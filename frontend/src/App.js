@@ -4,7 +4,7 @@ import Game from './components/Game.js';
 import MenuPlayers from './components/MenuPlayers.js';
 import Player from './components/Player.js';
 import Stadium from './components/Stadium.js';
-import StadiumView from './components/StadiumView.js';
+
 import AllPlayers from './components/AllPlayers.js';
 import { io } from 'socket.io-client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -75,6 +75,7 @@ function App() {
             headers: {
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ playerButton: 'master' }),
         });
 
         if (!response.ok) {
@@ -643,7 +644,7 @@ return (
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega}/>} />
             <Route path="/players" element={<AllPlayers />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase}/>} />
-            <Route path="/Stadium" element={ <StadiumView  />} />
+            
         </Routes>
     </Router>
 );
