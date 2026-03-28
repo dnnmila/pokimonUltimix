@@ -1,0 +1,103 @@
+.add_pokemon{
+    margin-top: 5rem;
+    height: 60vh;
+    width: 15vw;
+    border-color: palevioletred;
+    border-style: solid;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items:center;
+    background-color:rgba(0, 0, 0, 0.9);
+
+    input{ 
+        height: 3vh;
+        color: aliceblue;
+        background-color: rgb(170, 64, 170) ;
+        text-align: center;
+        font-size: 1rem;
+
+    }
+    button{
+        margin-top: 2rem;
+        height: 4vh;
+        width: 5vw;
+        background-color: rgb(242, 72, 72);
+        color: rgb(255, 255, 255);
+        border-radius: 60%;
+        border-color: rgb(242, 72, 72);
+        
+    }
+    button:hover{
+            transform: scale(1.5);
+            cursor: pointer;
+       
+    }
+    
+}
+
+.Pokeball_image{
+    width: 10vw;
+    margin-top: 50%;
+    margin-bottom: 10%;
+}
+
+
+.button_evolve{
+ background-image: url('../images/Evolution_icon.webp');
+height: 4vh;
+width: 2vw;
+background-size: contain;
+background-position: center center;
+background-repeat: no-repeat;
+}
+
+.button_evolve:hover{
+    transform: scale(1.5);
+    cursor: pointer;
+}
+
+$ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
+$ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
+
+@media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
+    .add_pokemon{
+        margin-top: 1rem;
+        height: 60vh;
+        width: 15vw;
+        border-color: palevioletred;
+        border-style: solid;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items:center;
+        background-color:rgba(0, 0, 0, 0.9);
+    
+        input{ 
+            height: 3vh;
+            color: aliceblue;
+            background-color: rgb(170, 64, 170) ;
+            text-align: center;
+            font-size: .8rem;
+            width: 80%;
+    
+        }
+        button{
+            margin-top: 2rem;
+            height: 6vh;
+            width: 8vw;
+            background-color: rgb(242, 72, 72);
+            color: rgb(255, 255, 255);
+            border-radius: 60%;
+            border-color: rgb(242, 72, 72);
+            
+        }
+        button:hover{
+                transform: scale(1.5);
+                cursor: pointer;
+           
+        }
+        
+    }
+
+}

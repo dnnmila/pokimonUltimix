@@ -1,0 +1,95 @@
+.Type_class{
+    font-size: 1rem;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+    padding: .4rem 1.2rem;
+     border-radius: 1.2rem;
+     color: #ffffff;
+}
+
+
+.type_NORMAL{
+    border: 2px solid #9099A1;
+    background-color: #9099A1;
+}
+.type_GRASS{
+    border: 2px solid #63BB5B;
+    background-color: #63BB5B;
+    }
+
+.type_FIRE{
+    border: 2px solid #FF9C54;
+    background-color: #FF9C54;
+}
+.type_WATER{
+    border: 2px solid #4D90D5;
+    background-color: #4D90D5;
+}
+.type_FIGHTING{
+    border: 2px solid #CE4069;
+    background-color: #CE4069;
+}
+.type_FLYING{
+    border: 2px solid #8FA8DD;
+    background-color: #8FA8DD;
+}
+.type_POISON{
+    border: 2px solid #AB6AC8;
+    background-color: #AB6AC8;
+}
+.type_GROUND{
+    border: 2px solid #D97746;
+    background-color: #D97746;
+}
+.type_ROCK{
+    border: 2px solid #C7B78B;
+    background-color: #C7B78B;
+}
+.type_GHOST{
+    border: 2px solid #5269AC;
+    background-color: #5269AC;
+}
+.type_ELECTRIC{
+    border: 2px solid #F3D23B;
+    background-color: #F3D23B;
+}
+.type_PSYCHIC{
+    border: 2px solid #F97176;
+    background-color: #F97176;
+}
+.type_DRAGON{
+    border: 2px solid #0A6DC4;
+    background-color: #0A6DC4;
+}
+.type_DARK{
+    border: 2px solid #5A5366;
+    background-color: #5A5366;
+}
+.type_STEEL{
+    border: 2px solid #5A8EA1;
+    background-color: #5A8EA1;
+}
+.type_FAIRY{
+    border: 2px solid #EC8FE6;
+    background-color: #EC8FE6;
+}
+.type_ICE{
+    border: 2px solid #74CEC0;
+    background-color: #74CEC0;
+}
+.type_BUG{
+    border: 2px solid #90C12C;
+    background-color: #90C12C;
+}
+
+$ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
+$ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
+
+@media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
+    .Type_class{
+        font-size: 0.6rem;
+        padding: .3rem .6rem;
+         border-radius: 1.2rem;
+         color: #ffffff;
+    }
+}

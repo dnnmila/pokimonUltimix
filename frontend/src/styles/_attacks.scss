@@ -1,0 +1,93 @@
+.Attack{
+    display: flex;
+    height: 7vw;
+    width: 28vh;
+    justify-content:flex-start;
+    align-items: center;
+
+    transform: rotate(90deg);
+    border: solid 1px rgb(224, 226, 247);
+    border-radius: 35px;
+    background-color: rgba(245, 247, 249, 0.55);
+    
+}
+
+
+.attack_type {
+    width: 20%;
+    height: 6vh;
+    background-position: center center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin: 2%;
+}
+.Attack_NORMAL{
+    background-image: url("../images/Types/NORMAL.png");}
+.Attack_BUG{
+    background-image: url("../images/Types/BUG.png");}
+.Attack_DARK{
+    background-image: url("../images/Types/DARK.png");}
+.Attack_DRAGON{
+    background-image: url("../images/Types/DRAGON.png");}
+.Attack_ELECTRIC{
+    background-image: url("../images/Types/ELECTRIC.png");}
+.Attack_FAIRY{
+    background-image: url("../images/Types/FAIRY.png");}
+.Attack_FIGHTING{
+    background-image: url("../images/Types/FIGHTING.png");}
+.Attack_FIRE{
+    background-image: url("../images/Types/FIRE.png");}
+.Attack_FLYING{
+    background-image: url("../images/Types/FLYING.png");}
+.Attack_GHOST{
+    background-image: url("../images/Types/GHOST.png");}
+.Attack_GRASS{
+    background-image: url("../images/Types/GRASS.png");}
+.Attack_GROUND{
+    background-image: url("../images/Types/GROUND.png");}
+.Attack_ICE{
+    background-image: url("../images/Types/ICE.png");}
+.Attack_POISON{
+    background-image: url("../images/Types/POISON.png");}
+.Attack_PSYCHIC{
+    background-image: url("../images/Types/PSYCHIC.png");}
+.Attack_ROCK{
+    background-image: url("../images/Types/ROCK.png");}
+.Attack_STEEL{
+    background-image: url("../images/Types/STEEL.png");}
+.Attack_WATER{
+    background-image: url("../images/Types/WATER.png");}
+
+.attack_name{
+    font-size: 1rem;
+    width: 45%;
+    overflow: hidden;
+    font-weight: lighter;
+    display: flex;
+    justify-content: center;
+    
+    }
+.attack_strenght{
+    font-size: 1.5rem;
+    width: 15%;
+    display: flex;
+    justify-content: center;
+    font-weight: bolder;
+    color: rgb(23, 21, 20);
+    }
+    .positive_bonus{
+        width: 10%;
+        display: flex;
+        justify-content: center;
+        font-weight: bolder;
+        color: green;
+    }
+    .negative_bonus{
+        font-size: 1.5rem;
+        width: 10%;
+        display: flex;
+        justify-content: center;
+        font-weight: bolder;
+        color: rgb(219, 61, 66);
+
+    }

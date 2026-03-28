@@ -1,0 +1,104 @@
+.modal-attach{
+    background-color: rgb(28, 28, 40);
+    color: beige;
+    width: 23vw;
+    height: 50vh;
+    padding: 1.5rem;
+    border-radius: 5px;
+    z-index: 2; /* Asegúrate de que sea más alto que el resto del contenido */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content:space-around;
+    
+}
+
+.Attach_all_options{
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.Attach-item-option{
+    margin-top: 1rem;
+    width: 5vw;
+    height: 7vh;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.Title-modal{
+font-size: 1.5rem;
+}
+
+.Attach-item-option:hover{
+cursor: pointer;
+transform: scale(1.5);
+}
+.attach-MT{
+    background-image: url("../images/tm.png");
+}
+.attach-Protein{
+    background-image: url("../images/protein.webp");
+}
+.attach-Potion{
+    background-image: url("../images/potion.webp");
+}
+.attach-Claw{
+    background-image: url("../images/claw.png");
+}
+.attach-Mega{
+    background-image: url("../images/Megaevo.webp");
+}
+.attach-Remove{
+    background-image: url("../images/delete.png");
+}
+
+.close-modal{
+    width: 3vw;
+    height: 2vh;
+}
+
+.TM-attack{
+    width: 3vw;
+    height: 3vh;
+    margin-top: .5rem;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.TM-attack:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+.Type-TM{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 90%;
+}
+.Attach-TM-options{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.Level-TM-options{
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 1rem;
+}
+.TM-Level{
+    color: rgb(237, 227, 241);
+    font-size: 1.5rem;
+}
+.TM-Level:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+    color: coral;
+}

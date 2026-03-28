@@ -1,0 +1,316 @@
+.Stadium{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    background-image: url("../images/PKMBG2.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    justify-content: flex-end;
+  
+}
+
+.player-stadium-main,.rival-stadium-main{
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    align-items: center;
+   margin-top: 25vh;
+}
+
+
+
+.player_team,.rival_team{
+ 
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;  
+    width: 80%;
+    align-items: center;
+    justify-content: center;
+}
+.player-name{
+    font-size: 3rem;
+    color: rgb(201, 183, 22);
+    margin-bottom: 2rem;
+}
+.rival-name{
+    font-size: 3rem;
+    color: rgb(30, 31, 31);
+    margin-bottom: 2rem;
+}
+.PokemonBattleListed{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.PokemonBattleListed:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+    
+}
+.attack-select-main{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    background-image: url("../images/pokeStadium.png");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.MyPokemon-main,.RivalPokemon-main{
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+
+}
+.MyPokemon_img,.RivalPokemon_img{
+    width: 13vw;
+    height: 25vh;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+
+}
+.RivalPokemon_name,.MyPokemon_name{
+    margin: .5rem;
+    font-size: 1.3rem;
+    font-weight: bolder;
+    color: rgb(23, 21, 20);
+}
+.RivalPokemon_level,.MyPokemon_level{
+    margin: .5rem;
+    font-size: 1.3rem;
+    font-weight: bolder;
+    color: rgb(23, 21, 20);
+}
+.MyPokemon_attacks,.RivalPokemon_attacks{
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    height: 90vh;
+    justify-content: space-evenly;
+}
+.MyPokemon_attacks{
+    left: 0%;
+}
+.RivalPokemon_attacks{
+    right: 0%;
+   
+    transform: rotate(180deg);
+}
+
+.MyDices,.RivalDices{
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+    position: absolute;
+    gap: .8rem;
+}
+.MyDices{
+left: 2%;
+top: 15%;
+}
+.RivalDices{
+right: 2%; 
+transform: rotate(180deg);
+top: 15%;
+
+}
+
+
+
+.MyDice, .RivalDice{
+    width: 5vw;
+    height: 8vh;
+    background-position: center center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter:brightness(80%)
+     
+}
+.RivalDice:hover,.MyDice:hover{
+        cursor: pointer;
+        transform: scale(1.5);
+}
+
+.mydice1{
+    background-image: url("../images/dices/dice1.png");
+}
+.mydice2{
+    background-image: url("../images/dices/dice2.png");
+}
+.mydice3{
+    background-image: url("../images/dices/dice3.png");
+}
+.mydice4{
+    background-image: url("../images/dices/dice4.png");
+}
+.mydice5{
+    background-image: url("../images/dices/dice5.png");
+}
+.mydice6{
+    background-image: url("../images/dices/dice6.png");
+}
+.rivalDicePlus,.mydicePlus{
+    width: 3vw;
+    height: 5vh;  
+    background-position: center center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-image: url("../images/add_plus.png");
+}
+.rivalDicePlus:hover,.mydicePlus:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+
+.MyPokemon_status,.RivalPokemon_status{
+    display: flex;
+    width: 40vw;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.MyPokemon_status{
+    position: absolute;
+    top: 5%;
+    left: 5vw;
+}
+.RivalPokemon_status{
+    position: absolute;
+    top: 5%;
+    right: 5vw;
+    transform: rotateY(180deg)
+    
+    
+}
+
+.status_battle{
+    width: 5vw;
+    height: 7vh;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: brightness(20%);
+}
+.statusActive{
+    filter: none;
+}
+.rotate-x{
+    transform: rotatey(180deg);
+}
+
+.MyTotal_label ,.MyTotal,.RivalTotal_label,.RivalTotal{
+    width: 40vw;
+    display: flex;
+    justify-content: space-evenly;
+    position: absolute;
+    
+}
+.MyTotal,.RivalTotal{
+   bottom: 9%;
+   font-weight: bold;
+   background-color: rgba(217, 203, 231, 0.622);
+   height: 4vh;
+   display: flex;
+   align-items: center;
+}
+.MyTotal_label ,.RivalTotal_label{
+    bottom: 13%;
+    background-color: #100b169f;
+    height: 3vh;
+    color: aliceblue;
+}
+.MyTotal,.MyTotal_label{
+    left: 5%;
+}
+.RivalTotal_label,.RivalTotal{
+    right: 5%;
+}
+
+.Pokemon-stadium2{
+    position:absolute;
+    width: 100vw;
+    height: 100vh;
+}
+
+.Attack-selected-mypoke,.Attack-selected-rival{
+    position: absolute;
+    top :25%
+}
+.Attack-selected-mypoke{
+    left: 21%;
+}
+.Attack-selected-rival{
+    right: 21%;
+}
+
+.myTotalFinal,.rivalTotalFinal{
+
+    width: 10vw;
+    height: 13vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    font-size: 5rem;
+    color: rgb(251, 94, 80);
+    top: 43%;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+}
+.myTotalFinal{
+    left: 33%;
+}
+.rivalTotalFinal{
+    right: 33%;
+}
+
+.rematchButton{
+    position: absolute;
+    width: 12%;
+    height: 4vh;
+    bottom: 2%;
+    right:35% ;
+    
+    border-radius: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ee29b9;
+    color: aliceblue;
+}
+.rematchButton:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+.change-pokemon{
+    position: absolute;
+    width: 12%;
+    height: 4vh;
+    bottom: 2%;
+    left:35% ;
+    border-radius: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ee9229;
+    color: aliceblue;
+}
+.End-Battle{
+    position: absolute;
+    width: 8%;
+    height: 4vh;
+    bottom: 2%;
+    right:3% ;
+    border-radius: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ee4141;
+    color: aliceblue;
+}

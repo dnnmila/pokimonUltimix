@@ -1,0 +1,92 @@
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3;
+}
+
+.modal-coins {
+    background-color: rgb(44, 32, 91);
+    color: rgb(208, 214, 238);
+    width: 30vw;
+    height: 50vh;
+    padding: 1.5rem;
+    border-radius: 5px;
+    z-index: 2; /* Asegúrate de que sea más alto que el resto del contenido */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content:space-around;
+}
+.modal2 {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    z-index: 3; /* Asegúrate de que sea más alto que el resto del contenido */
+}
+
+.Coins_all_options{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.add_coins_options{
+    
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    color: rgb(33, 145, 70);
+}
+
+.remove_coins_options{
+    color: rgb(227, 73, 73);
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+}
+
+.coins-option{
+    width: 4vw;
+    height: 7vh;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.coins-option:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+
+.add-one-coins{
+background-image: url("../images/PokéCoin.png");
+}
+.add-five-coins{
+    background-image: url("../images/pokecoins.png"); 
+}
+.remove-five-coins{
+    background-image: url("../images/pokecoins.png"); 
+
+}
+.remove-one-coin{
+    background-image: url("../images/PokéCoin.png");
+
+}
+.remove-1_3-coins{
+    background-image: url("../images/pokecoins.png"); 
+
+}
+.remove-1_2-coins{
+    background-image: url("../images/pokecoins.png"); 
+
+}

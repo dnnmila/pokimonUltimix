@@ -1,0 +1,113 @@
+
+.main-select-Menu{
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    background-image: url("../images/BgPlayers.jpg");
+    background-size: cover;
+    background-position: center center;
+    
+}
+
+.all-Trainers-select{
+    display: flex;
+    width: 70%;
+    height: 70%;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 5rem;
+  
+    justify-content: center;
+}
+
+.trainer-tag{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    height: 25vh;
+  
+}
+
+.trainer-tag:hover{
+    cursor: pointer;
+    border-color: rgb(133, 14, 218);
+    border-style: solid;
+    transform: scale(1.5);
+}
+.image-trainer{
+    display: flex;
+    width: 10vw;
+    height: 15vh;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.name-trainer{
+    margin-top: 1rem;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: rgb(244, 170, 191);
+    font-size: 1.5rem;
+}
+.button-to-start{
+    width: 70%;
+    height: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.boton-start-playing{
+    height: 5vh;
+    width: 10vw;
+    background-color: rgb(244, 170, 191);
+    color: white;
+    border-color:   rgb(244, 170, 191);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 15px;
+}
+.boton-start-playing:hover{
+cursor: pointer;
+transform: scale(1.5);
+background-color: rgb(150, 28, 198);
+color: white;
+border-color:  rgb(150, 28, 198);
+}
+
+
+
+.trainer1{
+    background-image: url("../images/trainers/Trainer1.webp");}
+.trainer2{
+    background-image: url("../images/trainers/Trainer2.webp");}
+.trainer3{
+    background-image: url("../images/trainers/Trainer3.webp");}
+.trainer4{
+    background-image: url("../images/trainers/Trainer4.webp");}
+.trainer5{
+    background-image: url("../images/trainers/Trainer5.webp");}
+.trainer6{
+    background-image: url("../images/trainers/Trainer6.webp");}
+.trainer7{
+    background-image: url("../images/trainers/Trainer7.webp");}
+.trainer8{
+    background-image: url("../images/trainers/Trainer8.webp");}
+.trainer9{
+    background-image: url("../images/trainers/Trainer9.webp");}
+.trainer10{
+    background-image: url("../images/trainers/Trainer10.webp");}
+.trainer11{
+    background-image: url("../images/trainers/Trainer11.webp");}
+.trainer12{
+    background-image: url("../images/trainers/Trainer12.webp");}
+.trainer13{
+    background-image: url("../images/trainers/Trainer13.webp");}
+.trainer14{
+    background-image: url("../images/trainers/Trainer14.webp");}
+.trainer15{
+    background-image: url("../images/trainers/Trainer15.webp");}

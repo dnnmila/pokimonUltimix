@@ -1,0 +1,255 @@
+.CurrentPlayerView{
+    background-image: url('../images/Bg_Control.jpg');
+    background-size:cover;
+    background-repeat: no-repeat;
+    width: 100vw;
+    height: 100vh;
+
+}
+.Title_pokeApp{
+    display: flex;
+    width: 90vw;
+    margin-left: 0vw;
+    justify-content: center;
+    align-items: center;
+    padding-top: 1rem;
+    
+}
+.Position_CurrentPlayer{
+    font-size: 4rem;
+    color: rgb(62, 88, 218);
+    width: 5%;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+.Name_CurrentPlayer{
+    font-size: 4rem;
+    color: rgb(62, 88, 218);
+    width: 15%;
+    justify-content: left;
+    align-items: center;
+    display: flex;
+}
+.Points_CurrentPlayer{
+    font-size: 2.5rem;
+    color: rgb(134, 36, 167);
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    position: absolute;
+    left: 4%;
+    top: 8%;
+    width: 5%;
+
+
+}
+.Money_CurrentPlayer{
+    font-size: 4rem;
+    color: rgb(199, 146, 2);
+    width:5%;
+}
+.Money_CurrentPlayer:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+
+
+.MainPokemons_Player{
+    display: flex;
+    width: 100vw;
+    justify-content: center;
+    align-items: center;
+}
+.All_Pokemons{
+    display: flex;
+    justify-content:last baseline;
+    align-items: center;
+    width:100vw;
+    gap: 1vw;
+     
+}
+
+
+.players_turns{
+    display: flex;
+    width: 80vw;
+    margin-left: 10vw;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.player_turn_box{
+    border-color: palevioletred;
+    border-style: solid;
+    background-color:rgba(0, 0, 0, 0.9);
+    color: aliceblue;
+    padding: 1rem;
+}
+
+.player_ON_turn{
+    border-color: palevioletred;
+    border-style: solid;
+    background-color:aliceblue;
+    color: rgba(0, 0, 0, 0.9);
+    padding: 1rem;
+}
+
+.prevPlayerView{
+width: 2.5vw;
+height: 3vh;
+background-image: url('../images/prevArrow.png');
+background-size: contain;
+background-position: center center;
+background-repeat: no-repeat;
+}
+
+.prevPlayerView:hover{
+   cursor: pointer;
+   transform: scale(1.5);
+    }
+
+.nextPlayerView{
+    width: 2.5vw;
+    background-image: url('../images/nextArrow.png');
+
+    height: 3vh;
+    background-size: contain;
+    background-position: center center;
+background-repeat: no-repeat;
+}
+
+.nextPlayerView:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+     }
+
+
+
+.nextTurnImage{
+    background-image: url('../images/nextPlayer.png');
+    height: 5vh;
+    width: 3vw;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.NextTurnButton{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: rgb(230, 159, 26);
+    font-weight: bold;
+}
+
+.NextTurnButton:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+
+.PrevTurnButton{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: rgb(3, 183, 72);
+    font-weight: bold;
+}
+.PrevTurnButton:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+
+.prevTurnImage{
+    background-image: url('../images/prevPlayer.png');
+    height: 5vh;
+    width: 3vw;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.Botom_PlayerView{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    
+}
+
+.Time_CurrentPlayer{
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 1rem;
+    gap: 0.5rem;
+    font-size: 2rem;
+    color: rgb(62, 88, 218);
+    
+}
+.Button-store{
+background-image: url("../images/mart.png");
+background-size: contain;
+background-position: center center; 
+background-repeat: no-repeat;
+width: 5vw;
+height: 8vh; 
+margin-left: 0rem;  
+}
+.Button-store:hover{
+    cursor:pointer;
+    transform: scale(1.5);
+}
+
+$ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
+$ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
+
+@media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
+    .Points_CurrentPlayer{
+        font-size: 1.5rem;
+        top: 8%;
+        left: 2%;
+        font-weight: bold;
+    }
+    .Position_CurrentPlayer{
+        font-size: 2.5rem; 
+    }
+    .Name_CurrentPlayer{
+        font-size: 2.5rem;
+      font-weight: bold;
+    }
+    .Money_CurrentPlayer{
+        font-size: 3rem;
+        color: rgb(199, 146, 2);
+        width:2%;
+        font-weight: bold;
+    }
+    .prevPlayerView,.nextPlayerView{
+        width: 3.5vw;
+        height: 4vh;
+        }
+
+        .All_Pokemons{
+            margin: auto;
+            width: 90vw;
+        }
+        .players_turns{
+            display: flex;
+            width: 80vw;
+            margin-left: 10vw;
+            justify-content: space-evenly;
+            align-items: center;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        .player_turn_box{
+            border-color: palevioletred;
+            border-style: solid;
+            background-color:rgba(0, 0, 0, 0.9);
+            color: aliceblue;
+            padding: .5rem; 
+        }
+
+}

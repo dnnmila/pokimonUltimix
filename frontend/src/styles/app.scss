@@ -1,0 +1,92 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.NORMAL{
+    color: #9099A1;
+}
+.GRASS{
+    color: #63BB5B;
+}
+.FIRE{
+    color: #FF9C54
+}
+.WATER{
+    color: #4D90D5;
+}
+.FIGHTING{
+    color: #CE4069;
+}
+.FLYING{
+    color: #8FA8DD;
+}
+.POISON{
+    color: #AB6AC8;
+}
+.GROUND{
+    color: #D97746;
+}
+.ROCK{
+    color: #C7B78B;
+}
+.GHOST{
+    color: #5269AC;
+}
+.ELECTRIC{
+    color: #F3D23B;
+}
+.PSYCHIC{
+    color: #F97176;
+}
+.DRAGON{
+    color: #0A6DC4;
+}
+.DARK{
+    color: #5A5366;
+}
+.STEEL{
+    color: #5A8EA1;
+}
+.FAIRY{
+    color: #EC8FE6;
+}
+.ICE{
+    color: #74CEC0;
+}
+.BUG{
+    color: #90C12C;
+}
+
+@import "./game";
+@import "./player";
+@import "./badges";
+@import "./pokemon";
+@import "./addPokemon";
+@import "./_types";
+@import "./currentPlayer";
+@import "./playerListed";
+@import "./pokemonListed";
+@import "./AllPlayers";
+@import "./modalMonedas";
+@import "./_modalAttachItem";
+@import "./modalStore";
+@import "./menuPlayers";
+
+//@import "./modalStadium";
+//@import "./modalStadium2";
+@import "./attacks";
+@import "./stadium";
+@import "./modalBattle";
+
+
+
+
+
+
+.App{
+    background-image: url("../images/Pokemon\ GO\ Wallpapers\ in\ Ultra\ HD\ 4K.jpg");
+    background-size: cover;
+    height: 100vh;
+}

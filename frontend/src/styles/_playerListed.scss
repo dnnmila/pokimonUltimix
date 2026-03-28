@@ -1,0 +1,151 @@
+.PlayerListedClass{
+    display: flex;
+    align-items: center;
+    background-color: rgb(0, 0, 0, 0.507);
+    position: relative;
+    height: 20;
+}
+
+.PlayerListedClass::after {
+    content: '';
+    position: absolute;
+    left: 10%;
+    bottom: 0;
+    width: 80%; /* Ancho de la línea */
+    height: 2px; /* Altura de la línea */
+    background-color: #5374CB; /* Color de la línea */
+  }
+
+.isMyturn{
+    background-image: url("../images/Poke_Ball.png");
+    width: 3vw;
+    height: 5vh;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+ 
+
+  }
+.Titles{
+    margin-left: 1vw;;
+    display: flex;
+    flex-direction: column;
+    width: 22vw;
+    align-items: center;
+    justify-content: center;
+   
+}
+.NamesAndPosition{
+    display: flex;
+    justify-content: left;
+    gap: 1rem;
+    align-items: center;
+    width: 22vw;
+    margin-bottom: 1rem;
+}
+.PlayerBadges{
+    display: flex;
+    width: 22vw;
+}
+
+.AllPokemons{
+    display: flex;
+    width: 70vw ;
+    align-items: center;
+}
+
+.PlayerPosition{
+    color: #9A3B3B;
+    font-size: 3rem;
+}
+.PlayerName{
+    color: #5374CB;
+    font-size: 3rem;
+}
+.PlayerPoints{
+    color: #5374CB;
+    font-size: 1.5rem;
+    align-self: flex-end
+}
+.CoinsAndTime{
+    width: 10% ;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.PlayerCoins{
+    color: #E2CE18;
+    font-size: 2rem;
+}
+.PlayerTime{
+    color: #5374CB;
+    font-size: 1.5rem;
+}
+
+
+#badge1Won{
+    background-image: url("../images/badges/badge1.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}    
+
+
+#badge2Won{
+    background-image: url("../images/badges/badge2.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}
+#badge3Won{
+    background-image: url("../images/badges/badge3.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}
+#badge4Won{
+    background-image: url("../images/badges/badge4.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}
+#badge5Won{
+    background-image: url("../images/badges/badge5.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}
+#badge6Won{
+    background-image: url("../images/badges/badge6.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}
+#badge7Won{
+    background-image: url("../images/badges/badge7.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}
+#badge8Won{
+    background-image: url("../images/badges/badge8.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 4vh;
+    width: 2vw;}
+    #badge9Won{
+        background-image: url("../images/badges/elite.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        height: 4vh;
+        width: 2vw;}
+        #badge10Won{
+            background-image: url("../images/badges/campion.png");
+            background-size: contain;
+            background-repeat: no-repeat;
+            height: 4vh;
+            width: 2vw;}
+
+  

@@ -1,0 +1,231 @@
+.pokemon{
+    margin-top: 5rem;
+    height: 60vh;
+    width: 15vw;
+    border-color: palevioletred;
+    border-style: solid;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items:center;
+    background-color:rgba(0, 0, 0, 0.9);
+    position: relative;
+}
+
+.img_pokemon{
+    height: 25vh;
+    width:10vw;
+    background-size: contain;
+    background-repeat: no-repeat;   
+    background-position: center center;
+    margin-top: 0rem;
+    margin-bottom: 0rem;
+}
+
+.img_pokemon_dead{
+    height: 25vh;
+    width:10vw;
+    background-size: contain;
+    background-repeat: no-repeat;   
+    background-position: center center;
+    margin-top: 0rem;
+    margin-bottom: 0rem;
+    filter: brightness(20%);
+
+}
+
+
+
+.name_pokemon{
+    color: rgb(162, 112, 216);
+    font-size: 2rem;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.type_pokemon{
+    color: rgb(162, 112, 216);
+    font-size: 1.5rem;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    
+   
+}
+
+.delete_pokemon{
+    background-image: url("../images/delete.png");
+    width: 2vw;
+    height: 5vh;
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin-top: 0rem;
+    display: flex;
+    align-self: flex-end;
+    justify-self: end;
+    position: absolute;
+    bottom: 0%;
+}
+.delete_pokemon:hover{
+cursor: pointer;
+transform: scale(1.5);
+}
+
+.types_div{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: aliceblue;
+    width: 60%;
+}
+
+.level_total{
+    display: flex;
+    color: rgb(134, 36, 167);
+    font-size: 1.5rem;
+    font-family: 'Times New Roman';
+    margin-top: 0rem;
+    margin-bottom: 1rem;
+}
+.level_total:hover{
+  cursor:pointer;
+}
+.level_extra{
+    margin-left: 1rem;
+}
+
+.attath_button{
+    color: palevioletred;
+    margin-top: 3rem;
+    border-color:palevioletred;
+    border-style: solid;
+    padding: .5rem;
+}
+
+.attath_button:hover{
+    cursor: pointer;
+}
+
+.attached-item{
+    margin-top: 2rem;
+    width: 3vw;
+    height: 6vh;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.attached-mt{
+    background-image: url('../images/tm.png');
+
+}
+.attached-protein{
+    background-image: url('../images/protein.webp');
+    
+}
+.attached-potion{
+    background-image: url('../images/potion.webp');
+    
+}
+.attached-claw{
+    background-image: url('../images/claw.png');
+    
+}
+
+.attached-mega{
+    background-image: url('../images/Megaevo.webp');
+    
+}
+
+.status_pokemon{
+    color: beige;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    width: 5vw;
+    height: 4vh;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.status_pokemon:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+.Asleep{
+ background-image: url("../images/status/sleep.png");
+}
+.Burned{
+    background-image: url("../images/status/burned.png");
+   }
+.Paralized{
+    background-image: url("../images/status/paralized.png");
+}
+.Frozen{
+    background-image: url("../images/status/frozen.png");
+}
+.Poisoned{
+    background-image: url("../images/status/poisoned.png");
+}
+.Confused{
+    background-image: url("../images/status/confused.png");
+}
+.Normal{
+    background-image: url("../images/status/statusOk.png");
+}
+
+$ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
+$ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
+
+@media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
+    .pokemon{
+        margin-top: 1rem;
+        height: 60vh;
+        width: 15vw;
+        border-color: palevioletred;
+        border-style: solid;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items:center;
+        background-color:rgba(0, 0, 0, 0.9);
+        position: relative;
+    }
+
+    .level_total{
+        display: flex;
+        color: rgb(134, 36, 167);
+        font-size: .8rem;
+        font-weight: bold;
+        font-family: 'Times New Roman';
+        margin-top: 0rem;
+        margin-bottom: .5rem;
+    }
+
+
+.name_pokemon{
+    color: rgb(162, 112, 216);
+    font-size: 1.5rem;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.status_pokemon{
+    color: beige;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    width: 5vw;
+    height: 4vh;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+
+}
+
+

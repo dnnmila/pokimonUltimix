@@ -1,0 +1,165 @@
+.Modal-battles{
+    width: 80vw;
+    height: 90vh;
+    background-image: url("../images/pokefondo.jpg");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.Players-to-battle{
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 1rem;
+}
+.Leaders-to-battle{
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 8rem;
+}
+.Elite-to-battle{
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 8rem;
+}
+.Special-to-battle{
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 8rem;
+}
+.close-blattle-modal{
+    width: 6%;
+    height: 4vh;
+    display: flex;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(78, 64, 234);
+    color: aliceblue;
+    border-radius: 35px;
+    bottom: 8%;
+    right: 13%;
+}.close-blattle-modal:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+    background-color: rgb(234, 78, 64);
+}
+
+.Leader,.Elite{
+    width: 8%;
+    height: 15vh;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.Leader:hover,.Elite:hover{
+    cursor: pointer;
+    transform: scale(1.5);
+}
+
+.leader1{
+    background-image: url("../images/Leaders/gym1_1.png");
+}
+.leader2{
+    background-image: url("../images/Leaders/gym2_1.png");
+}
+.leader3{
+    background-image: url("../images/Leaders/gym3_1.png");
+}
+.leader4{
+    background-image: url("../images/Leaders/gym4_1.png");
+}
+.leader5{
+    background-image: url("../images/Leaders/gym5_1.png");
+}
+.leader6{
+    background-image: url("../images/Leaders/gym6_1.png");
+}
+.leader7{
+    background-image: url("../images/Leaders/gym7_1.png");
+}
+.leader8{
+    background-image: url("../images/Leaders/gym8_1.png");
+}
+.Elite1{
+    background-image: url("../images/Leaders/gymE1_1.png");
+}
+.Elite2{
+    background-image: url("../images/Leaders/gymE2_1.png");
+}
+.Elite3{
+    background-image: url("../images/Leaders/gymE3_1.png");
+}
+.Elite4{
+    background-image: url("../images/Leaders/gymE4_1.png");
+}
+.Red{
+    background-image: url("../images/Leaders/gymC1.png");
+}
+.Blue1{
+    background-image: url("../images/Leaders/gymB1_1.png");
+}
+.Blue2{
+    background-image: url("../images/Leaders/gymB2_1.png");
+}
+.Blue3{
+    background-image: url("../images/Leaders/gymB3_1.png");
+}
+.Blue4{
+    background-image: url("../images/Leaders/gymB4_1.png");
+}
+.Blue5{
+    background-image: url("../images/Leaders/gymB5_1.png");
+}
+.Rocket{
+    background-image: url("../images/gymsCards/Rocket.png");
+}
+
+.Rocket1{
+    background-image: url("../images/Leaders/gymR1_1.png");
+}
+.Rocket2{
+    background-image: url("../images/Leaders/gymR2_1.png");
+}
+
+
+$ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
+$ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
+
+@media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
+    .Leaders-to-battle{
+        display: flex;
+        margin-left: 5%;
+        width: 90%;
+        justify-content: space-evenly;
+        align-items: center;
+        margin-top: 2rem;
+    }
+
+    .Elite-to-battle{
+        display: flex;
+        margin-left: 5%;
+        width: 90%;
+        justify-content: space-evenly;
+        align-items: center;
+        margin-top: 2rem;
+    }
+
+    .Special-to-battle{
+        display: flex;
+        margin-left: 5%;
+        width: 90%;
+        justify-content: space-evenly;
+        align-items: center;
+        margin-top: 3rem;
+    }
+}

@@ -1,0 +1,98 @@
+.img_pokemon_listed{
+    height: 10vh;
+    width: 11vw;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+.img_pokemon_listed_dead{
+    height: 10vh;
+    width: 11vw;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: brightness(20%);
+}
+
+.PokemonListed{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content:center;
+    position: relative;
+
+}
+
+.level_pokekon_listed{
+    color: beige;
+    font-size:2rem;
+}
+
+.status{
+
+    font-size: 1rem;
+    width: 3vw;
+    height: 3vh;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.attached{
+    top: 40%;
+    left: 15%;
+    position: absolute;
+    width: 3vw;
+    height: 3vh;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.attached-MT{
+    background-image: url('../images/tm.png');
+
+}
+.attached-Protein{
+    background-image: url('../images/protein.webp');
+    
+}
+.attached-Potion{
+    background-image: url('../images/potion.webp');
+    
+}
+.attached-Claw{
+    background-image: url('../images/claw.png');
+    
+}
+
+.attached-Mega{
+    background-image: url('../images/Megaevo.webp');
+    
+}
+
+.Asleep{
+ background-image: url("../images/status/sleep.png");
+}
+.Burned{
+    background-image: url("../images/status/burned.png");
+   }
+.Paralized{
+    background-image: url("../images/status/paralized.png");
+}
+.Frozen{
+    background-image: url("../images/status/frozen.png");
+}
+.Poisoned{
+    background-image: url("../images/status/poisoned.png");
+}
+.Confused{
+    background-image: url("../images/status/confused.png");
+}
+
+
