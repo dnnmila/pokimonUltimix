@@ -113,11 +113,18 @@ export const addPokemonScanned = async (req, res) => {
     console.log('addPokemon scanned started');
     try {
         const db = await openDb();
-        const {pokemonUID } = req.body;
-
+        const { pokemonUID, playerButton } = req.body;
 
         // Obtener el jugador por su ID
         const game = getGame();
+
+        if (playerButton && playerButton !== 'master') {
+            const playerIndex = parseInt(playerButton.replace('player', ''), 10) - 1;
+            if (playerIndex !== game.currentTurn) {
+                return res.status(200).json({ message: 'No es tu turno' });
+            }
+        }
+
         const player = game.players[game.currentTurn];
         console.log('player ' + player.name);
         console.log(pokemonUID);
