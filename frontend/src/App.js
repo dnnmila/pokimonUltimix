@@ -4,7 +4,8 @@ import Game from './components/Game.js';
 import MenuPlayers from './components/MenuPlayers.js';
 import Player from './components/Player.js';
 import Stadium from './components/Stadium.js';
-import StadiumView from './components/StadiumView.js';
+import SimPlayer from './components/SimPlayer.js';
+
 import AllPlayers from './components/AllPlayers.js';
 import { io } from 'socket.io-client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -601,6 +602,32 @@ const onHandleTotales = async (player,NewTotal) => {
     }
 };
 
+const simWildBattle = async (playerId, pokemonId) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/sim-wild-battle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, pokemonId }),
+        });
+        if (!response.ok) console.error('Error en sim-wild-battle:', response.status);
+    } catch (error) {
+        console.error('Error en simWildBattle:', error);
+    }
+};
+
+const simLeaderBattle = async (playerId, LeaderID, pokemonId1, pokemonId2) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/sim-leader-battle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, LeaderID, pokemonId1, pokemonId2 }),
+        });
+        if (!response.ok) console.error('Error en sim-leader-battle:', response.status);
+    } catch (error) {
+        console.error('Error en simLeaderBattle:', error);
+    }
+};
+
 const onChangeBattlePhase = async (newPhase) => {
     try {
         console.log("onChangeBattlePhase request");
@@ -643,7 +670,8 @@ return (
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega}/>} />
             <Route path="/players" element={<AllPlayers />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase}/>} />
-            <Route path="/Stadium" element={ <StadiumView  />} />
+            <Route path="/simPlayer/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle}/>} />
+
         </Routes>
     </Router>
 );

@@ -33,7 +33,7 @@ class Player {
         this.timeSpent = 0; // Tiempo total en segundos
         this.turnStartTime = null;
         this.totalPokemons =0;
-        
+        this.simRival = null;
 
 
     }
@@ -154,6 +154,10 @@ class Player {
         }
         pokemon.setState();
         console.log(pokemon);
+    }
+
+    setSimRival(rival) {
+        this.simRival = rival;
     }
 
     changeStatus(idPokemon,status){

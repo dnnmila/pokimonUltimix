@@ -12,8 +12,8 @@ import { getIo } from "../socketIo.js";
 
 async function openDb() {
     return open({
-       // filename: './db/pokimonDOUBLE.sqlite',
-       filename: './db/pokimonULTIMIX.sqlite',
+        filename: './db/pokimonDOUBLE.sqlite',
+       //filename: './db/pokimonULTIMIX.sqlite',
         driver: sqlite3.Database
     });
 }
@@ -164,8 +164,8 @@ export const wildBattle = async (req, res) => {
         const {pokemonId} = req.body;
         console.log(pokemonId);
 
-        // Asegurarse de que pokemonId tenga siempre 3 dígitos
-        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
+        //ajuste  Asegurarse de que pokemonId tenga siempre 3 dígitos ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -384,6 +384,104 @@ export const leaderBattle = async (req, res) => {
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 
         res.status(200).json({ message: 'Pokémon salvaje Agregado'});
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const simWildBattle = async (req, res) => {
+    console.log('Sim Wild Battle started');
+    try {
+        const { playerId, pokemonId } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) {
+            return res.status(404).json({ message: 'Jugador no encontrado' });
+        }
+
+        const db = await openDb();
+        //ajuste 4a 3 digitos pokimonId ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
+        const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [formattedPokemonId]);
+        if (!pokemonData) {
+            return res.status(404).json({ message: 'Pokémon no encontrado' });
+        }
+
+        const Attack1 = await getAttack(pokemonData.ATK1, db);
+        const Attack2 = await getAttack(pokemonData.ATK2, db);
+        const Attack3 = await getAttack(pokemonData.ATK3, db);
+
+        const pokemon = new Pokemons(
+            pokemonData.UID,
+            pokemonData.POKEDEX,
+            pokemonData.NAME,
+            pokemonData.TYPE1,
+            pokemonData.TYPE2,
+            pokemonData.LEVEL,
+            Attack1,
+            Attack2,
+            Attack3,
+            pokemonData.NEXT_LEVEL,
+            pokemonData.EVOLUTION,
+            pokemonData.MEGA
+        );
+
+        const simRival = new Rival('SimRival-' + playerId, 'Wild Pokemon');
+        simRival.addPokemon(pokemon);
+        player.setSimRival(simRival);
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'SimRival salvaje asignado al jugador ' + playerId });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const simLeaderBattle = async (req, res) => {
+    console.log('Sim Leader Battle started');
+    try {
+        const { playerId, LeaderID, pokemonId1, pokemonId2 } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) {
+            return res.status(404).json({ message: 'Jugador no encontrado' });
+        }
+
+        const rival = getRivalrById(LeaderID);
+        const db = await openDb();
+
+        const pokemonData = await db.get("SELECT * FROM pokemonsLeaders WHERE UID = ? LIMIT 1", [pokemonId1]);
+        if (!pokemonData) {
+            return res.status(404).json({ message: 'Pokémon 1 no encontrado' });
+        }
+        const Attack1 = await getAttack(pokemonData.ATK1, db);
+        const Attack2 = await getAttack(pokemonData.ATK2, db);
+        const Attack3 = await getAttack(pokemonData.ATK3, db);
+        const pokemon1 = new Pokemons(
+            pokemonData.UID, pokemonData.POKEDEX, pokemonData.NAME,
+            pokemonData.TYPE1, pokemonData.TYPE2, pokemonData.LEVEL,
+            Attack1, Attack2, Attack3,
+            pokemonData.NEXT_LEVEL, pokemonData.EVOLUTION, pokemonData.MEGA
+        );
+
+        const pokemonData2 = await db.get("SELECT * FROM pokemonsLeaders WHERE UID = ? LIMIT 1", [pokemonId2]);
+        if (!pokemonData2) {
+            return res.status(404).json({ message: 'Pokémon 2 no encontrado' });
+        }
+        const Attack1_2 = await getAttack(pokemonData2.ATK1, db);
+        const Attack2_2 = await getAttack(pokemonData2.ATK2, db);
+        const Attack3_2 = await getAttack(pokemonData2.ATK3, db);
+        const pokemon2 = new Pokemons(
+            pokemonData2.UID, pokemonData2.POKEDEX, pokemonData2.NAME,
+            pokemonData2.TYPE1, pokemonData2.TYPE2, pokemonData2.LEVEL,
+            Attack1_2, Attack2_2, Attack3_2,
+            pokemonData2.NEXT_LEVEL, pokemonData2.EVOLUTION, pokemonData2.MEGA
+        );
+
+        const simRival = new Rival('SimLeader-' + playerId, rival ? rival.name : LeaderID);
+        simRival.add2Pokemon(pokemon1, pokemon2);
+        player.setSimRival(simRival);
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'SimRival lider asignado al jugador ' + playerId });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

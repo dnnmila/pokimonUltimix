@@ -6,7 +6,6 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
 import { init as initSocketIo } from './socketIo.js';
-import { getGame } from './gameInstance.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,7 +18,7 @@ import { fileURLToPath } from 'url';
 //Tachomodem
 //const SERVER_IP = 'http://192.168.0.2:3000';
 //Casa
-const SERVER_IP = '  http://192.168.1.39:3000';
+const SERVER_IP = 'http://192.168.1.39:3000';
 
 
 //IP Monicure

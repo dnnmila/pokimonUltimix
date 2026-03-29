@@ -7,8 +7,8 @@ import { getGame ,getPlayerById,updateGameAndNotify,getPokemonById } from '../ga
 // Función para abrir la base de datos
 async function openDb() {
     return open({
-        //filename: './db/pokimonDOUBLE.sqlite',
-        filename: './db/pokimonULTIMIX.sqlite', 
+        filename: './db/pokimonDOUBLE.sqlite',
+       // filename: './db/pokimonULTIMIX.sqlite', 
         driver: sqlite3.Database
     });
 }
@@ -51,8 +51,8 @@ export const addPokemonToPlayer = async (req, res) => {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
 
-        // Asegurarse de que pokemonId tenga siempre 3 dígitos
-        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
+        // ajuste Asegurarse de que pokemonId tenga siempre 3 dígitos pokemonId ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -571,8 +571,8 @@ export const wildBattle = async (req, res) => {
         const {pokemonId} = req.body;
         console.log(pokemonId);
 
-        // Asegurarse de que pokemonId tenga siempre 3 dígitos
-        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
+        //ajuste  Asegurarse de que pokemonId tenga siempre 3 dígitos pokemonId ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
