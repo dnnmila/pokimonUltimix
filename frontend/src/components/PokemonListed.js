@@ -3,7 +3,7 @@
 
 const PokemonListed = ({pokemon}) => {
     //Ajuste de pokedes quitando un 0 ultimixdnn
-    const imageUrl = require(`../images/POKEMON/${pokemon.pokedex}.png`);
+    const imageUrl = require(`../images/POKEMON/0${pokemon.pokedex}.png`);
 
 
 

@@ -10,9 +10,10 @@ const PokemonBattleListed = ({pokemon,SelectPokemon}) => {
       } 
       else if (pokemon.pokedex.startsWith('M')){
         //ajuste agregadno la carpeta de tokens ultimixdnn
-        imageUrl = require(`../images/tokens_ultimix/${pokemon.pokedex}.png`);
+        //imageUrl = require(`../images/tokens_ultimix/${pokemon.pokedex}.png`);
+        imageUrl = require(`../images/tokens/${pokemon.pokedex}.png`);
       } else{
-        imageUrl = require(`../images/POKEMON/${pokemon.pokedex}.png`);
+        imageUrl = require(`../images/POKEMON/0${pokemon.pokedex}.png`);
       }
 
    

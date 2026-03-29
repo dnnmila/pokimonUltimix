@@ -298,7 +298,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         console.log(pokemon.name);
         setMyStatus(pokemon.status);
         //ajuste agregando la carpeta de tokens ultimixdnn
-        setMyPokemonImg(require(`../images/tokens_ultimix/${pokemon.pokedex}.png`));
+        setMyPokemonImg(require(`../images/tokens/${pokemon.pokedex}.png`));
         //Clase Type
         setMyPokemonType1_class(`type_${pokemon.type1}`);
         setMyPokemonType2_class(`type_${pokemon.type2}`);
@@ -316,7 +316,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         console.log(pokemon.name);
         setRivalStatus(pokemon.status);
         //ajuste agregando la carpeta de tokens ultimixdnn
-        setRivalPokemonImg(require(`../images/tokens_ultimix/${pokemon.pokedex}.png`));
+        setRivalPokemonImg(require(`../images/tokens/${pokemon.pokedex}.png`));
         //Clase Type
         setRivalPokemonType1_class(`type_${pokemon.type1}`);
         setRivalPokemonType2_class(`type_${pokemon.type2}`);

@@ -11,7 +11,7 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
     const type_id2 = `types_${id}_2`;
     const delete_id = `delete_${id}`;
     //Ajuste de pokedes quitando un 0 ultimixdnn
-    const imageUrl = require(`../images/POKEMON/${pokedex}.png`);
+    const imageUrl = require(`../images/POKEMON/0${pokedex}.png`);
     const box_id = `div_${id}`;
 
     const type1_class = `type_${type1}`;
