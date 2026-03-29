@@ -80,7 +80,16 @@ export const addPlayer = async (req, res) => {
 
 export const nextTurn = async (req, res) => {
     try {
+        const { playerButton } = req.body || {};
         const game = getGame();
+
+        if (playerButton && playerButton !== 'master') {
+            const playerIndex = parseInt(playerButton.replace('player', ''), 10) - 1;
+            if (playerIndex !== game.currentTurn) {
+                return res.status(200).json({ message: 'No es tu turno' });
+            }
+        }
+
         game.nextTurn();
         game.calculatePoints(); 
         game.updatePlayerPositions(); 
@@ -223,9 +232,18 @@ export const wildBattle = async (req, res) => {
 export const scanBattle = async (req, res) => {
     console.log('Wild Battle Scaned started');
     try {
+        const { pokemonUID, playerButton } = req.body;
+        const game = getGame();
+
+        if (playerButton && playerButton !== 'master') {
+            const playerIndex = parseInt(playerButton.replace('player', ''), 10) - 1;
+            if (playerIndex !== game.currentTurn) {
+                return res.status(200).json({ message: 'No es tu turno' });
+            }
+        }
+
         const rival = getRivalrById('Rival');
         const db = await openDb();
-        const {pokemonUID} = req.body;
         console.log(pokemonUID);
 
         // Asegurarse de que pokemonId tenga siempre 3 dígitos
@@ -261,12 +279,8 @@ export const scanBattle = async (req, res) => {
         );
 
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
-        
-        
-        const game = getGame();
-      
-        rival.addPokemon(pokemon)
-    
+
+        rival.addPokemon(pokemon);
 
         game.wildBattleOn(rival);
         

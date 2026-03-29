@@ -76,6 +76,7 @@ function App() {
             headers: {
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ playerButton: 'master' }),
         });
 
         if (!response.ok) {
