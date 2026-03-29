@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import PlayerListed from './PlayerListed';
+import StadiumMirrorModal from './StadiumMirrorModal';
 
 import SERVER_IP from '../config';
 
 const AllPlayers = () => {
+    const [game, setGame] = useState({ players: [], currentTurn: 0, battlePublic: false, myPlayerPkm: [], myRivalPkm: [], myPlayerPkmAtk: [], myRivalPkmAtk: [], myPlayerTotal: 0, myRivalTotal: 0, battlePhase: 'PokemonSelection' });
     const [players, setPlayers] = useState([]);
     const [myPlayerPkm, setMyPlayerPkm] = useState([]);
-    const [myPlayerPkmAtk, setMyPlayerPkmAtk] = useState([]);   
+    const [myPlayerPkmAtk, setMyPlayerPkmAtk] = useState([]);
     const [myRivalPkm, setMyRivalPkm] = useState([]);
     const [myRivalPkmAtk, setMyRivalPkmAtk] = useState([]);
     const [myPlayerTotal, setMyPlayerTotal] = useState(0);
@@ -22,6 +24,7 @@ const AllPlayers = () => {
         const socket = io(SERVER_IP);
 
         socket.on('gameUpdated', updatedGame => {
+            setGame(updatedGame);
             setPlayers(updatedGame.players);
             setMyPlayerPkm(updatedGame.myPlayerPkm);
             setMyPlayerPkmAtk(updatedGame.myPlayerPkmAtk);
@@ -58,13 +61,10 @@ const AllPlayers = () => {
 
     return (
         <div className='AllPlayers_class'>
-         
             {playersOrdered.map(player => (
-        
-            <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers}/>
-                    
-            
+                <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers}/>
             ))}
+            <StadiumMirrorModal game={game} />
         </div>
     );
 };
