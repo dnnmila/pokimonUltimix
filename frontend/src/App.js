@@ -603,6 +603,18 @@ const onHandleTotales = async (player,NewTotal) => {
     }
 };
 
+const toggleBattlePublic = async () => {
+    try {
+        const response = await fetch(`${SERVER_IP}/toggle-battle-public`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) console.error('Error en toggle-battle-public:', response.status);
+    } catch (error) {
+        console.error('Error en toggleBattlePublic:', error);
+    }
+};
+
 const simWildBattle = async (playerId, pokemonId) => {
     try {
         const response = await fetch(`${SERVER_IP}/sim-wild-battle`, {
@@ -626,6 +638,45 @@ const simLeaderBattle = async (playerId, LeaderID, pokemonId1, pokemonId2) => {
         if (!response.ok) console.error('Error en sim-leader-battle:', response.status);
     } catch (error) {
         console.error('Error en simLeaderBattle:', error);
+    }
+};
+
+const onHandleBonusFinal = async (player, bonus) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/set-battle-bonus-final`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, bonus }),
+        });
+        if (!response.ok) console.error('Error en set-battle-bonus-final:', response.status);
+    } catch (error) {
+        console.error('Error al asignar bonus final:', error);
+    }
+};
+
+const onHandleDice = async (player, dice) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/set-battle-dice`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, dice }),
+        });
+        if (!response.ok) console.error('Error en set-battle-dice:', response.status);
+    } catch (error) {
+        console.error('Error al asignar dado:', error);
+    }
+};
+
+const onHandleBonuses = async (player, b1, b2, b3) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/set-battle-bonuses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, b1, b2, b3 }),
+        });
+        if (!response.ok) console.error('Error en set-battle-bonuses:', response.status);
+    } catch (error) {
+        console.error('Error al asignar bonuses:', error);
     }
 };
 
@@ -670,7 +721,7 @@ return (
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega}/>} />
             <Route path="/players" element={<AllPlayers />} />
-            <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase}/>} />
+            <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal}/>} />
             <Route path="/simPlayer/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle}/>} />
 
         </Routes>

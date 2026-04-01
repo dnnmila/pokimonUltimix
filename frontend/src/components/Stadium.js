@@ -4,7 +4,7 @@ import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 
 
-const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase}) => {
+const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal}) => {
     
   
     const [myPokemon, setMyPokemon] = useState();
@@ -224,8 +224,8 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         
         console.log ('Atk1 aux1: ' + aux);
         console.log ('Atk1 aux2: ' + aux2);
-        setMyBonusAttack1(aux+ aux2);
-        console.log (' MyBonusAttack1: ' +  MyBonusAttack1);
+        const myB1 = aux + aux2;
+        setMyBonusAttack1(myB1);
         aux= await checkBonusType(myPokemon.attack2.type, rivalPokemon.type1);
         if(rivalPokemon.type2 !== null && rivalPokemon.type2 !== "NONE" ){
             aux2= await checkBonusType(myPokemon.attack2.type, rivalPokemon.type2);
@@ -233,10 +233,8 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         else{
             aux2=0;
         }
-        console.log ('Atk2 aux1: ' + aux);
-        console.log ('Atk2 aux2: ' + aux2);
-        setMyBonusAttack2(aux + aux2);
-        console.log (' MyBonusAttack2: ' +  MyBonusAttack2);
+        const myB2 = aux + aux2;
+        setMyBonusAttack2(myB2);
         aux=  await checkBonusType(myPokemon.attack3.type, rivalPokemon.type1);
         if(rivalPokemon.type2 !== null && rivalPokemon.type2 !== "NONE" ){
         aux2=  await checkBonusType(myPokemon.attack3.type, rivalPokemon.type2);
@@ -244,16 +242,8 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         else{
         aux2=0;
         }
-        console.log ('Atk2 aux1: ' + aux);
-        console.log ('Atk2 aux2: ' + aux2);
-        setMyBonusAttack3(aux + aux2);
-        console.log (' MyBonusAttack3: ' +  MyBonusAttack3);
-
-        console.log("Rival BONUS");
-        
-        console.log("My pokemon type: " + myPokemon.type1);
-        console.log("ATK1 type: " + rivalPokemon.attack1.type);
-        console.log("ATK2 type: " + rivalPokemon.attack2.type);
+        const myB3 = aux + aux2;
+        setMyBonusAttack3(myB3);
 
         aux= await checkBonusType(rivalPokemon.attack1.type, myPokemon.type1);
         if(myPokemon.type2 !== null && myPokemon.type2 !== "NONE" ){
@@ -262,11 +252,8 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         else{
             aux2=0;
             }
-       
-        console.log ('Atk3 aux1: ' + aux);
-        console.log ('Atk3 aux2: ' + aux2);
-        setRivalBonusAttack1(aux+ aux2);
-        console.log (' RivalBonusAttack1: ' +  RivalBonusAttack1);
+        const rivalB1 = aux + aux2;
+        setRivalBonusAttack1(rivalB1);
         aux= await checkBonusType(rivalPokemon.attack2.type, myPokemon.type1);
         if(myPokemon.type2 !== null && myPokemon.type2 !== "NONE" ){
         aux2= await checkBonusType(rivalPokemon.attack2.type, myPokemon.type2);
@@ -274,10 +261,8 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         else{
         aux2=0;
         }
-        console.log ('Atk4 aux1: ' + aux);
-        console.log ('Atk4 aux2: ' + aux2);
-        setRivalBonusAttack2(aux+ aux2);
-        console.log (' RivalBonusAttack2: ' +  RivalBonusAttack2);
+        const rivalB2 = aux + aux2;
+        setRivalBonusAttack2(rivalB2);
         aux= await checkBonusType(rivalPokemon.attack3.type, myPokemon.type1);
         if(myPokemon.type2 !== null && myPokemon.type2 !== "NONE" ){
         aux2= await checkBonusType(rivalPokemon.attack3.type, myPokemon.type2);
@@ -285,11 +270,11 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         else{
         aux2=0;
         }
-        console.log ('Atk6 aux1: ' + aux);
-        console.log ('Atk6 aux2: ' + aux2);
-        setRivalBonusAttack3(aux+ aux2);
-        console.log (' RivalBonusAttack2: ' +  RivalBonusAttack3);
+        const rivalB3 = aux + aux2;
+        setRivalBonusAttack3(rivalB3);
 
+        onHandleBonuses('MyPlayer', myB1, myB2, myB3);
+        onHandleBonuses('Rival', rivalB1, rivalB2, rivalB3);
     }
     //Select my Pokemon
     const handleSelectMyPokemon = (pokemon) => {
@@ -349,7 +334,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         //Battle Attack
         onAddBattleAttack('MyPlayer',attack.id);
         onTotales('MyPlayer',attack.strength + bonus + myPokemon.totalLevel );
-        
+        onHandleBonusFinal('MyPlayer', bonus);
         }
 
     const handleSelectRivalAttack =(attack,bonus) =>{
@@ -363,6 +348,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         //Battle Attack
         onAddBattleAttack('Rival',attack.id);
         onTotales('Rival',attack.strength + bonus + rivalPokemon.totalLevel );
+        onHandleBonusFinal('Rival', bonus);
         onBattlePhase('RollDice');
     }
 
@@ -377,11 +363,13 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
            setMyTotal(myTotal+Dice);
            setAddMyDice(false);
            onTotales('MyPlayer',myTotal+Dice);
+           onHandleDice('MyPlayer', myDice+Dice);
         }
         else{
            setMyDice(Dice);
            setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,Dice));
            onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,Dice));
+           onHandleDice('MyPlayer', Dice);
        }
 
        }
@@ -391,14 +379,16 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
            setRivalDice(rivalDice + Dice);
            setRivalTotal(rivalTotal+Dice);
            setAddRivalDice(false);
-              onTotales('Rival',rivalTotal+Dice);
+           onTotales('Rival',rivalTotal+Dice);
+           onHandleDice('Rival', rivalDice+Dice);
         }
         else{
            setRivalDice(Dice);
            setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,Dice));
            onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,Dice));
+           onHandleDice('Rival', Dice);
         }
-           
+
        }
 
        const handleMyStatus =(myNewStatus) =>{
@@ -467,6 +457,8 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         setRivalAttackSelected('false');
         setMyDice(0);
         setRivalDice(0);
+        onHandleDice('MyPlayer', 0);
+        onHandleDice('Rival', 0);
     };
 
     const ChangePokemon = () => {
@@ -476,8 +468,10 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         setRivalAttackSelected('false');
         setMyDice(0);
         setRivalDice(0);
+        onHandleDice('MyPlayer', 0);
+        onHandleDice('Rival', 0);
         onBattlePhase('PokemonSelection');
-      
+
     };
     const EndBattle = () => {
       console.log('EndBattle');
@@ -508,7 +502,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
             </div>
             )}
             <label className="switch">
-                <input type="checkbox" />
+                <input type="checkbox" onChange={onToggleBattlePublic} />
                 <span className="slider round"></span>
             </label>
 

@@ -18,7 +18,18 @@ class Game {
         this.myRivalPkmAtk= [];
         this.myPlayerTotal=0;
         this.myRivalTotal=0;
+        this.myPlayerDice = 0;
+        this.myRivalDice = 0;
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        this.myBonusAtk1 = 0;
+        this.myBonusAtk2 = 0;
+        this.myBonusAtk3 = 0;
+        this.rivalBonusAtk1 = 0;
+        this.rivalBonusAtk2 = 0;
+        this.rivalBonusAtk3 = 0;
         this.battlePhase = 'PokemonSelection';
+        this.battlePublic = false;
 
     
 
@@ -65,7 +76,7 @@ class Game {
         if (player === 'MyPlayer') {
             this.addMyPlayerPkm(this.players[this.currentTurn].pokemons.find(p => p.id === pokemon));
         } else if (player === 'Rival') {
-            this.addMyRivalPkm(this.rivals.find(p => p.id === pokemon));
+            this.addMyRivalPkm(this.CurrentRival?.pokemons?.find(p => p.id === pokemon));
         }
     }
 
@@ -73,9 +84,13 @@ class Game {
         console.log('setting battle attack for ' + player);
          console.log('setting battle AttackId ' + attack);
         if (player === 'MyPlayer') {
-            this.addMyPlayerPkmAtk(this.myPlayerPkm.attacks.find(a => a.id === attack));
+            const currentPkm = this.myPlayerPkm[this.myPlayerPkm.length - 1];
+            const found = [currentPkm?.attack1, currentPkm?.attack2, currentPkm?.attack3].find(a => a && a.id === attack);
+            this.addMyPlayerPkmAtk(found);
         } else if (player === 'Rival') {
-            this.addMyRivalPkmAtk(this.myRivalPkm.attacks.find(a => a.id === attack));
+            const currentPkm = this.myRivalPkm[this.myRivalPkm.length - 1];
+            const found = [currentPkm?.attack1, currentPkm?.attack2, currentPkm?.attack3].find(a => a && a.id === attack);
+            this.addMyRivalPkmAtk(found);
         }
     }
     setBattleTotal(player, total) {
@@ -86,6 +101,32 @@ class Game {
         } else if (player === 'Rival') {
             this.addMyRivalTotal(total);
         }
+    }
+
+    setBattleDice(player, dice) {
+        if (player === 'MyPlayer') this.myPlayerDice = dice;
+        else if (player === 'Rival') this.myRivalDice = dice;
+    }
+
+    setBattleBonusFinal(player, bonus) {
+        if (player === 'MyPlayer') this.myBonusFinal = bonus;
+        else if (player === 'Rival') this.rivalBonusFinal = bonus;
+    }
+
+    setBattleBonuses(player, b1, b2, b3) {
+        if (player === 'MyPlayer') {
+            this.myBonusAtk1 = b1;
+            this.myBonusAtk2 = b2;
+            this.myBonusAtk3 = b3;
+        } else if (player === 'Rival') {
+            this.rivalBonusAtk1 = b1;
+            this.rivalBonusAtk2 = b2;
+            this.rivalBonusAtk3 = b3;
+        }
+    }
+
+    toggleBattlePublic() {
+        this.battlePublic = !this.battlePublic;
     }
 
     setBattlePhase(phase) {

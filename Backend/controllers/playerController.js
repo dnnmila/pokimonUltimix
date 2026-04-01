@@ -211,9 +211,9 @@ export const evolvePokemon = async (req, res) => {
             return;
         }
 
-        // Asegurarse de que pokemonId tenga siempre 3 dígitos
+        // ajuste Asegurarse de que pokemonId tenga siempre 3 dígitos poemonId ultimixdnn
         console.log('newPokemonId' + newPokemonId);
-        const formattedPokemonId = newPokemonId.toString().padStart(4, '0');
+        const formattedPokemonId = newPokemonId.toString().padStart(3, '0');
         console.log('pokedex nuevo' + formattedPokemonId);
    
 
@@ -480,29 +480,22 @@ export const attachMega  = async (req, res) => {
         }
         if (pokemon.mega == 'Yes'){
 
+            // Mega principal (almacenada en pokemon.evolution)
             const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokemon.evolution]);
-            console.log("Looking for Attack 1 ");
-            const Attack1 = await getAttack(pokemonData.ATK1,db);
-            console.log(Attack1);
-            console.log("Looking for Attack 1 ");
-            const Attack2 = await getAttack(pokemonData.ATK2,db);
-            console.log(Attack2);
-            const Attack3 = await getAttack(pokemonData.ATK3,db);
-            console.log(Attack3);
             if (!pokemonData) {
                 return res.status(404).json({ message: 'Pokémon no encontrado' });
             }
-    
-            const newLevel = pokemonData.LEVEL + pokemon.extra  ;
-            const uniqueId = player.name + '_' + pokemonData.POKEDEX + '_' + player.totalPokemons;
-            // Crear una instancia de Pokémon
+            const Attack1 = await getAttack(pokemonData.ATK1,db);
+            const Attack2 = await getAttack(pokemonData.ATK2,db);
+            const Attack3 = await getAttack(pokemonData.ATK3,db);
+
             const mega = new Pokemons(
-                uniqueId,
+                player.name + '_' + pokemonData.POKEDEX + '_' + player.totalPokemons,
                 pokemonData.POKEDEX,
                 pokemonData.NAME,
                 pokemonData.TYPE1,
                 pokemonData.TYPE2,
-                newLevel,
+                pokemonData.LEVEL + pokemon.extra,
                 Attack1,
                 Attack2,
                 Attack3,
@@ -510,10 +503,34 @@ export const attachMega  = async (req, res) => {
                 pokemonData.EVOLUTION,
                 pokemonData.MEGA
             );
-    
             player.addMega(mega);
-            pokemon.addAttach("Mega");
 
+            // Megas alternativas (via PREEVOLUCION)
+            const altMegas = await db.all("SELECT DISTINCT POKEDEX FROM pokemons WHERE PREEVOLUCION = ?", [pokemon.pokedex]);
+            for (const alt of altMegas) {
+                const altData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [alt.POKEDEX]);
+                if (!altData) continue;
+                const altAtk1 = await getAttack(altData.ATK1, db);
+                const altAtk2 = await getAttack(altData.ATK2, db);
+                const altAtk3 = await getAttack(altData.ATK3, db);
+                const altMega = new Pokemons(
+                    player.name + '_' + altData.POKEDEX + '_' + player.totalPokemons,
+                    altData.POKEDEX,
+                    altData.NAME,
+                    altData.TYPE1,
+                    altData.TYPE2,
+                    altData.LEVEL + pokemon.extra,
+                    altAtk1,
+                    altAtk2,
+                    altAtk3,
+                    altData.NEXT_LEVEL,
+                    altData.EVOLUTION,
+                    altData.MEGA
+                );
+                player.addMega(altMega);
+            }
+
+            pokemon.addAttach("Mega");
         }
         
         console.log('Pokemon mega');
@@ -674,5 +691,60 @@ export const wildBattleScanned = async (req, res) => {
     }
 };
 
+export const getEvolutionChain = async (req, res) => {
+    try {
+        const db = await openDb();
+        const { pokedexId } = req.body;
+        const chain = [];
+        let currentId = pokedexId;
+        let safety = 0;
 
+        while (currentId && safety < 10) {
+            safety++;
+            const data = await db.get(
+                "SELECT POKEDEX, NAME, TYPE1, TYPE2, NEXT_LEVEL, EVOLUTION, MEGA FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                [currentId]
+            );
+            if (!data) break;
 
+            // Buscar ramas alternativas que apuntan a este pokemon via PREEVOLUCION
+            const branchRows = await db.all(
+                "SELECT DISTINCT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE PREEVOLUCION = ?",
+                [data.POKEDEX]
+            );
+            const branches = branchRows.map(b => ({
+                pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2,
+                isMega: b.POKEDEX.startsWith('M')
+            }));
+
+            // Si tiene mega principal via EVOLUTION, agregarlo a branches
+            if (data.MEGA === 'Yes' && data.EVOLUTION && data.EVOLUTION !== '000') {
+                const mainMega = await db.get(
+                    "SELECT DISTINCT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                    [data.EVOLUTION]
+                );
+                if (mainMega && !branches.find(b => b.pokedex === mainMega.POKEDEX)) {
+                    branches.unshift({ pokedex: mainMega.POKEDEX, name: mainMega.NAME, type1: mainMega.TYPE1, type2: mainMega.TYPE2, isMega: true });
+                }
+            }
+
+            chain.push({
+                pokedex: data.POKEDEX, name: data.NAME,
+                type1: data.TYPE1, type2: data.TYPE2,
+                isMega: data.POKEDEX.startsWith('M'),
+                branches
+            });
+
+            // Condiciones de parada
+            if (data.NEXT_LEVEL === 0) break;
+            if (!data.EVOLUTION || data.EVOLUTION === '000' || data.EVOLUTION === 'evee') break;
+            if (data.MEGA === 'Yes') break;
+
+            currentId = data.EVOLUTION;
+        }
+
+        res.status(200).json(chain);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

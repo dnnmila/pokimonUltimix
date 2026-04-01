@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
+import ModalPokedex from "./modals/ModalPokedex";
 
 const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     const { playerId } = useParams();
@@ -12,6 +13,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     // Inputs para configurar el rival de simulacion
     const [showSetup, setShowSetup] = useState(false);
     const [wildPokemonId, setWildPokemonId] = useState('');
+    const [showPokedex, setShowPokedex] = useState(false);
 
     // Fases de batalla (mismo patron que Stadium)
     const [myPokemon, setMyPokemon] = useState();
@@ -324,6 +326,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
     return (
         <div className="sim-player">
+            <div className="pokedex-button" onClick={() => setShowPokedex(true)}></div>
+            <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
            
 
             {/* Configurar rival de simulacion */}

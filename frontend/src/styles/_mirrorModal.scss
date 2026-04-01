@@ -1,0 +1,404 @@
+// =============================================================================
+// Mirror Modal - Vista publica de la batalla en Stadium
+// Todas las clases con prefijo "mirror-" para identificarlas facilmente
+// =============================================================================
+
+// ─── Backdrop y contenedor principal ─────────────────────────────────────────
+
+.mirror-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.mirror-modal {
+    width: 85vw;
+    height: 85vh;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+// =============================================================================
+// FASE: Seleccion de Pokemon
+// Basado en: .Stadium + .player-stadium-main/.rival-stadium-main
+// =============================================================================
+
+.mirror-pkm-selection {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background-image: url("../images/PKMBG2.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    justify-content: flex-end;
+}
+
+// Basado en: .player-stadium-main, .rival-stadium-main
+.mirror-player-main,
+.mirror-rival-main {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    align-items: center;
+    margin-top: 10vh;
+}
+
+// Basado en: .player-name
+.mirror-player-name {
+    font-size: 4rem;
+    color: rgb(201, 183, 22);
+    margin-bottom: 1rem;
+}
+
+// Basado en: .rival-name
+.mirror-rival-name {
+    font-size: 2rem;
+    color: rgb(30, 31, 31);
+    margin-bottom: 1rem;
+}
+
+// Basado en: .player_team, .rival_team
+.mirror-player-team,
+.mirror-rival-team {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 80%;
+    align-items: center;
+    justify-content: center;
+}
+
+// =============================================================================
+// FASE: Seleccion de Ataque
+// Basado en: .attack-select-main
+// =============================================================================
+
+.mirror-attack-select-main {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    background-image: url("../images/pokeStadium.png");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+// Basado en: .MyPokemon-main, .RivalPokemon-main
+.mirror-mypkm-main,
+.mirror-rivalpkm-main {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+// Basado en: .MyPokemon_img, .RivalPokemon_img
+.mirror-mypkm-img,
+.mirror-rivalpkm-img {
+    width: 13vw;
+    height: 25vh;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+// Basado en: .MyPokemon_name, .RivalPokemon_name
+.mirror-mypkm-name,
+.mirror-rivalpkm-name {
+    margin: 0.5rem;
+    font-size: 1.3rem;
+    font-weight: bolder;
+    color: rgb(23, 21, 20);
+}
+
+// Basado en: .MyPokemon_level, .RivalPokemon_level
+.mirror-mypkm-level,
+.mirror-rivalpkm-level {
+    margin: 0.5rem;
+    font-size: 1.3rem;
+    font-weight: bolder;
+    color: rgb(23, 21, 20);
+}
+
+// Basado en: .Attack-selected-mypoke, .Attack-selected-rival
+// (texto del ataque seleccionado en la parte superior)
+.mirror-attack-selected-mypoke,
+.mirror-attack-selected-rival {
+    position: absolute;
+    top: 12%;
+
+    // Override: _attacks.scss usa rotate(90deg), aqui se muestra horizontal
+    .Attack {
+        transform: rotate(0deg);
+        width: 28vh;
+        height: 7vw;
+    }
+}
+.mirror-attack-selected-mypoke {
+    left: 16%;
+}
+.mirror-attack-selected-rival {
+    right: 16%;
+}
+
+// =============================================================================
+// FASE: Dados y Totales
+// Basado en: .Pokemon-stadium2
+// =============================================================================
+
+.mirror-pokemon-stadium {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+// Basado en: .MyPokemon_status, .RivalPokemon_status
+.mirror-mypkm-status,
+.mirror-rivalpkm-status {
+    display: flex;
+    width: 40%;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.mirror-mypkm-status {
+    position: absolute;
+    top: 5%;
+    left: 5%;
+}
+.mirror-rivalpkm-status {
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    transform: rotateY(180deg);
+}
+
+// Basado en: .status_battle
+.mirror-status-battle {
+    width: 5vw;
+    height: 7vh;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: brightness(20%);
+}
+// Basado en: .statusActive
+.mirror-status-active {
+    filter: none;
+}
+// Basado en: .rotate-x
+.mirror-rotate-x {
+    transform: rotateY(180deg);
+}
+
+// Basado en: .MyTotal_label, .MyTotal, .RivalTotal_label, .RivalTotal
+.mirror-mytotal-label,
+.mirror-mytotal,
+.mirror-rivaltotal-label,
+.mirror-rivaltotal {
+    width: 40%;
+    display: flex;
+    justify-content: space-evenly;
+    position: absolute;
+}
+.mirror-mytotal,
+.mirror-rivaltotal {
+    bottom: 9%;
+    font-weight: bold;
+    background-color: rgba(217, 203, 231, 0.622);
+    height: 4vh;
+    display: flex;
+    align-items: center;
+}
+.mirror-mytotal-label,
+.mirror-rivaltotal-label {
+    bottom: 13%;
+    background-color: #100b169f;
+    height: 3vh;
+    color: aliceblue;
+}
+.mirror-mytotal,
+.mirror-mytotal-label {
+    left: 5%;
+}
+.mirror-rivaltotal-label,
+.mirror-rivaltotal {
+    right: 5%;
+}
+
+// Basado en: .myTotalFinal, .rivalTotalFinal
+// Numeros grandes centrados superpuestos
+.mirror-mytotal-final,
+.mirror-rivaltotal-final {
+    width: 10vw;
+    height: 13vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    font-size: 5rem;
+    color: rgb(251, 94, 80);
+    top: 43%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.mirror-mytotal-final {
+    left: 33%;
+}
+.mirror-rivaltotal-final {
+    right: 33%;
+}
+
+// =============================================================================
+// Clases anteriores (compatibilidad con JSX actual)
+// =============================================================================
+
+.mirror-pokemon-selection {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    height: 100%;
+    background-image: url("../images/PKMBG2.jpg");
+    background-size: cover;
+    background-position: center;
+    padding: 2rem;
+    gap: 2rem;
+}
+
+.mirror-player-side,
+.mirror-rival-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50%;
+    padding-top: 3rem;
+
+    .player-name {
+        font-size: 2rem;
+        color: rgb(201, 183, 22);
+        margin-bottom: 1rem;
+    }
+
+    .rival-name {
+        font-size: 2rem;
+        color: rgb(255, 255, 255);
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        margin-bottom: 1rem;
+    }
+
+    .player_team,
+    .rival_team {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        width: 100%;
+        justify-content: center;
+        margin-top: 0;
+    }
+}
+
+.mirror-attack-select {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)),
+        url("../images/pokeStadium.png");
+    background-size: cover;
+    background-position: center;
+
+    .MyPokemon-main {
+        position: absolute;
+        left: 8%;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .RivalPokemon-main {
+        position: absolute;
+        right: 8%;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .MyPokemon_img,
+    .RivalPokemon_img {
+        width: 190px;
+        height: 190px;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+    }
+
+    .MyPokemon_name,
+    .RivalPokemon_name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: rgb(23, 21, 20);
+    }
+
+    .MyPokemon_level,
+    .RivalPokemon_level {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: rgb(23, 21, 20);
+    }
+}
+
+.mirror-attack-label {
+    margin-top: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: rgb(23, 21, 20);
+    background-color: rgba(255, 255, 255, 0.75);
+    padding: 4px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.mirror-totals {
+    position: absolute;
+    top: 38%;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    z-index: 5;
+    pointer-events: none;
+
+    .myTotalFinal,
+    .rivalTotalFinal {
+        position: static;
+        width: auto;
+        height: auto;
+        font-size: 5rem;
+        color: rgb(251, 94, 80);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+}

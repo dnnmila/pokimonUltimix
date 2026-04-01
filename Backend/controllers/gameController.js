@@ -562,6 +562,53 @@ export const setMyBattleTotal = async (req, res) => {
     }
 }
 
+export const setBattleBonusFinal = async (req, res) => {
+    try {
+        const { player, bonus } = req.body;
+        const game = getGame();
+        game.setBattleBonusFinal(player, bonus);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Bonus final establecido' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const setBattleDice = async (req, res) => {
+    try {
+        const { player, dice } = req.body;
+        const game = getGame();
+        game.setBattleDice(player, dice);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Dado de batalla establecido' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const setBattleBonuses = async (req, res) => {
+    try {
+        const { player, b1, b2, b3 } = req.body;
+        const game = getGame();
+        game.setBattleBonuses(player, b1, b2, b3);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Bonuses de batalla establecidos' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const toggleBattlePublic = async (_req, res) => {
+    try {
+        const game = getGame();
+        game.toggleBattlePublic();
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Battle public toggled', battlePublic: game.battlePublic });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const setBattlePhase = async (req, res) => {
     console.log('setting battle phase ');
     try {
