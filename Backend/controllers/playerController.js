@@ -211,9 +211,9 @@ export const evolvePokemon = async (req, res) => {
             return;
         }
 
-        // Asegurarse de que pokemonId tenga siempre 3 dígitos
+        // ajuste Asegurarse de que pokemonId tenga siempre 3 dígitos poemonId ultimixdnn
         console.log('newPokemonId' + newPokemonId);
-        const formattedPokemonId = newPokemonId.toString().padStart(4, '0');
+        const formattedPokemonId = newPokemonId.toString().padStart(3, '0');
         console.log('pokedex nuevo' + formattedPokemonId);
    
 
@@ -674,5 +674,41 @@ export const wildBattleScanned = async (req, res) => {
     }
 };
 
+export const getEvolutionChain = async (req, res) => {
+    try {
+        const db = await openDb();
+        const { pokedexId } = req.body;
+        const chain = [];
+        let currentId = pokedexId;
+        let safety = 0;
 
+        while (currentId && safety < 10) {
+            safety++;
+            const data = await db.get(
+                "SELECT POKEDEX, NAME, TYPE1, TYPE2, NEXT_LEVEL, EVOLUTION, MEGA FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                [currentId]
+            );
+            if (!data) break;
 
+            chain.push({ pokedex: data.POKEDEX, name: data.NAME, type1: data.TYPE1, type2: data.TYPE2, isMega: false });
+
+            if (data.NEXT_LEVEL === 0) {
+                if (data.MEGA === 'Yes' && data.EVOLUTION) {
+                    const megaData = await db.get(
+                        "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                        [data.EVOLUTION]
+                    );
+                    if (megaData) {
+                        chain.push({ pokedex: megaData.POKEDEX, name: megaData.NAME, type1: megaData.TYPE1, type2: megaData.TYPE2, isMega: true });
+                    }
+                }
+                break;
+            }
+            currentId = data.EVOLUTION;
+        }
+
+        res.status(200).json(chain);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

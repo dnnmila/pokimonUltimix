@@ -1,0 +1,104 @@
+.modal-pokedex {
+    background-color: rgba(10, 10, 30, 0.97);
+    border: 2px solid rgb(162, 112, 216);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 50vw;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    overflow: hidden;
+}
+
+.pokedex-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    width: 100%;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.pokedex-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+}
+
+.pokedex-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pokedex-token {
+    width: 120px;
+    height: 120px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.pokedex-token--current {
+    
+}
+
+.pokedex-token--mega {
+    filter: drop-shadow(0 0 8px gold);
+}
+
+.pokedex-arrow {
+    font-size: 1.8rem;
+    color: rgb(162, 112, 216);
+    flex-shrink: 0;
+}
+
+.pokedex-arrow--mega {
+    color: gold;
+}
+
+.pokedex-final {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-left: 1rem;
+}
+
+.pokedex-close {
+    padding: 0.5rem 2rem;
+    background-color: rgb(162, 112, 216);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover {
+        background-color: rgb(120, 70, 180);
+    }
+}
+
+.pokedex-button {
+    background-image: url('../images/pokedex.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
