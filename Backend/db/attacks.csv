@@ -1,0 +1,397 @@
+IDATK,NAME,TYPE,POWER,EFFECT,ACTIVATE,DICE
+Absorb1,Absorb,GRASS,1,NONE,NONE,D6
+Absorb2,Absorb,GRASS,2,NONE,NONE,D6
+Acid2,Acid,POISON,2,Advantage,6,D6
+AcidSpray2,"Acid Spray",POISON,2,TripleDisadvantage,0,D6
+AArmor0,AcidArmor,POISON,0,TripleDisadvantage,0,D6
+AAce2,"Aerial Ace",FLYING,2,Advantage,0,D6
+ABlast3,"Aero Blast",FLYING,3,NONE,NONE,D8
+AirCutter3,"Air Cutter",FLYING,3,NONE,NONE,D8
+ASlash3E,"Air Slash",FLYING,3,Disadvantage,5,D6
+ASlash3,"Air Slash",FLYING,3,NONE,NONE,D6
+Amnesia0,Amnesia,PSYCHIC,0,TripleDisadvantage,0,D6
+Apower2,Anc.Power,ROCK,2,AncPower,6,D6
+Apower3,Anc.Power,ROCK,3,AncPower,6,D6
+AquaJet2,"Aqua Jet",WATER,2,QuickAttack,0,D6
+ATail2,"Aqua Tail",WATER,2,NONE,NONE,D6
+ATail3,"Aqua Tail",WATER,3,NONE,NONE,D6
+Assurance2,Assurance,DARK,2,Advantage,0,D6
+Astonish1,Astonish,GHOST,1,Disadvantage,5,D6
+Astonish2,Astonish,GHOST,2,Disadvantage,5,D6
+AOrder3,"Attack Order ",BUG,3,NONE,NONE,D8
+Asphere2,"Aura Sphere ",FIGHTING,2,Advantage,0,D6
+ASphere3,"Aura Sphere ",FIGHTING,3,Advantage,0,D6
+ABeam2,AuroraBeam,ICE,2,Disadvantage,6,D6
+ABeam3,AuroraBeam,ICE,3,Disadvantage,6,D6
+BabyDoll0,"Baby-Doll Eyes",FAIRY,0,Disadvantage,0,D6
+Barrage1,Barrage,NORMAL,1,DoubleDice,4,D4
+Barrier0,Barrier,PSYCHIC,0,TripleDisadvantage,0,D6
+Bind1,Bind,NORMAL,1,DoubleDice,4,D4
+Bite2,Bite,DARK,2,Disadvantage,5,D6
+Bite2E,Bite,DARK,2,Disadvantage,6,D6
+Bite3,Bite,DARK,3,Disadvantage,5,D6
+BlazeKick2,"Blaze Kick",FIRE,2,Burn,6,D8
+Blizzard3,Blizzard,ICE,3,Frozen,6,D6
+Blizzard4,Blizzard,ICE,4,Frozen,6,D6
+BSlam2,"Body Slam",NORMAL,2,Paralize,5,D6
+BSlam3,"Body Slam",NORMAL,3,Paralize,5,D6
+BClub3,BoneClub,GROUND,3,Disadvantage,6,D6
+Bonemerang2,Bonemerang,GROUND,2,DoubleDice,4,D4
+Bonemerang2E,Bonemerang,GROUND,2,DoubleDice,0,D4
+Bounce3,Bounce,FLYING,3,Paralize,5,D6
+BrickBreak3,"Brick Break",FIGHTING,3,BrickBreak,0,D4
+Bubble2,Bubble,WATER,2,NONE,NONE,D6
+BBeam3,"Bubble Beam",WATER,3,NONE,0,D6
+BBite3,"Bug Bite",BUG,3,NONE,NONE,D6
+BulletPunch1,"Bullet Punch",STEEL,1,QuickAttack,0,D6
+BulletSeed1,"Bullet Seed",GRASS,1,DoubleDice,4,D4
+Charge0,"Charge ",ELECTRIC,0,Disadvantage,0,D6
+CBeam2,"Charge Beam",ELECTRIC,2,Advantage,3,D6
+Charm0,Charm,FAIRY,0,TripleDisadvantage,0,D6
+Clamp2,Clamp,WATER,2,DoubleDice,4,D4
+CCombat4,"Close Combat",FIGHTING,4,OwnDisadvantage,0,D6
+CometPunch1,"Comet Punch",NORMAL,1,DoubleDice,4,D4
+CRay0,ConfuseRay,GHOST,0,Confusion,0,D6
+Confusion1,Confusion,PSYCHIC,1,Confusion,6,D6
+Confusion2,Confusion,PSYCHIC,2,Confusion,6,D6
+Conversion0,Conversion,NORMAL,0,Conversion,0,D6
+Conversion2,Conversion2,NORMAL,0,Conversion2,0,D6
+Counter0,Counter,FIGHTING,0,Counter,0,D6
+Covet2,Covet,NORMAL,2,NoItems,0,D6
+CHammer3,CrabHammer,WATER,3,NONE,NONE,D8
+CrossChop3,"Cross Chop",FIGHTING,3,NONE,NONE,D8
+CrossPoison3,"Cross Poison",POISON,3,Poison,6,D6
+Crunch2,Crunch,DARK,2,Advantage,6,D6
+Crunch3,Crunch,DARK,3,Advantage,6,D6
+DPulse2,"Dark Pulse",DARK,2,Disadvantage,6,D6
+DPulse3,"Dark Pulse",DARK,3,Disadvantage,6,D6
+DGleam2,"Dazzling Gleam",FAIRY,2,NONE,NONE,D6
+DGleam3,"Dazzling Gleam",FAIRY,3,NONE,NONE,D6
+DCurl0,DefenseCurl,NORMAL,0,Disadvantage,0,D6
+Dig2,Dig,GROUND,2,NONE,NONE,D6
+Dig3,Dig,GROUND,3,NONE,NONE,D6
+Disable0,Disable,NORMAL,0,Disable,0,D6
+DVoice2,DisarmingVoice,FAIRY,2,Advantage,0,D6
+Discharge3,Discharge,ELECTRIC,3,Paralize,5,D6
+DPunch3,DizzyPunch,NORMAL,3,Confusion,6,D6
+DEdge4,Double-Edge,NORMAL,4,Faint,6,D6
+DEgde3,Double-Edge,NORMAL,3,Faint,6,D6
+DTeam0,"Double Team",NORMAL,2,Disadvantage,0,D6
+DKick2,DoubleKick,FIGHTING,2,DoubleDice,0,D4
+DSlap1,DoubleSlap,NORMAL,1,DoubleDice,4,D4
+DSlap2,DoubleSlap,NORMAL,2,DoubleDice,4,D4
+DBreath2,"Dragon Breath",DRAGON,2,Paralize,5,D6
+DBreath3,"Dragon Breath",DRAGON,3,Paralize,5,D6
+DClaw3,"Dragon Claw",DRAGON,3,NONE,NONE,D6
+DrPulse2,"Dragon Pulse",DRAGON,2,NONE,NONE,D6
+DrPulse3,"Dragon Pulse",DRAGON,3,NONE,NONE,D6
+DRage4,"Dragon Rage",DRAGON,4,Neutro,0,D4
+DRush3,"Dragon Rush",DRAGON,3,Disadvantage,6,D6
+Dtail3,"Dragon Tail",DRAGON,3,Swipe,0,D6
+DrainPunch3,"Drain Punch",FIGHTING,3,Revive,0,D6
+DEater0,"Dream Eater",PSYCHIC,0,Dreameater,4,D6
+DrillRun2,"Drill Run",GROUND,2,NONE,NONE,D8
+DrillRun3,"Drill Run",GROUND,3,NONE,NONE,D8
+DPeck3,"Drill Peck",FLYING,3,NONE,NONE,D6
+DChop2,"Dual Chop",DRAGON,2,DoubleDice,0,D4
+Earthquake2,Earthquake,GROUND,2,NONE,NONE,D6
+Earthquake3,Earthquake,GROUND,3,NONE,NONE,D6
+EarthPower3,"Earth Power",GROUND,3,Advantage,6,D6
+EBomb2,"Egg Bomb",NORMAL,2,NONE,NONE,D6
+EBomb3,"Egg Bomb","NORMAL ",3,NONE,NONE,D6
+Ember2,Ember,FIRE,2,Burn,6,D6
+Ember3,Ember,FIRE,3,Burn,6,D6
+Eruption4,Eruption,FIRE,4,NONE,NONE,D6
+Explosion5,Explosion,NORMAL,5,Faint,0,D6
+ExtremeSpeed2,"Extreme Speed","NORMAL ",2,QuickAttack,0,D6
+Extrasensory2,Extrasensory,PSYCHIC,2,Disadvantage,6,D6
+FWind2,"Fairy Wind",FAIRY,2,NONE,NONE,D6
+FakeOut1,"Fake Out",NORMAL,1,QuickAttack,0,D6
+FAttack2,"Feint Attack",DARK,2,Advantage,0,D6
+FAttack3,"Feint Attack",DARK,3,Advantage,0,D6
+FiDance3,"Fiery Dance",FIRE,3,Advantage,4,D6
+FBlast3,"Fire Blast",FIRE,3,Burn,6,D6
+FBlast4,"Fire Blast",FIRE,4,Burn,6,D6
+FBlitz4,"Fire Blitz",FIRE,4,Burn,6,D6
+FFang3,"Fire Fang",FIRE,6,Burn,6,D6
+FSpin4,"Fire Spin",FIRE,2,DoubleDice,4,D4
+FSpin6,"Fire Spin",FIRE,2,DoubleDice,4,D6
+FPunch3,FirePunch,FIRE,3,Burn,6,D6
+FCharge2,"Flame Charge",FIRE,2,Advantage,0,D6
+FCharge2E,"Flame Charge",FIRE,2,NONE,NONE,D6
+Flamethrower3,Flamethrower,FIRE,3,Burn,6,D6
+FlameWheel3,"Flame Wheel",FIRE,3,Burn,6,D6
+FCannon3,"Flash Cannon",STEEL,3,Advantage,6,D6
+Fly3,Fly,FLYING,3,NONE,NONE,D6
+FoBlast3,"Focus Blast",FIGHTING,3,Advantage,6,D6
+FoBlast4,"Focus Blast",FIGHTING,4,Advantage,6,D6
+FPalm3,"Force Palm",FIGHTING,3,Paralize,5,D6
+FuAttack1,"Fury Attack",NORMAL,1,DoubleDice,4,D4
+FuAttack2,"Fury Attack",NORMAL,2,DoubleDice,4,D4
+FCutter1,"Fury Cutter",GRASS,1,FuryCutter,0,D6
+FuCutter1,"Fury Cutter",BUG,1,FuryCutter,0,D6
+FuCutter2,"Fury Cutter",BUG,2,FuryCutter,0,D6
+FSwipes1,"Fury Swipes",NORMAL,1,DoubleDice,4,D4
+FSwipes2,"Fury Swipes",NORMAL,2,DoubleDice,4,D4
+Fsight3,"Future Sight",PSYCHIC,3,Once,0,D6
+FSight4,"Future Sight",PSYCHIC,4,Once,0,D6
+GigaDrain3,"Diga Drain",GRASS,3,Revive,0,D6
+GImpact3,"Giga Impact",NORMAL,3,Once,0,D6
+GImpact4,"Giga Impact",NORMAL,4,Once,0,D6
+Glare0,Glare,NORMAL,0,Paralize,0,D6
+Growl0,Growl,NORMAL,0,Disadvantage,0,D6
+Growth0,Growth,NORMAL,0,Advantage,0,D6
+Guillotine0,Guillotine,NORMAL,0,Kill,5,D6
+GunkShot4,"Gunk Shot",POISON,4,Poison,5,D6
+Gust2,Gust,FLYING,2,NONE,NONE,D6
+HArm2,"Hammer Arm",FIGHTING,2,NONE,NONE,D6
+Harden0,Harden,NORMAL,0,Disadvantage,0,D6
+Headbutt2,Headbutt,NORMAL,2,Disadvantage,5,D6
+Headbutt3,Headbutt,NORMAL,3,Disadvantage,5,D6
+HealPulse0,"Heal Pulse",PSYCHIC,0,HealPulse,0,D6
+HeatWave3,"Heat Wave",FIRE,3,Burn,6,D6
+HeavySlam,"Heavy Slam",STEEL,0,LevelUp,0,D6
+HeavySlam4,"Heavy Slam",STEEL,4,NONE,NONE,D6
+Hex3,Hex,GHOST,3,NONE,NONE,D6
+HPower2,"Hidden Power",NORMAL,2,HiddenPower,0,D6
+HoneClaws0,"Hone Claws",DARK,0,TripleAdvantage,0,D6
+HAttack2,"Horn Attack",NORMAL,2,NONE,NONE,D6
+HDrill0,"Horn Drill",NORMAL,0,Kill,5,D6
+Hurricane4,Hurricane,FLYING,4,Confusion,6,D6
+HPump4,"Hydro Pump",WATER,4,NONE,NONE,D6
+HyBeam3,"Hyper Beam",NORMAL,3,Once,0,D6
+HyBeam4,"Hyper Beam",NORMAL,4,Once,0,D6
+HyFang3,"Hyper Fang",NORMAL,3,Disadvantage,6,D6
+Hypnosis0,Hypnosis,PSYCHIC,0,Sleep,4,D6
+IBeam2,"Ice Beam",ICE,2,Frozen,6,D6
+IBeam3,"Ice Beam",ICE,3,Frozen,6,D6
+IFang3,"Ice Fang ",ICE,3,IceFang,5,D6
+IFang2,"Ice Fang ",ICE,2,Frozen,6,D6
+IPunch3,"Ice Punch",ICE,3,Frozen,6,D6
+Icicle1,"Icicle Spear",ICE,1,DoubleDice,4,D6
+IWindy3,"Icy Windy",ICE,3,NONE,NONE,D6
+Inferno3,Inferno,FIRE,3,Burn,4,D6
+IrHead3,"Iron Head",STEEL,3,Disadvantage,5,D6
+IrHead2,"Iron Head",STEEL,2,Disadvantage,5,D6
+IrTail2,"Iron Tail",STEEL,2,Advantage,5,D6
+IrTail3,"Iron Tail",STEEL,3,Advantage,5,D6
+KChop2,KarateChop,FIGHTING,2,NONE,NONE,D8
+KnockOff2,"Knock Off",DARK,2,KnockOff,0,D6
+LaPlume3,"Lava Plume",FIRE,3,Burn,5,D6
+LBlade3,"Leaf Blade",GRASS,3,NONE,NONE,D8
+LStorm4,"Leaf Storm",GRASS,4,OwnDisadvantage,0,D6
+LLife3,"Leech Life",BUG,3,NONE,NONE,D6
+LLife2,LeechLife,BUG,2,NONE,NONE,D6
+Leer0,Leer,NORMAL,0,Advantage,0,D6
+Lick1,Lick,GHOST,1,Paralize,5,D6
+Lick1E6,Lick,GHOST,1,Paralize,6,D6
+Lick2,Lick,GHOST,2,Paralize,5,D6
+LScreen0,"Light Screen ",PSYCHIC,0,TripleDisadvantage,0,D6
+Liquidation3,Liquidation,WATER,3,Advantage,6,D6
+LKiss0,"Lovely Kiss",NORMAL,0,Sleep,3,D6
+LKick2,"Low Kick",FIGHTING,2,NONE,NONE,D6
+Lunge2,"Lunge ",BUG,2,NONE,NONE,D6
+LuPurge3,"Luster Purge",PSYCHIC,3,Disadvantage,4,D6
+MLeaf2,"Magical Leaf",GRASS,2,Advantage,0,D6
+MLeaf3,"Magical Leaf",GRASS,3,Advantage,0,D6
+MFirst0,"Me First",NORMAL,0,MeFirst,0,D6
+MHorn3,"Mega Horn",BUG,3,NONE,NONE,D6
+MPunch2,"Mega Punch",NORMAL,2,NONE,NONE,D6
+Megakick3,Megakick,NORMAL,3,NONE,NONE,D6
+MeClaw2,"Metal Claw",STEEL,2,Advantage,6,D6
+MeClaw2ED,"Metal Claw",STEEL,2,Disadvantage,6,D6
+MeSound0,"Metal Sound",STEEL,0,TripleAdvantage,0,D6
+MegaDrain3,"Mega Drain",GRASS,3,NONE,NONE,D6
+MeMasg3,"Meteor Masg",STEEL,3,Advantage,6,D6
+Metronome0,Metronome,NORMAL,0,Metronome,0,D6
+Mimimize0,Mimimize,NORMAL,0,Disadvantage,0,D6
+MCoat0,"Mirror Coat",PSYCHIC,0,MirrorCoat,0,D6
+MMove0,"Mirror Move",FLYING,0,MirrorMove,0,D6
+MShot3,"Mirror Shot",STEEL,3,Disadvantage,5,D6
+Mist0,Mist,ICE,0,Mist,0,D6
+MiBall3,"Mist Ball",PSYCHIC,3,Disadvantage,4,D6
+Moonblast2,Moonblast,FAIRY,2,Disadvantage,5,D6
+Moonblast3,Moonblast,FAIRY,3,Disadvantage,5,D6
+MSlap1,Mud-Slap,GROUND,1,Disadvantage,0,D6
+MSlap2,Mud-Slap,GROUND,2,Disadvantage,0,D6
+NastyPlot0,"Nasty Plot",DARK,0,TripleAdvantage,0,D6
+NShade3,"Night Shade",GHOST,3,LevelUp,0,D6
+NShadeLv,"Night Shade",GHOST,1,LevelUp,0,D6
+NSlash2,"Night Slash",DARK,2,NONE,NONE,D8
+000,NONE,NONE,0,NONE,NONE,D6
+Octazooka3,Octazooka,WATER,3,Disadvantage,4,D6
+OmWind3,"Ominous Wind",GHOST,3,OminousWind,6,D6
+Outrage4,Outrage,DRAGON,4,OwnConfusion,5,D6
+Outrage4E,Outrage,DRAGON,4,OwnConfusion,4,D6
+PDay2,"Pay Day",NORMAL,2,PayDay,6,D6
+Peck1,Peck,FLYING,1,NONE,NONE,D6
+Peck2,Peck,FLYING,2,NONE,NONE,D6
+PeDance4,"Petal Dance",GRASS,4,OwnConfusion,5,D6
+PeBlizzard3,"Petal Blozzard",GRASS,3,NONE,NONE,D6
+PinMissile1,"Pin Missile",BUG,1,DoubleDice,4,D4
+PlayNice0,"Play Nice",NORMAL,0,Disadvantage,0,D6
+PlRough3,"Play Rough",FAIRY,3,Disadvantage,5,D6
+PoGas0,"Poison Gas",POISON,0,Poison,2,D6
+PoPowder0,"Poison Powder",POISON,0,Poison,3,D6
+PoSting1,"Poison Sting",POISON,1,Poison,5,D6
+PoJab2,"Posion Jab",POISON,2,Poison,5,D6
+PoJab3,"Posion Jab",POISON,3,Poison,5,D6
+Pound1,Pound,NORMAL,1,NONE,NONE,D6
+Pound2,Pound,NORMAL,2,NONE,NONE,D6
+PoSnow2,"Powder Snow",ICE,2,Frozen,6,D6
+PGem2,"Power Gem",ROCK,2,NONE,NONE,D6
+PWhip3,"Power Whip",GRASS,3,NONE,NONE,D6
+PWhip4,"Power Whip",GRASS,4,NONE,NONE,D6
+Present2,Present,NORMAL,2,DoubleDice,6,D4
+Protect0,Protect,NORMAL,0,Protect,0,D6
+Psybeam2,Psybeam,PSYCHIC,2,Confusion,5,D6
+Psybeam3,Psybeam,PSYCHIC,3,Confusion,3,D6
+Psychic2,Psychic,PSYCHIC,2,Advantage,6,D6
+Psychic3,Psychic,PSYCHIC,3,Advantage,6,D6
+PCut3,"Psycho Cut",PSYCHIC,3,NONE,NONE,D8
+Psyshock3,Psyshock,PSYCHIC,3,NONE,NONE,D6
+Psystrike3,Psystrike,PSYCHIC,3,NONE,NONE,D6
+Psywave0,Psywave,PSYCHIC,0,LevelUp,0,D6
+QAttack1,"Quick Attack",NORMAL,1,QuickAttack,0,D6
+QAttack2,"Quick Attack",NORMAL,2,QuickAttack,0,D6
+Rage1,Rage,NORMAL,1,Advantage,0,D6
+RageFist1,"Rage Fist",GHOST,1,Advantage,0,D6
+RapidSpin1,"Rapid Spin",NORMAL,1,RapidSpin,0,D6
+RaLeaf3,"Razor Leaf",GRASS,3,NONE,NONE,D8
+Recover0,Recover,NORMAL,0,Recover,0,D6
+Reflect0,Reflect,PSYCHIC,0,TripleDisadvantage,0,D6
+Revenge2,Revenge,FIGHTING,2,NONE,NONE,D6
+Roar0,Roar,NORMAL,0,Switch,0,D6
+RockBlast1,"Rock Blast",ROCK,1,DoubleDice,4,D4
+RoSlide2,"Rock Slide",ROCK,2,Disadvantage,5,D6
+RoSlide3,"Rock Slide",ROCK,3,Disadvantage,5,D6
+RoWrecker4,"Rock Wrecker",ROCK,4,Faint,6,D6
+RoThrow2,RockThrow,ROCK,2,NONE,NONE,D6
+RockTomb3,"Rock Tomb",ROCK,3,NONE,NONE,D6
+Rollout1,Rollout,ROCK,1,NONE,0,D6
+Rollout2,Rollout,ROCK,2,Rollout,0,D6
+SaFire3,"Sacred Fire",FIRE,3,Burn,4,D6
+Safeguard0,Safeguard,NORMAL,0,Safeguard,0,D6
+SaAttack0,"Sand Attack",GROUND,0,Disadvantage,0,D6
+SaTomb2,"Sand Tomb",GROUND,2,DoubleDice,4,D6
+Sandstorm0,Sandstorm,ROCK,0,SandStorm,0,D6
+Sandstorm0E,Sandstorm,GROUND,0,SandStorm,0,D6
+Scald3,Scald,WATER,3,Burn,5,D6
+Scratch1,Scratch,NORMAL,1,NONE,NONE,D6
+Scratch2,Scratch,NORMAL,2,NONE,NONE,D6
+Screech0,Screech,NORMAL,0,TripleAdvantage,0,D6
+SBomb3,"Seed Bomb",GRASS,3,NONE,NONE,D6
+SToss0,"Seismic Toss",FIGHTING,0,LevelUp,0,D6
+SeDestruct4,Self-Destruct,NORMAL,4,Faint,0,D6
+ShBall2,"Shadow Ball",GHOST,2,Advantage,6,D6
+ShBall3,"Shadow Ball",GHOST,3,Advantage,6,D6
+ShClaw3,"Shadow Claw",GHOST,3,NONE,NONE,D8
+SPunch3,"Shadow Punch",GHOST,3,Advantage,0,D6
+SSneak2,"Shadow Sneak",GHOST,2,QuickAttack,0,D6
+Sharpen0,Sharpen,NORMAL,0,Advantage,0,D6
+SWave2,"Shock Wave",ELECTRIC,2,Advantage,0,D6
+SilverWind3,"Silver Wind",BUG,3,AncPower,6,D6
+Sing0,Sing,NORMAL,0,Sleep,4,D6
+Sketch,Sketch,NORMAL,0,Sketch,0,D6
+SkBash3,"Skull Bash",NORMAL,3,Once,0,D6
+SkAttack4,"Sky Attack",FLYING,4,Disadvantage,5,D8
+Slam2,Slam,NORMAL,2,NONE,NONE,D6
+Slam3,Slam,NORMAL,3,NONE,NONE,D6
+Slash2,Slash,NORMAL,2,NONE,NONE,D8
+Slash3,Slash,NORMAL,3,NONE,NONE,D8
+SlPowder0,"Sleep Powder",GRASS,0,Sleep,3,D6
+Sludge3,Sludge,POISON,3,Poison,5,D6
+SlBomb3,"Sludge Bomb",POISON,3,Poison,5,D6
+SludgeWave3,"Sludge Wave",POISON,3,Poison,6,D6
+SmartStrike2,"Smart Strike",STEEL,2,Advantage,0,D6
+Smog1,Smog,POISON,1,Poison,5,D6
+Smog2,Smog,POISON,2,Poison,5,D6
+Smokescreen0,Smokescreen,NORMAL,0,Disadvantage,0,D6
+Snarl3,Snarl,DARK,3,Disadvantage,0,D6
+SoftBoiled0,Soft-Boiled,NORMAL,0,Revive,0,D6
+SoBeam3,"Solar Beam",GRASS,3,Once,0,D6
+SoBeam4,"Solar Beam",GRASS,4,Once,0,D6
+SonicBoom2,"Sonic Boom",NORMAL,2,Neutro,0,D4
+Spark3,Spark,ELECTRIC,3,Paralize,5,D6
+SpCannon1,"Spike Cannon",NORMAL,1,DoubleDice,4,D4
+Spikes0,Spikes,GROUND,0,Spikes,0,D6
+Splash0,Splash,NORMAL,0,NONE,NONE,D6
+Spore0,Spore,GRASS,0,Sleep,0,D6
+StWing3,"Steel Wing",STEEL,3,Disadvantage,6,D6
+StWing2,"Steel Wing",STEEL,2,NONE,6,D6
+Stomp2,Stomp,NORMAL,2,Disadvantage,5,D6
+Stomping3,"Stomping Tantrun",GROUND,3,Disadvantage,5,D6
+SEdge2,"Stone Edge",ROCK,2,NONE,NONE,D8
+SEdge3,"Stone Edge",ROCK,3,NONE,NONE,D8
+StShot0,"String Shot",BUG,0,NONE,NONE,D6
+SBug2,"Struggle Bug ","BUG ",2,Disadvantage,0,D6
+StSpore0,"Stun Spore",GRASS,0,Paralize,3,D6
+Submission3,Submission,FIGHTING,3,OwnFaint,6,D6
+SuckerPunch2,"Sucker Punch",DARK,2,Advantage,0,D6
+SuFang2,"Super Fang",NORMAL,2,LevelDown,0,D6
+SunnyDay0,"Sunney Day",FIRE,0,Sunny,0,D6
+Superpower3,Superpower,FIGHTING,3,OwnDisadvantage,0,D6
+Superpower4,Superpower,FIGHTING,4,OwnDisadvantage,0,D6
+Supersonic0,Supersonic,NORMAL,0,Confusion,4,D6
+Surf3,Surf,WATER,3,NONE,NONE,D6
+Swagger0,Swagger,NORMAL,0,Confusion,0,D6
+SwKiss0,"Sweet Kiss",FAIRY,0,Confusion,0,D6
+Swift2,Swift,NORMAL,2,Advantage,0,D6
+SwDance0,"Swords Dance",NORMAL,0,TripleAdvantage,0,D6
+Tackle1,Tackle,NORMAL,1,NONE,NONE,D6
+Tackle2,Tackle,NORMAL,2,NONE,NONE,D6
+TaWhip0,"Tail Whip",NORMAL,0,Advantage,0,D6
+TaDown2,"Take Down",NORMAL,2,Faint,6,D6
+TaDown3,"Take Down",NORMAL,3,Faint,6,D6
+Taunt0,Taunt,PSYCHIC,0,Taunt,0,D6
+Teleport0,Teleport,PSYCHIC,0,NONE,NONE,D6
+Thief,Thief,DARK,2,Thief,0,D6
+Thrash4,Thrash,NORMAL,4,OwnConfusion,5,D6
+Thrash3,Thrash,NORMAL,3,OwnConfusion,5,D6
+Thunder3,Thunder,ELECTRIC,3,Paralize,6,D6
+Thunder4,Thunder,ELECTRIC,4,Paralize,6,D6
+ThBolt3,"Thunder Bolt",ELECTRIC,3,Paralize,6,D6
+ThPunch3,"Thunder Punch",ELECTRIC,3,Paralize,6,D6
+ThShock2,"Thunder Shock",ELECTRIC,2,Paralize,6,D6
+ThWave0,"Thunder Wave",ELECTRIC,0,Paralize,2,D6
+Transform0,Transform,NORMAL,0,Transform,0,D6
+TrAttack3,"Tri Attack",NORMAL,3,TriAttack,6,D6
+TrKick1,"Triple Kick",FIGHTING,-1,TripleDice,0,D4
+Twineedle1,Twineedle,BUG,1,DoubleDice,0,D4
+Twister1,Twister,DRAGON,1,Disadvantage,6,D6
+Twister2,Twister,DRAGON,2,Disadvantage,6,D6
+ViWhip2,"Vine Whip",GRASS,2,NONE,NONE,D6
+ViGrip2,"Vise Grip",NORMAL,2,NONE,NONE,D6
+VitalThrow3,"Vital Throw",FIGHTING,3,Advantage,0,D6
+WaFall3,"Water Fall",WATER,3,Disadvantage,6,D6
+WaGun2,"Water Gun",WATER,2,NONE,NONE,D6
+WaPulse2,"Water Pulse",WATER,2,Confusion,6,D6
+WaPulse3,"Water Pulse",WATER,3,Confusion,6,D6
+WaShuriken2,"Water Shuriken",WATER,2,DoubleDice,4,D6
+Whirlpool2,Whirlpool,WATER,2,DoubleDice,4,D6
+Withdraw0,Withdraw,WATER,0,Advantage,0,D6
+Whirlwind0,Whirlwind,NORMAL,0,Switch,0,D6
+WiWisp0,Will-O-Wisp,FIRE,0,Burn,2,D6
+WiAttack3,"Wing Attack",FLYING,3,NONE,NONE,D6
+Wrap1,Wrap,NORMAL,1,DoubleDice,4,D4
+X-Scissor2,X-Scissor,BUG,2,NONE,NONE,D6
+X-Scissor3,X-Scissor,BUG,3,NONE,NONE,D6
+ZaCannon3,"Zap Cannon",ELECTRIC,3,Paralize,4,D6
+ZaCannon4,"Zap Cannon",ELECTRIC,4,Paralize,4,D6
+ZeHeadbutt2,"Zen Headbutt",PSYCHIC,2,Disadvantage,6,D6
+ZeHeadbutt3,"Zen Headbutt",PSYCHIC,3,Disadvantage,6,D6
+RSpin1,"Rapid Spin",NORMAL,1,NONE,NONE,D6
+SWave3,"Shock Wave",ELECTRIC,3,Advantage,0,D6
+PoPowder1,"Poison Powder",POISON,1,Poison,3,D6
+ViWhip3,"Vine Whip",GRASS,3,NONE,NONE,D6
+Acid1,Acid,POISON,1,Advantage,6,D6
+Toxic0,Toxic,POISON,0,Poison,2,D6
+Bounce2,Bounce,FLYING,2,Paralize,6,D6
+Outrage3,Outrage,DRAGON,4,OwnConfusion,5,D6
+NShade4,"Night Shade",GHOST,4,NONE,0,D6
+RollKick3,"Rolling Kick",FIGHTING,3,Disadvantage,5,D6
+HJumpKick4,"High Jump Kick",FIGHTING,4,Faint,6,D6
+Submission4,Submission,FIGHTING,4,OwnFaint,6,D6
+AAce3,"Aerial Ace",FLYING,3,Advantage,0,D6
+FeatherDance0,"Feather Dance",FLYING,0,TripleDisadvantage,0,D6
+FCannon2,"Flash Cannon",STEEL,2,Advantage,6,D6

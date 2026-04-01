@@ -9,6 +9,17 @@ const getToken = (pokedex) => {
     }
 };
 
+const TokenImg = ({ pokedex, isMega, isCurrent }) => {
+    const img = getToken(pokedex);
+    if (!img) return null;
+    return (
+        <div
+            className={`pokedex-token ${isMega ? 'pokedex-token--mega' : ''} ${isCurrent ? 'pokedex-token--current' : ''}`}
+            style={{ backgroundImage: `url(${img})` }}
+        ></div>
+    );
+};
+
 const ModalPokedex = ({ show, onClose, player }) => {
     const [chains, setChains] = useState({});
 
@@ -48,25 +59,36 @@ const ModalPokedex = ({ show, onClose, player }) => {
                         return (
                             <div key={pokemon.id} className="pokedex-row">
                                 {!chain ? (
-                                    <div className="pokedex-token" style={{ backgroundImage: `url(${getToken(pokemon.pokedex)})` }}></div>
+                                    <TokenImg pokedex={pokemon.pokedex} isCurrent />
                                 ) : (
-                                    chain.map((step, index) => {
-                                        const img = getToken(step.pokedex);
-                                        if (!img) return null;
-                                        return (
-                                            <div key={step.pokedex} className="pokedex-step">
-                                                {index > 0 && (
-                                                    <div className={`pokedex-arrow ${step.isMega ? 'pokedex-arrow--mega' : ''}`}>
-                                                        {step.isMega ? '★' : '▶'}
+                                    chain.map((step, index) => (
+                                        <div key={step.pokedex} className="pokedex-step">
+                                            {index > 0 && (
+                                                <div className="pokedex-arrow">▶</div>
+                                            )}
+                                            <TokenImg
+                                                pokedex={step.pokedex}
+                                                isMega={step.isMega}
+                                                isCurrent={index === 0}
+                                            />
+                                            {step.branches.length > 0 && (
+                                                <>
+                                                    <div className={`pokedex-arrow ${step.branches[0].isMega ? 'pokedex-arrow--mega' : ''}`}>
+                                                        {step.branches[0].isMega ? '' : '▶'}
                                                     </div>
-                                                )}
-                                                <div
-                                                    className={`pokedex-token ${step.isMega ? 'pokedex-token--mega' : ''} ${index === 0 ? 'pokedex-token--current' : ''}`}
-                                                    style={{ backgroundImage: `url(${img})` }}
-                                                ></div>
-                                            </div>
-                                        );
-                                    })
+                                                    <div className="pokedex-branches">
+                                                        {step.branches.map(branch => (
+                                                            <TokenImg
+                                                                key={branch.pokedex}
+                                                                pokedex={branch.pokedex}
+                                                                isMega={branch.isMega}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         );

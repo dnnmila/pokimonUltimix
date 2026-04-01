@@ -1,0 +1,41 @@
+UID,POKEDEX,NAME,LEVEL,TYPE1,TYPE2,ATK1,ATK2,ATK3,NEXT_LEVEL,EVOLUTION,EVOLUTION2,MEGA
+Brock1,gym1_1,Geodude,2,ROCK,GROUND,Rollout2,Sandstorm0E,Tackle1,0,000,000,No
+Brock2,gym1_2,Onix,2,ROCK,GROUND,RockTomb3,DBreath2,Bind1,0,000,000,No
+Misty1,gym2_1,Staryu,2,WATER,NONE,WaGun2,Swift2,CRay0,0,000,000,No
+Misty2,gym2_2,Starmie,3,WATER,PSYCHIC,WaPulse3,Psybeam3,Swift2,0,000,000,No
+Surge1,gym3_1,Pikachu,3,ELECTRIC,NONE,Spark3,QAttack1,Charm0,0,000,000,No
+Surge2,gym3_2,Raichu,4,ELECTRIC,NONE,SWave3,Swift2,IrTail2,0,000,000,No
+Erika1,gym4_1,Victreebel,4,GRASS,POISON,RaLeaf3,PoJab3,KnockOff2,0,000,000,No
+Erika2,gym4_2,Vileplume,4,GRASS,POISON,PeDance4,SlBomb3,Moonblast2,0,000,000,No
+Sabrina1,gym6_1,Mr.Mine,5,PSYCHIC,FAIRY,Psychic3,DGleam3,ShBall2,0,000,000,No
+Sabrina2,gym6_2,Alakazam,6,PSYCHIC,NONE,Psychic3,FoBlast3,DGleam2,0,000,000,No
+Koga1,gym5_1,Golbat,5,POISON,FLYING,AirCutter3,SlBomb3,Bite2,0,000,000,No
+Koga2,gym5_2,Muk,6,POISON,NONE,GunkShot4,FBlast3,DPulse2,0,000,000,No
+Blaine1,gym7_1,Rapidash,6,FIRE,NONE,FBlast4,MHorn3,SoBeam3,0,000,000,No
+Blaine2,gym7_2,Arcanine,7,FIRE,NONE,FBlitz4,DEgde3,SoBeam3,0,000,000,No
+Giovanni1,gym8_1,Nidoking,7,POISON,GROUND,PoJab3,EarthPower3,Thunder3,0,000,000,No
+Giovanni2,gym8_2,Rhydon,8,GROUND,ROCK,DrillRun3,SEdge3,Thunder3,0,000,000,No
+Agatha1,gymE1_1,Arbok,8,POISON,NONE,GunkShot4,Thief,IFang2,0,000,000,No
+Agatha2,gymE1_2,Gengar,9,GHOST,POISON,SlBomb3,ShClaw3,DGleam2,0,000,000,No
+Bruno1,gymE2_1,Hitmonchan,8,FIGHTING,NONE,FoBlast4,Thief,BulletPunch1,0,000,000,No
+Bruno2,gymE2_2,Machamp,9,FIGHTING,NONE,CrossChop3,HeavySlam4,KnockOff2,0,000,000,No
+Lance1,gymE3_1,Gyarados,8,WATER,FLYING,HPump4,Hurricane4,Earthquake2,0,000,000,No
+Lance2,gymE3_2,Dragonite,9,DRAGON,FLYING,DRush3,Hurricane4,IrHead2,0,000,000,No
+Lorelei1,gymE4_1,Jynx,8,ICE,PSYCHIC,Blizzard4,Psychic3,WaPulse2,0,000,000,No
+Lorelei2,gymE4_2,Lapras,9,WATER,ICE,Blizzard4,WaPulse3,BSlam2,0,000,000,No
+Red1,gymC1,Snorlax,9,NORMAL,NONE,DEdge4,HeavySlam4,Bite2,0,000,000,No
+Red2,gymC2,"Mega Charizard",10,DRAGON,FIRE,FBlast4,DBreath3,IrTail2,0,000,000,No
+Ariadna1,gymR1_1,Arbok,5,POISON,NONE,AcidSpray2,Bite2,IFang2,0,000,000,No
+Ariadna2,gymR1_2,Vileplume,6,GRASS,POISON,GigaDrain3,SlBomb3,Moonblast2,0,000,000,No
+Petrel1,gymR2_1,Raticate,5,NORMAL,NONE,TaDown3,Bite2,Revenge2,0,000,000,No
+Petrel2,gymR2_2,Weezing,6,POISON,NONE,SlBomb3,FBlast3,Assurance2,0,000,000,No
+BluePink1,gymB1_1,Pidgey,2,NORMAL,FLYING,Tackle2,Gust2,SaAttack0,0,000,000,No
+BluePink2,gymB1_2,Squirtle,2,WATER,NONE,WaGun2,Tackle1,Withdraw0,0,000,000,No
+BlueGreen1,gymB2_1,Growlithe,2,FIRE,NONE,Ember2,Bite2,Leer0,0,000,000,No
+BlueGreen2,gymB2_2,Pidgeotto,3,NORMAL,FLYING,QAttack1,WiAttack3,MSlap1,0,000,000,No
+BlueBlue1,gymB3_1,Growlithe,3,FIRE,NONE,FFang3,Bite2,TaDown2,0,000,000,No
+BlueBlue2,gymB3_2,Wartotle,4,WATER,NONE,WaPulse3,Bite2,IBeam2,0,000,000,No
+BlueYellow1,gymB4_1,Arcanine,5,FIRE,NONE,FFang3,SoBeam3,Bite2,0,000,000,No
+BlueYellow2,gymB4_2,"Pidgeot ",6,NORMAL,FLYING,QAttack2,Hurricane4,MSlap1,0,000,000,No
+BlueRed1,gymB5_1,Blastoise,8,WATER,NONE,WaPulse3,Blizzard3,Earthquake2,0,000,000,No
+BlueRed2,gymB5_2,"Mega Pidgeot",9,NORMAL,FLYING,GImpact4,AAce3,MSlap1,0,000,000,No
