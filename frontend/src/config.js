@@ -13,7 +13,7 @@
 //Monicure
 //const SERVER_IP = 'http://192.168.1.86:3001';
 //CASA
-const SERVER_IP = 'http://192.168.1.83:3001';
+const SERVER_IP = 'http://192.168.0.3:3001';
 
 
 

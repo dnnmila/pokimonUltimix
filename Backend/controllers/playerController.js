@@ -7,8 +7,8 @@ import { getGame ,getPlayerById,updateGameAndNotify,getPokemonById } from '../ga
 // Función para abrir la base de datos
 async function openDb() {
     return open({
-        filename: './db/pokimonDOUBLE.sqlite',
-       // filename: './db/pokimonULTIMIX.sqlite', 
+        //filename: './db/pokimonDOUBLE.sqlite',
+       filename: './db/pokimonULTIMIX.sqlite',
         driver: sqlite3.Database
     });
 }
@@ -51,8 +51,8 @@ export const addPokemonToPlayer = async (req, res) => {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
 
-        // ajuste Asegurarse de que pokemonId tenga siempre 3 dígitos pokemonId ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
+        // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos pokemonId ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -211,9 +211,9 @@ export const evolvePokemon = async (req, res) => {
             return;
         }
 
-        // ajuste Asegurarse de que pokemonId tenga siempre 3 dígitos poemonId ultimixdnn
+        // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos poemonId ultimixdnn
         console.log('newPokemonId' + newPokemonId);
-        const formattedPokemonId = newPokemonId.toString().padStart(3, '0');
+        const formattedPokemonId = newPokemonId.toString().padStart(4, '0');
         console.log('pokedex nuevo' + formattedPokemonId);
    
 
@@ -595,8 +595,8 @@ export const wildBattle = async (req, res) => {
         const {pokemonId} = req.body;
         console.log(pokemonId);
 
-        //ajuste  Asegurarse de que pokemonId tenga siempre 3 dígitos pokemonId ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
+        //ajuste  Asegurarse de que pokemonId tenga siempre 4 dígitos pokemonId ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -702,25 +702,28 @@ export const getEvolutionChain = async (req, res) => {
         while (currentId && safety < 10) {
             safety++;
             const data = await db.get(
-                "SELECT POKEDEX, NAME, TYPE1, TYPE2, NEXT_LEVEL, EVOLUTION, MEGA FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                "SELECT POKEDEX, NAME, TYPE1, TYPE2, NEXT_LEVEL, EVOLUTION, EVOLUTION2, MEGA FROM pokemons WHERE POKEDEX = ? LIMIT 1",
                 [currentId]
             );
             if (!data) break;
 
-            // Buscar ramas alternativas que apuntan a este pokemon via PREEVOLUCION
-            const branchRows = await db.all(
-                "SELECT DISTINCT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE PREEVOLUCION = ?",
-                [data.POKEDEX]
-            );
-            const branches = branchRows.map(b => ({
-                pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2,
-                isMega: b.POKEDEX.startsWith('M')
-            }));
+            const branches = [];
+
+            // Rama alternativa via EVOLUTION2
+            if (data.EVOLUTION2 && data.EVOLUTION2 !== '000') {
+                const evo2 = await db.get(
+                    "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                    [data.EVOLUTION2]
+                );
+                if (evo2) {
+                    branches.push({ pokedex: evo2.POKEDEX, name: evo2.NAME, type1: evo2.TYPE1, type2: evo2.TYPE2, isMega: evo2.POKEDEX.startsWith('M') });
+                }
+            }
 
             // Si tiene mega principal via EVOLUTION, agregarlo a branches
             if (data.MEGA === 'Yes' && data.EVOLUTION && data.EVOLUTION !== '000') {
                 const mainMega = await db.get(
-                    "SELECT DISTINCT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                    "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
                     [data.EVOLUTION]
                 );
                 if (mainMega && !branches.find(b => b.pokedex === mainMega.POKEDEX)) {

@@ -25,19 +25,14 @@ export const initializeGame = () =>{
     new Rival("Gym8","Giovani"),
     new Rival("Rival","Wild Pokemon"),
     new Rival("Gary","Gary"),
-    //new Rival("Rocket","Team Rocket"),
+    new Rival("Rocket","Team Rocket"),
     new Rival("Elite1","Agatha"),
     new Rival("Elite2","Bruno"),
     new Rival("Elite3","Lorelei"),
     new Rival("Elite4","Lance"),
-    new Rival("Red","Red"),
-    new Rival("Ariadna","Ariadna"),
-    new Rival("Petrel","Petrel"),
-    new Rival("Blue1","Blue"),
-    new Rival("Blue2","Blue"),
-    new Rival("Blue3","Blue"),
-    new Rival("Blue4","Blue"),
-    new Rival("Blue5","Blue"),
+    new Rival("BlueC1","Blue"),
+    new Rival("BlueC2","Blue"),
+    new Rival("BlueC3","Blue"),
 
 
     ];

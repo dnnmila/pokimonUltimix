@@ -6,14 +6,14 @@ const PokemonBattleListed = ({pokemon,SelectPokemon}) => {
 
    
     if (pokemon.pokedex.startsWith('gym')) {
-        imageUrl = require(`../images/Leaders/${pokemon.pokedex}.png`);
+        imageUrl = require(`../images/Leaders2/${pokemon.pokedex}.png`);
       } 
       else if (pokemon.pokedex.startsWith('M')){
         //ajuste agregadno la carpeta de tokens ultimixdnn
         //imageUrl = require(`../images/tokens_ultimix/${pokemon.pokedex}.png`);
-        imageUrl = require(`../images/tokens/${pokemon.pokedex}.png`);
+        imageUrl = require(`../images/tokens_ultimix/${pokemon.pokedex}.png`);
       } else{
-        imageUrl = require(`../images/POKEMON/0${pokemon.pokedex}.png`);
+        imageUrl = require(`../images/POKEMON/${pokemon.pokedex}.png`);
       }
 
    

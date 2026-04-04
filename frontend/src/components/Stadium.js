@@ -3,6 +3,10 @@ import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 
+const getPkmImg = (pokedex) => {
+    if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
+    return require(`../images/tokens_ultimix/${pokedex}.png`);
+};
 
 const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal}) => {
     
@@ -283,7 +287,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         console.log(pokemon.name);
         setMyStatus(pokemon.status);
         //ajuste agregando la carpeta de tokens ultimixdnn
-        setMyPokemonImg(require(`../images/tokens/${pokemon.pokedex}.png`));
+        setMyPokemonImg(getPkmImg(pokemon.pokedex));
         //Clase Type
         setMyPokemonType1_class(`type_${pokemon.type1}`);
         setMyPokemonType2_class(`type_${pokemon.type2}`);
@@ -301,7 +305,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         console.log(pokemon.name);
         setRivalStatus(pokemon.status);
         //ajuste agregando la carpeta de tokens ultimixdnn
-        setRivalPokemonImg(require(`../images/tokens/${pokemon.pokedex}.png`));
+        setRivalPokemonImg(getPkmImg(pokemon.pokedex));
         //Clase Type
         setRivalPokemonType1_class(`type_${pokemon.type1}`);
         setRivalPokemonType2_class(`type_${pokemon.type2}`);

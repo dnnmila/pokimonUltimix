@@ -18,7 +18,7 @@ import { fileURLToPath } from 'url';
 //Tachomodem
 //const SERVER_IP = 'http://192.168.0.2:3000';
 //Casa
-const SERVER_IP = 'http://192.168.1.83:3000';
+const SERVER_IP = 'http://192.168.0.3:3000';
 
 
 //IP Monicure
@@ -64,8 +64,18 @@ app.get('/audio/:fileName', (req, res) => {
 
 // Ruta estática para servir todos los archivos de la carpeta `audio`
 app.use('/audio', express.static(path.join(__dirname, 'audio')));
-// Middleware para parsear JSON
-app.use(express.json());
+// Middleware para parsear JSON — preserva UIDs de barcode (números grandes) como strings
+app.use(express.text({ type: 'application/json' }));
+app.use((req, res, next) => {
+    if (typeof req.body === 'string' && req.body) {
+        try {
+            req.body = JSON.parse(req.body.replace(/:(\s*)(\d{16,})/g, ':$1"$2"'));
+        } catch (e) {
+            return res.status(400).json({ message: 'Invalid JSON' });
+        }
+    }
+    next();
+});
 
 // Usar las rutas del juego
 app.use(gameRouter);

@@ -3,7 +3,7 @@ import SERVER_IP from '../../config';
 
 const getToken = (pokedex) => {
     try {
-        return require(`../../images/tokens/${pokedex}.png`);
+        return require(`../../images/tokens_ultimix/${pokedex}.png`);
     } catch {
         return null;
     }
@@ -60,7 +60,7 @@ const ModalPokedex = ({ show, onClose, player }) => {
                             <div key={pokemon.id} className="pokedex-row">
                                 {!chain ? (
                                     <TokenImg pokedex={pokemon.pokedex} isCurrent />
-                                ) : (
+                                ) : Array.isArray(chain) ? (
                                     chain.map((step, index) => (
                                         <div key={step.pokedex} className="pokedex-step">
                                             {index > 0 && (
@@ -89,7 +89,7 @@ const ModalPokedex = ({ show, onClose, player }) => {
                                             )}
                                         </div>
                                     ))
-                                )}
+                                ) : null}
                             </div>
                         );
                     })}

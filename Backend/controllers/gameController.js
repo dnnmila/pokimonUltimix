@@ -12,8 +12,8 @@ import { getIo } from "../socketIo.js";
 
 async function openDb() {
     return open({
-        filename: './db/pokimonDOUBLE.sqlite',
-       //filename: './db/pokimonULTIMIX.sqlite',
+        //filename: './db/pokimonDOUBLE.sqlite',
+       filename: './db/pokimonULTIMIX.sqlite',
         driver: sqlite3.Database
     });
 }
@@ -173,8 +173,8 @@ export const wildBattle = async (req, res) => {
         const {pokemonId} = req.body;
         console.log(pokemonId);
 
-        //ajuste  Asegurarse de que pokemonId tenga siempre 3 dígitos ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
+        //ajuste  Asegurarse de que pokemonId tenga siempre 4 dígitos ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -413,8 +413,8 @@ export const simWildBattle = async (req, res) => {
         }
 
         const db = await openDb();
-        //ajuste 4a 3 digitos pokimonId ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
+        //ajuste 4 digitos pokimonId ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
         const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [formattedPokemonId]);
         if (!pokemonData) {
             return res.status(404).json({ message: 'Pokémon no encontrado' });

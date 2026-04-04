@@ -5,6 +5,11 @@ import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 import ModalPokedex from "./modals/ModalPokedex";
 
+const getPkmImg = (pokedex) => {
+    if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
+    return require(`../images/tokens_ultimix/${pokedex}.png`);
+};
+
 const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
@@ -182,7 +187,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
     const handleSelectMyPokemon = (pokemon) => {
         setMyPokemon(pokemon);
-        setMyPokemonImg(require(`../images/tokens/${pokemon.pokedex}.png`));
+        setMyPokemonImg(getPkmImg(pokemon.pokedex));
         setMyPokemonType1_class(`type_${pokemon.type1}`);
         setMyPokemonType2_class(`type_${pokemon.type2}`);
         setMyPkm_type_id1(`types_${pokemon.id}_1`);
@@ -192,7 +197,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
     const handleSelectRivalPokemon = async (pokemon) => {
         setRivalPokemon(pokemon);
-        setRivalPokemonImg(require(`../images/tokens/${pokemon.pokedex}.png`));
+        setRivalPokemonImg(getPkmImg(pokemon.pokedex));
         setRivalPokemonType1_class(`type_${pokemon.type1}`);
         setRivalPokemonType2_class(`type_${pokemon.type2}`);
         setRivalPkm_type_id1(`types_${pokemon.id}_1`);
@@ -360,16 +365,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                             <div className="Elite Elite2" onClick={() => handleSimLeader("Elite2","Bruno1","Bruno2")}></div>
                             <div className="Elite Elite3" onClick={() => handleSimLeader("Elite3","Lorelei1","Lorelei2")}></div>
                             <div className="Elite Elite4" onClick={() => handleSimLeader("Elite4","Lance1","Lance2")}></div>
-                            <div className="Elite Red" onClick={() => handleSimLeader("Red","Red1","Red2")}></div>
                         </div>
                         <div className='Special-to-battle'>
-                            <div className="Elite Rocket1" onClick={() => handleSimLeader("Ariadna","Ariadna1","Ariadna2")}></div>
-                            <div className="Elite Rocket2" onClick={() => handleSimLeader("Petrel","Petrel1","Petrel2")}></div>
-                            <div className="Elite Blue1" onClick={() => handleSimLeader("Blue1","BluePink1","BluePink2")}></div>
-                            <div className="Elite Blue2" onClick={() => handleSimLeader("Blue2","BlueGreen1","BlueGreen2")}></div>
-                            <div className="Elite Blue3" onClick={() => handleSimLeader("Blue3","BlueBlue1","BlueBlue2")}></div>
-                            <div className="Elite Blue4" onClick={() => handleSimLeader("Blue4","BlueYellow1","BlueYellow2")}></div>
-                            <div className="Elite Blue5" onClick={() => handleSimLeader("Blue5","BlueRed1","BlueRed2")}></div>
+                            <div className="Elite Rocket1" onClick={() => handleSimLeader("Rocket","Rocket1","Rocket2")}></div>
+                            <div className="Elite Blue1" onClick={() => handleSimLeader("BlueC1","Blue1","Blue2")}></div>
+                            <div className="Elite Blue2" onClick={() => handleSimLeader("BlueC2","Blue3","Blue4")}></div>
+                            <div className="Elite Blue3" onClick={() => handleSimLeader("BlueC3","Blue5","Blue6")}></div>
                         </div>
                     </div>
                 </div>

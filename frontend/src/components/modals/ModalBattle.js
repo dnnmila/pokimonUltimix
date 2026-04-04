@@ -48,18 +48,13 @@ const ModalBattle = ({ show, onClose, game,playerBattle,LeaderBattle }) => {
                             <div className="Elite Elite2" onClick={() => handleLeaderBattle("Elite2","Bruno1","Bruno2")}> </div>
                             <div className="Elite Elite3" onClick={() => handleLeaderBattle("Elite3","Lorelei1","Lorelei2")}> </div>
                             <div className="Elite Elite4" onClick={() => handleLeaderBattle("Elite4","Lance1","Lance2")}> </div>
-                            <div className="Elite Red" onClick={() => handleLeaderBattle("Red","Red1","Red2")}> </div>
-                              
                     </div>
 
                     <div className='Special-to-battle'>
-                            <div className="Elite Rocket1" onClick={() => handleLeaderBattle("Ariadna","Ariadna1","Ariadna2")}> </div>  
-                            <div className="Elite Rocket2" onClick={() => handleLeaderBattle("Petrel","Petrel1","Petrel2")}> </div>  
-                            <div className="Elite Blue1" onClick={() => handleLeaderBattle("Blue1","BluePink1","BluePink2")}> </div>
-                            <div className="Elite Blue2" onClick={() => handleLeaderBattle("Blue2","BlueGreen1","BlueGreen2")}> </div> 
-                            <div className="Elite Blue3" onClick={() => handleLeaderBattle("Blue3","BlueBlue1","BlueBlue2")}> </div> 
-                            <div className="Elite Blue4" onClick={() => handleLeaderBattle("Blue4","BlueYellow1","BlueYellow2")}> </div> 
-                            <div className="Elite Blue5" onClick={() => handleLeaderBattle("Blue5","BlueRed1","BlueRed2")}> </div>   
+                            <div className="Elite Rocket1" onClick={() => handleLeaderBattle("Rocket","Rocket1","Rocket2")}> </div>
+                            <div className="Elite Blue1" onClick={() => handleLeaderBattle("BlueC1","Blue1","Blue2")}> </div>
+                            <div className="Elite Blue2" onClick={() => handleLeaderBattle("BlueC2","Blue3","Blue4")}> </div>
+                            <div className="Elite Blue3" onClick={() => handleLeaderBattle("BlueC3","Blue5","Blue6")}> </div>
                     </div>
                     <div className="close-blattle-modal" onClick={onClose}>Close</div>
                 </div>
