@@ -52,7 +52,10 @@ export const addPokemonToPlayer = async (req, res) => {
         }
 
         // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos pokemonId ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
+        // Soporta prefijos como "A" (Alolan) o "M" (Mega): "A76" → "A0076", "76" → "0076"
+        const rawId = pokemonId.toString().trim().toUpperCase();
+        const prefixMatch = rawId.match(/^([A-Z]+)(\d+)$/);
+        const formattedPokemonId = prefixMatch ? prefixMatch[1] + prefixMatch[2].padStart(4, '0') : rawId.padStart(4, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -213,7 +216,9 @@ export const evolvePokemon = async (req, res) => {
 
         // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos poemonId ultimixdnn
         console.log('newPokemonId' + newPokemonId);
-        const formattedPokemonId = newPokemonId.toString().padStart(4, '0');
+        const rawEvoId = newPokemonId.toString().trim().toUpperCase();
+        const evoPrefixMatch = rawEvoId.match(/^([A-Z]+)(\d+)$/);
+        const formattedPokemonId = evoPrefixMatch ? evoPrefixMatch[1] + evoPrefixMatch[2].padStart(4, '0') : rawEvoId.padStart(4, '0');
         console.log('pokedex nuevo' + formattedPokemonId);
    
 
@@ -596,7 +601,9 @@ export const wildBattle = async (req, res) => {
         console.log(pokemonId);
 
         //ajuste  Asegurarse de que pokemonId tenga siempre 4 dígitos pokemonId ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
+        const rawWildId = pokemonId.toString().trim().toUpperCase();
+        const wildPrefixMatch = rawWildId.match(/^([A-Z]+)(\d+)$/);
+        const formattedPokemonId = wildPrefixMatch ? wildPrefixMatch[1] + wildPrefixMatch[2].padStart(4, '0') : rawWildId.padStart(4, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos

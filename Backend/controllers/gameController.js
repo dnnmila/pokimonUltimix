@@ -174,7 +174,9 @@ export const wildBattle = async (req, res) => {
         console.log(pokemonId);
 
         //ajuste  Asegurarse de que pokemonId tenga siempre 4 dígitos ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
+        const rawWildId = pokemonId.toString().trim().toUpperCase();
+        const wildPrefixMatch = rawWildId.match(/^([A-Z]+)(\d+)$/);
+        const formattedPokemonId = wildPrefixMatch ? wildPrefixMatch[1] + wildPrefixMatch[2].padStart(4, '0') : rawWildId.padStart(4, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
