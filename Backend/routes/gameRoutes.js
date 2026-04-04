@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal} from '../controllers/gameController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController} from '../controllers/gameController.js';
 import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,attachMega,getEvolutionChain} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
@@ -41,6 +41,7 @@ router.post('/set-battle-dice',setBattleDice);
 router.post('/set-battle-bonuses',setBattleBonuses);
 router.post('/set-battle-bonus-final',setBattleBonusFinal);
 router.post('/get-evolution-chain', getEvolutionChain);
+router.post('/load-game', loadGameController);
 
 
 

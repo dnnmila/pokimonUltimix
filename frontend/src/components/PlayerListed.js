@@ -10,7 +10,7 @@ const PlayerListed = ({player, totalPLayers}) => {
 
 
     return (
-        <div className="PlayerListedClass" style={playerStyle} >
+        <div className={`PlayerListedClass ${player.isMyTurn ? 'PlayerListedClass--active' : ''}`} style={playerStyle} >
            
             <div className="Titles">
                 <div className="NamesAndPosition">

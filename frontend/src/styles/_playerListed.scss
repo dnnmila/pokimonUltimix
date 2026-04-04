@@ -6,6 +6,20 @@
     height: 20;
 }
 
+.PlayerListedClass--active {
+    background-color: rgba(83, 116, 203, 0.2);
+    box-shadow: inset 4px 0 0 #FFD700, inset 0 0 30px rgba(255, 215, 0, 0.08);
+
+    .PlayerName {
+        color: #FFD700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    }
+
+    .PlayerPosition {
+        color: #FFD700;
+    }
+}
+
 .PlayerListedClass::after {
     content: '';
     position: absolute;

@@ -52,6 +52,24 @@ function App() {
       
   };
 
+  const loadGame = async () => {
+    try {
+      const response = await fetch(`${SERVER_IP}/load-game`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+          setIsGameStarted(true);
+          console.log('Partida cargada:', data.message);
+      } else {
+          alert('No hay auto-guardado disponible');
+      }
+    } catch (error) {
+        console.error('Error al cargar la partida:', error);
+    }
+  };
+
   const continueGame = async () => {
     try {
       const response = await fetch(`${SERVER_IP}/continue-game`, {
@@ -716,7 +734,7 @@ const onChangeBattlePhase = async (newPhase) => {
 return (
     <Router>
         <Routes>
-            <Route path="/" element={<Game onStartGame={startGame} isGameStarted={isGameStarted} onContinueGame={continueGame}/>} />
+            <Route path="/" element={<Game onStartGame={startGame} isGameStarted={isGameStarted} onContinueGame={continueGame} onLoadGame={loadGame}/>} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega}/>} />

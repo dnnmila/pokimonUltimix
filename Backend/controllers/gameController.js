@@ -7,7 +7,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 
 
-import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById} from "../gameInstance.js";
+import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame } from "../gameInstance.js";
 import { getIo } from "../socketIo.js";
 
 async function openDb() {
@@ -91,9 +91,12 @@ export const nextTurn = async (req, res) => {
         }
 
         game.nextTurn();
-        game.calculatePoints(); 
-        game.updatePlayerPositions(); 
-        updateGameAndNotify(); // Asegúrate de que esta función envíe una respuesta
+        game.calculatePoints();
+        game.updatePlayerPositions();
+        if (game.currentTurn === 0) {
+            saveGame();
+        }
+        updateGameAndNotify();
 
         res.status(200).json({ message: 'Turno avanzado' });
     } catch (error) {
@@ -402,6 +405,17 @@ export const leaderBattle = async (req, res) => {
         res.status(200).json({ message: 'Pokémon salvaje Agregado'});
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+export const loadGameController = (req, res) => {
+    try {
+        const game = loadGame();
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Partida cargada correctamente', round: game.round });
+    } catch (error) {
+        console.error('Error al cargar la partida:', error);
+        res.status(500).json({ message: 'No se encontró ningún auto-guardado' });
     }
 };
 
