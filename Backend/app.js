@@ -9,20 +9,7 @@ import { init as initSocketIo } from './socketIo.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-//IP MILA
-//const SERVER_IP = 'http://192.168.0.2:3000';
-//IP TACHO
-//const SERVER_IP = 'http://192.168.68.115:3000';
-//Mudblood
-//const SERVER_IP = 'http://192.168.1.146:3000';
-//Tachomodem
-//const SERVER_IP = 'http://192.168.0.2:3000';
-//Casa
-const SERVER_IP = 'http://192.168.1.124:3000';
-
-
-//IP Monicure
-//const SERVER_IP = 'http://192.168.1.86:3000';
+const SERVER_IP = `http://${process.env.SERVER_IP}:3000`;
 
 
 

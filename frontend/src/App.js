@@ -740,7 +740,7 @@ return (
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega}/>} />
             <Route path="/players" element={<AllPlayers />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal}/>} />
-            <Route path="/simPlayer/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle}/>} />
 
         </Routes>
     </Router>

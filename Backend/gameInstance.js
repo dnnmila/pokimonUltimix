@@ -126,6 +126,7 @@ export const loadGame = () => {
         Object.assign(player, p);
         player.pokemons = (p.pokemons || []).map(reconstructPokemon);
         player.megas = (p.megas || []).map(reconstructPokemon);
+        player.gmaxes = (p.gmaxes || []).map(reconstructPokemon);
         return player;
     });
 

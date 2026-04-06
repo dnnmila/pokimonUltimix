@@ -500,7 +500,12 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
                 <div className="player_team">
                 {(player.megas || []).map((pokemon) => (
                     <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon}/>
+                 ))}
+                </div>
 
+                <div className="player_team">
+                {(player.gmaxes || []).map((pokemon) => (
+                    <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon}/>
                  ))}
                 </div>
             </div>

@@ -4,6 +4,7 @@ import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 import ModalPokedex from "./modals/ModalPokedex";
+import ModalLeaderViewer from "./modals/ModalLeaderViewer";
 
 const getPkmImg = (pokedex) => {
     if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
@@ -19,6 +20,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     const [showSetup, setShowSetup] = useState(false);
     const [wildPokemonId, setWildPokemonId] = useState('');
     const [showPokedex, setShowPokedex] = useState(false);
+    const [showLeaderViewer, setShowLeaderViewer] = useState(false);
 
     // Fases de batalla (mismo patron que Stadium)
     const [myPokemon, setMyPokemon] = useState();
@@ -331,8 +333,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
     return (
         <div className="sim-player">
-            <div className="pokedex-button" onClick={() => setShowPokedex(true)}></div>
+            <div className="sim-home-button" onClick={handleNewSimulation}></div>
+            {(!rival || showSetup) && (
+                <div className="pokedex-button" onClick={() => setShowPokedex(true)}></div>
+            )}
+            {(!rival || showSetup) && (
+                <div className="leader-viewer-button" onClick={() => setShowLeaderViewer(true)}></div>
+            )}
             <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
+            <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} />
            
 
             {/* Configurar rival de simulacion */}

@@ -6,6 +6,7 @@ class Player {
         this.turn = turn;
         this.pokemons = [];
         this.megas = [];
+        this.gmaxes = [];
         this.coins = 3;
         this.isMyTurn = false;
         this.badge1 = false;
@@ -45,8 +46,9 @@ class Player {
     }
     addMega(pokemon) {
         this.megas.push(pokemon);
-       
-        // Lógica adicional para agregar Pokémon
+    }
+    addGMax(pokemon) {
+        this.gmaxes.push(pokemon);
     }
     addPokemonbyIndex(pokemon, index){
         this.pokemons[index] = pokemon;
@@ -60,6 +62,9 @@ class Player {
 
     removeMegaById(pokemonId) {
         this.megas = this.megas.filter(pokemon => pokemon.id !== pokemonId);
+    }
+    removeGMaxById(pokemonId) {
+        this.gmaxes = this.gmaxes.filter(pokemon => pokemon.id !== pokemonId);
     }
 
     updateNewCoins(newCoins) {
