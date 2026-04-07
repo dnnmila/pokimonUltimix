@@ -56,6 +56,14 @@ const ModalBattle = ({ show, onClose, game,playerBattle,LeaderBattle }) => {
                             <div className="Elite Blue2" onClick={() => handleLeaderBattle("BlueC2","Blue3","Blue4")}> </div>
                             <div className="Elite Blue3" onClick={() => handleLeaderBattle("BlueC3","Blue5","Blue6")}> </div>
                     </div>
+                    <div className='Gary-to-battle'>
+                            <div className="Elite GaryPink"   onClick={() => handleLeaderBattle("GaryPink",  "Gary1",  "Gary2")}> </div>
+                            <div className="Elite GaryGreen"  onClick={() => handleLeaderBattle("GaryGreen", "Gary3",  "Gary4")}> </div>
+                            <div className="Elite GaryBlue"   onClick={() => handleLeaderBattle("GaryBlue",  "Gary5",  "Gary6")}> </div>
+                            <div className="Elite GaryYellow" onClick={() => handleLeaderBattle("GaryYellow","Gary7",  "Gary8")}> </div>
+                            <div className="Elite GaryRed"    onClick={() => handleLeaderBattle("GaryRed",   "Gary9",  "Gary10")}> </div>
+                    </div>
+
                     <div className="close-blattle-modal" onClick={onClose}>Close</div>
                 </div>
 

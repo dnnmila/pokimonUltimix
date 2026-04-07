@@ -2,9 +2,30 @@ import Types from "./Types";
 import PokemonBattleListed from "./PokemonBattleListed";
 import Attack from "./Attacks";
 
+import imgRivPink1   from '../images/Leaders2/RivPink1.png';
+import imgRivPink2   from '../images/Leaders2/RivPink2.png';
+import imgRivGreen1  from '../images/Leaders2/RivGreen1.png';
+import imgRivGreen2  from '../images/Leaders2/RivGreen2.png';
+import imgRivBlue1   from '../images/Leaders2/RivBlue1.png';
+import imgRivBlue2   from '../images/Leaders2/RivBlue2.png';
+import imgRivYellow1 from '../images/Leaders2/RivYellow1.png';
+import imgRivYellow2 from '../images/Leaders2/RivYellow2.png';
+import imgRivRed1    from '../images/Leaders2/RivRed1.png';
+import imgRivRed2    from '../images/Leaders2/RivRed2.png';
+
+const RIV_IMAGES = {
+    RivPink1: imgRivPink1, RivPink2: imgRivPink2,
+    RivGreen1: imgRivGreen1, RivGreen2: imgRivGreen2,
+    RivBlue1: imgRivBlue1, RivBlue2: imgRivBlue2,
+    RivYellow1: imgRivYellow1, RivYellow2: imgRivYellow2,
+    RivRed1: imgRivRed1, RivRed2: imgRivRed2,
+};
+
 const getPkmImg = (pokedex) => {
+    if (RIV_IMAGES[pokedex]) return RIV_IMAGES[pokedex];
     if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
-    return require(`../images/tokens_ultimix/${pokedex}.png`);
+    if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
+    return require(`../images/POKEMON/${pokedex}.png`);
 };
 
 const StadiumMirrorModal = ({ game }) => {

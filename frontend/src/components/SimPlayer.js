@@ -6,9 +6,30 @@ import PokemonBattleListed from "./PokemonBattleListed";
 import ModalPokedex from "./modals/ModalPokedex";
 import ModalLeaderViewer from "./modals/ModalLeaderViewer";
 
+import imgRivPink1   from '../images/Leaders2/RivPink1.png';
+import imgRivPink2   from '../images/Leaders2/RivPink2.png';
+import imgRivGreen1  from '../images/Leaders2/RivGreen1.png';
+import imgRivGreen2  from '../images/Leaders2/RivGreen2.png';
+import imgRivBlue1   from '../images/Leaders2/RivBlue1.png';
+import imgRivBlue2   from '../images/Leaders2/RivBlue2.png';
+import imgRivYellow1 from '../images/Leaders2/RivYellow1.png';
+import imgRivYellow2 from '../images/Leaders2/RivYellow2.png';
+import imgRivRed1    from '../images/Leaders2/RivRed1.png';
+import imgRivRed2    from '../images/Leaders2/RivRed2.png';
+
+const RIV_IMAGES = {
+    RivPink1: imgRivPink1, RivPink2: imgRivPink2,
+    RivGreen1: imgRivGreen1, RivGreen2: imgRivGreen2,
+    RivBlue1: imgRivBlue1, RivBlue2: imgRivBlue2,
+    RivYellow1: imgRivYellow1, RivYellow2: imgRivYellow2,
+    RivRed1: imgRivRed1, RivRed2: imgRivRed2,
+};
+
 const getPkmImg = (pokedex) => {
+    if (RIV_IMAGES[pokedex]) return RIV_IMAGES[pokedex];
     if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
-    return require(`../images/tokens_ultimix/${pokedex}.png`);
+    if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
+    return require(`../images/POKEMON/${pokedex}.png`);
 };
 
 const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
@@ -380,6 +401,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                             <div className="Elite Blue1" onClick={() => handleSimLeader("BlueC1","Blue1","Blue2")}></div>
                             <div className="Elite Blue2" onClick={() => handleSimLeader("BlueC2","Blue3","Blue4")}></div>
                             <div className="Elite Blue3" onClick={() => handleSimLeader("BlueC3","Blue5","Blue6")}></div>
+                        </div>
+                        <div className='Gary-to-battle'>
+                            <div className="Elite GaryPink"   onClick={() => handleSimLeader("GaryPink",  "Gary1",  "Gary2")}></div>
+                            <div className="Elite GaryGreen"  onClick={() => handleSimLeader("GaryGreen", "Gary3",  "Gary4")}></div>
+                            <div className="Elite GaryBlue"   onClick={() => handleSimLeader("GaryBlue",  "Gary5",  "Gary6")}></div>
+                            <div className="Elite GaryYellow" onClick={() => handleSimLeader("GaryYellow","Gary7",  "Gary8")}></div>
+                            <div className="Elite GaryRed"    onClick={() => handleSimLeader("GaryRed",   "Gary9",  "Gary10")}></div>
                         </div>
                     </div>
                 </div>
