@@ -426,6 +426,26 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                             />
                         ))}
                     </div>
+                    <div className="player_team">
+                        {(player.megas || []).map((pokemon) => (
+                            <PokemonBattleListed
+                                key={player.name + pokemon.id}
+                                pokemon={pokemon}
+                                SelectPokemon={handleSelectMyPokemon}
+                            />
+                        ))}
+                    </div>
+                    {player.dynamax && (
+                    <div className="player_team">
+                        {(player.gmaxes || []).map((pokemon) => (
+                            <PokemonBattleListed
+                                key={player.name + pokemon.id}
+                                pokemon={pokemon}
+                                SelectPokemon={handleSelectMyPokemon}
+                            />
+                        ))}
+                    </div>
+                    )}
                 </div>
             )}
 

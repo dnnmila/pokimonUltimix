@@ -727,7 +727,7 @@ export const getEvolutionChain = async (req, res) => {
         while (currentId && safety < 10) {
             safety++;
             const data = await db.get(
-                "SELECT POKEDEX, NAME, TYPE1, TYPE2, NEXT_LEVEL, EVOLUTION, EVOLUTION2, MEGA, GMAX FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                "SELECT POKEDEX, NAME, TYPE1, TYPE2, NEXT_LEVEL, EVOLUTION, EVOLUTION2, MEGA, GMAX, FORM FROM pokemons WHERE POKEDEX = ? LIMIT 1",
                 [currentId]
             );
             if (!data) break;
@@ -737,53 +737,56 @@ export const getEvolutionChain = async (req, res) => {
             // Rama alternativa via EVOLUTION2
             if (data.EVOLUTION2 && data.EVOLUTION2 !== '000') {
                 const evo2 = await db.get(
-                    "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                    "SELECT POKEDEX, NAME, TYPE1, TYPE2, FORM FROM pokemons WHERE POKEDEX = ? LIMIT 1",
                     [data.EVOLUTION2]
                 );
                 if (evo2) {
-                    branches.push({ pokedex: evo2.POKEDEX, name: evo2.NAME, type1: evo2.TYPE1, type2: evo2.TYPE2, isMega: evo2.POKEDEX.startsWith('M') });
+                    branches.push({ pokedex: evo2.POKEDEX, name: evo2.NAME, type1: evo2.TYPE1, type2: evo2.TYPE2, isMega: evo2.FORM === 'Mega', mega: null, gmax: null });
                 }
             }
 
-            // Rama G-Max (via columna GMAX del pokemon base)
+            // G-Max: campo separado, no en branches
+            let gmax = null;
             if (data.GMAX && data.GMAX !== 'No' && data.GMAX !== 'NONE') {
                 const gmaxEntry = await db.get(
-                    "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                    "SELECT POKEDEX FROM pokemons WHERE POKEDEX = ? AND FORM = 'GMax' LIMIT 1",
                     [data.GMAX]
                 );
-                if (gmaxEntry && !branches.find(b => b.pokedex === gmaxEntry.POKEDEX)) {
-                    branches.push({ pokedex: gmaxEntry.POKEDEX, name: gmaxEntry.NAME, type1: gmaxEntry.TYPE1, type2: gmaxEntry.TYPE2, isMega: false, isGMax: true });
-                }
+                if (gmaxEntry) gmax = gmaxEntry.POKEDEX;
             }
 
-            // Si tiene mega principal via EVOLUTION, agregarlo a branches
+            // Si tiene mega principal via EVOLUTION, agregarla a branches
             if (data.MEGA === 'Yes' && data.EVOLUTION && data.EVOLUTION !== '000') {
                 const mainMega = await db.get(
-                    "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? LIMIT 1",
+                    "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? AND FORM = 'Mega' LIMIT 1",
                     [data.EVOLUTION]
                 );
                 if (mainMega && !branches.find(b => b.pokedex === mainMega.POKEDEX)) {
-                    branches.unshift({ pokedex: mainMega.POKEDEX, name: mainMega.NAME, type1: mainMega.TYPE1, type2: mainMega.TYPE2, isMega: true });
+                    branches.unshift({ pokedex: mainMega.POKEDEX, name: mainMega.NAME, type1: mainMega.TYPE1, type2: mainMega.TYPE2, isMega: true, mega: null, gmax: null });
                 }
             }
 
-            // Ramas adicionales via PREEVOLUCION (mega Y, eeveevoluciones alternativas, etc.)
-            // Para MEGA=Yes: excluir la mega principal (ya agregada arriba)
-            // Para MEGA=No (ej: Eevee): incluir TODAS las ramas sin excluir ninguna
-            const excludeFromPreeevo = data.MEGA === 'Yes' ? data.EVOLUTION : '___NONE___';
+            // Ramas adicionales via PREEVOLUCION — excluir siempre G-Max (ya está en gmax field)
+            const excludeFromPreevo = data.MEGA === 'Yes' ? data.EVOLUTION : '___NONE___';
             const preevoBranches = await db.all(
-                "SELECT DISTINCT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE PREEVOLUCION = ? AND POKEDEX != ?",
-                [data.POKEDEX, excludeFromPreeevo]
+                "SELECT DISTINCT POKEDEX, NAME, TYPE1, TYPE2, FORM, MEGA, EVOLUTION, GMAX FROM pokemons WHERE PREEVOLUCION = ? AND POKEDEX != ? AND FORM != 'GMax'",
+                [data.POKEDEX, excludeFromPreevo]
             );
             for (const b of preevoBranches) {
                 if (!branches.find(br => br.pokedex === b.POKEDEX)) {
-                    branches.push({ pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: b.POKEDEX.startsWith('M') });
+                    // Si este branch tiene mega, incluir su pokedex
+                    const branchMega = (b.MEGA === 'Yes' && b.EVOLUTION && b.EVOLUTION !== '000') ? b.EVOLUTION : null;
+                    // Si este branch tiene gmax, incluirlo
+                    const branchGmax = (b.GMAX && b.GMAX !== 'No' && b.GMAX !== 'NONE') ? b.GMAX : null;
+                    branches.push({ pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: b.FORM === 'Mega', mega: branchMega, gmax: branchGmax });
                 }
             }
+
             chain.push({
                 pokedex: data.POKEDEX, name: data.NAME,
                 type1: data.TYPE1, type2: data.TYPE2,
-                isMega: data.POKEDEX.startsWith('M'),
+                isMega: data.FORM === 'Mega',
+                gmax,
                 branches
             });
 
@@ -791,14 +794,27 @@ export const getEvolutionChain = async (req, res) => {
             if (data.NEXT_LEVEL === 0) break;
             if (!data.EVOLUTION || data.EVOLUTION === '000' || data.EVOLUTION === 'evee') break;
             if (data.MEGA === 'Yes') break;
-            // Si un pokemon sin mega tiene ramas por PREEVOLUCION (como Eevee),
-            // detener la cadena lineal para que no siga hacia una sola evolución
-            if (data.MEGA !== 'Yes' && preevoBranches.length > 0) break;
+            if (preevoBranches.length > 0) break;
 
             currentId = data.EVOLUTION;
         }
 
         res.status(200).json(chain);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const toggleDynamax = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) {
+            return res.status(404).json({ message: 'Jugador no encontrado' });
+        }
+        player.dynamax = !player.dynamax;
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Dynamax toggled', dynamax: player.dynamax });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

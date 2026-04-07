@@ -501,6 +501,18 @@ const playerBattle = async (playerId) => {
     }
 };
 
+const toggleDynamax = async (playerId) => {
+    try {
+        await fetch(`${SERVER_IP}/toggle-dynamax`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId }),
+        });
+    } catch (error) {
+        console.error('Error al toggle dynamax:', error);
+    }
+};
+
 const LeaderBattle = async (LeaderID,pokemonId1,pokemonId2) => {
     try {
         console.log("Leafer battle request");
@@ -737,7 +749,7 @@ return (
             <Route path="/" element={<Game onStartGame={startGame} isGameStarted={isGameStarted} onContinueGame={continueGame} onLoadGame={loadGame}/>} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
-            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega}/>} />
+            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax}/>} />
             <Route path="/players" element={<AllPlayers />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal}/>} />
             <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle}/>} />

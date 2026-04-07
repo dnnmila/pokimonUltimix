@@ -35,6 +35,7 @@ class Player {
         this.turnStartTime = null;
         this.totalPokemons =0;
         this.simRival = null;
+        this.dynamax = false;
 
 
     }

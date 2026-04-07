@@ -57,6 +57,26 @@ const StadiumMirrorModal = ({ game }) => {
                                         />
                                     ))}
                                 </div>
+                                <div className="mirror-player-team">
+                                    {(player.megas || []).map((pokemon) => (
+                                        <PokemonBattleListed
+                                            key={player.name + pokemon.id}
+                                            pokemon={pokemon}
+                                            SelectPokemon={() => {}}
+                                        />
+                                    ))}
+                                </div>
+                                {player.dynamax && (
+                                <div className="mirror-player-team">
+                                    {(player.gmaxes || []).map((pokemon) => (
+                                        <PokemonBattleListed
+                                            key={player.name + pokemon.id}
+                                            pokemon={pokemon}
+                                            SelectPokemon={() => {}}
+                                        />
+                                    ))}
+                                </div>
+                                )}
                             </div>
                         )}
                         {rival && (

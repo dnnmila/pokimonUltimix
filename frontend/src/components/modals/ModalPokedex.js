@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import SERVER_IP from '../../config';
 
+
 const getToken = (pokedex) => {
     try {
         return require(`../../images/tokens_ultimix/${pokedex}.png`);
@@ -13,10 +14,12 @@ const TokenImg = ({ pokedex, isMega, isCurrent }) => {
     const img = getToken(pokedex);
     if (!img) return null;
     return (
-        <div
-            className={`pokedex-token ${isMega ? 'pokedex-token--mega' : ''} ${isCurrent ? 'pokedex-token--current' : ''}`}
-            style={{ backgroundImage: `url(${img})` }}
-        ></div>
+        <div className="pokedex-token-wrapper">
+            <div
+                className={`pokedex-token ${isMega ? 'pokedex-token--mega' : ''} ${isCurrent ? 'pokedex-token--current' : ''}`}
+                style={{ backgroundImage: `url(${img})` }}
+            ></div>
+        </div>
     );
 };
 
@@ -71,6 +74,12 @@ const ModalPokedex = ({ show, onClose, player }) => {
                                                 isMega={step.isMega}
                                                 isCurrent={index === 0}
                                             />
+                                            {step.gmax && (
+                                                <>
+                                                    <div className="pokedex-arrow pokedex-arrow--gmax"></div>
+                                                    <TokenImg pokedex={step.gmax} />
+                                                </>
+                                            )}
                                             {step.branches.length > 0 && (
                                                 <>
                                                     <div className={`pokedex-arrow ${step.branches[0].isMega ? 'pokedex-arrow--mega' : ''}`}>
@@ -78,11 +87,22 @@ const ModalPokedex = ({ show, onClose, player }) => {
                                                     </div>
                                                     <div className="pokedex-branches">
                                                         {step.branches.map(branch => (
-                                                            <TokenImg
-                                                                key={branch.pokedex}
-                                                                pokedex={branch.pokedex}
-                                                                isMega={branch.isMega}
-                                                            />
+                                                            <div key={branch.pokedex} className="pokedex-branch-group">
+                                                                <TokenImg
+                                                                    pokedex={branch.pokedex}
+                                                                    isMega={branch.isMega}
+                                                                    gmax={branch.gmax}
+                                                                />
+                                                                {branch.mega && (
+                                                                    <>
+                                                                        <div className="pokedex-arrow pokedex-arrow--mega"></div>
+                                                                        <TokenImg
+                                                                            pokedex={branch.mega}
+                                                                            isMega={true}
+                                                                        />
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 </>

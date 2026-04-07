@@ -54,6 +54,27 @@
     transform: scale(1.5);
 }
 
+.dynamax-btn {
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    img {
+        width: 100%;
+        height: auto;
+    }
+    &:hover { transform: scale(1.2); }
+}
+.dynamax-off {
+    filter: grayscale(100%) brightness(0.5);
+}
+.dynamax-on {
+    filter: drop-shadow(0 0 8px rgba(220, 50, 50, 0.9));
+}
+
 
 .MainPokemons_Player{
     display: flex;

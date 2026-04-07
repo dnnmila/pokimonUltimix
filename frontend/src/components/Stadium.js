@@ -524,11 +524,13 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
                  ))}
                 </div>
 
+                {player.dynamax && (
                 <div className="player_team">
                 {(player.gmaxes || []).map((pokemon) => (
                     <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon}/>
                  ))}
                 </div>
+                )}
             </div>
             )}
             <label className="switch">

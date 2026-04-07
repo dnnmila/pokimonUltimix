@@ -74,7 +74,11 @@ class Game {
         console.log('setting battle pokemon for ' + player);
          console.log('setting battle PokemonId ' + pokemon);
         if (player === 'MyPlayer') {
-            this.addMyPlayerPkm(this.players[this.currentTurn].pokemons.find(p => p.id === pokemon));
+            const currentPlayer = this.players[this.currentTurn];
+            const found = currentPlayer.pokemons.find(p => p.id === pokemon)
+                || currentPlayer.megas.find(p => p.id === pokemon)
+                || (currentPlayer.gmaxes || []).find(p => p.id === pokemon);
+            this.addMyPlayerPkm(found);
         } else if (player === 'Rival') {
             this.addMyRivalPkm(this.CurrentRival?.pokemons?.find(p => p.id === pokemon));
         }

@@ -1,4 +1,5 @@
 import React, {useState,useEffect,useCallback} from 'react';
+import dinamaxImg from '../images/dinamax.png';
 import Pokemon from './Pokemon';
 import AddPokemon from './AddPokemon';
 import ModalMonedas from './modals/ModalMonedas.js';
@@ -9,7 +10,7 @@ import ModalBattle from './modals/ModalBattle.js';
 
 
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega}) => {
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax}) => {
 
     const handleKeyDown = useCallback((event) => {
         switch(event.key) {
@@ -177,7 +178,14 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
             <div className='NextTurnButton' onClick={onNextTurn} > <div className='nextTurnImage'> </div>Next Turn</div>
             </div>
 
-            <div className='Botom_PlayerView'> 
+            <div className='Botom_PlayerView'>
+
+            <div
+                className={`dynamax-btn ${currentPlayerView.dynamax ? 'dynamax-on' : 'dynamax-off'}`}
+                onClick={() => toggleDynamax(currentPlayerView.id)}
+            >
+                <img src={dinamaxImg} alt="Dynamax" />
+            </div>
 
             <div className='WildPokemon_imput'>
              <input type="text" value={inputWildPokemon} onChange={handleInputChange} />
