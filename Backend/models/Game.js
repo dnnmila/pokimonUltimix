@@ -30,6 +30,7 @@ class Game {
         this.rivalBonusAtk3 = 0;
         this.battlePhase = 'PokemonSelection';
         this.battlePublic = false;
+        this.generation = 1;
 
     
 
@@ -163,7 +164,9 @@ class Game {
                 this.weatherTurns +=1;
             }
         }
-    
+
+        this.battlePublic = false;
+
     }
 
     previousTurn() {
@@ -185,6 +188,8 @@ class Game {
             this.players[this.currentTurn].startTurn();
             this.players[this.currentTurn].isMyTurn = true;
         }
+
+        this.battlePublic = false;
 
         if (this.currentTurn + 1 === this.players.length) {
             // Todos los jugadores han completado su turno, se terminó la ronda

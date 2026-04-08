@@ -19,7 +19,7 @@ const LEADERS = [
     { name: 'Rocket',   imgs: ['gymR1_1', 'gymR1_2'], badge: 'masterball' },
 ];
 
-const getImg = (name) => require(`../../images/Leaders2/${name}.png`);
+const getImg = (name) => require(`../../images/Leaders1/${name}.png`);
 const getBadge = (name) => require(`../../images/badges/${name}.png`);
 
 const ModalLeaderViewer = ({ show, onClose }) => {

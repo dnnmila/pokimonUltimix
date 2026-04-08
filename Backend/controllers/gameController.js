@@ -7,7 +7,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 
 
-import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame } from "../gameInstance.js";
+import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame, setGameRivals } from "../gameInstance.js";
 import { getIo } from "../socketIo.js";
 
 async function openDb() {
@@ -408,9 +408,11 @@ export const leaderBattle = async (req, res) => {
     }
 };
 
-export const loadGameController = (req, res) => {
+export const loadGameController = async (req, res) => {
     try {
         const game = loadGame();
+        const db = await openDb();
+        await loadRivalsForGeneration(game.generation || 1, db);
         updateGameAndNotify();
         res.status(200).json({ message: 'Partida cargada correctamente', round: game.round });
     } catch (error) {
@@ -633,12 +635,93 @@ export const setBattlePhase = async (req, res) => {
         game.setBattlePhase(newPhase);
         updateGameAndNotify();
         res.status(200).json({ message: 'Fase de batalla establecida ' });
-        
 
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+};
+
+// Carga rivales únicos desde DB para una generación y los inyecta al juego
+async function loadRivalsForGeneration(generation, db) {
+    const rows = await db.all(
+        "SELECT DISTINCT RIVAL_ID, RIVAL_NAME FROM pokemonsLeaders WHERE GENERATION = ? AND RIVAL_ID IS NOT NULL",
+        [generation]
+    );
+    setGameRivals(rows.map(r => ({ id: r.RIVAL_ID, name: r.RIVAL_NAME })));
 }
+
+export const setGeneration = async (req, res) => {
+    try {
+        const { generation } = req.body;
+        const db = await openDb();
+        const game = getGame();
+        game.generation = generation;
+        await loadRivalsForGeneration(generation, db);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Generación establecida', generation });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getLeadersByGeneration = async (req, res) => {
+    try {
+        const generation = parseInt(req.query.generation) || 1;
+        const db = await openDb();
+
+        // RIVAL_ID y RIVAL_NAME vienen directo de la DB — sin hardcode
+        const rows = await db.all(
+            "SELECT UID, POKEDEX, RIVAL_ID, RIVAL_NAME FROM pokemonsLeaders WHERE GENERATION = ? AND RIVAL_ID IS NOT NULL ORDER BY UID",
+            [generation]
+        );
+
+        const getCategory = (img) => {
+            if (!img) return 'other';
+            if (img.startsWith('gymE')) return 'elite';
+            if (img.startsWith('gymC')) return 'champion';
+            if (img.startsWith('gymR')) return 'rocket';
+            if (img.startsWith('gym'))  return 'gym';
+            if (img.startsWith('Riv'))  return 'rival';
+            return 'other';
+        };
+
+        // Agrupa por RIVAL_ID (viene de la DB)
+        const map = {};
+        for (const row of rows) {
+            const key = row.RIVAL_ID;
+            const num = parseInt(row.UID.match(/\d+$/)[0]);
+            if (!map[key]) map[key] = { rivalId: key, rivalName: row.RIVAL_NAME, img: row.POKEDEX, pokemons: [] };
+            map[key].pokemons.push({ uid: row.UID, num });
+        }
+
+        const CATEGORY_ORDER = ['gym', 'elite', 'champion', 'rocket', 'rival', 'other'];
+
+        const leaders = Object.values(map).map(l => {
+            const sorted = l.pokemons.sort((a, b) => a.num - b.num);
+            const category = getCategory(l.img);
+            const numMatch = l.img?.match(/(\d+)/);
+            const sortKey = numMatch ? parseInt(numMatch[1]) : 99;
+            return {
+                leaderKey: l.rivalId,
+                uid1: sorted[0]?.uid,
+                uid2: sorted[1]?.uid,
+                img: l.img,
+                category,
+                sortKey,
+            };
+        });
+
+        leaders.sort((a, b) => {
+            const catDiff = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+            if (catDiff !== 0) return catDiff;
+            return a.sortKey - b.sortKey;
+        });
+
+        res.status(200).json(leaders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
 

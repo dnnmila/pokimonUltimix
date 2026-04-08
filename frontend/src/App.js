@@ -2,6 +2,7 @@
 import React, { useState ,useEffect} from 'react';
 import Game from './components/Game.js';
 import MenuPlayers from './components/MenuPlayers.js';
+import SelectGeneration from './components/SelectGeneration.js';
 import Player from './components/Player.js';
 import Stadium from './components/Stadium.js';
 import SimPlayer from './components/SimPlayer.js';
@@ -724,12 +725,24 @@ const onChangeBattlePhase = async (newPhase) => {
         if (response.ok) {
             const updatedPlayer = await response.json();
             console.log(updatedPlayer);
-            // Actualiza el estado del juego con el jugador actualizado
         } else {
             console.error('Error en la respuesta del servidor:', response.status);
         }
     } catch (error) {
         console.error('Error al asignar Fase de batalla:', error);
+    }
+};
+
+const setGeneration = async (generation) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/set-generation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ generation }),
+        });
+        if (!response.ok) console.error('Error al establecer generación:', response.status);
+    } catch (error) {
+        console.error('Error en setGeneration:', error);
     }
 };
 
@@ -747,6 +760,7 @@ return (
     <Router>
         <Routes>
             <Route path="/" element={<Game onStartGame={startGame} isGameStarted={isGameStarted} onContinueGame={continueGame} onLoadGame={loadGame}/>} />
+            <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax}/>} />

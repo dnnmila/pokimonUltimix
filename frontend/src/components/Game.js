@@ -6,7 +6,7 @@ const Game = ({ onStartGame, onLoadGame }) => {
 
     const handleStartGame = async () => {
         await onStartGame();
-        navigate('/menuPlayers');
+        navigate('/selectGeneration');
     };
 
     const handleLoadGame = async () => {

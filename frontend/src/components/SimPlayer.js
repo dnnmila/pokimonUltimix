@@ -1,33 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 import ModalPokedex from "./modals/ModalPokedex";
 import ModalLeaderViewer from "./modals/ModalLeaderViewer";
+import SERVER_IP from "../config.js";
 
-import imgRivPink1   from '../images/Leaders2/RivPink1.png';
-import imgRivPink2   from '../images/Leaders2/RivPink2.png';
-import imgRivGreen1  from '../images/Leaders2/RivGreen1.png';
-import imgRivGreen2  from '../images/Leaders2/RivGreen2.png';
-import imgRivBlue1   from '../images/Leaders2/RivBlue1.png';
-import imgRivBlue2   from '../images/Leaders2/RivBlue2.png';
-import imgRivYellow1 from '../images/Leaders2/RivYellow1.png';
-import imgRivYellow2 from '../images/Leaders2/RivYellow2.png';
-import imgRivRed1    from '../images/Leaders2/RivRed1.png';
-import imgRivRed2    from '../images/Leaders2/RivRed2.png';
+const LEADER_PREFIXES = ['gym', 'Riv'];
 
-const RIV_IMAGES = {
-    RivPink1: imgRivPink1, RivPink2: imgRivPink2,
-    RivGreen1: imgRivGreen1, RivGreen2: imgRivGreen2,
-    RivBlue1: imgRivBlue1, RivBlue2: imgRivBlue2,
-    RivYellow1: imgRivYellow1, RivYellow2: imgRivYellow2,
-    RivRed1: imgRivRed1, RivRed2: imgRivRed2,
-};
-
-const getPkmImg = (pokedex) => {
-    if (RIV_IMAGES[pokedex]) return RIV_IMAGES[pokedex];
-    if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
+const getPkmImg = (pokedex, generation = 1) => {
+    if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
     return require(`../images/POKEMON/${pokedex}.png`);
 };
@@ -36,6 +19,16 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
+    const generation = game?.generation || 1;
+
+    const [leaders, setLeaders] = useState([]);
+
+    useEffect(() => {
+        fetch(`${SERVER_IP}/get-leaders?generation=${generation}`)
+            .then(r => r.json())
+            .then(data => setLeaders(data))
+            .catch(console.error);
+    }, [generation]);
 
     // Inputs para configurar el rival de simulacion
     const [showSetup, setShowSetup] = useState(false);
@@ -210,7 +203,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
     const handleSelectMyPokemon = (pokemon) => {
         setMyPokemon(pokemon);
-        setMyPokemonImg(getPkmImg(pokemon.pokedex));
+        setMyPokemonImg(getPkmImg(pokemon.pokedex, generation));
         setMyPokemonType1_class(`type_${pokemon.type1}`);
         setMyPokemonType2_class(`type_${pokemon.type2}`);
         setMyPkm_type_id1(`types_${pokemon.id}_1`);
@@ -220,7 +213,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
     const handleSelectRivalPokemon = async (pokemon) => {
         setRivalPokemon(pokemon);
-        setRivalPokemonImg(getPkmImg(pokemon.pokedex));
+        setRivalPokemonImg(getPkmImg(pokemon.pokedex, generation));
         setRivalPokemonType1_class(`type_${pokemon.type1}`);
         setRivalPokemonType2_class(`type_${pokemon.type2}`);
         setRivalPkm_type_id1(`types_${pokemon.id}_1`);
@@ -381,33 +374,36 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
                     <div className="sim-player__setup-leader">
                         <div className='Leaders-to-battle'>
-                            <div className="Leader leader1" onClick={() => handleSimLeader("Gym1","Brock1","Brock2")}></div>
-                            <div className="Leader leader2" onClick={() => handleSimLeader("Gym2","Misty1","Misty2")}></div>
-                            <div className="Leader leader3" onClick={() => handleSimLeader("Gym3","Surge1","Surge2")}></div>
-                            <div className="Leader leader4" onClick={() => handleSimLeader("Gym4","Erika1","Erika2")}></div>
-                            <div className="Leader leader5" onClick={() => handleSimLeader("Gym5","Koga1","Koga2")}></div>
-                            <div className="Leader leader6" onClick={() => handleSimLeader("Gym6","Sabrina1","Sabrina2")}></div>
-                            <div className="Leader leader7" onClick={() => handleSimLeader("Gym7","Blaine1","Blaine2")}></div>
-                            <div className="Leader leader8" onClick={() => handleSimLeader("Gym8","Giovanni1","Giovanni2")}></div>
+                            {leaders.filter(l => l.category === 'gym').map(l => {
+                                const img = l.img ? getPkmImg(l.img, generation) : null;
+                                return <div key={l.leaderKey} className="Leader"
+                                    style={img ? { backgroundImage: `url(${img})` } : {}}
+                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
+                            })}
                         </div>
                         <div className='Elite-to-battle'>
-                            <div className="Elite Elite1" onClick={() => handleSimLeader("Elite1","Agatha1","Agatha2")}></div>
-                            <div className="Elite Elite2" onClick={() => handleSimLeader("Elite2","Bruno1","Bruno2")}></div>
-                            <div className="Elite Elite3" onClick={() => handleSimLeader("Elite3","Lorelei1","Lorelei2")}></div>
-                            <div className="Elite Elite4" onClick={() => handleSimLeader("Elite4","Lance1","Lance2")}></div>
+                            {leaders.filter(l => l.category === 'elite').map(l => {
+                                const img = l.img ? getPkmImg(l.img, generation) : null;
+                                return <div key={l.leaderKey} className="Elite"
+                                    style={img ? { backgroundImage: `url(${img})` } : {}}
+                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
+                            })}
                         </div>
                         <div className='Special-to-battle'>
-                            <div className="Elite Rocket1" onClick={() => handleSimLeader("Rocket","Rocket1","Rocket2")}></div>
-                            <div className="Elite Blue1" onClick={() => handleSimLeader("BlueC1","Blue1","Blue2")}></div>
-                            <div className="Elite Blue2" onClick={() => handleSimLeader("BlueC2","Blue3","Blue4")}></div>
-                            <div className="Elite Blue3" onClick={() => handleSimLeader("BlueC3","Blue5","Blue6")}></div>
+                            {leaders.filter(l => l.category === 'champion' || l.category === 'rocket').map(l => {
+                                const img = l.img ? getPkmImg(l.img, generation) : null;
+                                return <div key={l.leaderKey} className="Elite"
+                                    style={img ? { backgroundImage: `url(${img})` } : {}}
+                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
+                            })}
                         </div>
                         <div className='Gary-to-battle'>
-                            <div className="Elite GaryPink"   onClick={() => handleSimLeader("GaryPink",  "Gary1",  "Gary2")}></div>
-                            <div className="Elite GaryGreen"  onClick={() => handleSimLeader("GaryGreen", "Gary3",  "Gary4")}></div>
-                            <div className="Elite GaryBlue"   onClick={() => handleSimLeader("GaryBlue",  "Gary5",  "Gary6")}></div>
-                            <div className="Elite GaryYellow" onClick={() => handleSimLeader("GaryYellow","Gary7",  "Gary8")}></div>
-                            <div className="Elite GaryRed"    onClick={() => handleSimLeader("GaryRed",   "Gary9",  "Gary10")}></div>
+                            {leaders.filter(l => l.category === 'rival').map(l => {
+                                const img = l.img ? getPkmImg(l.img, generation) : null;
+                                return <div key={l.leaderKey} className="Elite"
+                                    style={img ? { backgroundImage: `url(${img})` } : {}}
+                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
+                            })}
                         </div>
                     </div>
                 </div>

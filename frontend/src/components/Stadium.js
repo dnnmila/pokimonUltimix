@@ -3,33 +3,16 @@ import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 
-import imgRivPink1   from '../images/Leaders2/RivPink1.png';
-import imgRivPink2   from '../images/Leaders2/RivPink2.png';
-import imgRivGreen1  from '../images/Leaders2/RivGreen1.png';
-import imgRivGreen2  from '../images/Leaders2/RivGreen2.png';
-import imgRivBlue1   from '../images/Leaders2/RivBlue1.png';
-import imgRivBlue2   from '../images/Leaders2/RivBlue2.png';
-import imgRivYellow1 from '../images/Leaders2/RivYellow1.png';
-import imgRivYellow2 from '../images/Leaders2/RivYellow2.png';
-import imgRivRed1    from '../images/Leaders2/RivRed1.png';
-import imgRivRed2    from '../images/Leaders2/RivRed2.png';
+const LEADER_PREFIXES = ['gym', 'Riv'];
 
-const RIV_IMAGES = {
-    RivPink1: imgRivPink1, RivPink2: imgRivPink2,
-    RivGreen1: imgRivGreen1, RivGreen2: imgRivGreen2,
-    RivBlue1: imgRivBlue1, RivBlue2: imgRivBlue2,
-    RivYellow1: imgRivYellow1, RivYellow2: imgRivYellow2,
-    RivRed1: imgRivRed1, RivRed2: imgRivRed2,
-};
-
-const getPkmImg = (pokedex) => {
-    if (RIV_IMAGES[pokedex]) return RIV_IMAGES[pokedex];
-    if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
+const getPkmImg = (pokedex, generation = 1) => {
+    if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
     return require(`../images/POKEMON/${pokedex}.png`);
 };
 
-const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal}) => {
+const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal}) => {
+    const generation = game?.generation || 1;
     
   
     const [myPokemon, setMyPokemon] = useState();
@@ -308,7 +291,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         console.log(pokemon.name);
         setMyStatus(pokemon.status);
         //ajuste agregando la carpeta de tokens ultimixdnn
-        setMyPokemonImg(getPkmImg(pokemon.pokedex));
+        setMyPokemonImg(getPkmImg(pokemon.pokedex, generation));
         //Clase Type
         setMyPokemonType1_class(`type_${pokemon.type1}`);
         setMyPokemonType2_class(`type_${pokemon.type2}`);
@@ -326,7 +309,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
         console.log(pokemon.name);
         setRivalStatus(pokemon.status);
         //ajuste agregando la carpeta de tokens ultimixdnn
-        setRivalPokemonImg(getPkmImg(pokemon.pokedex));
+        setRivalPokemonImg(getPkmImg(pokemon.pokedex, generation));
         //Clase Type
         setRivalPokemonType1_class(`type_${pokemon.type1}`);
         setRivalPokemonType2_class(`type_${pokemon.type2}`);
@@ -378,7 +361,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
     }
 
      //Battle  functions
-    function sumTotal (PokemonLevel,AttackStrenght,Bonus,Dice, player){
+    function sumTotal (PokemonLevel,AttackStrenght,Bonus,Dice){
         return PokemonLevel + AttackStrenght + Bonus + Dice;
    }
  
@@ -513,28 +496,28 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
                 <div className="player-name">{player.name}</div>
                 <div className="player_team">
                 {(player.pokemons || []).map((pokemon) => (
-                    <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon}/>
+                    <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon} generation={generation}/>
 
                  ))}
                 </div>
 
                 <div className="player_team">
                 {(player.megas || []).map((pokemon) => (
-                    <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon}/>
+                    <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon} generation={generation}/>
                  ))}
                 </div>
 
                 {player.dynamax && (
                 <div className="player_team">
                 {(player.gmaxes || []).map((pokemon) => (
-                    <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon}/>
+                    <PokemonBattleListed key = {player.name + pokemon.id} pokemon={pokemon}  SelectPokemon={handleSelectMyPokemon} generation={generation}/>
                  ))}
                 </div>
                 )}
             </div>
             )}
             <label className="switch">
-                <input type="checkbox" onChange={onToggleBattlePublic} />
+                <input type="checkbox" checked={game.battlePublic} onChange={onToggleBattlePublic} />
                 <span className="slider round"></span>
             </label>
 
@@ -543,7 +526,7 @@ const Stadium = ({player,rival, onHandleBattlePokemon, onHandleBattleAttack, onH
                 <div className="rival-name">{rival.name}</div>
                 <div  className="rival_team">
                 {(rival.pokemons || []).map((pokemon) => (
-                 <PokemonBattleListed key = {rival.name + rival.id} pokemon={pokemon}  SelectPokemon={handleSelectRivalPokemon}/>
+                 <PokemonBattleListed key = {rival.name + rival.id} pokemon={pokemon}  SelectPokemon={handleSelectRivalPokemon} generation={generation}/>
                  ))}
                 </div>
             </div>

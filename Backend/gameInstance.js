@@ -20,39 +20,15 @@ let game = new Game("xxx1");
 
 
 export const initializeGame = () =>{
-    
+    // Solo el rival permanente de batallas salvajes — los líderes se cargan desde DB al setear generación
+    game.rivals = [new Rival("Rival", "Wild Pokemon")];
+    return game;
+};
 
- 
-    const rivals = [
-    new Rival("Gym1","Brook"),
-    new Rival("Gym2","Misty"),
-    new Rival("Gym3","Surge"),
-    new Rival("Gym4","Erika"),
-    new Rival("Gym5","Koga"),
-    new Rival("Gym6","Sabrina"),
-    new Rival("Gym7","Blaine"),
-    new Rival("Gym8","Giovani"),
-    new Rival("Rival","Wild Pokemon"),
-    new Rival("Gary","Gary"),
-    new Rival("GaryPink","Gary"),
-    new Rival("GaryGreen","Gary"),
-    new Rival("GaryBlue","Gary"),
-    new Rival("GaryYellow","Gary"),
-    new Rival("GaryRed","Gary"),
-    new Rival("Rocket","Team Rocket"),
-    new Rival("Elite1","Agatha"),
-    new Rival("Elite2","Bruno"),
-    new Rival("Elite3","Lorelei"),
-    new Rival("Elite4","Lance"),
-    new Rival("BlueC1","Blue"),
-    new Rival("BlueC2","Blue"),
-    new Rival("BlueC3","Blue"),
-
-
-    ];
-    rivals.forEach(rival => game.addRival(rival)); 
-    
-    return game;   
+export const setGameRivals = (rivalsFromDb) => {
+    // Conserva el rival salvaje permanente y reemplaza el resto
+    const wildRival = game.rivals.find(r => r.id === 'Rival') || new Rival("Rival", "Wild Pokemon");
+    game.rivals = [wildRival, ...rivalsFromDb.map(r => new Rival(r.id, r.name))];
 };
 
 
@@ -135,35 +111,11 @@ export const loadGame = () => {
         return player;
     });
 
-    const freshRivals = [
-        new Rival("Gym1","Brook"),
-        new Rival("Gym2","Misty"),
-        new Rival("Gym3","Surge"),
-        new Rival("Gym4","Erika"),
-        new Rival("Gym5","Koga"),
-        new Rival("Gym6","Sabrina"),
-        new Rival("Gym7","Blaine"),
-        new Rival("Gym8","Giovani"),
-        new Rival("Rival","Wild Pokemon"),
-        new Rival("Gary","Gary"),
-        new Rival("GaryPink","Gary"),
-        new Rival("GaryGreen","Gary"),
-        new Rival("GaryBlue","Gary"),
-        new Rival("GaryYellow","Gary"),
-        new Rival("GaryRed","Gary"),
-        new Rival("Rocket","Team Rocket"),
-        new Rival("Elite1","Agatha"),
-        new Rival("Elite2","Bruno"),
-        new Rival("Elite3","Lorelei"),
-        new Rival("Elite4","Lance"),
-        new Rival("BlueC1","Blue"),
-        new Rival("BlueC2","Blue"),
-        new Rival("BlueC3","Blue"),
-    ];
-    newGame.rivals = freshRivals;
+    // Los rivales se restauran vacíos — loadGameController los recarga desde DB
+    newGame.rivals = [new Rival("Rival", "Wild Pokemon")];
 
     if (saved.CurrentRival && saved.CurrentRival.id) {
-        const restoredRival = freshRivals.find(r => r.id === saved.CurrentRival.id);
+        const restoredRival = newGame.rivals.find(r => r.id === saved.CurrentRival.id);
         if (restoredRival) {
             restoredRival.pokemons = (saved.CurrentRival.pokemons || []).map(reconstructPokemon);
             newGame.CurrentRival = restoredRival;

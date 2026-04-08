@@ -2,28 +2,10 @@ import Types from "./Types";
 import PokemonBattleListed from "./PokemonBattleListed";
 import Attack from "./Attacks";
 
-import imgRivPink1   from '../images/Leaders2/RivPink1.png';
-import imgRivPink2   from '../images/Leaders2/RivPink2.png';
-import imgRivGreen1  from '../images/Leaders2/RivGreen1.png';
-import imgRivGreen2  from '../images/Leaders2/RivGreen2.png';
-import imgRivBlue1   from '../images/Leaders2/RivBlue1.png';
-import imgRivBlue2   from '../images/Leaders2/RivBlue2.png';
-import imgRivYellow1 from '../images/Leaders2/RivYellow1.png';
-import imgRivYellow2 from '../images/Leaders2/RivYellow2.png';
-import imgRivRed1    from '../images/Leaders2/RivRed1.png';
-import imgRivRed2    from '../images/Leaders2/RivRed2.png';
+const LEADER_PREFIXES = ['gym', 'Riv'];
 
-const RIV_IMAGES = {
-    RivPink1: imgRivPink1, RivPink2: imgRivPink2,
-    RivGreen1: imgRivGreen1, RivGreen2: imgRivGreen2,
-    RivBlue1: imgRivBlue1, RivBlue2: imgRivBlue2,
-    RivYellow1: imgRivYellow1, RivYellow2: imgRivYellow2,
-    RivRed1: imgRivRed1, RivRed2: imgRivRed2,
-};
-
-const getPkmImg = (pokedex) => {
-    if (RIV_IMAGES[pokedex]) return RIV_IMAGES[pokedex];
-    if (pokedex.startsWith('gym')) return require(`../images/Leaders2/${pokedex}.png`);
+const getPkmImg = (pokedex, generation = 1) => {
+    if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
     return require(`../images/POKEMON/${pokedex}.png`);
 };
@@ -54,6 +36,7 @@ const StadiumMirrorModal = ({ game }) => {
                                             key={player.name + pokemon.id}
                                             pokemon={pokemon}
                                             SelectPokemon={() => {}}
+                                            generation={game.generation}
                                         />
                                     ))}
                                 </div>
@@ -63,6 +46,7 @@ const StadiumMirrorModal = ({ game }) => {
                                             key={player.name + pokemon.id}
                                             pokemon={pokemon}
                                             SelectPokemon={() => {}}
+                                            generation={game.generation}
                                         />
                                     ))}
                                 </div>
@@ -73,6 +57,7 @@ const StadiumMirrorModal = ({ game }) => {
                                             key={player.name + pokemon.id}
                                             pokemon={pokemon}
                                             SelectPokemon={() => {}}
+                                            generation={game.generation}
                                         />
                                     ))}
                                 </div>
@@ -88,6 +73,7 @@ const StadiumMirrorModal = ({ game }) => {
                                             key={rival.name + index}
                                             pokemon={pokemon}
                                             SelectPokemon={() => {}}
+                                            generation={game.generation}
                                         />
                                     ))}
                                 </div>
@@ -100,7 +86,7 @@ const StadiumMirrorModal = ({ game }) => {
                 {game.battlePhase === 'AttackSelection'  && playerPkm && rivalPkm && (
                      <div className="mirror-attack-select-main">
                         <div className="mirror-mypkm-main">
-                            <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex)})` }}></div>
+                            <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-mypkm-name">{playerPkm.name}</div>
                             <div className="mirror-mypkm-level">Lv: {playerPkm.totalLevel}</div>
                             <div className="types_div">
@@ -118,7 +104,7 @@ const StadiumMirrorModal = ({ game }) => {
                         </div>
 
                         <div className="mirror-rivalpkm-main">
-                            <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex)})` }}></div>
+                            <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-rivalpkm-name">{rivalPkm.name}</div>
                             <div className="mirror-rivalpkm-level">Lv: {rivalPkm.totalLevel}</div>
                             <div className="types_div">
@@ -137,12 +123,12 @@ const StadiumMirrorModal = ({ game }) => {
                 )}
 
                 {/* Fase: totales superpuestos centrados */}
-                {game.battlePhase === 'RollDice' && (
+                {game.battlePhase === 'RollDice' && playerPkm && rivalPkm && (
                     <div className="mirror-attack-select-main">
 
 
                             <div className="mirror-mypkm-main">
-                            <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex)})` }}></div>
+                            <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-mypkm-name">{playerPkm.name}</div>
                             <div className="mirror-mypkm-level">Lv: {playerPkm.totalLevel}</div>
                             <div className="types_div">
@@ -158,7 +144,7 @@ const StadiumMirrorModal = ({ game }) => {
                         </div>
 
                         <div className="mirror-rivalpkm-main">
-                            <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex)})` }}></div>
+                            <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-rivalpkm-name">{rivalPkm.name}</div>
                             <div className="mirror-rivalpkm-level">Lv: {rivalPkm.totalLevel}</div>
                             <div className="types_div">
@@ -187,7 +173,7 @@ const StadiumMirrorModal = ({ game }) => {
 
                     <div className='MyTotal'>
                         <div>{playerPkm.totalLevel}  </div>
-                        <div>{playerAtk.strength}  </div>
+                        <div>{playerAtk?.strength ?? '-'}  </div>
                         <div>{game.myBonusFinal}  </div>
                         <div>{game.myPlayerDice}  </div>
                     </div>
@@ -201,10 +187,10 @@ const StadiumMirrorModal = ({ game }) => {
                     </div>
                     <div className='RivalTotal'>
                         <div>{rivalPkm.totalLevel}  </div>
-                        <div>{rivalAtk.strength}  </div>
+                        <div>{rivalAtk?.strength ?? '-'}  </div>
                         <div>{game.rivalBonusFinal}  </div>
                         <div>{game.myRivalDice}  </div>
-                      
+
                     </div>
                     </div>
                 )}
