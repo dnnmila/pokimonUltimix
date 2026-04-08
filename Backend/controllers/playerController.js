@@ -734,17 +734,6 @@ export const getEvolutionChain = async (req, res) => {
 
             const branches = [];
 
-            // Rama alternativa via EVOLUTION2
-            if (data.EVOLUTION2 && data.EVOLUTION2 !== '000') {
-                const evo2 = await db.get(
-                    "SELECT POKEDEX, NAME, TYPE1, TYPE2, FORM FROM pokemons WHERE POKEDEX = ? LIMIT 1",
-                    [data.EVOLUTION2]
-                );
-                if (evo2) {
-                    branches.push({ pokedex: evo2.POKEDEX, name: evo2.NAME, type1: evo2.TYPE1, type2: evo2.TYPE2, isMega: evo2.FORM === 'Mega', mega: null, gmax: null });
-                }
-            }
-
             // G-Max: campo separado, no en branches
             let gmax = null;
             if (data.GMAX && data.GMAX !== 'No' && data.GMAX !== 'NONE') {
@@ -753,6 +742,28 @@ export const getEvolutionChain = async (req, res) => {
                     [data.GMAX]
                 );
                 if (gmaxEntry) gmax = gmaxEntry.POKEDEX;
+            }
+
+            // Helper para construir un branch con su mega y gmax
+            const buildBranch = async (pokedexId) => {
+                const b = await db.get(
+                    "SELECT POKEDEX, NAME, TYPE1, TYPE2, FORM, MEGA, EVOLUTION, GMAX FROM pokemons WHERE POKEDEX = ? AND FORM != 'Mega' AND FORM != 'GMax' LIMIT 1",
+                    [pokedexId]
+                );
+                if (!b) return null;
+                const branchMega = (b.MEGA === 'Yes' && b.EVOLUTION && b.EVOLUTION !== '000') ? b.EVOLUTION : null;
+                const branchGmax = (b.GMAX && b.GMAX !== 'No' && b.GMAX !== 'NONE') ? b.GMAX : null;
+                return { pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: false, mega: branchMega, gmax: branchGmax };
+            };
+
+            // Si hay EVOLUTION2: ambas evoluciones son branches al mismo nivel, parar cadena lineal
+            if (data.EVOLUTION2 && data.EVOLUTION2 !== '000') {
+                const branch1 = await buildBranch(data.EVOLUTION);
+                const branch2 = await buildBranch(data.EVOLUTION2);
+                if (branch1) branches.push(branch1);
+                if (branch2) branches.push(branch2);
+                chain.push({ pokedex: data.POKEDEX, name: data.NAME, type1: data.TYPE1, type2: data.TYPE2, isMega: data.FORM === 'Mega', gmax, branches });
+                break;
             }
 
             // Si tiene mega principal via EVOLUTION, agregarla a branches
@@ -774,9 +785,7 @@ export const getEvolutionChain = async (req, res) => {
             );
             for (const b of preevoBranches) {
                 if (!branches.find(br => br.pokedex === b.POKEDEX)) {
-                    // Si este branch tiene mega, incluir su pokedex
                     const branchMega = (b.MEGA === 'Yes' && b.EVOLUTION && b.EVOLUTION !== '000') ? b.EVOLUTION : null;
-                    // Si este branch tiene gmax, incluirlo
                     const branchGmax = (b.GMAX && b.GMAX !== 'No' && b.GMAX !== 'NONE') ? b.GMAX : null;
                     branches.push({ pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: b.FORM === 'Mega', mega: branchMega, gmax: branchGmax });
                 }
