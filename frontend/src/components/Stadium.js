@@ -8,7 +8,7 @@ const LEADER_PREFIXES = ['gym', 'Riv'];
 const getPkmImg = (pokedex, generation = 1) => {
     if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
-    return require(`../images/POKEMON/${pokedex}.png`);
+    return require(`../images/tokens_ultimix/${pokedex}.png`);
 };
 
 const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal}) => {
@@ -130,8 +130,9 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                 return -2;
             else 
                     return 0;
+                //Pendiente de ajuster en modal y simPlayer
         } else if (Attack_type.includes("GROUND")) {
-            if (PkmRival_type.includes("POISON") || PkmRival_type.includes("ROCK") || PkmRival_type.includes("FIRE") || PkmRival_type.includes("ELECTRIC") || PkmRival_type.includes("STEEL"))
+            if (PkmRival_type.includes("POISON") || PkmRival_type.includes("ROCK") || PkmRival_type.includes("FIRE") || PkmRival_type.includes("ELECTRIC") || PkmRival_type.includes("STEEL") || PkmRival_type.includes("ICE")   )
                 return 2;
             else if (PkmRival_type.includes("FLYING") || PkmRival_type.includes("BUG") || PkmRival_type.includes("GRASS"))
                 return -2;
@@ -585,7 +586,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
             </div>
 
             <div className='MyPokemon'>
-            <div className='Attack-selected-mypoke'>{myAttack.name} {myAttack.strength}  </div>
+            <div className='Attack-selected-mypoke'><Attack attack={myAttack} bonus={myBonusFinal} /></div>
                     <div className='MyTotal_label'>
                         <div>Level </div>+
                         <div>Attack  </div>+
@@ -616,7 +617,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                    
                 </div>
               <div className='RivalPokemon'>
-                    <div className='Attack-selected-rival'>{rivalAttack.name} {rivalAttack.strength}  </div>
+                    <div className='Attack-selected-rival'><Attack attack={rivalAttack} bonus={rivalBonusFinal} /></div>
                     <div className='RivalTotal_label'>
                         <div>Level </div>+
                         <div>Attack  </div>+

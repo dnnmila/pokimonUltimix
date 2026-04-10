@@ -332,13 +332,18 @@ top: 15%;
 
 .Attack-selected-mypoke,.Attack-selected-rival{
     position: absolute;
-    top :25%
+    top: 16%;
+    .Attack {
+        transform: rotate(0deg);
+        width: 28vh;
+        height: 7vw;
+    }
 }
 .Attack-selected-mypoke{
-    left: 21%;
+    left: 16%;
 }
 .Attack-selected-rival{
-    right: 21%;
+    right: 16%;
 }
 
 .myTotalFinal,.rivalTotalFinal{

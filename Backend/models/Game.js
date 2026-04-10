@@ -166,6 +166,23 @@ class Game {
         }
 
         this.battlePublic = false;
+        this.battlePhase = 'PokemonSelection';
+        this.myPlayerPkm = [];
+        this.myRivalPkm = [];
+        this.myPlayerPkmAtk = [];
+        this.myRivalPkmAtk = [];
+        this.myPlayerTotal = 0;
+        this.myRivalTotal = 0;
+        this.myPlayerDice = 0;
+        this.myRivalDice = 0;
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        this.myBonusAtk1 = 0;
+        this.myBonusAtk2 = 0;
+        this.myBonusAtk3 = 0;
+        this.rivalBonusAtk1 = 0;
+        this.rivalBonusAtk2 = 0;
+        this.rivalBonusAtk3 = 0;
 
     }
 
@@ -190,6 +207,23 @@ class Game {
         }
 
         this.battlePublic = false;
+        this.battlePhase = 'PokemonSelection';
+        this.myPlayerPkm = [];
+        this.myRivalPkm = [];
+        this.myPlayerPkmAtk = [];
+        this.myRivalPkmAtk = [];
+        this.myPlayerTotal = 0;
+        this.myRivalTotal = 0;
+        this.myPlayerDice = 0;
+        this.myRivalDice = 0;
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        this.myBonusAtk1 = 0;
+        this.myBonusAtk2 = 0;
+        this.myBonusAtk3 = 0;
+        this.rivalBonusAtk1 = 0;
+        this.rivalBonusAtk2 = 0;
+        this.rivalBonusAtk3 = 0;
 
         if (this.currentTurn + 1 === this.players.length) {
             // Todos los jugadores han completado su turno, se terminó la ronda

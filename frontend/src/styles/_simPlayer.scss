@@ -2,12 +2,13 @@
     position: fixed;
     top: 1rem;
     left: 1rem;
-    width: 6rem;
-    height: 6rem;
+    width: 4rem;
+    height: 4rem;
     background-image: url("../images/Poke_Ball.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+
     cursor: pointer;
     z-index: 100;
     transition: transform 0.15s;
@@ -84,7 +85,7 @@
     align-items: center;
     gap: 1rem;
     margin: 1rem 0;
-    margin-bottom: 5rem;
+    margin-bottom: 1rem;
 
     input {
         padding: 0.4rem 0.8rem;
@@ -112,12 +113,12 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 3rem;
+    gap: 2rem;
 
     .Leaders-to-battle,
     .Elite-to-battle,
     .Special-to-battle {
-        margin-top: 1rem;
+        margin-top: 0.5rem;
     }
 }
 
@@ -128,5 +129,14 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+}
+
+.Attack-selected-mypoke,
+.Attack-selected-rival {
+    .Attack {
+        transform: rotate(0deg);
+        width: 28vh;
+        height: 7vw;
+    }
 }
 

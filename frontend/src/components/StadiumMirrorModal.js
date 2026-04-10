@@ -7,7 +7,7 @@ const LEADER_PREFIXES = ['gym', 'Riv'];
 const getPkmImg = (pokedex, generation = 1) => {
     if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
-    return require(`../images/POKEMON/${pokedex}.png`);
+    return require(`../images/tokens_ultimix/${pokedex}.png`);
 };
 
 const StadiumMirrorModal = ({ game }) => {

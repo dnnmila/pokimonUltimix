@@ -703,6 +703,7 @@ export const getLeadersByGeneration = async (req, res) => {
             const sortKey = numMatch ? parseInt(numMatch[1]) : 99;
             return {
                 leaderKey: l.rivalId,
+                name: l.rivalName,
                 uid1: sorted[0]?.uid,
                 uid2: sorted[1]?.uid,
                 img: l.img,

@@ -12,7 +12,7 @@ const LEADER_PREFIXES = ['gym', 'Riv'];
 const getPkmImg = (pokedex, generation = 1) => {
     if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
-    return require(`../images/POKEMON/${pokedex}.png`);
+    return require(`../images/tokens_ultimix/${pokedex}.png`);
 };
 
 const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
@@ -128,7 +128,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
             else if (PkmRival_type.includes("POISON") || PkmRival_type.includes("GROUND") || PkmRival_type.includes("ROCK") || PkmRival_type.includes("GHOST") || PkmRival_type.includes("STEEL")) return -2;
             else return 0;
         } else if (Attack_type.includes("GROUND")) {
-            if (PkmRival_type.includes("FIRE") || PkmRival_type.includes("ELECTRIC") || PkmRival_type.includes("POISON") || PkmRival_type.includes("ROCK") || PkmRival_type.includes("STEEL")) return 2;
+            if (PkmRival_type.includes("FIRE") || PkmRival_type.includes("ELECTRIC") || PkmRival_type.includes("POISON") || PkmRival_type.includes("ROCK") || PkmRival_type.includes("STEEL") || PkmRival_type.includes("ICE")) return 2;
             else if (PkmRival_type.includes("GRASS") || PkmRival_type.includes("BUG") || PkmRival_type.includes("FLYING")) return -2;
             else return 0;
         } else if (Attack_type.includes("FLYING")) {
@@ -355,7 +355,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                 <div className="leader-viewer-button" onClick={() => setShowLeaderViewer(true)}></div>
             )}
             <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
-            <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} />
+            <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
            
 
             {/* Configurar rival de simulacion */}
@@ -419,6 +419,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                                 key={player.name + pokemon.id}
                                 pokemon={pokemon}
                                 SelectPokemon={handleSelectMyPokemon}
+                                generation={generation}
                             />
                         ))}
                     </div>
@@ -428,6 +429,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                                 key={player.name + pokemon.id}
                                 pokemon={pokemon}
                                 SelectPokemon={handleSelectMyPokemon}
+                                generation={generation}
                             />
                         ))}
                     </div>
@@ -438,6 +440,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                                 key={player.name + pokemon.id}
                                 pokemon={pokemon}
                                 SelectPokemon={handleSelectMyPokemon}
+                                generation={generation}
                             />
                         ))}
                     </div>
@@ -455,6 +458,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                                 key={rival.name + index}
                                 pokemon={pokemon}
                                 SelectPokemon={handleSelectRivalPokemon}
+                                generation={generation}
                             />
                         ))}
                     </div>
@@ -536,7 +540,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                             </div>
 
                             <div className='MyPokemon'>
-                                <div className='Attack-selected-mypoke'>{myAttack.name} {myAttack.strength}</div>
+                                <div className='Attack-selected-mypoke'><Attack attack={myAttack} bonus={myBonusFinal} /></div>
                                 <div className='MyTotal_label'>
                                     <div>Level</div>+<div>Attack</div>+<div>Bonus</div>+<div>Dice</div>=<div>Total</div>
                                 </div>
@@ -559,7 +563,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                             </div>
 
                             <div className='RivalPokemon'>
-                                <div className='Attack-selected-rival'>{rivalAttack.name} {rivalAttack.strength}</div>
+                                <div className='Attack-selected-rival'><Attack attack={rivalAttack} bonus={rivalBonusFinal} /></div>
                                 <div className='RivalTotal_label'>
                                     <div>Level</div>+<div>Attack</div>+<div>Bonus</div>+<div>Dice</div>=<div>Total</div>
                                 </div>

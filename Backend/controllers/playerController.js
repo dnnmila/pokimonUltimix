@@ -42,6 +42,8 @@ async function attachGMaxIfAvailable(player, pokemon, pokemonData, db) {
     if (!pokemonData.GMAX || pokemonData.GMAX === 'No' || pokemonData.GMAX === 'NONE') return;
     const gmaxData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokemonData.GMAX]);
     if (!gmaxData) return;
+    // Eliminar gmax duplicado si ya existe (por si el pokemon fue borrado y re-agregado)
+    player.gmaxes = player.gmaxes.filter(g => g.pokedex !== gmaxData.POKEDEX);
     const atk1 = await getAttack(gmaxData.ATK1, db);
     const atk2 = await getAttack(gmaxData.ATK2, db);
     const atk3 = await getAttack(gmaxData.ATK3, db);
@@ -52,6 +54,8 @@ async function attachGMaxIfAvailable(player, pokemon, pokemonData, db) {
         atk1, atk2, atk3,
         gmaxData.NEXT_LEVEL, gmaxData.EVOLUTION, gmaxData.MEGA
     );
+    // Guardar referencia al pokedex del gmax en el pokemon base para poder limpiarlo despues
+    pokemon.gmaxPokedex = gmaxData.POKEDEX;
     player.addGMax(gmax);
 }
 
@@ -232,6 +236,12 @@ export const evolvePokemon = async (req, res) => {
             return;
         }
 
+        // Limpiar el gmax del pokemon anterior antes de evolucionar
+        const oldPkm = player.pokemons[oldPkmIndex];
+        if (oldPkm?.gmaxPokedex) {
+            player.gmaxes = player.gmaxes.filter(g => g.pokedex !== oldPkm.gmaxPokedex);
+        }
+
         // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos poemonId ultimixdnn
         console.log('newPokemonId' + newPokemonId);
         const rawEvoId = newPokemonId.toString().trim().toUpperCase();
@@ -277,10 +287,11 @@ export const evolvePokemon = async (req, res) => {
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
       
         player.addPokemonbyIndex(newPokemon,oldPkmIndex);
-       
+        // Agregar gmax del pokemon evolucionado si aplica
+        await attachGMaxIfAvailable(player, newPokemon, pokemonData, db);
+
         console.log(player.name + ' ha agreago al pokemon ' + newPokemon.name );
         updateGameAndNotify();
-        // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 
         res.status(200).json({ message: 'Pokémon agregado al jugador', player });
     } catch (error) {
@@ -298,10 +309,15 @@ export const removePokemonToPlayer = async (req, res) => {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
 
-        player.removePokemonById(pokemonId); 
+        // Limpiar el gmax asociado antes de borrar el pokemon
+        const pokemon = player.pokemons.find(p => p.id === pokemonId);
+        if (pokemon?.gmaxPokedex) {
+            player.gmaxes = player.gmaxes.filter(g => g.pokedex !== pokemon.gmaxPokedex);
+        }
+
+        player.removePokemonById(pokemonId);
         console.log(player.name + ' removido pokemon exitosamente');
         updateGameAndNotify();
-        // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 
         res.status(200).json({ message: 'Pokémon removido exitosamente', player });
     } catch (error) {

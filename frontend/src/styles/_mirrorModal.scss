@@ -108,14 +108,23 @@
 }
 
 // Basado en: .MyPokemon_img, .RivalPokemon_img
-.mirror-mypkm-img,
-.mirror-rivalpkm-img {
-    width: 13vw;
-    height: 25vh;
+//Nuevo ajuste dnnmila
+.mirror-mypkm-img{
+       width: 20vw;
+    height: 35vh;
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
+    margin-left: 4rem;
 }
+.mirror-rivalpkm-img {
+        width: 25vw;
+    height: 40vh;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-right: 4rem;}
+
 
 // Basado en: .MyPokemon_name, .RivalPokemon_name
 .mirror-mypkm-name,
@@ -140,7 +149,7 @@
 .mirror-attack-selected-mypoke,
 .mirror-attack-selected-rival {
     position: absolute;
-    top: 12%;
+    top: 5%;
 
     // Override: _attacks.scss usa rotate(90deg), aqui se muestra horizontal
     .Attack {
@@ -252,16 +261,16 @@
     justify-content: center;
     align-items: center;
     position: absolute;
-    font-size: 5rem;
-    color: rgb(251, 94, 80);
-    top: 43%;
+    font-size: 7rem;
+    color: rgb(186, 9, 171);
+    top: 10%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 .mirror-mytotal-final {
-    left: 33%;
+    left: 37%;
 }
 .mirror-rivaltotal-final {
-    right: 33%;
+    right: 37%;
 }
 
 // =============================================================================
