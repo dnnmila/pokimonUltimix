@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 import ModalPokedex from "./modals/ModalPokedex";
 import ModalLeaderViewer from "./modals/ModalLeaderViewer";
+import ModalTiendaSim from "./modals/ModalTiendaSim";
 import SERVER_IP from "../config.js";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
@@ -13,6 +14,10 @@ const getPkmImg = (pokedex, generation = 1) => {
     if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
     return require(`../images/tokens_ultimix/${pokedex}.png`);
+};
+
+const getSafePkmImg = (pokedex, generation = 1) => {
+    try { return getPkmImg(pokedex, generation); } catch { return null; }
 };
 
 const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
@@ -33,8 +38,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     // Inputs para configurar el rival de simulacion
     const [showSetup, setShowSetup] = useState(false);
     const [wildPokemonId, setWildPokemonId] = useState('');
+    const [wildPreviewImg, setWildPreviewImg] = useState(null);
+    const [wildChain, setWildChain] = useState(null);
+    const [showWildModal, setShowWildModal] = useState(false);
     const [showPokedex, setShowPokedex] = useState(false);
     const [showLeaderViewer, setShowLeaderViewer] = useState(false);
+    const [showStore, setShowStore] = useState(false);
+    const [pendingRequest, setPendingRequest] = useState(null);
+    const [showOtherRivals, setShowOtherRivals] = useState(false);
 
     // Fases de batalla (mismo patron que Stadium)
     const [myPokemon, setMyPokemon] = useState();
@@ -80,20 +91,92 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     const [addMyDice, setAddMyDice] = useState(false);
     const [addRivalDice, setAddRivalDice] = useState(false);
 
+    // Detectar cuando el request pendiente fue resuelto (aprobado o denegado)
+    useEffect(() => {
+        if (!pendingRequest) return;
+        const stillPending = (game.pendingPurchases || []).find(r => r.id === pendingRequest.id);
+        if (!stillPending) setPendingRequest(null);
+    }, [game.pendingPurchases, pendingRequest]);
+
+    // Detectar pokemon escaneado por RFID → mostrar el mismo modal que búsqueda manual
+    const prevSimRivalId = React.useRef(null);
+    useEffect(() => {
+        if (!player) return;
+        const rival = player.simRival;
+        if (!rival || !rival.id.startsWith('SimRival-')) return;
+        if (rival.id === prevSimRivalId.current) return; // ya procesado
+        prevSimRivalId.current = rival.id;
+
+        const scannedPokemon = rival.pokemons?.[0];
+        if (!scannedPokemon) return;
+
+        const pokedex = scannedPokemon.pokedex;
+        const img = getSafePkmImg(pokedex, generation);
+        setWildPokemonId(pokedex);
+        setWildPreviewImg(img);
+        setShowSetup(true);
+
+        fetch(`${SERVER_IP}/get-evolution-chain`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pokedexId: pokedex })
+        })
+            .then(r => r.json())
+            .then(data => { setWildChain(data); setShowWildModal(true); })
+            .catch(() => setShowWildModal(false));
+    }, [player?.simRival?.id]);
+
     if (!player) {
         return <div className="sim-player">Jugador no encontrado.</div>;
     }
 
-    const handleSetWildRival = () => {
+    const handleSearchWildPokemon = async () => {
+        if (!wildPokemonId) return;
+        try {
+            const padded = wildPokemonId.padStart(4, '0');
+            const img = getPkmImg(padded, generation);
+            setWildPreviewImg(img);
+            setWildPokemonId(padded);
+            const res = await fetch(`${SERVER_IP}/get-evolution-chain`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pokedexId: padded })
+            });
+            const data = await res.json();
+            setWildChain(data);
+        } catch (e) {
+            setWildPreviewImg(null);
+            setWildChain(null);
+        }
+    };
+
+    const handleConfirmWildPokemon = () => {
         if (!wildPokemonId) return;
         onSimWildBattle(playerId, wildPokemonId);
         setWildPokemonId('');
+        setWildPreviewImg(null);
+        setWildChain(null);
+        setShowWildModal(false);
         setShowSetup(false);
     };
 
     const handleSimLeader = (leaderID, pkm1, pkm2) => {
         onSimLeaderBattle(playerId, leaderID, pkm1, pkm2);
         setShowSetup(false);
+    };
+
+    const handleRequestPurchase = async (item, price) => {
+        try {
+            const res = await fetch(`${SERVER_IP}/request-purchase`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId, item, price })
+            });
+            const data = await res.json();
+            if (res.ok) setPendingRequest({ id: data.purchaseId, item, price });
+        } catch (err) {
+            console.error('Error al solicitar compra:', err);
+        }
     };
 
     async function checkBonusType(Attack_type, PkmRival_type) {
@@ -347,63 +430,172 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
 
     return (
         <div className="sim-player">
+                {/* Home fijo siempre visible */}
             <div className="sim-home-button" onClick={handleNewSimulation}></div>
+
+            {/* Info nombre/monedas — solo en setup */}
             {(!rival || showSetup) && (
-                <div className="pokedex-button" onClick={() => setShowPokedex(true)}></div>
+                <div className="sim-player-info">
+                    <span className="sim-player-info-name">{player.name}</span>
+                    <span className="sim-player-info-coins">${player.coins}</span>
+                </div>
             )}
-            {(!rival || showSetup) && (
-                <div className="leader-viewer-button" onClick={() => setShowLeaderViewer(true)}></div>
-            )}
+
             <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
-           
+            <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} />
 
-            {/* Configurar rival de simulacion */}
+            {/* Modal info pokemon salvaje */}
+            {showWildModal && wildChain && (
+                <div className="modal-backdrop" onClick={() => setShowWildModal(false)}>
+                    <div className="sim-wild-modal" onClick={e => e.stopPropagation()}>
+                        <button className="sim-wild-modal-close" onClick={() => setShowWildModal(false)}>✕</button>
+                        <div className="sim-wild-modal-chain">
+                            {wildChain.map((node, i) => {
+                                const nodeImg = getSafePkmImg(node.pokedex, generation);
+                                if (!nodeImg) return null;
+                                return (
+                                    <div key={node.pokedex} className="pokedex-step">
+                                        {i > 0 && <div className="pokedex-arrow">▶</div>}
+                                        <div className="pokedex-token-wrapper">
+                                            <div className={`pokedex-token ${node.isMega ? 'pokedex-token--mega' : ''}`}
+                                                style={{ backgroundImage: `url(${nodeImg})` }} />
+                                        </div>
+                                        {node.gmax && (() => {
+                                            const img = getSafePkmImg(node.gmax, generation);
+                                            return img ? (<><div className="pokedex-arrow pokedex-arrow--gmax"></div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
+                                        })()}
+                                        {node.branches && node.branches.length > 0 && (
+                                            <>
+                                                <div className={`pokedex-arrow ${node.branches[0].isMega ? 'pokedex-arrow--mega' : ''}`}>
+                                                    {node.branches[0].isMega ? '' : '▶'}
+                                                </div>
+                                                <div className="pokedex-branches">
+                                                    {node.branches.map(branch => {
+                                                        const branchImg = getSafePkmImg(branch.pokedex, generation);
+                                                        if (!branchImg) return null;
+                                                        return (
+                                                            <div key={branch.pokedex} className="pokedex-branch-group">
+                                                                <div className="pokedex-token-wrapper">
+                                                                    <div className={`pokedex-token ${branch.isMega ? 'pokedex-token--mega' : ''}`}
+                                                                        style={{ backgroundImage: `url(${branchImg})` }} />
+                                                                </div>
+                                                                {branch.mega && (() => {
+                                                                    const img = getSafePkmImg(branch.mega, generation);
+                                                                    return img ? (<><div className="pokedex-arrow pokedex-arrow--mega"></div><div className="pokedex-token-wrapper"><div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
+                                                                })()}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <button className="sim-wild-modal-fight" onClick={handleConfirmWildPokemon}>⚔</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal rivales secundarios */}
+            {showOtherRivals && (
+                <div className="modal-backdrop" onClick={() => setShowOtherRivals(false)}>
+                    <div className="sim-other-rivals-modal" onClick={e => e.stopPropagation()}>
+                        <div className="sim-other-rivals-title">
+                            Elite 4 / Campeón / Rival
+                            <button className="sim-other-rivals-close" onClick={() => setShowOtherRivals(false)}>✕</button>
+                        </div>
+                        <div className="sim-other-rivals-group">
+                            <div className="sim-other-rivals-label">Elite 4</div>
+                            <div className="sim-other-rivals-row">
+                                {leaders.filter(l => l.category === 'elite').map(l => {
+                                    const img = l.img ? getPkmImg(l.img, generation) : null;
+                                    return <div key={l.leaderKey} className="Elite"
+                                        style={img ? { backgroundImage: `url(${img})` } : {}}
+                                        onClick={() => { handleSimLeader(l.leaderKey, l.uid1, l.uid2); setShowOtherRivals(false); }} />;
+                                })}
+                            </div>
+                        </div>
+                        <div className="sim-other-rivals-group">
+                            <div className="sim-other-rivals-label">Campeón / Especial</div>
+                            <div className="sim-other-rivals-row">
+                                {leaders.filter(l => l.category === 'champion' || l.category === 'rocket').map(l => {
+                                    const img = l.img ? getPkmImg(l.img, generation) : null;
+                                    return <div key={l.leaderKey} className="Elite"
+                                        style={img ? { backgroundImage: `url(${img})` } : {}}
+                                        onClick={() => { handleSimLeader(l.leaderKey, l.uid1, l.uid2); setShowOtherRivals(false); }} />;
+                                })}
+                            </div>
+                        </div>
+                        <div className="sim-other-rivals-group">
+                            <div className="sim-other-rivals-label">Rival</div>
+                            <div className="sim-other-rivals-row">
+                                {leaders.filter(l => l.category === 'rival').map(l => {
+                                    const img = l.img ? getPkmImg(l.img, generation) : null;
+                                    return <div key={l.leaderKey} className="Elite"
+                                        style={img ? { backgroundImage: `url(${img})` } : {}}
+                                        onClick={() => { handleSimLeader(l.leaderKey, l.uid1, l.uid2); setShowOtherRivals(false); }} />;
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Setup principal */}
             {(!rival || showSetup) && (
                 <div className="sim-player__setup">
+                    {/* Wild pokemon */}
                     <div className="sim-player__setup-wild">
-                        <h3>Pokemon Salvaje</h3>
                         <input
-                            type="text"
+                            type="number"
                             placeholder="# Pokedex"
                             value={wildPokemonId}
-                            onChange={(e) => setWildPokemonId(e.target.value)}
+                            onChange={(e) => { setWildPokemonId(e.target.value); setWildPreviewImg(null); }}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchWildPokemon()}
                         />
-                        <button onClick={handleSetWildRival}>Confirmar</button>
+                        <button onClick={handleSearchWildPokemon}>Buscar</button>
+                        {wildPreviewImg && (
+                            <div className="sim-wild-preview" onClick={() => setShowWildModal(true)}>
+                                <img src={wildPreviewImg} alt={wildPokemonId} className="sim-wild-preview-img" />
+                            </div>
+                        )}
                     </div>
 
-                    <div className="sim-player__setup-leader">
-                        <div className='Leaders-to-battle'>
+                    {/* 8 líderes de gimnasio prominentes */}
+                    <div className="sim-gym-leaders">
+                        <div className="sim-gym-leaders-title">Líderes de Gimnasio</div>
+                        <div className="sim-gym-leaders-grid">
                             {leaders.filter(l => l.category === 'gym').map(l => {
                                 const img = l.img ? getPkmImg(l.img, generation) : null;
-                                return <div key={l.leaderKey} className="Leader"
+                                return <div key={l.leaderKey} className="sim-gym-leader-card"
                                     style={img ? { backgroundImage: `url(${img})` } : {}}
                                     onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
                             })}
                         </div>
-                        <div className='Elite-to-battle'>
-                            {leaders.filter(l => l.category === 'elite').map(l => {
-                                const img = l.img ? getPkmImg(l.img, generation) : null;
-                                return <div key={l.leaderKey} className="Elite"
-                                    style={img ? { backgroundImage: `url(${img})` } : {}}
-                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
-                            })}
+                    </div>
+
+                    {/* Botón para Elite4 / Campeón / Rival */}
+                    <div className="sim-other-rivals-btn" onClick={() => setShowOtherRivals(true)}>
+                        <div className="sim-other-rivals-btn-icon"></div>
+                        <span>Elite 4 / Campeón / Rival</span>
+                    </div>
+
+                    {/* Botones inferiores */}
+                    <div className="sim-setup-bottom-btns">
+                        <div className="sim-setup-btn" onClick={() => setShowPokedex(true)}>
+                            <div className="sim-setup-btn-icon sim-topbar-pokedex"></div>
+                            <span>Pokedex</span>
                         </div>
-                        <div className='Special-to-battle'>
-                            {leaders.filter(l => l.category === 'champion' || l.category === 'rocket').map(l => {
-                                const img = l.img ? getPkmImg(l.img, generation) : null;
-                                return <div key={l.leaderKey} className="Elite"
-                                    style={img ? { backgroundImage: `url(${img})` } : {}}
-                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
-                            })}
+                        <div className="sim-setup-btn" onClick={() => setShowLeaderViewer(true)}>
+                            <div className="sim-setup-btn-icon sim-topbar-book"></div>
+                            <span>Guia</span>
                         </div>
-                        <div className='Gary-to-battle'>
-                            {leaders.filter(l => l.category === 'rival').map(l => {
-                                const img = l.img ? getPkmImg(l.img, generation) : null;
-                                return <div key={l.leaderKey} className="Elite"
-                                    style={img ? { backgroundImage: `url(${img})` } : {}}
-                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
-                            })}
+                        <div className={`sim-setup-btn ${pendingRequest ? 'sim-store-button--pending' : ''}`} onClick={() => setShowStore(true)}>
+                            <div className="sim-setup-btn-icon sim-topbar-store"></div>
+                            <span>Tienda</span>
                         </div>
                     </div>
                 </div>

@@ -10,7 +10,7 @@ import ModalBattle from './modals/ModalBattle.js';
 
 
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax}) => {
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase}) => {
 
     const handleKeyDown = useCallback((event) => {
         switch(event.key) {
@@ -46,6 +46,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
     const [showModalCoins, setShowModalCoins] = useState(false);
     const [showModalStore, setShowModalStore] = useState(false);
     const [showModalBattle, setShowModalBattle] = useState(false);
+    const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
 
 
     const handleOpenModalCoins = () => {
@@ -159,7 +160,48 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
      
    
             <ModalMonedas show={showModalCoins} onClose={handleCloseModalCoins} currentPlayer={currentPlayerView} onUpdateCoins={onUpdateCoins}/>
-            <ModalTienda show={showModalStore} onClose={handleCloseModalStore} currentPlayer={currentPlayerView} onUpdateCoins={onUpdateCoins}/>
+            <ModalTienda show={showModalStore} onClose={handleCloseModalStore} currentPlayer={currentPlayerView} onMasterPurchase={onMasterPurchase}/>
+
+            {showPurchaseHistory && (
+                <div className="modal-backdrop" onClick={() => setShowPurchaseHistory(false)}>
+                    <div className="purchase-history-modal" onClick={e => e.stopPropagation()}>
+                        <div className="purchase-history-title">
+                            Historial de Compras
+                            <button className="purchase-history-close" onClick={() => setShowPurchaseHistory(false)}>✕</button>
+                        </div>
+                        {(game.purchaseHistory || []).length === 0 ? (
+                            <div className="purchase-history-empty">Sin compras registradas</div>
+                        ) : (
+                            <div className="purchase-history-list">
+                                {[...(game.purchaseHistory || [])].reverse().map((entry, i) => (
+                                    <div key={i} className="purchase-history-item">
+                                        <span className="ph-round">R{entry.round}</span>
+                                        <span className="ph-player">{entry.playerName}</span>
+                                        <span className="ph-item">{entry.item}</span>
+                                        <span className="ph-price">-${entry.price}</span>
+                                        <span className="ph-coins-after">→ ${entry.coinsAfter}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {(game.pendingPurchases || []).length > 0 && (
+                <div className="pending-purchases">
+                    <div className="pending-purchases-title">Solicitudes de compra</div>
+                    {game.pendingPurchases.map(req => (
+                        <div key={req.id} className="pending-purchase-item">
+                            <span className="pending-purchase-player">{req.playerName}</span>
+                            <span className="pending-purchase-item-name">{req.item}</span>
+                            <span className="pending-purchase-price">${req.price}</span>
+                            <button className="pending-approve" onClick={() => onApprovePurchase(req.id)}>✓</button>
+                            <button className="pending-deny" onClick={() => onDenyPurchase(req.id)}>✕</button>
+                        </div>
+                    ))}
+                </div>
+            )}
             <ModalBattle show={showModalBattle} onClose={handleCloseModalBattle} game={game} playerBattle={playerBattle} LeaderBattle={LeaderBattle}  />
           
                         
@@ -194,7 +236,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
             <button  className='BattleMenu_Button' onClick={handleOpenModalBattle} > Battle </button>
             <div onClick={handleOpenModalStore} className='Button-store'></div>
+            <div className='Button-purchase-history' onClick={() => setShowPurchaseHistory(v => !v)}></div>
                 <div className='Time_CurrentPlayer'>
+                    <h4>R{game.round}</h4>
                     <h4> {currentPlayerView.hours}hrs</h4>
                     <h4> {currentPlayerView.minutes}min</h4>
                     <h4> {currentPlayerView.seconds}sec</h4>

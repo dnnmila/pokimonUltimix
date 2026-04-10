@@ -1,43 +1,138 @@
+// botones inferiores del setup
+.sim-setup-bottom-btns {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 0.5rem;
+}
+
+.sim-setup-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+
+    span {
+        color: white;
+        font-size: 0.95rem;
+        font-weight: bold;
+        letter-spacing: 0.04em;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    }
+
+    &:hover {
+        transform: scale(1.15);
+        span { color: #f0d080; }
+    }
+}
+
+.sim-setup-btn-icon {
+    width: 4rem;
+    height: 4rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.sim-topbar-pokedex { background-image: url("../images/pokedex.png"); }
+.sim-topbar-book    { background-image: url("../images/book2.png"); }
+.sim-topbar-store   { background-image: url("../images/mart.png"); }
+
+.sim-store-button {
+    // mantenido por compatibilidad, ya no se usa directamente
+    width: 3.2rem;
+    height: 3.2rem;
+    background-image: url("../images/mart.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+    transition: transform 0.15s;
+    &:hover { transform: scale(1.15); }
+
+    &--pending {
+        filter: drop-shadow(0 0 6px gold);
+        animation: pulse-pending 1.2s infinite;
+    }
+}
+
+@keyframes pulse-pending {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.1); }
+}
+
+.sim-store-pending {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+}
+.sim-store-pending-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #4a90d9;
+}
+.sim-store-pending-item {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+.sim-store-pending-wait {
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.store-option--disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
 .sim-home-button {
     position: fixed;
-    top: 1rem;
-    left: 1rem;
-    width: 4rem;
-    height: 4rem;
-    background-image: url("../images/Poke_Ball.png");
+    top: 0.8rem;
+    left: 0.8rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    background-image: url("../images/newHome.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-
     cursor: pointer;
-    z-index: 100;
+    z-index: 300;
     transition: transform 0.15s;
-
-    &:hover {
-        transform: scale(1.15);
-    }
+    &:hover { transform: scale(1.15); }
 }
 
-.leader-viewer-button {
+.leader-viewer-button { display: none; } // reemplazado por topbar
+
+.sim-player-info {
     position: fixed;
-    bottom: 1rem;
-    left: 2rem;
-    width: 4rem;
-    height: 4rem;
-    background-image: url("../images/book2.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    z-index: 100;
-    transition: transform 0.15s;
-
-    &:hover {
-        transform: scale(1.15);
-    }
+    top: 0.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background-color: rgba(0, 0, 0, 0.55);
+    border-radius: 20px;
+    padding: 0.3rem 1.2rem;
+    z-index: 200;
+}
+.sim-player-info-name {
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+.sim-player-info-coins {
+    color: #f0d080;
+    font-weight: bold;
+    font-size: 1.1rem;
 }
 
-.sim-player{
+.sim-player {
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -45,81 +140,297 @@
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
-
-  
 }
-.sim-player__setup{
+
+.sim-player__setup {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    padding-top: 5rem;
+    background-color: rgba(0, 0, 0, 0.55);
     color: white;
-    font-size: 1.5rem;
-
+    gap: 1.5rem;
+    box-sizing: border-box;
 }
-.player-sim-main,.rival-sim-main{
-     display: flex;
-    flex-direction: column;
-    width: 100%;
-    align-items: center;
-   margin-top: 15vh;
-}
-
-.attack-select-sim{
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url("../images/pokeStadiumSim.webp");
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-}
-
-
 
 .sim-player__setup-wild {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin: 1rem 0;
-    margin-bottom: 1rem;
+    gap: 0.6rem;
 
     input {
-        padding: 0.4rem 0.8rem;
+        padding: 0.3rem 0.6rem;
         border-radius: 8px;
         border: 1px solid #ccc;
-        font-size: 1rem;
+        font-size: 0.95rem;
+        width: 6rem;
+        text-align: center;
+
+        // ocultar flechas del input number
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        &[type=number] { -moz-appearance: textfield; appearance: textfield; }
     }
 
     button {
-        padding: 0.4rem 1rem;
+        padding: 0.3rem 0.8rem;
         border-radius: 8px;
         background-color: rgb(78, 64, 234);
         color: white;
         border: none;
+        font-size: 0.9rem;
         cursor: pointer;
+        &:hover { background-color: rgb(234, 78, 64); transform: scale(1.05); }
+    }
+}
+
+// Modal pokemon salvaje
+.sim-wild-modal {
+    background: rgba(10, 10, 30, 0.97);
+    border: 2px solid #f0d080;
+    border-radius: 14px;
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.8rem;
+    position: relative;
+    min-width: 320px;
+    max-width: 92vw;
+}
+
+.sim-wild-modal-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.8rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    &:hover { background: rgba(255,80,80,0.5); }
+}
+
+.sim-wild-modal-chain {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.sim-wild-modal-name {
+    color: white;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-align: center;
+    text-transform: capitalize;
+    margin-top: 0.3rem;
+}
+
+.sim-wild-modal-fight {
+    background: linear-gradient(135deg, rgb(180, 30, 30), rgb(220, 60, 60));
+    color: white;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 12px rgba(200,30,30,0.5);
+    &:hover {
+        transform: scale(1.12);
+        box-shadow: 0 6px 18px rgba(200,30,30,0.7);
+    }
+}
+
+// Líderes de gimnasio — protagonistas
+.sim-wild-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+
+    &:hover {
+        transform: scale(1.08);
+        .sim-wild-preview-label { color: #f0d080; }
+    }
+}
+
+.sim-wild-preview-img {
+    width: 8rem;
+    height: 8rem;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 2px solid rgba(240, 208, 128, 0.5);
+    background: rgba(0,0,0,0.4);
+    padding: 0.3rem;
+    box-shadow: 0 0 12px rgba(240, 208, 128, 0.3);
+}
+
+.sim-wild-preview-label { display: none; }
+
+.sim-gym-leaders {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.sim-gym-leaders-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #f0d080;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.sim-gym-leaders-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.sim-gym-leader-card {
+    width: 9vw;
+    height: 9vw;
+    max-width: 120px;
+    max-height: 120px;
+    min-width: 70px;
+    min-height: 70px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 12px;
+    border: 2px solid rgba(240, 208, 128, 0.5);
+    background-color: rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        transform: scale(1.12);
+        border-color: #f0d080;
+        box-shadow: 0 0 12px rgba(240, 208, 128, 0.6);
+    }
+}
+
+// Botón para el resto
+.sim-other-rivals-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+
+    span {
+        color: white;
+        font-size: 0.95rem;
+        font-weight: bold;
+        letter-spacing: 0.04em;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    }
+
+    &:hover {
+        transform: scale(1.15);
+        span { color: #f0d080; }
+    }
+}
+
+.sim-other-rivals-btn-icon {
+    width: 4rem;
+    height: 4rem;
+    background-image: url("../images/corona.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+// Modal Elite4 / Campeón / Rival
+.sim-other-rivals-modal {
+    background: rgba(10, 10, 30, 0.97);
+    border: 2px solid #f0d080;
+    border-radius: 14px;
+    padding: 2rem;
+    width: 90vw;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .Elite {
+        width: 110px;
+        height: 110px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        border: 2px solid rgba(240, 208, 128, 0.4);
+        background-color: rgba(0,0,0,0.3);
+        transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
 
         &:hover {
-            background-color: rgb(234, 78, 64);
-            transform: scale(1.05);
+            transform: scale(1.1);
+            border-color: #f0d080;
+            box-shadow: 0 0 12px rgba(240, 208, 128, 0.6);
         }
     }
 }
 
-.sim-player__setup-leader {
+.sim-other-rivals-title {
+    color: #f0d080;
+    font-size: 1.4rem;
+    font-weight: bold;
+    text-align: center;
+    position: relative;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgba(240,208,128,0.3);
+}
+
+.sim-other-rivals-close {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.1rem 0.5rem;
+    &:hover { background: rgba(255,80,80,0.5); }
+}
+
+.sim-other-rivals-group {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    gap: 2rem;
+    gap: 0.5rem;
+}
 
-    .Leaders-to-battle,
-    .Elite-to-battle,
-    .Special-to-battle {
-        margin-top: 0.5rem;
-    }
+.sim-other-rivals-label {
+    color: #aaa;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.sim-other-rivals-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    justify-content: center;
 }
 
 // Seleccion de pokemon
@@ -129,6 +440,17 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    margin-top: 5rem;
+}
+
+.attack-select-sim {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url("../images/pokeStadiumSim.webp");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
 }
 
 .Attack-selected-mypoke,
@@ -139,4 +461,388 @@
         height: 7vw;
     }
 }
+
+// ─── MÓVIL: Setup vertical ───────────────────────────────────────────────────
+@media (max-width: 768px) and (orientation: portrait) {
+    .sim-player__setup {
+        padding-top: 4rem;
+        gap: 1rem;
+    }
+
+    .sim-gym-leaders-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+
+    .sim-gym-leader-card {
+        width: 18vw;
+        height: 18vw;
+        min-width: 50px;
+        min-height: 50px;
+    }
+
+    .sim-gym-leaders-title { font-size: 1rem; }
+
+    .sim-setup-btn-icon,
+    .sim-other-rivals-btn-icon { width: 3rem; height: 3rem; }
+
+    .sim-setup-btn span,
+    .sim-other-rivals-btn span { font-size: 0.8rem; }
+
+    .sim-setup-bottom-btns { gap: 1.5rem; }
+}
+
+// ─── MÓVIL: Setup horizontal ─────────────────────────────────────────────────
+@media (max-width: 900px) and (orientation: landscape) {
+    .sim-player__setup {
+        padding-top: 3rem;
+        padding-bottom: 0.5rem;
+        gap: 0.6rem;
+        justify-content: flex-start;
+        overflow-y: auto;
+    }
+
+    .sim-player-info { font-size: 0.85rem; padding: 0.2rem 0.8rem; }
+
+    .sim-gym-leaders-title { font-size: 0.9rem; }
+
+    .sim-gym-leaders { gap: 0.4rem; }
+
+    .sim-gym-leaders-grid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 0.4rem;
+    }
+
+    .sim-gym-leader-card {
+        width: 9vw;
+        height: 9vw;
+        min-width: 44px;
+        min-height: 44px;
+        max-width: 70px;
+        max-height: 70px;
+    }
+
+    .sim-setup-btn-icon,
+    .sim-other-rivals-btn-icon { width: 2.5rem; height: 2.5rem; }
+
+    .sim-setup-btn span,
+    .sim-other-rivals-btn span { font-size: 0.75rem; }
+
+    .sim-setup-bottom-btns { gap: 1.2rem; margin-top: 0.2rem; }
+
+    .sim-player__setup-wild input { width: 5rem; font-size: 0.85rem; }
+    .sim-player__setup-wild button { font-size: 0.8rem; padding: 0.2rem 0.6rem; }
+}
+
+// ─── MÓVIL: Batalla vertical ── scoped bajo .sim-player ─────────────────────
+// Usa solo max-width (no orientation) — en iPhone portrait ~390px, landscape ~844px
+@media (max-width: 768px) {
+    .sim-player {
+
+        .Type_class {
+            font-size: 0.6rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.8rem;
+        }
+
+        // ── Selección de ataques ──────────────────────────────────────────────
+
+        .MyPokemon_img, .RivalPokemon_img {
+            width: 22vw;
+            height: 16vh;
+        }
+
+        .MyPokemon_name, .RivalPokemon_name,
+        .MyPokemon_level, .RivalPokemon_level {
+            font-size: 0.8rem;
+            margin: 0.1rem;
+        }
+
+        // Sacar los ataques del flujo absoluto → fila horizontal
+        .MyPokemon_attacks, .RivalPokemon_attacks {
+            position: static;
+            flex-direction: row;
+            height: auto;
+            gap: 0.4rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .RivalPokemon_attacks {
+            transform: none;
+        }
+
+        // Desrotar las cartas de ataque y darles tamaño horizontal
+        .MyPokemon_attacks .Attack,
+        .RivalPokemon_attacks .Attack {
+            transform: rotate(0deg);
+            width: 36vw;
+            height: 7vh;
+            font-size: 0.75rem;
+        }
+
+        .Attack-selected-mypoke .Attack,
+        .Attack-selected-rival .Attack {
+            width: 20vh;
+            height: 8vw;
+        }
+
+        // ── Fase dados y totales ──────────────────────────────────────────────
+
+        // Status badges: más compactos
+        .MyPokemon_status, .RivalPokemon_status {
+            width: 46vw;
+        }
+        .status_battle { width: 9vw; height: 5.5vh; }
+
+        // Dados: más grandes y con margen para que no queden cortados
+        .MyDices, .RivalDices {
+            gap: 0.4rem;
+            top: 10%;
+        }
+        .MyDices  { left: 2%;  }
+        .RivalDices { right: 2%; }
+
+        .MyDice, .RivalDice   { width: 14vw; height: 8vh; }
+        .rivalDicePlus, .mydicePlus { width: 9vw; height: 4.5vh; }
+
+        // Totales inferiores — en portrait ocultamos el header y solo mostramos los números
+        .MyTotal_label, .RivalTotal_label { display: none; }
+
+        .MyTotal, .RivalTotal {
+            width: 46vw;
+            font-size: 0.6rem;
+            height: 2.5vh;
+            bottom: 7%;
+        }
+
+        // Números grandes centrales
+        .myTotalFinal, .rivalTotalFinal {
+            font-size: 2rem;
+            width: 13vw;
+            top: 25%;
+        }
+        .myTotalFinal   { left: 22%; }
+        .rivalTotalFinal { right: 22%; }
+
+        // Botones rematch / nueva sim
+        .rematchButton, .change-pokemon {
+            width: 24%;
+            height: 4vh;
+            font-size: 0.7rem;
+            bottom: 2%;
+        }
+        .rematchButton   { right: 24%; }
+        .change-pokemon  { left: 24%; }
+
+        // Home más pequeño durante batalla
+        .sim-home-button { width: 2.2rem; height: 2.2rem; top: 0.4rem; left: 0.4rem; }
+    }
+}
+
+// ─── MÓVIL: Batalla landscape ── scoped bajo .sim-player ─────────────────────
+// Todos los overrides están bajo .sim-player para NO afectar Stadium ni MirrorModal
+
+// ─── MÓVIL: Modales Pokedex y Tienda (solo en SimPlayer) ────────────────────
+@media (max-width: 900px) {
+
+    // Tokens más pequeños en el modal del pokemon salvaje
+    .sim-wild-modal {
+        padding: 1.2rem 1rem;
+        gap: 1rem;
+
+        .pokedex-token {
+            width: 65px;
+            height: 65px;
+        }
+
+        .pokedex-arrow { font-size: 0.9rem; }
+    }
+
+    // Pokedex del jugador — scoped dentro de .sim-player
+    .sim-player .modal-pokedex {
+        width: 95vw;
+        height: 92vh;
+        padding: 1rem;
+        gap: 0.8rem;
+
+        .pokedex-token { width: 70px; height: 70px; }
+        .pokedex-arrow { font-size: 1.2rem; }
+        .pokedex-arrow--mega, .pokedex-arrow--gmax { width: 28px; height: 28px; }
+        .pokedex-row { padding: 0.5rem 0.6rem; gap: 0.3rem; }
+        .pokedex-list { gap: 0.6rem; }
+    }
+
+    // Tienda SimPlayer — layout rejilla compacta
+    .sim-player .modal-store {
+        width: 95vw;
+        height: 92vh;
+        padding: 0.8rem;
+
+        .store_all_options {
+            width: 100%;
+            gap: 0.3rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .store-option {
+            width: 100%;
+            height: 7vh;
+            margin: 0;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.1rem;
+        }
+
+        .store-option-img { width: 7vw; height: 4vh; }
+
+        .store-option-name {
+            font-size: 0.6rem;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .store-option-cost {
+            position: static;
+            width: auto;
+            height: auto;
+            font-size: 0.75rem;
+            background-image: none;
+            color: #f0d080;
+        }
+
+        .store-option:hover { transform: scale(1.1); }
+    }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+    .sim-player {
+
+        .Type_class {
+            font-size: 0.55rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.8rem;
+        }
+
+        .types_div { gap: 0.2rem; }
+
+        // ── Selección de ataques ──────────────────────────────────────────────
+
+        .attack-select-sim {
+            flex-direction: row;
+            align-items: stretch;
+            overflow: hidden;
+        }
+
+        // Panel jugador y rival: columna centrada, ataques en fila horizontal
+        .MyPokemon-main, .RivalPokemon-main {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.3rem;
+        }
+
+        .MyPokemon_img, .RivalPokemon_img {
+            width: 14vw;
+            height: 14vw;
+        }
+
+        .MyPokemon_name, .RivalPokemon_name,
+        .MyPokemon_level, .RivalPokemon_level {
+            font-size: 0.75rem;
+            margin: 0.1rem;
+        }
+
+        // Ataques: fila horizontal, sin position absolute
+        .MyPokemon_attacks, .RivalPokemon_attacks {
+            position: static;
+            flex-direction: row;
+            height: auto;
+            gap: 0.4rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 0.4rem;
+        }
+
+        .RivalPokemon_attacks {
+            transform: none;
+        }
+
+        .Attack-selected-mypoke .Attack,
+        .Attack-selected-rival .Attack {
+            width: 16vh;
+            height: 5vw;
+        }
+
+        // ── Fase dados y totales ──────────────────────────────────────────────
+
+        .Pokemon-stadium2 {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+
+            > * { pointer-events: all; }
+        }
+
+        // Status más pequeños
+        .MyPokemon_status, .RivalPokemon_status {
+            width: 35vw;
+        }
+        .status_battle { width: 6vw; height: 4.5vh; }
+
+        // Dados: columna vertical compacta
+        .MyDices, .RivalDices {
+            gap: 0.3rem;
+            top: 8%;
+        }
+        .MyDices { left: 0.5%; }
+        .RivalDices { right: 0.5%; }
+
+        .MyDice, .RivalDice { width: 9vw; height: 6.5vh; }
+        .rivalDicePlus, .mydicePlus { width: 6vw; height: 3.5vh; }
+
+        // Totales
+        .MyTotal_label, .RivalTotal_label,
+        .MyTotal, .RivalTotal { width: 42vw; font-size: 0.75rem; }
+
+        .MyTotal, .RivalTotal { height: 3vh; bottom: 8%; }
+        .MyTotal_label, .RivalTotal_label { height: 2.5vh; bottom: 11.5%; }
+
+        // Totales grandes centrales
+        .myTotalFinal, .rivalTotalFinal {
+            font-size: 2.8rem;
+            width: 10vw;
+            top: 38%;
+        }
+        .myTotalFinal { left: 28%; }
+        .rivalTotalFinal { right: 28%; }
+
+        // Botones rematch/nueva simulacion
+        .rematchButton, .change-pokemon {
+            width: 18%;
+            height: 3.5vh;
+            font-size: 0.7rem;
+            bottom: 2%;
+        }
+        .rematchButton { right: 30%; }
+        .change-pokemon { left: 30%; }
+
+        // Home más pequeño durante batalla
+        .sim-home-button { width: 2.2rem; height: 2.2rem; top: 0.4rem; left: 0.4rem; }
+    }
+
+    // Botón batallar (⚔) más pequeño en móvil
+    .sim-wild-modal-fight {
+        width: 2.8rem;
+        height: 2.8rem;
+        font-size: 1.2rem;
+    }
+}
+
 

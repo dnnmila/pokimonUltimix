@@ -325,6 +325,30 @@ export const removePokemonToPlayer = async (req, res) => {
     }
 };
 
+export const masterPurchase = async (req, res) => {
+    try {
+        const { playerId, item, price } = req.body;
+        const { getGame } = await import('../gameInstance.js');
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (player.coins < price) return res.status(400).json({ message: 'Monedas insuficientes' });
+        const coinsAfter = player.coins - price;
+        player.updateNewCoins(coinsAfter);
+        game.purchaseHistory.push({
+            playerName: player.name,
+            item,
+            price,
+            coinsAfter,
+            round: game.round
+        });
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Compra realizada', player });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const updateCoins = async (req, res) => {
     console.log('Add Coins started');
     try {

@@ -31,6 +31,8 @@ class Game {
         this.battlePhase = 'PokemonSelection';
         this.battlePublic = false;
         this.generation = 1;
+        this.pendingPurchases = [];
+        this.purchaseHistory = [];
 
     
 
