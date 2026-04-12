@@ -6,9 +6,18 @@ import PokemonBattleListed from "./PokemonBattleListed";
 import ModalPokedex from "./modals/ModalPokedex";
 import ModalLeaderViewer from "./modals/ModalLeaderViewer";
 import ModalTiendaSim from "./modals/ModalTiendaSim";
+import ModalRulesGuide from "./modals/ModalRulesGuide";
 import SERVER_IP from "../config.js";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
+
+const getBadgeImg = (gen, num) => {
+    try {
+        return require(`../images/badges/badges${gen}/badge${num}.webp`);
+    } catch (e) {
+        try { return require(`../images/badges/badge${num}.png`); } catch { return null; }
+    }
+};
 
 const getPkmImg = (pokedex, generation = 1) => {
     if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
@@ -44,6 +53,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
     const [showPokedex, setShowPokedex] = useState(false);
     const [showLeaderViewer, setShowLeaderViewer] = useState(false);
     const [showStore, setShowStore] = useState(false);
+    const [showRulesGuide, setShowRulesGuide] = useState(false);
     const [pendingRequest, setPendingRequest] = useState(null);
     const [showOtherRivals, setShowOtherRivals] = useState(false);
 
@@ -433,6 +443,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                 {/* Home fijo siempre visible */}
             <div className="sim-home-button" onClick={handleNewSimulation}></div>
 
+            {/* Botón flotante de guía de efectos — visible durante la batalla */}
+            {rival && !showSetup && (
+                <div className="rules-guide-float-btn" onClick={() => setShowRulesGuide(true)}>?</div>
+            )}
+
             {/* Info nombre/monedas — solo en setup */}
             {(!rival || showSetup) && (
                 <div className="sim-player-info">
@@ -444,6 +459,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
             <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
             <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} />
+            <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
 
             {/* Modal info pokemon salvaje */}
             {showWildModal && wildChain && (
@@ -568,11 +584,22 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                     <div className="sim-gym-leaders">
                         <div className="sim-gym-leaders-title">Líderes de Gimnasio</div>
                         <div className="sim-gym-leaders-grid">
-                            {leaders.filter(l => l.category === 'gym').map(l => {
+                            {leaders.filter(l => l.category === 'gym').map((l, idx) => {
                                 const img = l.img ? getPkmImg(l.img, generation) : null;
-                                return <div key={l.leaderKey} className="sim-gym-leader-card"
-                                    style={img ? { backgroundImage: `url(${img})` } : {}}
-                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />;
+                                const badgeNum = idx + 1;
+                                const badgeImg = getBadgeImg(generation, badgeNum);
+                                const hasBadge = player[`badge${badgeNum}`];
+                                return (
+                                    <div key={l.leaderKey} className="sim-gym-leader-wrapper">
+                                        <div className="sim-gym-leader-card"
+                                            style={img ? { backgroundImage: `url(${img})` } : {}}
+                                            onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />
+                                        <div
+                                            className={hasBadge ? 'Bagde_win sim-badge' : 'Badge sim-badge'}
+                                            style={badgeImg ? { backgroundImage: `url(${badgeImg})` } : {}}
+                                        />
+                                    </div>
+                                );
                             })}
                         </div>
                     </div>
@@ -592,6 +619,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                         <div className="sim-setup-btn" onClick={() => setShowLeaderViewer(true)}>
                             <div className="sim-setup-btn-icon sim-topbar-book"></div>
                             <span>Guia</span>
+                        </div>
+                        <div className="sim-setup-btn" onClick={() => setShowRulesGuide(true)}>
+                            <div className="sim-setup-btn-icon sim-topbar-effects"></div>
+                            <span>Efectos</span>
                         </div>
                         <div className={`sim-setup-btn ${pendingRequest ? 'sim-store-button--pending' : ''}`} onClick={() => setShowStore(true)}>
                             <div className="sim-setup-btn-icon sim-topbar-store"></div>

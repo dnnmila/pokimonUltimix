@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import Types from './Types';
 import ModalAttach from './modals/ModalAttach';
 
-const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,attached, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus}) => {
+const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
    
     const img_id = `img_${id}`;
     const level_id = `level_${id}`;
@@ -75,6 +75,10 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
     const handleChangeState = ()=> {
          onChangeState(currentPlayer.id, id);
     }
+    const handleDecreaseStatusCounter = () => {
+        onDecreaseStatusCounter(currentPlayer.id, id);
+    };
+
     const handleChangeStatus = ()=> {
         if(status ==="Normal"){
         onChangeStatus(currentPlayer.id, id, "Asleep");
@@ -112,7 +116,10 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
             </div>
             {extra >= nextLevel && nextLevel !== 0 && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
             <h1 className="name_pokemon" id={name_id}> {name}</h1>
-            <div className={`status_pokemon ${status}`} onClick={handleChangeStatus} ></div>
+            <div className="status_wrapper">
+                <div className={`status_pokemon ${status}`} onClick={handleChangeStatus} ></div>
+                {statusCounter > 0 && <div className="status_counter" onClick={handleDecreaseStatusCounter}>{statusCounter}</div>}
+            </div>
             <div className="types_div"> 
             <Types Type={type1}  Clase={type1_class} type_id={type_id1}/>
             { type2_true === true && <Types Type={type2}  Clase={type2_class} type_id={type_id2}/>}

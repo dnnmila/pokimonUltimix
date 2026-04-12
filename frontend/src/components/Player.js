@@ -1,5 +1,13 @@
 import React, {useState,useEffect,useCallback} from 'react';
 import dinamaxImg from '../images/dinamax.png';
+
+const getBadgeImg = (gen, num) => {
+    try {
+        return require(`../images/badges/badges${gen}/badge${num}.webp`);
+    } catch (e) {
+        try { return require(`../images/badges/badge${num}.png`); } catch { return null; }
+    }
+};
 import Pokemon from './Pokemon';
 import AddPokemon from './AddPokemon';
 import ModalMonedas from './modals/ModalMonedas.js';
@@ -10,7 +18,7 @@ import ModalBattle from './modals/ModalBattle.js';
 
 
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase}) => {
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase}) => {
 
     const handleKeyDown = useCallback((event) => {
         switch(event.key) {
@@ -104,14 +112,17 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                 
            
             <div className='allBadges'>
-                <div className={`${currentPlayerView.badge1 ? 'Bagde_win' : 'Badge'}`} id='Badge1' onClick={()=> handleBadge(1)}> </div>
-                <div className={`${currentPlayerView.badge2 ? 'Bagde_win' : 'Badge'}`} id='Badge2' onClick={()=> handleBadge(2)}> </div>
-                <div className={`${currentPlayerView.badge3 ? 'Bagde_win' : 'Badge'}`} id='Badge3' onClick={()=> handleBadge(3)}> </div>
-                <div className={`${currentPlayerView.badge4 ? 'Bagde_win' : 'Badge'}`} id='Badge4' onClick={()=> handleBadge(4)}> </div>
-                <div className={`${currentPlayerView.badge5 ? 'Bagde_win' : 'Badge'}`} id='Badge5' onClick={()=> handleBadge(5)}> </div>
-                <div className={`${currentPlayerView.badge6 ? 'Bagde_win' : 'Badge'}`} id='Badge6' onClick={()=> handleBadge(6)}> </div>
-                <div className={`${currentPlayerView.badge7 ? 'Bagde_win' : 'Badge'}`} id='Badge7' onClick={()=> handleBadge(7)}> </div>
-                <div className={`${currentPlayerView.badge8 ? 'Bagde_win' : 'Badge'}`} id='Badge8' onClick={()=> handleBadge(8)}> </div>
+                {[1,2,3,4,5,6,7,8].map(num => {
+                    const img = getBadgeImg(game.generation, num);
+                    return (
+                        <div
+                            key={num}
+                            className={currentPlayerView[`badge${num}`] ? 'Bagde_win' : 'Badge'}
+                            style={img ? { backgroundImage: `url(${img})` } : {}}
+                            onClick={() => handleBadge(num)}
+                        />
+                    );
+                })}
                 <div className={`${currentPlayerView.badge9 ? 'Bagde_win' : 'Badge'}`} id='Elite' onClick={()=> handleBadge(9)}> </div>
                 <div className={`${currentPlayerView.badge10 ? 'Bagde_win' : 'Badge'}`} id='BadgeChampion' onClick={()=> handleBadge(10)}> </div>
             </div>
@@ -145,7 +156,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                          attachTM={attachTM}
                          attachMega={attachMega}
                          onChangeState={onChangeState}
-                         onChangeStatus={onChangeStatus}/>
+                         onChangeStatus={onChangeStatus}
+                         statusCounter={pokemon.statusCounter}
+                         onDecreaseStatusCounter={onDecreaseStatusCounter}/>
                        
                     ))}
             {currentPlayerView.pokemons.length < 6 && <AddPokemon onAdd={onAddPokemon} currentPlayer={currentPlayerView} />}

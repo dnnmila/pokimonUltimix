@@ -63,7 +63,7 @@ const AllPlayers = () => {
         <div className='AllPlayers_class'>
             <div className='round-badge'>Ronda {game.round}</div>
             {playersOrdered.map(player => (
-                <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers}/>
+                <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers} generation={game.generation}/>
             ))}
             <StadiumMirrorModal game={game} />
         </div>

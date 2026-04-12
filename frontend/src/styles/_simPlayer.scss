@@ -36,9 +36,10 @@
     background-position: center;
 }
 
-.sim-topbar-pokedex { background-image: url("../images/pokedex.png"); }
-.sim-topbar-book    { background-image: url("../images/book2.png"); }
-.sim-topbar-store   { background-image: url("../images/mart.png"); }
+.sim-topbar-pokedex  { background-image: url("../images/pokedex.png"); }
+.sim-topbar-book     { background-image: url("../images/book2.png"); }
+.sim-topbar-store    { background-image: url("../images/mart.png"); }
+.sim-topbar-effects  { background-image: url("../images/claw.png"); }
 
 .sim-store-button {
     // mantenido por compatibilidad, ya no se usa directamente
@@ -300,6 +301,23 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
+}
+
+.sim-gym-leader-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sim-badge {
+    width: 5vw;
+    height: 5vw;
+    max-width: 40px;
+    max-height: 40px;
+    min-width: 28px;
+    min-height: 28px;
+    pointer-events: none;
 }
 
 .sim-gym-leader-card {
@@ -717,6 +735,368 @@
         .store-option:hover { transform: scale(1.1); }
     }
 }
+
+// ─── Modal Guía de Efectos ───────────────────────────────────────────────────
+
+.rules-guide-backdrop {
+    z-index: 500;
+}
+
+.rules-guide-modal {
+    background: rgba(8, 8, 24, 0.98);
+    border: 2px solid #4a90d9;
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 92vw;
+    max-width: 680px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.rules-guide-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    &:hover { background: rgba(255,80,80,0.5); }
+}
+
+.rules-guide-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 2rem;
+}
+
+.rules-guide-title {
+    color: #f0d080;
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.rules-guide-lang-toggle {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.rules-guide-lang-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    color: #aaa;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.2rem 0.55rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &.active {
+        background: #f0d080;
+        border-color: #f0d080;
+        color: #111;
+    }
+    &:hover:not(.active) {
+        background: rgba(240,208,128,0.2);
+        color: #f0d080;
+    }
+}
+
+.rules-guide-tabs {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.rules-guide-tab {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: #ccc;
+    font-size: 0.82rem;
+    font-weight: bold;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &.active {
+        background: #4a90d9;
+        border-color: #4a90d9;
+        color: white;
+    }
+    &:hover:not(.active) {
+        background: rgba(74,144,217,0.3);
+        color: white;
+    }
+}
+
+.rules-guide-content {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 0.3rem;
+
+    &::-webkit-scrollbar { width: 5px; }
+    &::-webkit-scrollbar-thumb { background: rgba(74,144,217,0.5); border-radius: 4px; }
+}
+
+// Tab iconos
+.rules-guide-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.rules-guide-section-title {
+    font-size: 0.82rem;
+    font-weight: bold;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    margin-top: 0.4rem;
+    letter-spacing: 0.04em;
+}
+.rules-guide-white-title {
+    background: rgba(255,255,255,0.12);
+    color: #eee;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.rules-guide-black-title {
+    background: rgba(30,30,80,0.6);
+    color: #aac4ff;
+    border: 1px solid rgba(100,140,255,0.3);
+}
+
+.rules-guide-effect-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+}
+.rules-guide-effect-white {
+    background: rgba(255,255,255,0.05);
+}
+.rules-guide-effect-black {
+    background: rgba(60,80,160,0.15);
+}
+.rules-guide-effect-special {
+    background: rgba(80,40,120,0.2);
+    border: 1px solid rgba(180,120,255,0.15);
+}
+
+.rules-guide-effect-icon-wrap {
+    flex-shrink: 0;
+    width: 2.4rem;
+    height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rules-guide-effect-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    object-fit: contain;
+}
+
+.rules-guide-effect-icon-placeholder {
+    width: 2.4rem;
+    height: 2.4rem;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+}
+
+.rules-guide-effect-name {
+    color: #f0d080;
+    font-size: 0.75rem;
+    font-weight: bold;
+    white-space: nowrap;
+    min-width: 7.5rem;
+}
+.rules-guide-effect-desc {
+    color: #ddd;
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+.rules-guide-note {
+    color: #999;
+    font-size: 0.7rem;
+    font-style: italic;
+    margin-top: 0.6rem;
+    padding: 0.4rem 0.5rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+// Tab campo / estados
+.rules-guide-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.rules-guide-field-note {
+    color: #aaa;
+    font-size: 0.75rem;
+    font-style: italic;
+    padding: 0.4rem 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+}
+
+.rules-guide-field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.8rem;
+}
+
+.rules-guide-field-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: default;
+}
+
+.rules-guide-field-img {
+    width: 100%;
+    max-width: 140px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    object-fit: contain;
+}
+
+.rules-guide-status-img {
+    width: 100%;
+    max-width: 140px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    object-fit: contain;
+}
+
+.rules-guide-field-placeholder {
+    width: 120px;
+    height: 80px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 0.3rem;
+}
+
+.rules-guide-field-name {
+    color: #ddd;
+    font-size: 0.72rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+// Tab especiales
+.rules-guide-special {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.rules-guide-search {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.4rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid rgba(74,144,217,0.5);
+    background: rgba(255,255,255,0.07);
+    color: white;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+
+    &::placeholder { color: #888; }
+    &:focus { outline: none; border-color: #4a90d9; }
+}
+
+.rules-guide-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.rules-guide-empty {
+    color: #888;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+// Botón flotante de reglas (durante la batalla)
+.rules-guide-float-btn {
+    position: fixed;
+    top: 0.8rem;
+    right: 0.8rem;
+    width: 2.6rem;
+    height: 2.6rem;
+    background: rgba(74,144,217,0.85);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    cursor: pointer;
+    z-index: 300;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    transition: transform 0.15s, background 0.15s;
+
+    &:hover {
+        transform: scale(1.15);
+        background: rgba(74,144,217,1);
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .rules-guide-modal {
+        width: 97vw;
+        max-height: 92vh;
+        padding: 1rem 0.8rem 0.8rem;
+    }
+
+    .rules-guide-field-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .rules-guide-effect-name {
+        min-width: 6.5rem;
+        font-size: 0.7rem;
+    }
+    .rules-guide-effect-desc { font-size: 0.7rem; }
+
+    .rules-guide-float-btn {
+        width: 2.2rem;
+        height: 2.2rem;
+        font-size: 1rem;
+        top: 0.4rem;
+        right: 0.4rem;
+    }
+}
+
+// ─── MÓVIL: Batalla landscape ── scoped bajo .sim-player ─────────────────────
+// Todos los overrides están bajo .sim-player para NO afectar Stadium ni MirrorModal
 
 @media (max-width: 900px) and (orientation: landscape) {
     .sim-player {

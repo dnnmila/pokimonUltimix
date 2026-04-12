@@ -130,6 +130,19 @@ class Player {
             return;
         }
         pokemon.addExtra();
+        // Sincronizar megas y gmaxes vinculados a este pokemon
+        if (pokemon.attach === 'Mega') {
+            this.megas.forEach(mega => {
+                mega.extra = pokemon.extra;
+                mega.totalLevel = mega.level + mega.extra;
+            });
+        }
+        if (pokemon.gmaxPokedex) {
+            this.gmaxes.forEach(gmax => {
+                gmax.extra = pokemon.extra;
+                gmax.totalLevel = gmax.level + gmax.extra;
+            });
+        }
     }
 
     attachItemToPokemon(idPokemon, item){
@@ -175,6 +188,12 @@ class Player {
         }
         pokemon.setStatus(status);
         console.log("New status:" + pokemon.status);
+    }
+
+    decreaseStatusCounter(idPokemon){
+        const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
+        if (!pokemon) return;
+        pokemon.decreaseStatusCounter();
     }
 
     startTurn() {

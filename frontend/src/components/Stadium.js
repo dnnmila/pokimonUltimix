@@ -2,6 +2,7 @@ import { useState } from "react";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
+import ModalRulesGuide from "./modals/ModalRulesGuide";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
 
@@ -19,6 +20,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
     const [myPokemonSelected, setMyPokemonSelected] = useState('false');
     const [rivalPokemonSelected, setRivalPokemonSelected] = useState('false');
     const [rivalPokemon, setRivalPokemon] = useState();
+    const [showRulesGuide, setShowRulesGuide] = useState(false);
    
 
     //Attack Section
@@ -664,6 +666,8 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
         )}   
           
+        <div className="rules-guide-float-btn" onClick={() => setShowRulesGuide(true)}>?</div>
+        <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
         </div>
     )
 };

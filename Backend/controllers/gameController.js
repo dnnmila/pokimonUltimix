@@ -280,7 +280,7 @@ export const scanBattle = async (req, res) => {
             // Siempre actualiza el simRival del jugador (sea o no su turno)
             const player = game.players[playerIndex];
             if (player) {
-                const simRival = new Rival('SimRival-' + player.id, 'Wild Pokemon');
+                const simRival = new Rival('SimRival-' + player.id + '-' + Date.now(), 'Wild Pokemon');
                 simRival.addPokemon(pokemon);
                 player.setSimRival(simRival);
                 console.log('SimRival asignado a ' + player.name + ': ' + pokemon.name);

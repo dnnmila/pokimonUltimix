@@ -50,10 +50,12 @@ async function attachGMaxIfAvailable(player, pokemon, pokemonData, db) {
     const gmax = new Pokemons(
         player.name + '_' + gmaxData.POKEDEX + '_' + player.totalPokemons,
         gmaxData.POKEDEX, gmaxData.NAME, gmaxData.TYPE1, gmaxData.TYPE2,
-        gmaxData.LEVEL + pokemon.extra,
+        gmaxData.LEVEL,
         atk1, atk2, atk3,
         gmaxData.NEXT_LEVEL, gmaxData.EVOLUTION, gmaxData.MEGA
     );
+    gmax.extra = pokemon.extra;
+    gmax.totalLevel = gmax.level + gmax.extra;
     // Guardar referencia al pokedex del gmax en el pokemon base para poder limpiarlo despues
     pokemon.gmaxPokedex = gmaxData.POKEDEX;
     player.addGMax(gmax);
@@ -281,11 +283,15 @@ export const evolvePokemon = async (req, res) => {
             pokemonData.EVOLUTION,
             pokemonData.MEGA
         );
+        // Los extras que superan el nextLevel se transfieren, el resto se gastó en evolucionar
+        const transferExtra = Math.max(0, oldPkm.extra - oldPkm.nextLevel);
+        newPokemon.extra = transferExtra;
+        newPokemon.totalLevel = newPokemon.level + newPokemon.extra;
         console.log(newPokemon);
 
         // Aquí, necesitarás obtener el jugador (Player) por su ID y agregar el Pokémon
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
-      
+
         player.addPokemonbyIndex(newPokemon,oldPkmIndex);
         // Agregar gmax del pokemon evolucionado si aplica
         await attachGMaxIfAvailable(player, newPokemon, pokemonData, db);
@@ -558,7 +564,7 @@ export const attachMega  = async (req, res) => {
                 pokemonData.NAME,
                 pokemonData.TYPE1,
                 pokemonData.TYPE2,
-                pokemonData.LEVEL + pokemon.extra,
+                pokemonData.LEVEL,
                 Attack1,
                 Attack2,
                 Attack3,
@@ -566,6 +572,8 @@ export const attachMega  = async (req, res) => {
                 pokemonData.EVOLUTION,
                 pokemonData.MEGA
             );
+            mega.extra = pokemon.extra;
+            mega.totalLevel = mega.level + mega.extra;
             player.addMega(mega);
 
             // Megas alternativas (via PREEVOLUCION), excluyendo la principal ya agregada
@@ -582,7 +590,7 @@ export const attachMega  = async (req, res) => {
                     altData.NAME,
                     altData.TYPE1,
                     altData.TYPE2,
-                    altData.LEVEL + pokemon.extra,
+                    altData.LEVEL,
                     altAtk1,
                     altAtk2,
                     altAtk3,
@@ -590,6 +598,8 @@ export const attachMega  = async (req, res) => {
                     altData.EVOLUTION,
                     altData.MEGA
                 );
+                altMega.extra = pokemon.extra;
+                altMega.totalLevel = altMega.level + altMega.extra;
                 player.addMega(altMega);
             }
 
@@ -650,6 +660,19 @@ export const changeStatus  = async (req, res) => {
     }
 };
 
+
+export const decreaseStatusCounter = async (req, res) => {
+    try {
+        const { playerId, pokemonId } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        player.decreaseStatusCounter(pokemonId);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Counter updated', player });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 export const wildBattle = async (req, res) => {
     console.log('Wild started');

@@ -379,6 +379,18 @@ const changeStatus = async (playerId ,pokemonId,status) => {
 };
 
 
+const decreaseStatusCounter = async (playerId, pokemonId) => {
+    try {
+        await fetch(`${SERVER_IP}/decrease-status-counter`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, pokemonId }),
+        });
+    } catch (error) {
+        console.error('Error al bajar contador de status:', error);
+    }
+};
+
 const attachItem = async (playerId ,pokemonId,itemAttached) => {
     try {
         const response = await fetch(`${SERVER_IP}/attach-item`, {
@@ -799,7 +811,7 @@ return (
             <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
-            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase}/>} />
+            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase}/>} />
             <Route path="/players" element={<AllPlayers />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal}/>} />
             <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle}/>} />

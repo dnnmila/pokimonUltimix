@@ -134,9 +134,16 @@ transform: scale(1.5);
     
 }
 
+.status_wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 1rem;
+}
+
 .status_pokemon{
     color: beige;
-    margin-bottom: 1rem;
     font-size: 1rem;
     width: 5vw;
     height: 4vh;
@@ -150,6 +157,22 @@ transform: scale(1.5);
 .status_pokemon:hover{
     cursor: pointer;
     transform: scale(1.5);
+}
+
+.status_counter {
+    color: white;
+    font-size: 1.4rem;
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.15s;
+    &:hover { background-color: rgba(220, 80, 80, 0.85); transform: scale(1.15); }
 }
 .Asleep{
  background-image: url("../images/status/sleep.png");
@@ -210,19 +233,6 @@ $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
     margin-bottom: 0.5rem;
 }
 
-.status_pokemon{
-    color: beige;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    width: 5vw;
-    height: 4vh;
-    align-items: center;
-    display: flex;
-    justify-content: center;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
 
 
 
