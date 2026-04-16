@@ -588,9 +588,9 @@ export const setBattleBonusFinal = async (req, res) => {
 
 export const setBattleDice = async (req, res) => {
     try {
-        const { player, dice } = req.body;
+        const { player, dice, rows } = req.body;
         const game = getGame();
-        game.setBattleDice(player, dice);
+        game.setBattleDice(player, dice, rows);
         updateGameAndNotify();
         res.status(200).json({ message: 'Dado de batalla establecido' });
     } catch (error) {

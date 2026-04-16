@@ -251,6 +251,22 @@
     right: 5%;
 }
 
+.mirror-dice-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.2rem;
+
+    .MyDice {
+        width: 4vw;
+        height: 6vh;
+        background-position: center center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        filter: brightness(100%);
+    }
+}
+
 // Basado en: .myTotalFinal, .rivalTotalFinal
 // Numeros grandes centrados superpuestos
 .mirror-mytotal-final,

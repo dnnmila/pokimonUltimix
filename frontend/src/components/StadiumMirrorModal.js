@@ -136,6 +136,13 @@ const StadiumMirrorModal = ({ game }) => {
                                 {playerPkm.type2 !== null && playerPkm.type2 !== "NONE" &&
                                     <Types Type={playerPkm.type2} Clase={`type_${playerPkm.type2}`} type_id={`types_mirror_p2`} />}
                             </div>
+                            {game.myPlayerDiceRows?.length > 0 && (
+                                <div className="mirror-dice-row">
+                                    {game.myPlayerDiceRows.map((val, idx) => (
+                                        <div key={idx} className={`MyDice mydice${val}`} />
+                                    ))}
+                                </div>
+                            )}
                             {playerAtk && (
                                 <div className="mirror-attack-selected-mypoke">
                                       <Attack attack={playerAtk} bonus={game.myBonusFinal}  />
@@ -152,6 +159,13 @@ const StadiumMirrorModal = ({ game }) => {
                                 {rivalPkm.type2 !== null && rivalPkm.type2 !== "NONE" &&
                                     <Types Type={rivalPkm.type2} Clase={`type_${rivalPkm.type2}`} type_id={`types_mirror_r2`} />}
                             </div>
+                            {game.myRivalDiceRows?.length > 0 && (
+                                <div className="mirror-dice-row">
+                                    {game.myRivalDiceRows.map((val, idx) => (
+                                        <div key={idx} className={`MyDice mydice${val}`} />
+                                    ))}
+                                </div>
+                            )}
                             {rivalAtk && (
                                 <div className="mirror-attack-selected-rival">
                                     <Attack attack={rivalAtk} bonus={game.rivalBonusFinal} />
@@ -190,7 +204,6 @@ const StadiumMirrorModal = ({ game }) => {
                         <div>{rivalAtk?.strength ?? '-'}  </div>
                         <div>{game.rivalBonusFinal}  </div>
                         <div>{game.myRivalDice}  </div>
-
                     </div>
                     </div>
                 )}

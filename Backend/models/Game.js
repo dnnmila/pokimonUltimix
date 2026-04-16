@@ -20,6 +20,8 @@ class Game {
         this.myRivalTotal=0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
         this.myBonusFinal = 0;
         this.rivalBonusFinal = 0;
         this.myBonusAtk1 = 0;
@@ -110,9 +112,14 @@ class Game {
         }
     }
 
-    setBattleDice(player, dice) {
-        if (player === 'MyPlayer') this.myPlayerDice = dice;
-        else if (player === 'Rival') this.myRivalDice = dice;
+    setBattleDice(player, dice, rows) {
+        if (player === 'MyPlayer') {
+            this.myPlayerDice = dice;
+            if (rows !== undefined) this.myPlayerDiceRows = rows;
+        } else if (player === 'Rival') {
+            this.myRivalDice = dice;
+            if (rows !== undefined) this.myRivalDiceRows = rows;
+        }
     }
 
     setBattleBonusFinal(player, bonus) {
@@ -139,6 +146,14 @@ class Game {
     setBattlePhase(phase) {
         console.log('setting battle phase ' + phase);
         this.battlePhase = phase;
+        if (phase === 'AttackSelection') {
+            this.myPlayerDice = 0;
+            this.myRivalDice = 0;
+            this.myPlayerDiceRows = [];
+            this.myRivalDiceRows = [];
+            this.myPlayerTotal = 0;
+            this.myRivalTotal = 0;
+        }
     }
 
     nextTurn() {
@@ -177,6 +192,8 @@ class Game {
         this.myRivalTotal = 0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
         this.myBonusFinal = 0;
         this.rivalBonusFinal = 0;
         this.myBonusAtk1 = 0;
@@ -218,6 +235,8 @@ class Game {
         this.myRivalTotal = 0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
         this.myBonusFinal = 0;
         this.rivalBonusFinal = 0;
         this.myBonusAtk1 = 0;

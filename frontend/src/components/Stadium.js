@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 import ModalRulesGuide from "./modals/ModalRulesGuide";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
+
+const TYPE_COLORS = {
+    FIRE:'#ff6a00', WATER:'#3a9ad9', GRASS:'#4caf50', ELECTRIC:'#f9d71c',
+    ICE:'#a8e6f0', FIGHTING:'#c0392b', POISON:'#8e44ad', GROUND:'#d4a017',
+    FLYING:'#85c1e9', PSYCHIC:'#f06292', BUG:'#8bc34a', ROCK:'#9e9e9e',
+    GHOST:'#5c3566', DRAGON:'#1565c0', DARK:'#263238', STEEL:'#b0bec5',
+    FAIRY:'#f8bbd0', NORMAL:'#ffffff',
+};
 
 const getPkmImg = (pokedex, generation = 1) => {
     if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
@@ -52,12 +60,65 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
 
     //Battle
-    const [myDice, setMyDice] = useState(0);
     const [myTotal, setMyTotal] = useState(0);
-    const [rivalDice, setRivalDice] = useState(0);
     const [rivalTotal, setRivalTotal] = useState(0);
-    const [addMyDice, setAddMyDice] = useState(false);
-    const [addRivalDice, setAddRivalDice] = useState(false);
+    const [myDiceAnim, setMyDiceAnim] = useState(0);
+    const [rivalDiceAnim, setRivalDiceAnim] = useState(0);
+    const [myDiceRows, setMyDiceRows] = useState([null]);
+    const [rivalDiceRows, setRivalDiceRows] = useState([null]);
+    const [myLocked, setMyLocked] = useState(false);
+    const [rivalLocked, setRivalLocked] = useState(false);
+
+    // Efectos visuales avanzados
+    const [typeFlashColor, setTypeFlashColor] = useState(null);
+    const [screenShake, setScreenShake] = useState(false);
+    const [displayMyTotal, setDisplayMyTotal] = useState(0);
+    const [displayRivalTotal, setDisplayRivalTotal] = useState(0);
+
+    // Count-up animado cuando cambian los totales reales
+    useEffect(() => {
+        if (!myTotal) return;
+        let start = 0;
+        const end = myTotal;
+        const duration = 600;
+        const step = Math.ceil(duration / end);
+        const timer = setInterval(() => {
+            start += 1;
+            setDisplayMyTotal(start);
+            if (start >= end) clearInterval(timer);
+        }, step);
+        return () => clearInterval(timer);
+    }, [myTotal]);
+
+    useEffect(() => {
+        if (!rivalTotal) return;
+        let start = 0;
+        const end = rivalTotal;
+        const duration = 600;
+        const step = Math.ceil(duration / end);
+        const timer = setInterval(() => {
+            start += 1;
+            setDisplayRivalTotal(start);
+            if (start >= end) clearInterval(timer);
+        }, step);
+        return () => clearInterval(timer);
+    }, [rivalTotal]);
+
+    // Screen shake al revelarse ambos totales finales
+    useEffect(() => {
+        if (myLocked && rivalLocked) {
+            setScreenShake(true);
+            const t = setTimeout(() => setScreenShake(false), 700);
+            return () => clearTimeout(t);
+        }
+    }, [myLocked, rivalLocked]);
+
+    // Flash del tipo al seleccionar ataque — se apaga solo
+    useEffect(() => {
+        if (!typeFlashColor) return;
+        const t = setTimeout(() => setTypeFlashColor(null), 600);
+        return () => clearTimeout(t);
+    }, [typeFlashColor]);
     const [myAttackPower, setMyAttackPower] = useState();
     const [rivalAttackPower, setRivalAttackPower] = useState();
     const [myBonusFinal, setMyBonusFinal] = useState();
@@ -335,6 +396,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
    
     //Select Attacks
     const handleSelectMyAttack =(attack,bonus) =>{
+        setTypeFlashColor(TYPE_COLORS[attack.type] || '#ffffff');
         setMyAttack(attack);
         setMyAttackPower(attack.strength);
         setMyBonus(bonus);
@@ -349,6 +411,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
         }
 
     const handleSelectRivalAttack =(attack,bonus) =>{
+        setTypeFlashColor(TYPE_COLORS[attack.type] || '#ffffff');
         setRivalAttack(attack);
         setRivalAttackPower(attack.strength);
         setRivalBonus(bonus);
@@ -368,39 +431,72 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
         return PokemonLevel + AttackStrenght + Bonus + Dice;
    }
  
-     const handleSelectMyDice =(Dice) =>{
-       if (addMyDice === true){
-           setMyDice(myDice+Dice);
-           setMyTotal(myTotal+Dice);
-           setAddMyDice(false);
-           onTotales('MyPlayer',myTotal+Dice);
-           onHandleDice('MyPlayer', myDice+Dice);
-        }
-        else{
-           setMyDice(Dice);
-           setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,Dice));
-           onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,Dice));
-           onHandleDice('MyPlayer', Dice);
-       }
+    const calcDiceSum = (rows) => rows.reduce((acc, v) => acc + (v || 0), 0);
 
-       }
+    const handleSelectMyDice = (rowIndex, dice) => {
+        if (myLocked) return;
+        setMyDiceAnim(dice);
+        const newRows = [...myDiceRows];
+        newRows[rowIndex] = dice;
+        setMyDiceRows(newRows);
+        const diceSum = calcDiceSum(newRows);
+        const total = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, diceSum);
+        setMyTotal(total);
+        onTotales('MyPlayer', total);
+        onHandleDice('MyPlayer', diceSum, newRows.filter(v => v !== null));
+        // bloquear si se seleccionó el dado de la última fila
+        if (rowIndex === newRows.length - 1) setMyLocked(true);
+    };
 
-   const handleSelectRivalDice =(Dice) =>{
-       if (addRivalDice === true){
-           setRivalDice(rivalDice + Dice);
-           setRivalTotal(rivalTotal+Dice);
-           setAddRivalDice(false);
-           onTotales('Rival',rivalTotal+Dice);
-           onHandleDice('Rival', rivalDice+Dice);
-        }
-        else{
-           setRivalDice(Dice);
-           setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,Dice));
-           onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,Dice));
-           onHandleDice('Rival', Dice);
-        }
+    const handleAddMyDiceRow = () => {
+        if (myDiceRows.length >= 3) return;
+        setMyDiceRows([...myDiceRows, null]);
+        setMyLocked(false);
+    };
 
-       }
+    const handleUnlockMyDice = () => {
+        const newRows = [...myDiceRows];
+        newRows[newRows.length - 1] = null;
+        setMyDiceRows(newRows);
+        setMyLocked(false);
+        const diceSum = calcDiceSum(newRows);
+        const total = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, diceSum);
+        setMyTotal(total);
+        onTotales('MyPlayer', total);
+        onHandleDice('MyPlayer', diceSum, newRows.filter(v => v !== null));
+    };
+
+    const handleSelectRivalDice = (rowIndex, dice) => {
+        if (rivalLocked) return;
+        setRivalDiceAnim(dice);
+        const newRows = [...rivalDiceRows];
+        newRows[rowIndex] = dice;
+        setRivalDiceRows(newRows);
+        const diceSum = calcDiceSum(newRows);
+        const total = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, diceSum);
+        setRivalTotal(total);
+        onTotales('Rival', total);
+        onHandleDice('Rival', diceSum, newRows.filter(v => v !== null));
+        if (rowIndex === newRows.length - 1) setRivalLocked(true);
+    };
+
+    const handleAddRivalDiceRow = () => {
+        if (rivalDiceRows.length >= 3) return;
+        setRivalDiceRows([...rivalDiceRows, null]);
+        setRivalLocked(false);
+    };
+
+    const handleUnlockRivalDice = () => {
+        const newRows = [...rivalDiceRows];
+        newRows[newRows.length - 1] = null;
+        setRivalDiceRows(newRows);
+        setRivalLocked(false);
+        const diceSum = calcDiceSum(newRows);
+        const total = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, diceSum);
+        setRivalTotal(total);
+        onTotales('Rival', total);
+        onHandleDice('Rival', diceSum, newRows.filter(v => v !== null));
+    };
 
        const handleMyStatus =(myNewStatus) =>{
            
@@ -408,24 +504,22 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                setMyStatus(myNewStatus);
                setMyAttackPower(0);
                setMyBonusFinal(0);
-               setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,myDice));
-               onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,myDice));
-               
+               setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,calcDiceSum(myDiceRows)));
+               onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,calcDiceSum(myDiceRows)));
            }
            else if(myNewStatus === "Burned"){
                setMyStatus(myNewStatus);
                setMyAttackPower(myAttack.strength -1);
                setMyBonusFinal(myBonus);
-               setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,myDice));
-               onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,myDice));
+               setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,calcDiceSum(myDiceRows)));
+               onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,calcDiceSum(myDiceRows)));
            }
-
            else if(myNewStatus === "Confused" || myNewStatus === "Normal"){
                setMyStatus(myNewStatus);
                setMyAttackPower(myAttack.strength);
                setMyBonusFinal(myBonus);
-               setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,myDice));
-               onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,myDice));
+               setMyTotal(sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,calcDiceSum(myDiceRows)));
+               onTotales('MyPlayer',sumTotal(myPokemon.totalLevel,myAttackPower,myBonusFinal,calcDiceSum(myDiceRows)));
            }
        }
 
@@ -435,23 +529,22 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                setRivalStatus(myNewStatus);
                setRivalAttackPower(0);
                setRivalBonusFinal(0);
-               setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,rivalDice));
-               onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,rivalDice));
+               setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,calcDiceSum(rivalDiceRows)));
+               onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,calcDiceSum(rivalDiceRows)));
            }
            else if(myNewStatus === "Burned"){
                setRivalStatus(myNewStatus);
                setRivalAttackPower(rivalAttack.strength -1);
                setRivalBonusFinal(rivalBonus);
-               setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,rivalDice));
-               onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,rivalDice));
+               setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,calcDiceSum(rivalDiceRows)));
+               onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,calcDiceSum(rivalDiceRows)));
            }
-
            else if(myNewStatus === "Confused" || myNewStatus === "Normal"){
                setRivalStatus(myNewStatus);
                setRivalAttackPower(rivalAttack.strength);
                setRivalBonusFinal(rivalBonus);
-               setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,rivalDice));
-               onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,rivalDice));
+               setRivalTotal(sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,calcDiceSum(rivalDiceRows)));
+               onTotales('Rival',sumTotal(rivalPokemon.totalLevel,rivalAttackPower,rivalBonusFinal,calcDiceSum(rivalDiceRows)));
            }
        }
 
@@ -463,13 +556,20 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
         return `status_battle rotate-x ${status} ${rivalStatus === status ? 'statusActive' : ''}`;
     };
 
+    const resetDice = () => {
+        setMyDiceRows([null]);
+        setRivalDiceRows([null]);
+        setMyLocked(false);
+        setRivalLocked(false);
+        onHandleDice('MyPlayer', 0, []);
+        onHandleDice('Rival', 0, []);
+    };
+
     const handleRematch = () => {
         setMyAttackSelected('false');
         setRivalAttackSelected('false');
-        setMyDice(0);
-        setRivalDice(0);
-        onHandleDice('MyPlayer', 0);
-        onHandleDice('Rival', 0);
+        resetDice();
+        onBattlePhase('AttackSelection');
     };
 
     const ChangePokemon = () => {
@@ -477,10 +577,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
         setRivalPokemonSelected('false');
         setMyAttackSelected('false');
         setRivalAttackSelected('false');
-        setMyDice(0);
-        setRivalDice(0);
-        onHandleDice('MyPlayer', 0);
-        onHandleDice('Rival', 0);
+        resetDice();
         onBattlePhase('PokemonSelection');
 
     };
@@ -492,10 +589,13 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
     return (
         
-        <div className="Stadium"  >
+        <div className={`Stadium ${screenShake ? 'anim-screen-shake' : ''}`}>
+            {typeFlashColor && (
+                <div className="type-flash-overlay" style={{ backgroundColor: typeFlashColor }} />
+            )}
             
             {player && myPokemonSelected === 'false'  && (
-            <div className="player-stadium-main">
+            <div className="player-stadium-main anim-slide-left">
                 <div className="player-name">{player.name}</div>
                 <div className="player_team">
                 {(player.pokemons || []).map((pokemon) => (
@@ -525,7 +625,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
             </label>
 
             {rival && rivalPokemonSelected === 'false'  && (
-            <div  className="rival-stadium-main">
+            <div  className="rival-stadium-main anim-slide-right">
                 <div className="rival-name">{rival.name}</div>
                 <div  className="rival_team">
                 {(rival.pokemons || []).map((pokemon) => (
@@ -537,14 +637,21 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
             {rivalPokemonSelected === 'true' && myPokemonSelected === 'true' && (
             <div className="attack-select-main">
-                    <div className='MyPokemon-main'>
-                        <div className='MyPokemon_img' style={{ backgroundImage: `url(${myPokemonImg})`}}></div>
+                    <div className='MyPokemon-main anim-slide-left'>
+                        <div className={`MyPokemon_img ${myLocked && rivalLocked ? (myTotal >= rivalTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${myPokemonImg})`}}></div>
                         <div className='MyPokemon_name'>{myPokemon.name}</div>
                         <div className='MyPokemon_level'>Lv: {myPokemon.totalLevel}</div>
-                        <div className="types_div"> 
+                        <div className="types_div">
                             <Types Type={myPokemon.type1}  Clase={MyPokemonType1_class} type_id={MyPkm_type_id1}/>
                             { (myPokemon.type2 !== null && myPokemon.type2 !== "NONE" ) && <Types Type={myPokemon.type2}  Clase={MyPokemonType2_class} type_id={MyPkm_type_id2}/>}
                         </div>
+                        {myAttackSelected === 'true' && myDiceRows.some(v => v !== null) && (
+                            <div className='my-dice-panel'>
+                                {myDiceRows.filter(v => v !== null).map((val, idx) => (
+                                    <div key={idx} className={`MyDice mydice${val} dice-selected`} />
+                                ))}
+                            </div>
+                        )}
                        { myAttackSelected === 'false' && (<div className='MyPokemon_attacks' >
                             <div className='MyAttack1'  onClick={()=>handleSelectMyAttack (myPokemon.attack1, MyBonusAttack1)}> <Attack attack={myPokemon.attack1} bonus ={MyBonusAttack1}/> </div>
                             {myPokemon.attack2.name !== 'NONE' && <div className='MyAttack2'  onClick={()=>handleSelectMyAttack (myPokemon.attack2 ,MyBonusAttack2)}>  <Attack attack={myPokemon.attack2} bonus ={MyBonusAttack2}/> </div>}
@@ -552,14 +659,21 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                         </div> ) }                      
                     </div>
 
-                    <div className='RivalPokemon-main'>
-                        <div className='RivalPokemon_img' style={{ backgroundImage: `url(${rivalPokemonImg})`}}></div>
+                    <div className='RivalPokemon-main anim-slide-right'>
+                        <div className={`RivalPokemon_img ${myLocked && rivalLocked ? (rivalTotal >= myTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${rivalPokemonImg})`}}></div>
                         <div className='RivalPokemon_name'>{rivalPokemon.name}</div>
                         <div className='RivalPokemon_level'>Lv: {rivalPokemon.totalLevel}</div>
-                        <div className="types_div"> 
+                        <div className="types_div">
                             <Types Type={rivalPokemon.type1}  Clase={RivalPokemonType1_class} type_id={RivalPkm_type_id1}/>
                             { (rivalPokemon.type2 !== null && rivalPokemon.type2 !== "NONE" ) && <Types Type={rivalPokemon.type2}  Clase={RivalPokemonType2_class} type_id={RivalPkm_type_id2}/>}
                         </div>
+                        {rivalAttackSelected === 'true' && rivalDiceRows.some(v => v !== null) && (
+                            <div className='rival-dice-panel'>
+                                {rivalDiceRows.filter(v => v !== null).map((val, idx) => (
+                                    <div key={idx} className={`RivalDice mydice${val} dice-selected`} />
+                                ))}
+                            </div>
+                        )}
                         { rivalAttackSelected === 'false' &&( <div className='RivalPokemon_attacks' >
                             <div className='RivalAttack1'  onClick={()=>handleSelectRivalAttack (rivalPokemon.attack1,RivalBonusAttack1)}><Attack attack={rivalPokemon.attack1} bonus ={RivalBonusAttack1}/></div>
                             {rivalPokemon.attack2.name !== 'NONE' && <div className='RivalAttack2'  onClick={()=>handleSelectRivalAttack (rivalPokemon.attack2,RivalBonusAttack2)}><Attack attack={rivalPokemon.attack2} bonus ={RivalBonusAttack2}/></div>}
@@ -576,8 +690,10 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
         {myAttackSelected === 'true' && rivalAttackSelected === 'true' && (
             <div className='Pokemon-stadium2'>
-                <div className="myTotalFinal">{myTotal}</div>
-                <div className="rivalTotalFinal">{rivalTotal}</div>
+                {myLocked && rivalLocked && <>
+                    <div className={`myTotalFinal anim-pop ${myTotal > rivalTotal ? 'total-win' : myTotal < rivalTotal ? 'total-lose' : 'total-tie'}`}>{displayMyTotal}</div>
+                    <div className={`rivalTotalFinal anim-pop ${rivalTotal > myTotal ? 'total-win' : rivalTotal < myTotal ? 'total-lose' : 'total-tie'}`}>{displayRivalTotal}</div>
+                </>}
             <div className='MyPokemon_status'>
                 <div className={getStatusClass('Paralized')} onClick={()=> handleMyStatus('Paralized')}></div>
                 <div className={getStatusClass('Asleep')} onClick={()=> handleMyStatus('Asleep')}></div>
@@ -588,7 +704,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
             </div>
 
             <div className='MyPokemon'>
-            <div className='Attack-selected-mypoke'><Attack attack={myAttack} bonus={myBonusFinal} /></div>
+            <div className='Attack-selected-mypoke anim-fade-up'><Attack attack={myAttack} bonus={myBonusFinal} /></div>
                     <div className='MyTotal_label'>
                         <div>Level </div>+
                         <div>Attack  </div>+
@@ -601,25 +717,38 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                         <div>{myPokemon.totalLevel}  </div>+
                         <div>{myAttackPower}  </div>+
                         <div>{myBonusFinal}  </div>+
-                        <div>{myDice}  </div>=
+                        <div>{calcDiceSum(myDiceRows)}  </div>=
                         <div> {myTotal} </div>
                     </div>
 
-                    <div className='MyDices'>
-                        
-                        <div className='MyDice mydice1' onClick={()=> handleSelectMyDice(1)}></div>
-                        <div className='MyDice mydice2' onClick={()=> handleSelectMyDice(2)}></div>
-                        <div className='MyDice mydice3' onClick={()=> handleSelectMyDice(3)}></div>
-                        <div className='MyDice mydice4' onClick={()=> handleSelectMyDice(4)}></div>
-                        <div className='MyDice mydice5' onClick={()=> handleSelectMyDice(5)}></div>
-                        <div className='MyDice mydice6' onClick={()=> handleSelectMyDice(6)}></div>
-                        <div className='mydicePlus' onClick={()=> setAddMyDice(true)}></div>
-                    </div>
 
-                   
+                    {/* Dados de selección — lado izquierdo */}
+                    <div className='MyDices'>
+                        {myLocked ? (
+                            <>
+                                <div className='dice-refresh' onClick={handleUnlockMyDice}>↺</div>
+                                {myDiceRows.length < 3 &&
+                                    <div className='mydicePlus' onClick={handleAddMyDiceRow} />}
+                            </>
+                        ) : (
+                            myDiceRows.map((val, rowIdx) => {
+                                const isLastRow = rowIdx === myDiceRows.length - 1;
+                                if (val !== null) return null;
+                                return (
+                                    <div key={rowIdx} className='dice-row'>
+                                        {[1,2,3,4,5,6].map(n => (
+                                            <div key={n}
+                                                className={`MyDice mydice${n} ${myDiceAnim === n && isLastRow ? 'anim-dice' : ''}`}
+                                                onClick={() => handleSelectMyDice(rowIdx, n)} />
+                                        ))}
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
               <div className='RivalPokemon'>
-                    <div className='Attack-selected-rival'><Attack attack={rivalAttack} bonus={rivalBonusFinal} /></div>
+                    <div className='Attack-selected-rival anim-fade-up'><Attack attack={rivalAttack} bonus={rivalBonusFinal} /></div>
                     <div className='RivalTotal_label'>
                         <div>Level </div>+
                         <div>Attack  </div>+
@@ -631,20 +760,33 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                         <div>{rivalPokemon.totalLevel}  </div>+
                         <div>{rivalAttackPower}  </div>+
                         <div>{rivalBonusFinal}  </div>+
-                        <div>{rivalDice} </div>=
+                        <div>{calcDiceSum(rivalDiceRows)} </div>=
                         <div> {rivalTotal} </div>
                     </div>
+                    {/* Dados de selección — lado derecho */}
                     <div className='RivalDices'>
-                        <div className='rivalDicePlus' onClick={()=> setAddRivalDice(true)} ></div>
-                        <div className='RivalDice mydice1' onClick={()=> handleSelectRivalDice(1)}></div>
-                        <div className='RivalDice mydice2' onClick={()=> handleSelectRivalDice(2)}></div>
-                        <div className='RivalDice mydice3' onClick={()=> handleSelectRivalDice(3)}></div>
-                        <div className='RivalDice mydice4' onClick={()=> handleSelectRivalDice(4)}></div>
-                        <div className='RivalDice mydice5' onClick={()=> handleSelectRivalDice(5)}></div>
-                        <div className='RivalDice mydice6' onClick={()=> handleSelectRivalDice(6)}></div>
-                        
-                </div>
-               
+                        {rivalLocked ? (
+                            <>
+                                <div className='dice-refresh' onClick={handleUnlockRivalDice}>↺</div>
+                                {rivalDiceRows.length < 3 &&
+                                    <div className='rivalDicePlus' onClick={handleAddRivalDiceRow} />}
+                            </>
+                        ) : (
+                            rivalDiceRows.map((val, rowIdx) => {
+                                const isLastRow = rowIdx === rivalDiceRows.length - 1;
+                                if (val !== null) return null;
+                                return (
+                                    <div key={rowIdx} className='dice-row'>
+                                        {[1,2,3,4,5,6].map(n => (
+                                            <div key={n}
+                                                className={`RivalDice mydice${n} ${rivalDiceAnim === n && isLastRow ? 'anim-dice' : ''}`}
+                                                onClick={() => handleSelectRivalDice(rowIdx, n)} />
+                                        ))}
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
             </div>
 
             <div className='RivalPokemon_status'>

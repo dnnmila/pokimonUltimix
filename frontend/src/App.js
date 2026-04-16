@@ -733,12 +733,12 @@ const onHandleBonusFinal = async (player, bonus) => {
     }
 };
 
-const onHandleDice = async (player, dice) => {
+const onHandleDice = async (player, dice, rows) => {
     try {
         const response = await fetch(`${SERVER_IP}/set-battle-dice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player, dice }),
+            body: JSON.stringify({ player, dice, rows }),
         });
         if (!response.ok) console.error('Error en set-battle-dice:', response.status);
     } catch (error) {
