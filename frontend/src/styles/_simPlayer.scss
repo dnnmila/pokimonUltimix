@@ -282,6 +282,105 @@
 
 .sim-wild-preview-label { display: none; }
 
+// ── Layout 3+3 equipo ────────────────────────────────────────
+.sim-setup-center-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+.sim-setup-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.sim-team-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.sim-mini-pkm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(162, 112, 216, 0.5);
+    border-radius: 10px;
+    padding: 0.3rem 0.5rem;
+    width: 7rem;
+
+    &.sim-mini-pkm--dead {
+        opacity: 0.4;
+        filter: grayscale(80%);
+    }
+}
+
+.sim-mini-pkm-img {
+    width: 4rem;
+    height: 4rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.sim-mini-pkm-name {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: rgb(162, 112, 216);
+    text-align: center;
+    line-height: 1.1;
+    max-width: 6.5rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sim-mini-pkm-level {
+    font-size: 1rem;
+    font-weight: bold;
+    color: rgb(162, 112, 216);
+    font-family: 'Times New Roman', serif;
+    display: flex;
+    gap: 0.2rem;
+}
+
+.sim-mini-pkm-extra {
+    color: rgb(162, 112, 216);
+}
+
+.sim-mini-pkm-icons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 1.4rem;
+
+    .attached-item {
+        width: 1.4rem;
+        height: 1.4rem;
+        margin-top: 0;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+}
+
+.sim-mini-status {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+}
+
+// ── Fin layout 3+3 ───────────────────────────────────────────
+
 .sim-gym-leaders {
     display: flex;
     flex-direction: column;
@@ -451,6 +550,29 @@
     justify-content: center;
 }
 
+.sim-player-rival-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+
+    &:hover { transform: scale(1.1); }
+}
+
+.sim-player-rival-img {
+    width: 5rem !important;
+    height: 7rem !important;
+}
+
+.sim-player-rival-name {
+    color: rgb(244, 170, 191);
+    font-size: 0.9rem;
+    font-weight: bold;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
 // Seleccion de pokemon
 .player-sim-main,
 .rival-sim-main {
@@ -484,7 +606,7 @@
 @media (max-width: 768px) and (orientation: portrait) {
     .sim-player__setup {
         padding-top: 4rem;
-        gap: 1rem;
+        gap: 0.6rem;
     }
 
     .sim-gym-leaders-grid {
@@ -508,6 +630,40 @@
     .sim-other-rivals-btn span { font-size: 0.8rem; }
 
     .sim-setup-bottom-btns { gap: 1.5rem; }
+
+    // Portrait: columnas se vuelven filas horizontales (3 arriba + 3 abajo)
+    .sim-setup-center-row {
+        flex-direction: column;
+        padding: 0;
+        gap: 0.5rem;
+    }
+
+    .sim-team-col {
+        flex-direction: row;
+        gap: 0.4rem;
+        justify-content: center;
+    }
+
+    .sim-mini-pkm {
+        width: 5.5rem;
+        padding: 0.25rem 0.4rem;
+        gap: 0.1rem;
+    }
+
+    .sim-mini-pkm-img {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .sim-mini-pkm-name { font-size: 0.6rem; }
+    .sim-mini-pkm-level { font-size: 0.7rem; }
+
+    .sim-mini-pkm-icons {
+        min-height: 1.1rem;
+        .attached-item { width: 1.1rem; height: 1.1rem; }
+    }
+
+    .sim-mini-status { width: 1.1rem !important; height: 1.1rem !important; }
 }
 
 // ─── MÓVIL: Setup horizontal ─────────────────────────────────────────────────
@@ -550,6 +706,30 @@
 
     .sim-player__setup-wild input { width: 5rem; font-size: 0.85rem; }
     .sim-player__setup-wild button { font-size: 0.8rem; padding: 0.2rem 0.6rem; }
+
+    // Landscape: mantiene 3 columnas pero más compacto
+    .sim-setup-center-row { padding: 0 0.4rem; }
+
+    .sim-mini-pkm {
+        width: 5.5rem;
+        padding: 0.25rem 0.4rem;
+        gap: 0.1rem;
+    }
+
+    .sim-mini-pkm-img {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .sim-mini-pkm-name { font-size: 0.6rem; }
+    .sim-mini-pkm-level { font-size: 0.7rem; }
+
+    .sim-mini-pkm-icons {
+        min-height: 1.1rem;
+        .attached-item { width: 1.1rem; height: 1.1rem; }
+    }
+
+    .sim-mini-status { width: 1.1rem !important; height: 1.1rem !important; }
 }
 
 // ─── MÓVIL: Batalla vertical ── scoped bajo .sim-player ─────────────────────

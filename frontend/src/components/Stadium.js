@@ -20,7 +20,7 @@ const getPkmImg = (pokedex, generation = 1) => {
     return require(`../images/tokens_ultimix/${pokedex}.png`);
 };
 
-const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal}) => {
+const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal, increaseLevel, changeState}) => {
     const generation = game?.generation || 1;
     
   
@@ -69,6 +69,9 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
     const [myLocked, setMyLocked] = useState(false);
     const [rivalLocked, setRivalLocked] = useState(false);
 
+    const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
+    const [showKOPrompt, setShowKOPrompt] = useState(false);
+
     // Efectos visuales avanzados
     const [typeFlashColor, setTypeFlashColor] = useState(null);
     const [screenShake, setScreenShake] = useState(false);
@@ -112,6 +115,34 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
             return () => clearTimeout(t);
         }
     }, [myLocked, rivalLocked]);
+
+    // Prompt de subir nivel: player ganó y el rival tenía nivel >= al propio
+    useEffect(() => {
+        if (!myLocked || !rivalLocked) return;
+        if (!myPokemon || !rivalPokemon) return;
+        if (myTotal > rivalTotal && rivalPokemon.totalLevel >= myPokemon.totalLevel) {
+            setShowLevelUpPrompt(true);
+        }
+    }, [myLocked, rivalLocked]);
+
+    const handleConfirmLevelUp = () => {
+        setShowLevelUpPrompt(false);
+        increaseLevel(player.id, myPokemon.id);
+    };
+
+    // Prompt de noquear: player perdió y su pokemon sigue Alive
+    useEffect(() => {
+        if (!myLocked || !rivalLocked) return;
+        if (!myPokemon || !rivalPokemon) return;
+        if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
+            setShowKOPrompt(true);
+        }
+    }, [myLocked, rivalLocked]);
+
+    const handleConfirmKO = () => {
+        setShowKOPrompt(false);
+        changeState(player.id, myPokemon.id);
+    };
 
     // Flash del tipo al seleccionar ataque — se apaga solo
     useEffect(() => {
@@ -810,6 +841,39 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
           
         <div className="rules-guide-float-btn" onClick={() => setShowRulesGuide(true)}>?</div>
         <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
+
+        {showKOPrompt && (
+            <div className="modal-backdrop" onClick={() => setShowKOPrompt(false)}>
+                <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
+                    <div className="levelup-prompt-title" style={{color: '#e74c3c'}}>¡Derrota!</div>
+                    <div className="levelup-prompt-msg">
+                        {myPokemon?.name} fue noqueado por {rivalPokemon?.name}.
+                        <br />¿Marcar como noqueado?
+                    </div>
+                    <div className="levelup-prompt-buttons">
+                        <button className="levelup-btn-yes" onClick={handleConfirmKO}>Sí</button>
+                        <button className="levelup-btn-no" onClick={() => setShowKOPrompt(false)}>No</button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {showLevelUpPrompt && (
+            <div className="modal-backdrop" onClick={() => setShowLevelUpPrompt(false)}>
+                <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
+                    <div className="levelup-prompt-title">¡Victoria!</div>
+                    <div className="levelup-prompt-msg">
+                        {myPokemon.name} derrotó a {rivalPokemon.name} (Lv. {rivalPokemon.totalLevel}).
+                        <br />¿Subir de nivel?
+                    </div>
+                    <div className="levelup-prompt-buttons">
+                        <button className="levelup-btn-yes" onClick={handleConfirmLevelUp}>Sí</button>
+                        <button className="levelup-btn-no" onClick={() => setShowLevelUpPrompt(false)}>No</button>
+                    </div>
+                </div>
+            </div>
+        )}
+
         </div>
     )
 };

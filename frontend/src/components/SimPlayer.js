@@ -29,7 +29,17 @@ const getSafePkmImg = (pokedex, generation = 1) => {
     try { return getPkmImg(pokedex, generation); } catch { return null; }
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
+const getPokemonImg = (pokedex) => {
+    try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
+};
+
+const TRAINER_CLASS = {
+    Mila: 'trainer1', Wuicho: 'trainer2', Kevin: 'trainer3', Kampis: 'trainer4',
+    Mandito: 'trainer5', Doc: 'trainer6', Tacho: 'trainer7', Fede: 'trainer8',
+    Perry: 'trainer9', Richi: 'trainer10', Mono: 'trainer11', Foxi: 'trainer2',
+};
+
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -424,6 +434,17 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
         setRivalStatus('Normal');
     };
 
+    const getAttachedClass = (attach) => {
+        switch (attach) {
+            case 'MT':      return 'attached-mt';
+            case 'Protein': return 'attached-protein';
+            case 'Potion':  return 'attached-potion';
+            case 'Claw':    return 'attached-claw';
+            case 'Mega':    return 'attached-mega';
+            default:        return '';
+        }
+    };
+
     const handleNewSimulation = () => {
         setMyPokemon(undefined);
         setRivalPokemon(undefined);
@@ -500,6 +521,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                                                                     const img = getSafePkmImg(branch.mega, generation);
                                                                     return img ? (<><div className="pokedex-arrow pokedex-arrow--mega"></div><div className="pokedex-token-wrapper"><div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
                                                                 })()}
+                                                                {branch.nextEvolution && (() => {
+                                                                    const img = getSafePkmImg(branch.nextEvolution, generation);
+                                                                    return img ? (<><div className="pokedex-arrow">▶</div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
+                                                                })()}
                                                             </div>
                                                         );
                                                     })}
@@ -523,6 +548,22 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                             Elite 4 / Campeón / Rival
                             <button className="sim-other-rivals-close" onClick={() => setShowOtherRivals(false)}>✕</button>
                         </div>
+
+                        {/* Jugadores */}
+                        {game.players.filter(p => p.id !== playerId).length > 0 && (
+                            <div className="sim-other-rivals-group">
+                                <div className="sim-other-rivals-label">Jugadores</div>
+                                <div className="sim-other-rivals-row">
+                                    {game.players.filter(p => p.id !== playerId).map(p => (
+                                        <div key={p.id} className="sim-player-rival-card"
+                                            onClick={() => { onSimPlayerBattle(playerId, p.id); setShowSetup(false); setShowOtherRivals(false); }}>
+                                            <div className={`sim-player-rival-img image-trainer ${TRAINER_CLASS[p.name] || 'trainer1'}`} />
+                                            <div className="sim-player-rival-name">{p.name}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <div className="sim-other-rivals-group">
                             <div className="sim-other-rivals-label">Elite 4</div>
                             <div className="sim-other-rivals-row">
@@ -580,34 +621,91 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                         )}
                     </div>
 
-                    {/* 8 líderes de gimnasio prominentes */}
-                    <div className="sim-gym-leaders">
-                        <div className="sim-gym-leaders-title">Líderes de Gimnasio</div>
-                        <div className="sim-gym-leaders-grid">
-                            {leaders.filter(l => l.category === 'gym').map((l, idx) => {
-                                const img = l.img ? getPkmImg(l.img, generation) : null;
-                                const badgeNum = idx + 1;
-                                const badgeImg = getBadgeImg(generation, badgeNum);
-                                const hasBadge = player[`badge${badgeNum}`];
+                    {/* Fila central: equipo izquierda | líderes | equipo derecha */}
+                    <div className="sim-setup-center-row">
+
+                        {/* Pokemon 0-2 */}
+                        <div className="sim-team-col">
+                            {player.pokemons.slice(0, 3).map(pkm => {
+                                const pkmImg = getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation);
                                 return (
-                                    <div key={l.leaderKey} className="sim-gym-leader-wrapper">
-                                        <div className="sim-gym-leader-card"
-                                            style={img ? { backgroundImage: `url(${img})` } : {}}
-                                            onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />
-                                        <div
-                                            className={hasBadge ? 'Bagde_win sim-badge' : 'Badge sim-badge'}
-                                            style={badgeImg ? { backgroundImage: `url(${badgeImg})` } : {}}
-                                        />
+                                    <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
+                                        <div className="sim-mini-pkm-img"
+                                            style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
+                                            onClick={() => onChangeState(player.id, pkm.id)} />
+                                        <div className="sim-mini-pkm-name">{pkm.name}</div>
+                                        <div className="sim-mini-pkm-level">
+                                            {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
+                                        </div>
+                                        <div className="sim-mini-pkm-icons">
+                                            {pkm.attach !== 'None' && (
+                                                <div className={`sim-mini-attach attached-item ${getAttachedClass(pkm.attach)}`} />
+                                            )}
+                                            {pkm.status !== 'Normal' && (
+                                                <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
                         </div>
-                    </div>
 
-                    {/* Botón para Elite4 / Campeón / Rival */}
-                    <div className="sim-other-rivals-btn" onClick={() => setShowOtherRivals(true)}>
-                        <div className="sim-other-rivals-btn-icon"></div>
-                        <span>Elite 4 / Campeón / Rival</span>
+                        {/* Centro: líderes + rivals btn */}
+                        <div className="sim-setup-center">
+                            <div className="sim-gym-leaders">
+                                <div className="sim-gym-leaders-title">Líderes de Gimnasio</div>
+                                <div className="sim-gym-leaders-grid">
+                                    {leaders.filter(l => l.category === 'gym').map((l, idx) => {
+                                        const img = l.img ? getPkmImg(l.img, generation) : null;
+                                        const badgeNum = idx + 1;
+                                        const badgeImg = getBadgeImg(generation, badgeNum);
+                                        const hasBadge = player[`badge${badgeNum}`];
+                                        return (
+                                            <div key={l.leaderKey} className="sim-gym-leader-wrapper">
+                                                <div className="sim-gym-leader-card"
+                                                    style={img ? { backgroundImage: `url(${img})` } : {}}
+                                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />
+                                                <div
+                                                    className={hasBadge ? 'Bagde_win sim-badge' : 'Badge sim-badge'}
+                                                    style={badgeImg ? { backgroundImage: `url(${badgeImg})` } : {}}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <div className="sim-other-rivals-btn" onClick={() => setShowOtherRivals(true)}>
+                                <div className="sim-other-rivals-btn-icon"></div>
+                                <span>Elite 4 / Campeón / Rival</span>
+                            </div>
+                        </div>
+
+                        {/* Pokemon 3-5 */}
+                        <div className="sim-team-col">
+                            {player.pokemons.slice(3, 6).map(pkm => {
+                                const pkmImg = getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation);
+                                return (
+                                    <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
+                                        <div className="sim-mini-pkm-img"
+                                            style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
+                                            onClick={() => onChangeState(player.id, pkm.id)} />
+                                        <div className="sim-mini-pkm-name">{pkm.name}</div>
+                                        <div className="sim-mini-pkm-level">
+                                            {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
+                                        </div>
+                                        <div className="sim-mini-pkm-icons">
+                                            {pkm.attach !== 'None' && (
+                                                <div className={`sim-mini-attach attached-item ${getAttachedClass(pkm.attach)}`} />
+                                            )}
+                                            {pkm.status !== 'Normal' && (
+                                                <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
                     </div>
 
                     {/* Botones inferiores */}
@@ -685,6 +783,30 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle }) => {
                             />
                         ))}
                     </div>
+                    {(rival.megas || []).length > 0 && (
+                        <div className="rival_team">
+                            {rival.megas.map((pokemon, index) => (
+                                <PokemonBattleListed
+                                    key={rival.name + 'mega' + index}
+                                    pokemon={pokemon}
+                                    SelectPokemon={handleSelectRivalPokemon}
+                                    generation={generation}
+                                />
+                            ))}
+                        </div>
+                    )}
+                    {rival.dynamax && (rival.gmaxes || []).length > 0 && (
+                        <div className="rival_team">
+                            {rival.gmaxes.map((pokemon, index) => (
+                                <PokemonBattleListed
+                                    key={rival.name + 'gmax' + index}
+                                    pokemon={pokemon}
+                                    SelectPokemon={handleSelectRivalPokemon}
+                                    generation={generation}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

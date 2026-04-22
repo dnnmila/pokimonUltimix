@@ -462,6 +462,29 @@ export const simWildBattle = async (req, res) => {
     }
 };
 
+export const simPlayerBattle = async (req, res) => {
+    console.log('Sim Player Battle started');
+    try {
+        const { playerId, rivalPlayerId } = req.body;
+        const player = getPlayerById(playerId);
+        const rivalPlayer = getPlayerById(rivalPlayerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (!rivalPlayer) return res.status(404).json({ message: 'Jugador rival no encontrado' });
+
+        const simRival = new Rival('SimPlayer-' + rivalPlayerId, rivalPlayer.name);
+        simRival.pokemons = [...rivalPlayer.pokemons];
+        simRival.megas = [...(rivalPlayer.megas || [])];
+        simRival.gmaxes = [...(rivalPlayer.gmaxes || [])];
+        simRival.dynamax = rivalPlayer.dynamax || false;
+
+        player.setSimRival(simRival);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'SimRival jugador asignado a ' + playerId });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const simLeaderBattle = async (req, res) => {
     console.log('Sim Leader Battle started');
     try {

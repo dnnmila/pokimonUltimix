@@ -76,10 +76,8 @@ export const addPokemonToPlayer = async (req, res) => {
         }
 
         // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos pokemonId ultimixdnn
-        // Soporta prefijos como "A" (Alolan) o "M" (Mega): "A76" → "A0076", "76" → "0076"
-        const rawId = pokemonId.toString().trim().toUpperCase();
-        const prefixMatch = rawId.match(/^([A-Z]+)(\d+)$/);
-        const formattedPokemonId = prefixMatch ? prefixMatch[1] + prefixMatch[2].padStart(4, '0') : rawId.padStart(4, '0');
+        // Soporta prefijos como "A" (Alolan) o "M" (Mega): "A76" → "A0076", "76" → "0076", "0877i" → "0877i"
+        const formattedPokemonId = pokemonId.toString().trim().replace(/\d+/, (num) => num.padStart(4, '0'));
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -246,9 +244,9 @@ export const evolvePokemon = async (req, res) => {
 
         // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos poemonId ultimixdnn
         console.log('newPokemonId' + newPokemonId);
-        const rawEvoId = newPokemonId.toString().trim().toUpperCase();
-        const evoPrefixMatch = rawEvoId.match(/^([A-Z]+)(\d+)$/);
-        const formattedPokemonId = evoPrefixMatch ? evoPrefixMatch[1] + evoPrefixMatch[2].padStart(4, '0') : rawEvoId.padStart(4, '0');
+        const rawStr = newPokemonId.toString().trim();
+        // Padding solo en la parte numérica, preservando letras y su capitalización (ej: M0376, G0079, 0877i)
+        const formattedPokemonId = rawStr.replace(/\d+/, (num) => num.padStart(4, '0'));
         console.log('pokedex nuevo' + formattedPokemonId);
    
 
@@ -283,8 +281,11 @@ export const evolvePokemon = async (req, res) => {
             pokemonData.EVOLUTION,
             pokemonData.MEGA
         );
-        // Los extras que superan el nextLevel se transfieren, el resto se gastó en evolucionar
-        const transferExtra = Math.max(0, oldPkm.extra - oldPkm.nextLevel);
+        // Cambio de forma (nextLevel=-1): transferir todo el extra sin descuento
+        // Evolución normal: solo transfieren los extras que superan el nextLevel requerido
+        const transferExtra = oldPkm.nextLevel === -1
+            ? oldPkm.extra
+            : Math.max(0, oldPkm.extra - oldPkm.nextLevel);
         newPokemon.extra = transferExtra;
         newPokemon.totalLevel = newPokemon.level + newPokemon.extra;
         console.log(newPokemon);
@@ -626,8 +627,19 @@ export const changeState  = async (req, res) => {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
 
-        
         player.changeState(pokemonId);
+
+        const game = getGame();
+        const changedPokemon = player.pokemons.find(p => p.id === pokemonId);
+        if (game && changedPokemon) {
+            game.stateHistory.push({
+                round: game.round,
+                playerName: player.name,
+                pokemonName: changedPokemon.name,
+                newState: changedPokemon.state
+            });
+        }
+
         console.log('Pokemon actualizado');
         updateGameAndNotify();
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
@@ -682,9 +694,7 @@ export const wildBattle = async (req, res) => {
         console.log(pokemonId);
 
         //ajuste  Asegurarse de que pokemonId tenga siempre 4 dígitos pokemonId ultimixdnn
-        const rawWildId = pokemonId.toString().trim().toUpperCase();
-        const wildPrefixMatch = rawWildId.match(/^([A-Z]+)(\d+)$/);
-        const formattedPokemonId = wildPrefixMatch ? wildPrefixMatch[1] + wildPrefixMatch[2].padStart(4, '0') : rawWildId.padStart(4, '0');
+        const formattedPokemonId = pokemonId.toString().trim().replace(/\d+/, (num) => num.padStart(4, '0'));
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -814,13 +824,14 @@ export const getEvolutionChain = async (req, res) => {
                     [pokedexId]
                 );
                 if (!b) return null;
-                const branchMega = (b.MEGA === 'Yes' && b.EVOLUTION && b.EVOLUTION !== '000') ? b.EVOLUTION : null;
+                const branchMega = (b.MEGA === 'Yes' && b.EVOLUTION && b.EVOLUTION !== '0000') ? b.EVOLUTION : null;
                 const branchGmax = (b.GMAX && b.GMAX !== 'No' && b.GMAX !== 'NONE') ? b.GMAX : null;
-                return { pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: false, mega: branchMega, gmax: branchGmax };
+                const branchNextEvol = (b.MEGA !== 'Yes' && b.EVOLUTION && b.EVOLUTION !== '0000' && b.EVOLUTION !== 'evee') ? b.EVOLUTION : null;
+                return { pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: false, mega: branchMega, gmax: branchGmax, nextEvolution: branchNextEvol };
             };
 
             // Si hay EVOLUTION2: ambas evoluciones son branches al mismo nivel, parar cadena lineal
-            if (data.EVOLUTION2 && data.EVOLUTION2 !== '000') {
+            if (data.EVOLUTION2 && data.EVOLUTION2 !== '0000') {
                 const branch1 = await buildBranch(data.EVOLUTION);
                 const branch2 = await buildBranch(data.EVOLUTION2);
                 if (branch1) branches.push(branch1);
@@ -830,7 +841,7 @@ export const getEvolutionChain = async (req, res) => {
             }
 
             // Si tiene mega principal via EVOLUTION, agregarla a branches
-            if (data.MEGA === 'Yes' && data.EVOLUTION && data.EVOLUTION !== '000') {
+            if (data.MEGA === 'Yes' && data.EVOLUTION && data.EVOLUTION !== '0000') {
                 const mainMega = await db.get(
                     "SELECT POKEDEX, NAME, TYPE1, TYPE2 FROM pokemons WHERE POKEDEX = ? AND FORM = 'Mega' LIMIT 1",
                     [data.EVOLUTION]
@@ -848,9 +859,19 @@ export const getEvolutionChain = async (req, res) => {
             );
             for (const b of preevoBranches) {
                 if (!branches.find(br => br.pokedex === b.POKEDEX)) {
-                    const branchMega = (b.MEGA === 'Yes' && b.EVOLUTION && b.EVOLUTION !== '000') ? b.EVOLUTION : null;
+                    const branchMega = (b.MEGA === 'Yes' && b.EVOLUTION && b.EVOLUTION !== '0000') ? b.EVOLUTION : null;
                     const branchGmax = (b.GMAX && b.GMAX !== 'No' && b.GMAX !== 'NONE') ? b.GMAX : null;
-                    branches.push({ pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: b.FORM === 'Mega', mega: branchMega, gmax: branchGmax });
+                    const branchNextEvol = (b.MEGA !== 'Yes' && b.EVOLUTION && b.EVOLUTION !== '0000' && b.EVOLUTION !== 'evee') ? b.EVOLUTION : null;
+                    branches.push({ pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2, isMega: b.FORM === 'Mega', mega: branchMega, gmax: branchGmax, nextEvolution: branchNextEvol });
+                }
+            }
+
+            // Si hay ramas via PREEVOLUCION y también hay una evolución principal válida,
+            // agregarla como primera rama (ej: Galarian Slowpoke → Slowbro + Slowking, Goomy → Sliggoo + Hisuian Sliggoo)
+            if (preevoBranches.length > 0 && data.MEGA !== 'Yes' && data.EVOLUTION && data.EVOLUTION !== '0000' && data.EVOLUTION !== 'evee') {
+                const mainEvoBranch = await buildBranch(data.EVOLUTION);
+                if (mainEvoBranch && !branches.find(br => br.pokedex === mainEvoBranch.pokedex)) {
+                    branches.unshift(mainEvoBranch);
                 }
             }
 
@@ -864,7 +885,16 @@ export const getEvolutionChain = async (req, res) => {
 
             // Condiciones de parada
             if (data.NEXT_LEVEL === 0) break;
-            if (!data.EVOLUTION || data.EVOLUTION === '000' || data.EVOLUTION === 'evee') break;
+            if (data.NEXT_LEVEL === -1) {
+                if (data.EVOLUTION && data.EVOLUTION !== '0000') {
+                    const formBranch = await buildBranch(data.EVOLUTION);
+                    if (formBranch && !branches.find(br => br.pokedex === formBranch.pokedex)) {
+                        branches.push(formBranch);
+                    }
+                }
+                break;
+            }
+            if (!data.EVOLUTION || data.EVOLUTION === '0000' || data.EVOLUTION === 'evee') break;
             if (data.MEGA === 'Yes') break;
             if (preevoBranches.length > 0) break;
 

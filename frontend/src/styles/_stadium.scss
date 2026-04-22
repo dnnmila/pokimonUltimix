@@ -548,3 +548,57 @@ top: 15%;
     background-color: #ee4141;
     color: aliceblue;
 }
+.levelup-prompt {
+    background: linear-gradient(160deg, #1a1a2e, #16213e);
+    border: 2px solid #f9d71c;
+    border-radius: 16px;
+    padding: 28px 36px;
+    text-align: center;
+    min-width: 280px;
+    box-shadow: 0 0 30px rgba(249, 215, 28, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: popIn 0.3s ease both;
+
+    .levelup-prompt-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #f9d71c;
+        letter-spacing: 1px;
+    }
+
+    .levelup-prompt-msg {
+        color: #e0e0e0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .levelup-prompt-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 6px;
+
+        button {
+            padding: 8px 28px;
+            border: none;
+            border-radius: 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: filter 0.15s;
+            &:hover { filter: brightness(1.2); }
+        }
+
+        .levelup-btn-yes {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .levelup-btn-no {
+            background-color: #c0392b;
+            color: white;
+        }
+    }
+}

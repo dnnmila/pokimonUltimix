@@ -96,10 +96,13 @@ const ModalPokedex = ({ show, onClose, player }) => {
                                                                 {branch.mega && (
                                                                     <>
                                                                         <div className="pokedex-arrow pokedex-arrow--mega"></div>
-                                                                        <TokenImg
-                                                                            pokedex={branch.mega}
-                                                                            isMega={true}
-                                                                        />
+                                                                        <TokenImg pokedex={branch.mega} isMega={true} />
+                                                                    </>
+                                                                )}
+                                                                {branch.nextEvolution && (
+                                                                    <>
+                                                                        <div className="pokedex-arrow">▶</div>
+                                                                        <TokenImg pokedex={branch.nextEvolution} />
                                                                     </>
                                                                 )}
                                                             </div>

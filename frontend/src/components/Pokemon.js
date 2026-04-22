@@ -10,8 +10,17 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
     const type_id1 = `types_${id}_1`;
     const type_id2 = `types_${id}_2`;
     const delete_id = `delete_${id}`;
-    //Ajuste de pokedes ultimixdnn
-    const imageUrl = require(`../images/POKEMON/${pokedex}.png`);
+    const getImageUrl = (id, forceToken = false) => {
+        if (forceToken) {
+            try { return require(`../images/tokens_ultimix/${id}.png`); } catch { return null; }
+        }
+        try {
+            return require(`../images/POKEMON/${id}.png`);
+        } catch {
+            try { return require(`../images/tokens_ultimix/${id}.png`); } catch { return null; }
+        }
+    };
+    const imageUrl = getImageUrl(pokedex, nextLevel === -1);
     const box_id = `div_${id}`;
 
     const type1_class = `type_${type1}`;
@@ -114,7 +123,7 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
             <h1 className="level_pokemon" > {level}</h1>
             {extra > 0 && <h1 className="level_extra"> + {extra} </h1>}
             </div>
-            {extra >= nextLevel && nextLevel !== 0 && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
+            {((extra >= nextLevel && nextLevel > 0) || nextLevel === -1) && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
             <h1 className="name_pokemon" id={name_id}> {name}</h1>
             <div className="status_wrapper">
                 <div className={`status_pokemon ${status}`} onClick={handleChangeStatus} ></div>

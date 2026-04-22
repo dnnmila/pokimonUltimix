@@ -1,5 +1,10 @@
 import React, {useState,useEffect,useCallback} from 'react';
 import dinamaxImg from '../images/dinamax.png';
+import Pokemon from './Pokemon';
+import AddPokemon from './AddPokemon';
+import ModalMonedas from './modals/ModalMonedas.js';
+import ModalTienda from './modals/ModalTienda.js';
+import ModalBattle from './modals/ModalBattle.js';
 
 const getBadgeImg = (gen, num) => {
     try {
@@ -8,11 +13,6 @@ const getBadgeImg = (gen, num) => {
         try { return require(`../images/badges/badge${num}.png`); } catch { return null; }
     }
 };
-import Pokemon from './Pokemon';
-import AddPokemon from './AddPokemon';
-import ModalMonedas from './modals/ModalMonedas.js';
-import ModalTienda from './modals/ModalTienda.js';
-import ModalBattle from './modals/ModalBattle.js';
 
 
 
@@ -55,6 +55,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
     const [showModalStore, setShowModalStore] = useState(false);
     const [showModalBattle, setShowModalBattle] = useState(false);
     const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
+    const [historyTab, setHistoryTab] = useState('purchases');
 
 
     const handleOpenModalCoins = () => {
@@ -179,23 +180,50 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                 <div className="modal-backdrop" onClick={() => setShowPurchaseHistory(false)}>
                     <div className="purchase-history-modal" onClick={e => e.stopPropagation()}>
                         <div className="purchase-history-title">
-                            Historial de Compras
+                            {historyTab === 'purchases' ? 'Historial de Compras' : 'Historial de Estados'}
                             <button className="purchase-history-close" onClick={() => setShowPurchaseHistory(false)}>✕</button>
                         </div>
-                        {(game.purchaseHistory || []).length === 0 ? (
-                            <div className="purchase-history-empty">Sin compras registradas</div>
+                        <div className="purchase-history-tabs">
+                            <button
+                                className={`ph-tab${historyTab === 'purchases' ? ' ph-tab-active' : ''}`}
+                                onClick={() => setHistoryTab('purchases')}
+                            >Compras</button>
+                            <button
+                                className={`ph-tab${historyTab === 'states' ? ' ph-tab-active' : ''}`}
+                                onClick={() => setHistoryTab('states')}
+                            >Estados</button>
+                        </div>
+                        {historyTab === 'purchases' ? (
+                            (game.purchaseHistory || []).length === 0 ? (
+                                <div className="purchase-history-empty">Sin compras registradas</div>
+                            ) : (
+                                <div className="purchase-history-list">
+                                    {[...(game.purchaseHistory || [])].reverse().map((entry, i) => (
+                                        <div key={i} className="purchase-history-item">
+                                            <span className="ph-round">R{entry.round}</span>
+                                            <span className="ph-player">{entry.playerName}</span>
+                                            <span className="ph-item">{entry.item}</span>
+                                            <span className="ph-price">-${entry.price}</span>
+                                            <span className="ph-coins-after">→ ${entry.coinsAfter}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
                         ) : (
-                            <div className="purchase-history-list">
-                                {[...(game.purchaseHistory || [])].reverse().map((entry, i) => (
-                                    <div key={i} className="purchase-history-item">
-                                        <span className="ph-round">R{entry.round}</span>
-                                        <span className="ph-player">{entry.playerName}</span>
-                                        <span className="ph-item">{entry.item}</span>
-                                        <span className="ph-price">-${entry.price}</span>
-                                        <span className="ph-coins-after">→ ${entry.coinsAfter}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            (game.stateHistory || []).length === 0 ? (
+                                <div className="purchase-history-empty">Sin cambios de estado registrados</div>
+                            ) : (
+                                <div className="purchase-history-list">
+                                    {[...(game.stateHistory || [])].reverse().map((entry, i) => (
+                                        <div key={i} className="purchase-history-item">
+                                            <span className="ph-round">R{entry.round}</span>
+                                            <span className="ph-player">{entry.playerName}</span>
+                                            <span className="ph-item">{entry.pokemonName}</span>
+                                            <span className={`ph-state ph-state-${entry.newState?.toLowerCase()}`}>{entry.newState}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
                         )}
                     </div>
                 </div>

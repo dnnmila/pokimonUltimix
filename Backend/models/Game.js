@@ -35,6 +35,7 @@ class Game {
         this.generation = 1;
         this.pendingPurchases = [];
         this.purchaseHistory = [];
+        this.stateHistory = [];
 
     
 
