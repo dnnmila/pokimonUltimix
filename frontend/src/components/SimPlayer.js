@@ -495,18 +495,35 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <div key={node.pokedex} className="pokedex-step">
                                         {i > 0 && <div className="pokedex-arrow">▶</div>}
                                         <div className="pokedex-token-wrapper">
-                                            <div className={`pokedex-token ${node.isMega ? 'pokedex-token--mega' : ''}`}
-                                                style={{ backgroundImage: `url(${nodeImg})` }} />
+                                            <div className="pokedex-token" style={{ backgroundImage: `url(${nodeImg})` }} />
                                         </div>
+                                        {/* GMax — inline */}
                                         {node.gmax && (() => {
                                             const img = getSafePkmImg(node.gmax, generation);
                                             return img ? (<><div className="pokedex-arrow pokedex-arrow--gmax"></div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
                                         })()}
+                                        {/* Megas — separadas de evoluciones */}
+                                        {node.megas && node.megas.length > 0 && (
+                                            <>
+                                                <div className="pokedex-arrow pokedex-arrow--mega"></div>
+                                                <div className="pokedex-branches">
+                                                    {node.megas.map(megaPokedex => {
+                                                        const img = getSafePkmImg(megaPokedex, generation);
+                                                        return img ? (
+                                                            <div key={megaPokedex} className="pokedex-branch-group">
+                                                                <div className="pokedex-token-wrapper">
+                                                                    <div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} />
+                                                                </div>
+                                                            </div>
+                                                        ) : null;
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                        {/* Ramas de evolución */}
                                         {node.branches && node.branches.length > 0 && (
                                             <>
-                                                <div className={`pokedex-arrow ${node.branches[0].isMega ? 'pokedex-arrow--mega' : ''}`}>
-                                                    {node.branches[0].isMega ? '' : '▶'}
-                                                </div>
+                                                <div className="pokedex-arrow">▶</div>
                                                 <div className="pokedex-branches">
                                                     {node.branches.map(branch => {
                                                         const branchImg = getSafePkmImg(branch.pokedex, generation);
@@ -514,13 +531,29 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                                         return (
                                                             <div key={branch.pokedex} className="pokedex-branch-group">
                                                                 <div className="pokedex-token-wrapper">
-                                                                    <div className={`pokedex-token ${branch.isMega ? 'pokedex-token--mega' : ''}`}
-                                                                        style={{ backgroundImage: `url(${branchImg})` }} />
+                                                                    <div className="pokedex-token" style={{ backgroundImage: `url(${branchImg})` }} />
                                                                 </div>
-                                                                {branch.mega && (() => {
-                                                                    const img = getSafePkmImg(branch.mega, generation);
-                                                                    return img ? (<><div className="pokedex-arrow pokedex-arrow--mega"></div><div className="pokedex-token-wrapper"><div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
+                                                                {branch.gmax && (() => {
+                                                                    const img = getSafePkmImg(branch.gmax, generation);
+                                                                    return img ? (<><div className="pokedex-arrow pokedex-arrow--gmax"></div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
                                                                 })()}
+                                                                {branch.megas && branch.megas.length > 0 && (
+                                                                    <>
+                                                                        <div className="pokedex-arrow pokedex-arrow--mega"></div>
+                                                                        <div className="pokedex-branches">
+                                                                            {branch.megas.map(megaPokedex => {
+                                                                                const img = getSafePkmImg(megaPokedex, generation);
+                                                                                return img ? (
+                                                                                    <div key={megaPokedex} className="pokedex-branch-group">
+                                                                                        <div className="pokedex-token-wrapper">
+                                                                                            <div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ) : null;
+                                                                            })}
+                                                                        </div>
+                                                                    </>
+                                                                )}
                                                                 {branch.nextEvolution && (() => {
                                                                     const img = getSafePkmImg(branch.nextEvolution, generation);
                                                                     return img ? (<><div className="pokedex-arrow">▶</div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;

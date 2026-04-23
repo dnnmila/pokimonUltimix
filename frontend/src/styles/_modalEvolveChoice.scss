@@ -1,0 +1,67 @@
+.modal-evolve-choice {
+    background-color: rgb(28, 28, 40);
+    color: beige;
+    padding: 1.5rem;
+    border-radius: 8px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    min-width: 20vw;
+    max-width: 80vw;
+
+    &__title {
+        font-size: 1.6rem;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        color: rgb(162, 112, 216);
+    }
+
+    &__options {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    &__card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.8rem;
+        border: 2px solid transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: border-color 0.15s, transform 0.15s;
+
+        &:hover {
+            border-color: rgb(162, 112, 216);
+            transform: scale(1.05);
+        }
+    }
+
+    &__img {
+        width: 8vw;
+        height: 14vh;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+
+        @media (max-width: 1180px) {
+            width: 12vw;
+            height: 10vh;
+        }
+    }
+
+    &__name {
+        font-size: 1.1rem;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        color: rgb(162, 112, 216);
+    }
+
+    &__types {
+        display: flex;
+        gap: 0.4rem;
+    }
+}

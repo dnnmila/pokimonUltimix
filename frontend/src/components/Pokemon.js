@@ -1,6 +1,8 @@
 import React, {useState} from 'react';
 import Types from './Types';
 import ModalAttach from './modals/ModalAttach';
+import ModalEvolveChoice from './modals/ModalEvolveChoice';
+import SERVER_IP from '../config';
 
 const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
    
@@ -40,10 +42,34 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
         // Limpia el campo de entrada después de agregar
     };
 
-    const handleEvolvePokemon = () => {
-        console.log(evolution);
-        onEvolvePokemon(currentPlayer.id, id , evolution);
-        // Limpia el campo de entrada después de agregar
+    const handleEvolvePokemon = async () => {
+        if (nextLevel === -1) {
+            onEvolvePokemon(currentPlayer.id, id, evolution);
+            return;
+        }
+        try {
+            const res = await fetch(`${SERVER_IP}/get-possible-evolutions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pokedexId: pokedex }),
+            });
+            const options = await res.json();
+            if (options.length === 1) {
+                onEvolvePokemon(currentPlayer.id, id, options[0].POKEDEX);
+            } else if (options.length > 1) {
+                setEvolveOptions(options);
+                setShowEvolveModal(true);
+            } else {
+                onEvolvePokemon(currentPlayer.id, id, evolution);
+            }
+        } catch (e) {
+            onEvolvePokemon(currentPlayer.id, id, evolution);
+        }
+    };
+
+    const handleEvolveSelect = (newPokedex) => {
+        setShowEvolveModal(false);
+        onEvolvePokemon(currentPlayer.id, id, newPokedex);
     };
 
     const handleIncreaseLevel = () => {
@@ -54,6 +80,8 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
 
 
     const [showModalAttach, setShowModalAttach] = useState(false);
+    const [showEvolveModal, setShowEvolveModal] = useState(false);
+    const [evolveOptions, setEvolveOptions] = useState([]);
 
 
     const handleOpenModalAttach = () => {
@@ -140,6 +168,7 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
             <div className="delete_pokemon" id={delete_id} onClick={handleDeletePokemon} > </div>
 
             <ModalAttach show={showModalAttach} onClose={handleCloseModalAttach} currentPlayer={currentPlayer} pokemonId={id} onAttach={onAttach} attachTM={attachTM} attachMega={attachMega}/>
+            <ModalEvolveChoice show={showEvolveModal} options={evolveOptions} onSelect={handleEvolveSelect} onClose={() => setShowEvolveModal(false)} />
         </div>
     )
 };
