@@ -180,7 +180,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                 <div className="modal-backdrop" onClick={() => setShowPurchaseHistory(false)}>
                     <div className="purchase-history-modal" onClick={e => e.stopPropagation()}>
                         <div className="purchase-history-title">
-                            {historyTab === 'purchases' ? 'Historial de Compras' : 'Historial de Estados'}
+                            {historyTab === 'purchases' ? 'Historial de Compras' : historyTab === 'states' ? 'Historial de Estados' : 'Historial de Niveles'}
                             <button className="purchase-history-close" onClick={() => setShowPurchaseHistory(false)}>✕</button>
                         </div>
                         <div className="purchase-history-tabs">
@@ -192,6 +192,10 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                                 className={`ph-tab${historyTab === 'states' ? ' ph-tab-active' : ''}`}
                                 onClick={() => setHistoryTab('states')}
                             >Estados</button>
+                            <button
+                                className={`ph-tab${historyTab === 'levels' ? ' ph-tab-active' : ''}`}
+                                onClick={() => setHistoryTab('levels')}
+                            >Niveles</button>
                         </div>
                         {historyTab === 'purchases' ? (
                             (game.purchaseHistory || []).length === 0 ? (
@@ -209,19 +213,46 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                                     ))}
                                 </div>
                             )
-                        ) : (
+                        ) : historyTab === 'states' ? (
                             (game.stateHistory || []).length === 0 ? (
                                 <div className="purchase-history-empty">Sin cambios de estado registrados</div>
                             ) : (
                                 <div className="purchase-history-list">
-                                    {[...(game.stateHistory || [])].reverse().map((entry, i) => (
-                                        <div key={i} className="purchase-history-item">
-                                            <span className="ph-round">R{entry.round}</span>
-                                            <span className="ph-player">{entry.playerName}</span>
-                                            <span className="ph-item">{entry.pokemonName}</span>
-                                            <span className={`ph-state ph-state-${entry.newState?.toLowerCase()}`}>{entry.newState}</span>
-                                        </div>
-                                    ))}
+                                    {[...(game.stateHistory || [])].reverse().map((entry, i) => {
+                                        const sourceLabel = entry.source === 'manual-master' ? 'Manual (Master)' : entry.source === 'manual-player' ? `Manual (${entry.playerName})` : '';
+                                        return (
+                                            <div key={i} className="purchase-history-item">
+                                                <span className="ph-round">R{entry.round}</span>
+                                                <span className="ph-player">{entry.playerName}</span>
+                                                <span className="ph-item">{entry.pokemonName}</span>
+                                                <span className={`ph-state ph-state-${entry.newState?.toLowerCase()}`}>{entry.newState}</span>
+                                                {entry.rivalPokemonName && <span className="ph-rival-pkm">vs {entry.rivalPokemonName}</span>}
+                                                {entry.rivalName && <span className="ph-rival">{entry.rivalName}</span>}
+                                                {sourceLabel && <span className="ph-source">{sourceLabel}</span>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )
+                        ) : (
+                            (game.levelHistory || []).length === 0 ? (
+                                <div className="purchase-history-empty">Sin subidas de nivel registradas</div>
+                            ) : (
+                                <div className="purchase-history-list">
+                                    {[...(game.levelHistory || [])].reverse().map((entry, i) => {
+                                        const sourceLabel = entry.source === 'manual-master' ? 'Manual (Master)' : entry.source === 'manual-player' ? `Manual (${entry.playerName})` : '';
+                                        return (
+                                            <div key={i} className="purchase-history-item">
+                                                <span className="ph-round">R{entry.round}</span>
+                                                <span className="ph-player">{entry.playerName}</span>
+                                                <span className="ph-item">{entry.pokemonName}</span>
+                                                <span className="ph-level-change">Lv.{entry.previousLevel}→{entry.newLevel}</span>
+                                                {entry.rivalPokemonName && <span className="ph-rival-pkm">vs {entry.rivalPokemonName}</span>}
+                                                {entry.rivalName && <span className="ph-rival">{entry.rivalName}</span>}
+                                                {sourceLabel && <span className="ph-source">{sourceLabel}</span>}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )
                         )}

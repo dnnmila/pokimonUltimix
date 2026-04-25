@@ -465,18 +465,34 @@ export const changePosition  = async (req, res) => {
 export const increaseLevel  = async (req, res) => {
     console.log('increase Level ');
     try {
-        const { playerId, pokemonId } = req.body;
+        const { playerId, pokemonId, rivalName, rivalPokemonName, source } = req.body;
         const player = getPlayerById(playerId);
         if (!player) {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
 
-        
+        const pokemon = player.pokemons.find(p => p.id === pokemonId);
+        const previousLevel = pokemon?.totalLevel ?? 0;
+
         player.increasePokemonLevel(pokemonId);
+
+        const updatedPokemon = player.pokemons.find(p => p.id === pokemonId);
+        const game = getGame();
+        if (game && updatedPokemon) {
+            game.levelHistory.push({
+                round: game.round,
+                playerName: player.name,
+                pokemonName: updatedPokemon.name,
+                previousLevel,
+                newLevel: updatedPokemon.totalLevel,
+                rivalName: rivalName || null,
+                rivalPokemonName: rivalPokemonName || null,
+                source: source || null
+            });
+        }
+
         console.log('Pokemon actualizado ');
         updateGameAndNotify();
-        // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
-
         res.status(200).json({ message: 'Position updated', player });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -624,7 +640,7 @@ export const attachMega  = async (req, res) => {
 export const changeState  = async (req, res) => {
     console.log('attach item  ');
     try {
-        const { playerId, pokemonId } = req.body;
+        const { playerId, pokemonId, rivalName, rivalPokemonName, source } = req.body;
         const player = getPlayerById(playerId);
         if (!player) {
             return res.status(404).json({ message: 'Jugador no encontrado' });
@@ -639,7 +655,10 @@ export const changeState  = async (req, res) => {
                 round: game.round,
                 playerName: player.name,
                 pokemonName: changedPokemon.name,
-                newState: changedPokemon.state
+                newState: changedPokemon.state,
+                rivalName: rivalName || null,
+                rivalPokemonName: rivalPokemonName || null,
+                source: source || null
             });
         }
 

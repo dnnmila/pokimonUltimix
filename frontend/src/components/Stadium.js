@@ -127,7 +127,10 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
     const handleConfirmLevelUp = () => {
         setShowLevelUpPrompt(false);
-        increaseLevel(player.id, myPokemon.id);
+        increaseLevel(player.id, myPokemon.id, {
+            rivalName: rival?.name,
+            rivalPokemonName: rivalPokemon?.name,
+        });
     };
 
     // Prompt de noquear: player perdió y su pokemon sigue Alive
@@ -141,7 +144,10 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
     const handleConfirmKO = () => {
         setShowKOPrompt(false);
-        changeState(player.id, myPokemon.id);
+        changeState(player.id, myPokemon.id, {
+            rivalName: rival?.name,
+            rivalPokemonName: rivalPokemon?.name,
+        });
     };
 
     // Flash del tipo al seleccionar ataque — se apaga solo

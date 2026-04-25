@@ -385,7 +385,8 @@ export const leaderBattle = async (req, res) => {
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
     
         const game = getGame();
-        rival.add2Pokemon(pokemon1,pokemon2)
+        rival.add2Pokemon(pokemon1,pokemon2);
+        rival.badgeNum = badgeNum;
         console.log("Rival");
         console.log(rival);
 
@@ -713,6 +714,18 @@ export const setBattlePhase = async (req, res) => {
         updateGameAndNotify();
         res.status(200).json({ message: 'Fase de batalla establecida ' });
 
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const startSimMirror = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        game.startSimMirror(playerId);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Mirror de simulación iniciado' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

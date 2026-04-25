@@ -75,7 +75,7 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
     const handleIncreaseLevel = () => {
         console.log ('Player ID: ' + currentPlayer.id);
         console.log ('pokemon ID :' + id);
-        onIncreaseLevel(currentPlayer.id,id)
+        onIncreaseLevel(currentPlayer.id, id, { source: 'manual-master' })
     }
 
 
@@ -109,8 +109,8 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
         }
     };
 
-    const handleChangeState = ()=> {
-         onChangeState(currentPlayer.id, id);
+    const handleChangeState = () => {
+        onChangeState(currentPlayer.id, id, { source: 'manual-master' });
     }
     const handleDecreaseStatusCounter = () => {
         onDecreaseStatusCounter(currentPlayer.id, id);

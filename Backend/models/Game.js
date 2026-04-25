@@ -36,6 +36,7 @@ class Game {
         this.pendingPurchases = [];
         this.purchaseHistory = [];
         this.stateHistory = [];
+        this.levelHistory = [];
 
     
 
@@ -155,6 +156,34 @@ class Game {
             this.myPlayerTotal = 0;
             this.myRivalTotal = 0;
         }
+    }
+
+    startSimMirror(playerId) {
+        const isCurrentTurn = this.players[this.currentTurn]?.id === playerId;
+        if (!isCurrentTurn) return;
+        const player = this.players.find(p => p.id === playerId);
+        if (!player?.simRival) return;
+        this.CurrentRival = player.simRival;
+        this.battlePublic = true;
+        this.battlePhase = 'PokemonSelection';
+        this.myPlayerPkm = [];
+        this.myRivalPkm = [];
+        this.myPlayerPkmAtk = [];
+        this.myRivalPkmAtk = [];
+        this.myPlayerTotal = 0;
+        this.myRivalTotal = 0;
+        this.myPlayerDice = 0;
+        this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        this.myBonusAtk1 = 0;
+        this.myBonusAtk2 = 0;
+        this.myBonusAtk3 = 0;
+        this.rivalBonusAtk1 = 0;
+        this.rivalBonusAtk2 = 0;
+        this.rivalBonusAtk3 = 0;
     }
 
     nextTurn() {

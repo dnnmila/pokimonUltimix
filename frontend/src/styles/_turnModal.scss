@@ -1,0 +1,81 @@
+@keyframes turn-pulse {
+    0%   { box-shadow: 0 0 20px 4px rgba(255, 220, 0, 0.7), 0 0 60px 10px rgba(255, 180, 0, 0.3); transform: scale(1); }
+    50%  { box-shadow: 0 0 40px 12px rgba(255, 220, 0, 1),  0 0 90px 20px rgba(255, 180, 0, 0.6); transform: scale(1.04); }
+    100% { box-shadow: 0 0 20px 4px rgba(255, 220, 0, 0.7), 0 0 60px 10px rgba(255, 180, 0, 0.3); transform: scale(1); }
+}
+
+@keyframes turn-icon-spin {
+    0%   { transform: rotate(-15deg) scale(1.1); }
+    50%  { transform: rotate(15deg) scale(1.3); }
+    100% { transform: rotate(-15deg) scale(1.1); }
+}
+
+@keyframes turn-backdrop-flash {
+    0%   { background-color: rgba(0, 0, 0, 0.55); }
+    50%  { background-color: rgba(255, 200, 0, 0.18); }
+    100% { background-color: rgba(0, 0, 0, 0.55); }
+}
+
+.turn-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    animation: turn-backdrop-flash 1s ease-in-out infinite;
+}
+
+.turn-modal {
+    background: linear-gradient(145deg, rgb(28, 28, 48), rgb(20, 20, 36));
+    border: 3px solid rgb(255, 210, 0);
+    border-radius: 16px;
+    padding: 2.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+    animation: turn-pulse 1s ease-in-out infinite;
+    min-width: 22vw;
+}
+
+.turn-modal-icon {
+    font-size: 3.5rem;
+    animation: turn-icon-spin 1s ease-in-out infinite;
+    line-height: 1;
+}
+
+.turn-modal-text {
+    text-align: center;
+    font-size: 1.8rem;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: rgb(220, 220, 220);
+    line-height: 1.4;
+
+    span {
+        color: rgb(255, 210, 0);
+        font-size: 2.2rem;
+    }
+}
+
+.turn-modal-btn {
+    background-color: rgb(255, 210, 0);
+    color: rgb(20, 20, 36);
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 2.5rem;
+    font-size: 1.3rem;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.15s;
+
+    &:hover {
+        background-color: rgb(255, 230, 60);
+        transform: scale(1.07);
+    }
+
+    &:active {
+        transform: scale(0.97);
+    }
+}

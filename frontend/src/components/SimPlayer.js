@@ -39,7 +39,7 @@ const TRAINER_CLASS = {
     Perry: 'trainer9', Richi: 'trainer10', Mono: 'trainer11', Foxi: 'trainer2',
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -66,6 +66,18 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [showRulesGuide, setShowRulesGuide] = useState(false);
     const [pendingRequest, setPendingRequest] = useState(null);
     const [showOtherRivals, setShowOtherRivals] = useState(false);
+    const [showTurnModal, setShowTurnModal] = useState(false);
+    const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
+    const [showKOPrompt, setShowKOPrompt] = useState(false);
+    const [gymLeaderBadgeNum, setGymLeaderBadgeNum] = useState(null);
+    const [pendingBadge, setPendingBadge] = useState(false);
+    const [showBadgePrompt, setShowBadgePrompt] = useState(false);
+    const isMyTurn = game.players[game.currentTurn]?.id === playerId;
+    const isOfficialBattle = isMyTurn && game.battlePublic;
+
+    useEffect(() => {
+        if (isMyTurn) setShowTurnModal(true);
+    }, [game.currentTurn]);
 
     // Fases de batalla (mismo patron que Stadium)
     const [myPokemon, setMyPokemon] = useState();
@@ -108,8 +120,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [rivalStatus, setRivalStatus] = useState('Normal');
     const [myDice, setMyDice] = useState(0);
     const [rivalDice, setRivalDice] = useState(0);
-    const [addMyDice, setAddMyDice] = useState(false);
-    const [addRivalDice, setAddRivalDice] = useState(false);
+    const [myDiceRows, setMyDiceRows] = useState([null]);
+    const [rivalDiceRows, setRivalDiceRows] = useState([null]);
+    const [myLocked, setMyLocked] = useState(false);
+    const [rivalLocked, setRivalLocked] = useState(false);
+    const [myDiceAnim, setMyDiceAnim] = useState(0);
+    const [rivalDiceAnim, setRivalDiceAnim] = useState(0);
 
     // Detectar cuando el request pendiente fue resuelto (aprobado o denegado)
     useEffect(() => {
@@ -117,6 +133,35 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         const stillPending = (game.pendingPurchases || []).find(r => r.id === pendingRequest.id);
         if (!stillPending) setPendingRequest(null);
     }, [game.pendingPurchases, pendingRequest]);
+
+    // Activar fase RollDice en el mirror y enviar totales iniciales cuando ambos ataques están seleccionados
+    useEffect(() => {
+        if (!isMyTurn) return;
+        if (myAttackSelected === 'true' && rivalAttackSelected === 'true') {
+            onChangeBattlePhase('RollDice');
+            onHandleTotales('MyPlayer', myTotal);
+            onHandleTotales('Rival', rivalTotal);
+        }
+    }, [myAttackSelected, rivalAttackSelected]);
+
+    // Prompts de batalla oficial: solo cuando ambos dados están bloqueados y es batalla pública
+    useEffect(() => {
+        if (!myLocked || !rivalLocked) return;
+        if (!isOfficialBattle) return;
+        if (!myPokemon || !rivalPokemon) return;
+        if (myTotal > rivalTotal) {
+            const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel;
+            if (canLevelUp) setShowLevelUpPrompt(true);
+            const isLastRivalPkm = rival?.pokemons?.[rival.pokemons.length - 1]?.id === rivalPokemon?.id;
+            if (rival?.id?.startsWith('SimLeader-') && gymLeaderBadgeNum !== null && isLastRivalPkm) {
+                if (canLevelUp) setPendingBadge(true);
+                else setShowBadgePrompt(true);
+            }
+        }
+        if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
+            setShowKOPrompt(true);
+        }
+    }, [myLocked, rivalLocked]);
 
     // Detectar pokemon escaneado por RFID → mostrar el mismo modal que búsqueda manual
     const prevSimRivalId = React.useRef(null);
@@ -170,9 +215,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
     };
 
-    const handleConfirmWildPokemon = () => {
+    const handleConfirmWildPokemon = async () => {
         if (!wildPokemonId) return;
-        onSimWildBattle(playerId, wildPokemonId);
+        await onSimWildBattle(playerId, wildPokemonId);
+        if (isMyTurn) onStartSimMirror(playerId);
         setWildPokemonId('');
         setWildPreviewImg(null);
         setWildChain(null);
@@ -180,8 +226,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowSetup(false);
     };
 
-    const handleSimLeader = (leaderID, pkm1, pkm2) => {
-        onSimLeaderBattle(playerId, leaderID, pkm1, pkm2);
+    const handleSimLeader = async (leaderID, pkm1, pkm2, badgeNum = null) => {
+        if (badgeNum !== null) {
+            setGymLeaderBadgeNum(badgeNum);
+            setPendingBadge(false);
+        }
+        await onSimLeaderBattle(playerId, leaderID, pkm1, pkm2);
+        if (isMyTurn) onStartSimMirror(playerId);
         setShowSetup(false);
     };
 
@@ -281,27 +332,35 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
         aux = await checkBonusType(myPkm.attack1.type, rivalPkm.type1);
         aux2 = (rivalPkm.type2 !== null && rivalPkm.type2 !== "NONE") ? await checkBonusType(myPkm.attack1.type, rivalPkm.type2) : 0;
-        setMyBonusAttack1(aux + aux2);
+        const myB1 = aux + aux2;
+        setMyBonusAttack1(myB1);
 
         aux = await checkBonusType(myPkm.attack2.type, rivalPkm.type1);
         aux2 = (rivalPkm.type2 !== null && rivalPkm.type2 !== "NONE") ? await checkBonusType(myPkm.attack2.type, rivalPkm.type2) : 0;
-        setMyBonusAttack2(aux + aux2);
+        const myB2 = aux + aux2;
+        setMyBonusAttack2(myB2);
 
         aux = await checkBonusType(myPkm.attack3.type, rivalPkm.type1);
         aux2 = (rivalPkm.type2 !== null && rivalPkm.type2 !== "NONE") ? await checkBonusType(myPkm.attack3.type, rivalPkm.type2) : 0;
-        setMyBonusAttack3(aux + aux2);
+        const myB3 = aux + aux2;
+        setMyBonusAttack3(myB3);
 
         aux = await checkBonusType(rivalPkm.attack1.type, myPkm.type1);
         aux2 = (myPkm.type2 !== null && myPkm.type2 !== "NONE") ? await checkBonusType(rivalPkm.attack1.type, myPkm.type2) : 0;
-        setRivalBonusAttack1(aux + aux2);
+        const rivalB1 = aux + aux2;
+        setRivalBonusAttack1(rivalB1);
 
         aux = await checkBonusType(rivalPkm.attack2.type, myPkm.type1);
         aux2 = (myPkm.type2 !== null && myPkm.type2 !== "NONE") ? await checkBonusType(rivalPkm.attack2.type, myPkm.type2) : 0;
-        setRivalBonusAttack2(aux + aux2);
+        const rivalB2 = aux + aux2;
+        setRivalBonusAttack2(rivalB2);
 
         aux = await checkBonusType(rivalPkm.attack3.type, myPkm.type1);
         aux2 = (myPkm.type2 !== null && myPkm.type2 !== "NONE") ? await checkBonusType(rivalPkm.attack3.type, myPkm.type2) : 0;
-        setRivalBonusAttack3(aux + aux2);
+        const rivalB3 = aux + aux2;
+        setRivalBonusAttack3(rivalB3);
+
+        return { myB1, myB2, myB3, rivalB1, rivalB2, rivalB3 };
     }
 
     const handleSelectMyPokemon = (pokemon) => {
@@ -312,6 +371,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyPkm_type_id1(`types_${pokemon.id}_1`);
         setMyPkm_type_id2(`types_${pokemon.id}_2`);
         setMyPokemonSelected('true');
+        if (isMyTurn) onHandleBattlePokemon('MyPlayer', pokemon.id);
     };
 
     const handleSelectRivalPokemon = async (pokemon) => {
@@ -321,8 +381,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRivalPokemonType2_class(`type_${pokemon.type2}`);
         setRivalPkm_type_id1(`types_${pokemon.id}_1`);
         setRivalPkm_type_id2(`types_${pokemon.id}_2`);
-        await calculateBonus(myPokemon, pokemon);
+        const bonuses = await calculateBonus(myPokemon, pokemon);
         setRivalPokemonSelected('true');
+        if (isMyTurn) {
+            onHandleBattlePokemon('Rival', pokemon.id);
+            onChangeBattlePhase('AttackSelection');
+            onHandleBonuses('MyPlayer', bonuses.myB1, bonuses.myB2, bonuses.myB3);
+            onHandleBonuses('Rival', bonuses.rivalB1, bonuses.rivalB2, bonuses.rivalB3);
+        }
     };
 
     const handleSelectMyAttack = (attack, bonus) => {
@@ -332,6 +398,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyBonusFinal(bonus);
         setMyTotal(attack.strength + bonus + myPokemon.totalLevel);
         setMyAttackSelected('true');
+        if (isMyTurn) {
+            onHandleBattleAttack('MyPlayer', attack.id);
+            onHandleBonusFinal('MyPlayer', bonus);
+        }
     };
 
     const handleSelectRivalAttack = (attack, bonus) => {
@@ -341,6 +411,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRivalBonusFinal(bonus);
         setRivalTotal(attack.strength + bonus + rivalPokemon.totalLevel);
         setRivalAttackSelected('true');
+        if (isMyTurn) {
+            onHandleBattleAttack('Rival', attack.id);
+            onHandleBonusFinal('Rival', bonus);
+        }
     };
 
     function sumTotal(level, attackStrength, bonus, dice) {
@@ -356,82 +430,146 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     };
 
     const handleMyStatus = (newStatus) => {
+        let newBonusFinal, newTotal;
         if (newStatus === "Asleep" || newStatus === "Paralized" || newStatus === "Frozen") {
+            newBonusFinal = 0;
+            newTotal = sumTotal(myPokemon.totalLevel, 0, 0, myDice);
             setMyStatus(newStatus);
             setMyAttackPower(0);
             setMyBonusFinal(0);
-            setMyTotal(sumTotal(myPokemon.totalLevel, 0, 0, myDice));
+            setMyTotal(newTotal);
         } else if (newStatus === "Burned") {
+            newBonusFinal = myBonus;
+            newTotal = sumTotal(myPokemon.totalLevel, myAttack.strength - 1, myBonus, myDice);
             setMyStatus(newStatus);
             setMyAttackPower(myAttack.strength - 1);
             setMyBonusFinal(myBonus);
-            setMyTotal(sumTotal(myPokemon.totalLevel, myAttack.strength - 1, myBonus, myDice));
-        } else if (newStatus === "Confused" || newStatus === "Normal") {
+            setMyTotal(newTotal);
+        } else {
+            newBonusFinal = myBonus;
+            newTotal = sumTotal(myPokemon.totalLevel, myAttack.strength, myBonus, myDice);
             setMyStatus(newStatus);
             setMyAttackPower(myAttack.strength);
             setMyBonusFinal(myBonus);
-            setMyTotal(sumTotal(myPokemon.totalLevel, myAttack.strength, myBonus, myDice));
+            setMyTotal(newTotal);
+        }
+        if (isMyTurn) {
+            onHandleBonusFinal('MyPlayer', newBonusFinal);
+            onHandleTotales('MyPlayer', newTotal);
         }
     };
 
     const handleRivalStatus = (newStatus) => {
+        let newBonusFinal, newTotal;
         if (newStatus === "Asleep" || newStatus === "Paralized" || newStatus === "Frozen") {
+            newBonusFinal = 0;
+            newTotal = sumTotal(rivalPokemon.totalLevel, 0, 0, rivalDice);
             setRivalStatus(newStatus);
             setRivalAttackPower(0);
             setRivalBonusFinal(0);
-            setRivalTotal(sumTotal(rivalPokemon.totalLevel, 0, 0, rivalDice));
+            setRivalTotal(newTotal);
         } else if (newStatus === "Burned") {
+            newBonusFinal = rivalBonus;
+            newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttack.strength - 1, rivalBonus, rivalDice);
             setRivalStatus(newStatus);
             setRivalAttackPower(rivalAttack.strength - 1);
             setRivalBonusFinal(rivalBonus);
-            setRivalTotal(sumTotal(rivalPokemon.totalLevel, rivalAttack.strength - 1, rivalBonus, rivalDice));
-        } else if (newStatus === "Confused" || newStatus === "Normal") {
+            setRivalTotal(newTotal);
+        } else {
+            newBonusFinal = rivalBonus;
+            newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttack.strength, rivalBonus, rivalDice);
             setRivalStatus(newStatus);
             setRivalAttackPower(rivalAttack.strength);
             setRivalBonusFinal(rivalBonus);
-            setRivalTotal(sumTotal(rivalPokemon.totalLevel, rivalAttack.strength, rivalBonus, rivalDice));
+            setRivalTotal(newTotal);
+        }
+        if (isMyTurn) {
+            onHandleBonusFinal('Rival', newBonusFinal);
+            onHandleTotales('Rival', newTotal);
         }
     };
 
-    const handleSelectMyDice = (dice) => {
-        if (addMyDice === true) {
-            setMyDice(myDice + dice);
-            setMyTotal(myTotal + dice);
-            setAddMyDice(false);
-        } else {
-            setMyDice(dice);
-            setMyTotal(sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, dice));
+    const calcDiceSum = (rows) => rows.reduce((acc, v) => acc + (v || 0), 0);
+
+    const handleSelectMyDice = (rowIndex, dice) => {
+        if (myLocked) return;
+        setMyDiceAnim(dice);
+        const newRows = [...myDiceRows];
+        newRows[rowIndex] = dice;
+        setMyDiceRows(newRows);
+        const newDice = calcDiceSum(newRows);
+        const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, newDice);
+        setMyDice(newDice);
+        setMyTotal(newTotal);
+        if (rowIndex === newRows.length - 1) setMyLocked(true);
+        if (isMyTurn) {
+            onHandleDice('MyPlayer', newDice, newRows.filter(v => v !== null));
+            onHandleTotales('MyPlayer', newTotal);
         }
     };
 
-    const handleSelectRivalDice = (dice) => {
-        if (addRivalDice === true) {
-            setRivalDice(rivalDice + dice);
-            setRivalTotal(rivalTotal + dice);
-            setAddRivalDice(false);
-        } else {
-            setRivalDice(dice);
-            setRivalTotal(sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, dice));
+    const handleAddMyDiceRow = () => {
+        if (myDiceRows.length >= 3) return;
+        setMyDiceRows([...myDiceRows, null]);
+        setMyLocked(false);
+    };
+
+    const handleUnlockMyDice = () => {
+        const newRows = [...myDiceRows];
+        newRows[newRows.length - 1] = null;
+        setMyDiceRows(newRows);
+        setMyLocked(false);
+        const newDice = calcDiceSum(newRows);
+        const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, newDice);
+        setMyDice(newDice);
+        setMyTotal(newTotal);
+        if (isMyTurn) {
+            onHandleDice('MyPlayer', newDice, newRows.filter(v => v !== null));
+            onHandleTotales('MyPlayer', newTotal);
+        }
+    };
+
+    const handleSelectRivalDice = (rowIndex, dice) => {
+        if (rivalLocked) return;
+        setRivalDiceAnim(dice);
+        const newRows = [...rivalDiceRows];
+        newRows[rowIndex] = dice;
+        setRivalDiceRows(newRows);
+        const newDice = calcDiceSum(newRows);
+        const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, newDice);
+        setRivalDice(newDice);
+        setRivalTotal(newTotal);
+        if (rowIndex === newRows.length - 1) setRivalLocked(true);
+        if (isMyTurn) {
+            onHandleDice('Rival', newDice, newRows.filter(v => v !== null));
+            onHandleTotales('Rival', newTotal);
+        }
+    };
+
+    const handleAddRivalDiceRow = () => {
+        if (rivalDiceRows.length >= 3) return;
+        setRivalDiceRows([...rivalDiceRows, null]);
+        setRivalLocked(false);
+    };
+
+    const handleUnlockRivalDice = () => {
+        const newRows = [...rivalDiceRows];
+        newRows[newRows.length - 1] = null;
+        setRivalDiceRows(newRows);
+        setRivalLocked(false);
+        const newDice = calcDiceSum(newRows);
+        const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, newDice);
+        setRivalDice(newDice);
+        setRivalTotal(newTotal);
+        if (isMyTurn) {
+            onHandleDice('Rival', newDice, newRows.filter(v => v !== null));
+            onHandleTotales('Rival', newTotal);
         }
     };
 
     const handleRematch = () => {
-        setMyPokemon(undefined);
-        setRivalPokemon(undefined);
-        setMyPokemonSelected('false');
-        setRivalPokemonSelected('false');
-        setMyAttackSelected('false');
-        setRivalAttackSelected('false');
-        setMyTotal(0);
-        setRivalTotal(0);
-        setMyDice(0);
-        setRivalDice(0);
-        setAddMyDice(false);
-        setAddRivalDice(false);
-        setMyAttack(undefined);
-        setRivalAttack(undefined);
-        setMyStatus('Normal');
-        setRivalStatus('Normal');
+        resetBattleState();
+        if (isMyTurn) onStartSimMirror(playerId);
     };
 
     const getAttachedClass = (attach) => {
@@ -445,7 +583,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
     };
 
-    const handleNewSimulation = () => {
+    const resetBattleState = () => {
         setMyPokemon(undefined);
         setRivalPokemon(undefined);
         setMyPokemonSelected('false');
@@ -454,13 +592,45 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRivalAttackSelected('false');
         setMyTotal(0);
         setRivalTotal(0);
+        setMyDice(0);
+        setRivalDice(0);
+        setMyDiceRows([null]);
+        setRivalDiceRows([null]);
+        setMyLocked(false);
+        setRivalLocked(false);
         setMyAttack(undefined);
         setRivalAttack(undefined);
+        setMyStatus('Normal');
+        setRivalStatus('Normal');
+    };
+
+    // Botón home / modal de turno: vuelve al setup para elegir nuevo rival
+    const handleNewSimulation = () => {
+        resetBattleState();
         setShowSetup(true);
+        setGymLeaderBadgeNum(null);
+        setPendingBadge(false);
+        setShowBadgePrompt(false);
+        if (isMyTurn && game.battlePublic) onToggleBattlePublic();
+    };
+
+    // Botón "Nueva Simulacion" durante la batalla: mantiene el rival, vuelve a selección de pokemon
+    const handleResetBattle = () => {
+        resetBattleState();
+        if (isMyTurn) onStartSimMirror(playerId);
     };
 
     return (
-        <div className="sim-player">
+        <div className={`sim-player${isMyTurn ? ' sim-player--my-turn' : ''}`}>
+            {showTurnModal && (
+                <div className="turn-modal-backdrop">
+                    <div className="turn-modal">
+                        <div className="turn-modal-icon">⚡</div>
+                        <div className="turn-modal-text">¡Es tu turno,<br /><span>{player.name}</span>!</div>
+                        <button className="turn-modal-btn" onClick={() => { setShowTurnModal(false); handleNewSimulation(); }}>OK</button>
+                    </div>
+                </div>
+            )}
                 {/* Home fijo siempre visible */}
             <div className="sim-home-button" onClick={handleNewSimulation}></div>
 
@@ -589,7 +759,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 <div className="sim-other-rivals-row">
                                     {game.players.filter(p => p.id !== playerId).map(p => (
                                         <div key={p.id} className="sim-player-rival-card"
-                                            onClick={() => { onSimPlayerBattle(playerId, p.id); setShowSetup(false); setShowOtherRivals(false); }}>
+                                            onClick={async () => { await onSimPlayerBattle(playerId, p.id); if (isMyTurn) onStartSimMirror(playerId); setShowSetup(false); setShowOtherRivals(false); }}>
                                             <div className={`sim-player-rival-img image-trainer ${TRAINER_CLASS[p.name] || 'trainer1'}`} />
                                             <div className="sim-player-rival-name">{p.name}</div>
                                         </div>
@@ -665,7 +835,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
                                         <div className="sim-mini-pkm-img"
                                             style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
-                                            onClick={() => onChangeState(player.id, pkm.id)} />
+                                            onClick={() => onChangeState(player.id, pkm.id, { source: 'manual-player', playerName: player.name })} />
                                         <div className="sim-mini-pkm-name">{pkm.name}</div>
                                         <div className="sim-mini-pkm-level">
                                             {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
@@ -697,7 +867,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                             <div key={l.leaderKey} className="sim-gym-leader-wrapper">
                                                 <div className="sim-gym-leader-card"
                                                     style={img ? { backgroundImage: `url(${img})` } : {}}
-                                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2)} />
+                                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2, badgeNum)} />
                                                 <div
                                                     className={hasBadge ? 'Bagde_win sim-badge' : 'Badge sim-badge'}
                                                     style={badgeImg ? { backgroundImage: `url(${badgeImg})` } : {}}
@@ -721,7 +891,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
                                         <div className="sim-mini-pkm-img"
                                             style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
-                                            onClick={() => onChangeState(player.id, pkm.id)} />
+                                            onClick={() => onChangeState(player.id, pkm.id, { source: 'manual-player', playerName: player.name })} />
                                         <div className="sim-mini-pkm-name">{pkm.name}</div>
                                         <div className="sim-mini-pkm-level">
                                             {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
@@ -847,7 +1017,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             {!showSetup && rivalPokemonSelected === 'true' && myPokemonSelected === 'true' && (
                 <div className="attack-select-sim">
                     <div className='MyPokemon-main'>
-                        <div className='MyPokemon_img' style={{ backgroundImage: `url(${myPokemonImg})` }}></div>
+                        <div className={`MyPokemon_img ${myLocked && rivalLocked ? (myTotal >= rivalTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${myPokemonImg})` }}></div>
                         <div className='MyPokemon_name'>{myPokemon.name}</div>
                         <div className='MyPokemon_level'>Lv: {myPokemon.totalLevel}</div>
                         <div className="types_div">
@@ -875,7 +1045,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     </div>
 
                     <div className='RivalPokemon-main'>
-                        <div className='RivalPokemon_img' style={{ backgroundImage: `url(${rivalPokemonImg})` }}></div>
+                        <div className={`RivalPokemon_img ${myLocked && rivalLocked ? (rivalTotal >= myTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${rivalPokemonImg})` }}></div>
                         <div className='RivalPokemon_name'>{rivalPokemon.name}</div>
                         <div className='RivalPokemon_level'>Lv: {rivalPokemon.totalLevel}</div>
                         <div className="types_div">
@@ -926,17 +1096,30 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <div>{myPokemon.totalLevel}</div>+
                                     <div>{myAttackPower}</div>+
                                     <div>{myBonusFinal}</div>+
-                                    <div>{myDice}</div>=
+                                    <div>{calcDiceSum(myDiceRows)}</div>=
                                     <div>{myTotal}</div>
                                 </div>
                                 <div className='MyDices'>
-                                    <div className='MyDice mydice1' onClick={() => handleSelectMyDice(1)}></div>
-                                    <div className='MyDice mydice2' onClick={() => handleSelectMyDice(2)}></div>
-                                    <div className='MyDice mydice3' onClick={() => handleSelectMyDice(3)}></div>
-                                    <div className='MyDice mydice4' onClick={() => handleSelectMyDice(4)}></div>
-                                    <div className='MyDice mydice5' onClick={() => handleSelectMyDice(5)}></div>
-                                    <div className='MyDice mydice6' onClick={() => handleSelectMyDice(6)}></div>
-                                    <div className='mydicePlus' onClick={() => setAddMyDice(true)}></div>
+                                    {myLocked ? (
+                                        <>
+                                            <div className='dice-refresh' onClick={handleUnlockMyDice}>↺</div>
+                                            {myDiceRows.length < 3 && <div className='mydicePlus' onClick={handleAddMyDiceRow} />}
+                                        </>
+                                    ) : (
+                                        myDiceRows.map((val, rowIdx) => {
+                                            const isLastRow = rowIdx === myDiceRows.length - 1;
+                                            if (val !== null) return null;
+                                            return (
+                                                <div key={rowIdx} className='dice-row'>
+                                                    {[1,2,3,4,5,6].map(n => (
+                                                        <div key={n}
+                                                            className={`MyDice mydice${n} ${myDiceAnim === n && isLastRow ? 'anim-dice' : ''}`}
+                                                            onClick={() => handleSelectMyDice(rowIdx, n)} />
+                                                    ))}
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             </div>
 
@@ -949,17 +1132,30 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <div>{rivalPokemon.totalLevel}</div>+
                                     <div>{rivalAttackPower}</div>+
                                     <div>{rivalBonusFinal}</div>+
-                                    <div>{rivalDice}</div>=
+                                    <div>{calcDiceSum(rivalDiceRows)}</div>=
                                     <div>{rivalTotal}</div>
                                 </div>
                                 <div className='RivalDices'>
-                                    <div className='rivalDicePlus' onClick={() => setAddRivalDice(true)}></div>
-                                    <div className='RivalDice mydice1' onClick={() => handleSelectRivalDice(1)}></div>
-                                    <div className='RivalDice mydice2' onClick={() => handleSelectRivalDice(2)}></div>
-                                    <div className='RivalDice mydice3' onClick={() => handleSelectRivalDice(3)}></div>
-                                    <div className='RivalDice mydice4' onClick={() => handleSelectRivalDice(4)}></div>
-                                    <div className='RivalDice mydice5' onClick={() => handleSelectRivalDice(5)}></div>
-                                    <div className='RivalDice mydice6' onClick={() => handleSelectRivalDice(6)}></div>
+                                    {rivalLocked ? (
+                                        <>
+                                            <div className='dice-refresh' onClick={handleUnlockRivalDice}>↺</div>
+                                            {rivalDiceRows.length < 3 && <div className='rivalDicePlus' onClick={handleAddRivalDiceRow} />}
+                                        </>
+                                    ) : (
+                                        rivalDiceRows.map((val, rowIdx) => {
+                                            const isLastRow = rowIdx === rivalDiceRows.length - 1;
+                                            if (val !== null) return null;
+                                            return (
+                                                <div key={rowIdx} className='dice-row'>
+                                                    {[1,2,3,4,5,6].map(n => (
+                                                        <div key={n}
+                                                            className={`RivalDice mydice${n} ${rivalDiceAnim === n && isLastRow ? 'anim-dice' : ''}`}
+                                                            onClick={() => handleSelectRivalDice(rowIdx, n)} />
+                                                    ))}
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             </div>
 
@@ -973,9 +1169,63 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             </div>
 
                             <div className="rematchButton" onClick={handleRematch}>Re-Match</div>
-                            <div className="change-pokemon" onClick={handleNewSimulation}>Nueva Simulacion</div>
+                            <div className="change-pokemon" onClick={handleResetBattle}>Change Pokemon</div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {showKOPrompt && (
+                <div className="modal-backdrop" onClick={() => setShowKOPrompt(false)}>
+                    <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
+                        <div className="levelup-prompt-title" style={{ color: '#e74c3c' }}>¡Derrota!</div>
+                        <div className="levelup-prompt-msg">
+                            {myPokemon?.name} fue noqueado por {rivalPokemon?.name}.
+                            <br />¿Marcar como noqueado?
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes" onClick={() => { setShowKOPrompt(false); onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); }}>Sí</button>
+                            <button className="levelup-btn-no" onClick={() => setShowKOPrompt(false)}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showLevelUpPrompt && (
+                <div className="modal-backdrop" onClick={() => setShowLevelUpPrompt(false)}>
+                    <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
+                        <div className="levelup-prompt-title">¡Victoria!</div>
+                        <div className="levelup-prompt-msg">
+                            {myPokemon?.name} derrotó a {rivalPokemon?.name} (Lv. {rivalPokemon?.totalLevel}).
+                            <br />¿Subir de nivel?
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); if (pendingBadge) { setPendingBadge(false); setShowBadgePrompt(true); } }}>Sí</button>
+                            <button className="levelup-btn-no" onClick={() => setShowLevelUpPrompt(false)}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showBadgePrompt && (
+                <div className="modal-backdrop" onClick={() => setShowBadgePrompt(false)}>
+                    <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
+                        <div className="levelup-prompt-title">¡Medalla!</div>
+                        <div className="levelup-prompt-msg">
+                            ¡Derrotaste a {rival?.name}!<br />¿Otorgar medalla {gymLeaderBadgeNum}?
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes" onClick={async () => {
+                                setShowBadgePrompt(false);
+                                await fetch(`${SERVER_IP}/badge-won`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ playerId, numBadge: gymLeaderBadgeNum }),
+                                });
+                                setGymLeaderBadgeNum(null);
+                            }}>Sí</button>
+                            <button className="levelup-btn-no" onClick={() => setShowBadgePrompt(false)}>No</button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

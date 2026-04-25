@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,setGeneration,getLeadersByGeneration,requestPurchase,approvePurchase,denyPurchase} from '../controllers/gameController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,setGeneration,getLeadersByGeneration,requestPurchase,approvePurchase,denyPurchase,startSimMirror} from '../controllers/gameController.js';
 import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,attachMega,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
@@ -39,6 +39,7 @@ router.post('/sim-wild-battle',simWildBattle);
 router.post('/sim-leader-battle',simLeaderBattle);
 router.post('/sim-player-battle',simPlayerBattle);
 router.post('/toggle-battle-public',toggleBattlePublic);
+router.post('/start-sim-mirror',startSimMirror);
 router.post('/set-battle-dice',setBattleDice);
 router.post('/set-battle-bonuses',setBattleBonuses);
 router.post('/set-battle-bonus-final',setBattleBonusFinal);

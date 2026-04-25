@@ -312,14 +312,14 @@ const masterPurchase = async (playerId, item, price) => {
     }
 };
 
-const increaseLevel = async (playerId ,pokemonId) => {
+const increaseLevel = async (playerId, pokemonId, ctx = {}) => {
     try {
         const response = await fetch(`${SERVER_IP}/increase-level`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ playerId, pokemonId}),
+            body: JSON.stringify({ playerId, pokemonId, ...ctx }),
         });
 
         if (response.ok) {
@@ -334,14 +334,14 @@ const increaseLevel = async (playerId ,pokemonId) => {
     }
 };
 
-const changeState = async (playerId ,pokemonId) => {
+const changeState = async (playerId, pokemonId, ctx = {}) => {
     try {
         const response = await fetch(`${SERVER_IP}/change-state`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ playerId, pokemonId}),
+            body: JSON.stringify({ playerId, pokemonId, ...ctx }),
         });
 
         if (response.ok) {
@@ -733,6 +733,19 @@ const simLeaderBattle = async (playerId, LeaderID, pokemonId1, pokemonId2) => {
     }
 };
 
+const startSimMirror = async (playerId) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/start-sim-mirror`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId }),
+        });
+        if (!response.ok) console.error('Error en start-sim-mirror:', response.status);
+    } catch (error) {
+        console.error('Error en startSimMirror:', error);
+    }
+};
+
 const onHandleBonusFinal = async (player, bonus) => {
     try {
         const response = await fetch(`${SERVER_IP}/set-battle-bonus-final`, {
@@ -827,7 +840,7 @@ return (
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase}/>} />
             <Route path="/players" element={<AllPlayers />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
-            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic}/>} />
 
         </Routes>
     </Router>
