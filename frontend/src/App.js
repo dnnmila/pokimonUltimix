@@ -6,6 +6,7 @@ import SelectGeneration from './components/SelectGeneration.js';
 import Player from './components/Player.js';
 import Stadium from './components/Stadium.js';
 import SimPlayer from './components/SimPlayer.js';
+import Login from './components/Login.js';
 
 import AllPlayers from './components/AllPlayers.js';
 import { io } from 'socket.io-client';
@@ -16,8 +17,13 @@ import SERVER_IP from './config.js';
 
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('authenticated'));
   const [game, setGame] = useState({ players: [], currentTurn: 0 });
   const [isGameStarted, setIsGameStarted] = useState(false);
+
+  if (!isAuthenticated) {
+      return <Login onLogin={() => { sessionStorage.setItem('authenticated', 'true'); setIsAuthenticated(true); }} />;
+  }
 
   useEffect(() => {
     // Establecer la conexión con el servidor de Socket.io
