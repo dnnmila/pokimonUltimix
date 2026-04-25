@@ -67,8 +67,16 @@ app.use((req, res, next) => {
     next();
 });
 
+// Servir el frontend buildeado en producción
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
 // Usar las rutas del juego
 app.use(gameRouter);
+
+// Catch-all: cualquier ruta no reconocida devuelve el index.html de React
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
 
 
 io.on('connection', (socket) => {
