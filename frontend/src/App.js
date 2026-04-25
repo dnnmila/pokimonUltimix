@@ -21,10 +21,6 @@ function App() {
   const [game, setGame] = useState({ players: [], currentTurn: 0 });
   const [isGameStarted, setIsGameStarted] = useState(false);
 
-  if (!isAuthenticated) {
-      return <Login onLogin={() => { sessionStorage.setItem('authenticated', 'true'); setIsAuthenticated(true); }} />;
-  }
-
   useEffect(() => {
     // Establecer la conexión con el servidor de Socket.io
     const socket = io(SERVER_IP);
@@ -836,6 +832,10 @@ const setGeneration = async (generation) => {
 
 
   
+if (!isAuthenticated) {
+    return <Login onLogin={() => { sessionStorage.setItem('authenticated', 'true'); setIsAuthenticated(true); }} />;
+}
+
 return (
     <Router>
         <Routes>
