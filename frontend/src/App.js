@@ -2,6 +2,7 @@
 import React, { useState ,useEffect} from 'react';
 import Game from './components/Game.js';
 import MenuPlayers from './components/MenuPlayers.js';
+import SelectGeneration from './components/SelectGeneration.js';
 import Player from './components/Player.js';
 import Stadium from './components/Stadium.js';
 import SimPlayer from './components/SimPlayer.js';
@@ -50,6 +51,24 @@ function App() {
       console.error('Error al iniciar el juego:', error);
   }
       
+  };
+
+  const loadGame = async () => {
+    try {
+      const response = await fetch(`${SERVER_IP}/load-game`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+          setIsGameStarted(true);
+          console.log('Partida cargada:', data.message);
+      } else {
+          alert('No hay auto-guardado disponible');
+      }
+    } catch (error) {
+        console.error('Error al cargar la partida:', error);
+    }
   };
 
   const continueGame = async () => {
@@ -257,14 +276,50 @@ const updateCoins = async (playerId, coins) => {
 
 
 
-const increaseLevel = async (playerId ,pokemonId) => {
+const approvePurchase = async (purchaseId) => {
+    try {
+        await fetch(`${SERVER_IP}/approve-purchase`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ purchaseId }),
+        });
+    } catch (error) {
+        console.error('Error al aprobar compra:', error);
+    }
+};
+
+const denyPurchase = async (purchaseId) => {
+    try {
+        await fetch(`${SERVER_IP}/deny-purchase`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ purchaseId }),
+        });
+    } catch (error) {
+        console.error('Error al denegar compra:', error);
+    }
+};
+
+const masterPurchase = async (playerId, item, price) => {
+    try {
+        await fetch(`${SERVER_IP}/master-purchase`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, item, price }),
+        });
+    } catch (error) {
+        console.error('Error al realizar compra master:', error);
+    }
+};
+
+const increaseLevel = async (playerId, pokemonId, ctx = {}) => {
     try {
         const response = await fetch(`${SERVER_IP}/increase-level`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ playerId, pokemonId}),
+            body: JSON.stringify({ playerId, pokemonId, ...ctx }),
         });
 
         if (response.ok) {
@@ -279,14 +334,14 @@ const increaseLevel = async (playerId ,pokemonId) => {
     }
 };
 
-const changeState = async (playerId ,pokemonId) => {
+const changeState = async (playerId, pokemonId, ctx = {}) => {
     try {
         const response = await fetch(`${SERVER_IP}/change-state`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ playerId, pokemonId}),
+            body: JSON.stringify({ playerId, pokemonId, ...ctx }),
         });
 
         if (response.ok) {
@@ -323,6 +378,18 @@ const changeStatus = async (playerId ,pokemonId,status) => {
     }
 };
 
+
+const decreaseStatusCounter = async (playerId, pokemonId) => {
+    try {
+        await fetch(`${SERVER_IP}/decrease-status-counter`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, pokemonId }),
+        });
+    } catch (error) {
+        console.error('Error al bajar contador de status:', error);
+    }
+};
 
 const attachItem = async (playerId ,pokemonId,itemAttached) => {
     try {
@@ -483,6 +550,18 @@ const playerBattle = async (playerId) => {
     }
 };
 
+const toggleDynamax = async (playerId) => {
+    try {
+        await fetch(`${SERVER_IP}/toggle-dynamax`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId }),
+        });
+    } catch (error) {
+        console.error('Error al toggle dynamax:', error);
+    }
+};
+
 const LeaderBattle = async (LeaderID,pokemonId1,pokemonId2) => {
     try {
         console.log("Leafer battle request");
@@ -628,6 +707,19 @@ const simWildBattle = async (playerId, pokemonId) => {
     }
 };
 
+const simPlayerBattle = async (playerId, rivalPlayerId) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/sim-player-battle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, rivalPlayerId }),
+        });
+        if (!response.ok) console.error('Error en sim-player-battle:', response.status);
+    } catch (error) {
+        console.error('Error en simPlayerBattle:', error);
+    }
+};
+
 const simLeaderBattle = async (playerId, LeaderID, pokemonId1, pokemonId2) => {
     try {
         const response = await fetch(`${SERVER_IP}/sim-leader-battle`, {
@@ -638,6 +730,19 @@ const simLeaderBattle = async (playerId, LeaderID, pokemonId1, pokemonId2) => {
         if (!response.ok) console.error('Error en sim-leader-battle:', response.status);
     } catch (error) {
         console.error('Error en simLeaderBattle:', error);
+    }
+};
+
+const startSimMirror = async (playerId) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/start-sim-mirror`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId }),
+        });
+        if (!response.ok) console.error('Error en start-sim-mirror:', response.status);
+    } catch (error) {
+        console.error('Error en startSimMirror:', error);
     }
 };
 
@@ -654,12 +759,12 @@ const onHandleBonusFinal = async (player, bonus) => {
     }
 };
 
-const onHandleDice = async (player, dice) => {
+const onHandleDice = async (player, dice, rows) => {
     try {
         const response = await fetch(`${SERVER_IP}/set-battle-dice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player, dice }),
+            body: JSON.stringify({ player, dice, rows }),
         });
         if (!response.ok) console.error('Error en set-battle-dice:', response.status);
     } catch (error) {
@@ -694,12 +799,24 @@ const onChangeBattlePhase = async (newPhase) => {
         if (response.ok) {
             const updatedPlayer = await response.json();
             console.log(updatedPlayer);
-            // Actualiza el estado del juego con el jugador actualizado
         } else {
             console.error('Error en la respuesta del servidor:', response.status);
         }
     } catch (error) {
         console.error('Error al asignar Fase de batalla:', error);
+    }
+};
+
+const setGeneration = async (generation) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/set-generation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ generation }),
+        });
+        if (!response.ok) console.error('Error al establecer generación:', response.status);
+    } catch (error) {
+        console.error('Error en setGeneration:', error);
     }
 };
 
@@ -716,13 +833,14 @@ const onChangeBattlePhase = async (newPhase) => {
 return (
     <Router>
         <Routes>
-            <Route path="/" element={<Game onStartGame={startGame} isGameStarted={isGameStarted} onContinueGame={continueGame}/>} />
+            <Route path="/" element={<Game onStartGame={startGame} isGameStarted={isGameStarted} onContinueGame={continueGame} onLoadGame={loadGame}/>} />
+            <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
-            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega}/>} />
+            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase}/>} />
             <Route path="/players" element={<AllPlayers />} />
-            <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal}/>} />
-            <Route path="/simPlayer/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle}/>} />
+            <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic}/>} />
 
         </Routes>
     </Router>

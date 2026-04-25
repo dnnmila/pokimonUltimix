@@ -1,7 +1,7 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal} from '../controllers/gameController.js';
-import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,attachMega,getEvolutionChain} from '../controllers/playerController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,setGeneration,getLeadersByGeneration,requestPurchase,approvePurchase,denyPurchase,startSimMirror} from '../controllers/gameController.js';
+import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,attachMega,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
 //router.post('/game', createGame);
@@ -29,6 +29,7 @@ router.post('/attach-item',attachItem);
 router.post('/attach-TM',attachTM);
 router.post('/change-state',changeState);
 router.post('/change-status',changeStatus);
+router.post('/decrease-status-counter',decreaseStatusCounter);
 router.post('/wild-battle',wildBattle);
 router.post('/player-battle',playerBattle);
 router.post('/leader-battle',leaderBattle);
@@ -36,11 +37,22 @@ router.post('/attach-mega',attachMega);
 router.post('/scan-battle-pokemon',scanBattle);
 router.post('/sim-wild-battle',simWildBattle);
 router.post('/sim-leader-battle',simLeaderBattle);
+router.post('/sim-player-battle',simPlayerBattle);
 router.post('/toggle-battle-public',toggleBattlePublic);
+router.post('/start-sim-mirror',startSimMirror);
 router.post('/set-battle-dice',setBattleDice);
 router.post('/set-battle-bonuses',setBattleBonuses);
 router.post('/set-battle-bonus-final',setBattleBonusFinal);
 router.post('/get-evolution-chain', getEvolutionChain);
+router.post('/get-possible-evolutions', getPossibleEvolutions);
+router.post('/toggle-dynamax', toggleDynamax);
+router.post('/load-game', loadGameController);
+router.post('/set-generation', setGeneration);
+router.get('/get-leaders', getLeadersByGeneration);
+router.post('/request-purchase', requestPurchase);
+router.post('/approve-purchase', approvePurchase);
+router.post('/deny-purchase', denyPurchase);
+router.post('/master-purchase', masterPurchase);
 
 
 

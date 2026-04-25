@@ -1,15 +1,24 @@
 import React, {useState,useEffect,useCallback} from 'react';
+import dinamaxImg from '../images/dinamax.png';
 import Pokemon from './Pokemon';
 import AddPokemon from './AddPokemon';
 import ModalMonedas from './modals/ModalMonedas.js';
 import ModalTienda from './modals/ModalTienda.js';
 import ModalBattle from './modals/ModalBattle.js';
 
+const getBadgeImg = (gen, num) => {
+    try {
+        return require(`../images/badges/badges${gen}/badge${num}.webp`);
+    } catch (e) {
+        try { return require(`../images/badges/badge${num}.png`); } catch { return null; }
+    }
+};
 
 
 
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega}) => {
+
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase}) => {
 
     const handleKeyDown = useCallback((event) => {
         switch(event.key) {
@@ -45,6 +54,8 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
     const [showModalCoins, setShowModalCoins] = useState(false);
     const [showModalStore, setShowModalStore] = useState(false);
     const [showModalBattle, setShowModalBattle] = useState(false);
+    const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
+    const [historyTab, setHistoryTab] = useState('purchases');
 
 
     const handleOpenModalCoins = () => {
@@ -102,14 +113,17 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                 
            
             <div className='allBadges'>
-                <div className={`${currentPlayerView.badge1 ? 'Bagde_win' : 'Badge'}`} id='Badge1' onClick={()=> handleBadge(1)}> </div>
-                <div className={`${currentPlayerView.badge2 ? 'Bagde_win' : 'Badge'}`} id='Badge2' onClick={()=> handleBadge(2)}> </div>
-                <div className={`${currentPlayerView.badge3 ? 'Bagde_win' : 'Badge'}`} id='Badge3' onClick={()=> handleBadge(3)}> </div>
-                <div className={`${currentPlayerView.badge4 ? 'Bagde_win' : 'Badge'}`} id='Badge4' onClick={()=> handleBadge(4)}> </div>
-                <div className={`${currentPlayerView.badge5 ? 'Bagde_win' : 'Badge'}`} id='Badge5' onClick={()=> handleBadge(5)}> </div>
-                <div className={`${currentPlayerView.badge6 ? 'Bagde_win' : 'Badge'}`} id='Badge6' onClick={()=> handleBadge(6)}> </div>
-                <div className={`${currentPlayerView.badge7 ? 'Bagde_win' : 'Badge'}`} id='Badge7' onClick={()=> handleBadge(7)}> </div>
-                <div className={`${currentPlayerView.badge8 ? 'Bagde_win' : 'Badge'}`} id='Badge8' onClick={()=> handleBadge(8)}> </div>
+                {[1,2,3,4,5,6,7,8].map(num => {
+                    const img = getBadgeImg(game.generation, num);
+                    return (
+                        <div
+                            key={num}
+                            className={currentPlayerView[`badge${num}`] ? 'Bagde_win' : 'Badge'}
+                            style={img ? { backgroundImage: `url(${img})` } : {}}
+                            onClick={() => handleBadge(num)}
+                        />
+                    );
+                })}
                 <div className={`${currentPlayerView.badge9 ? 'Bagde_win' : 'Badge'}`} id='Elite' onClick={()=> handleBadge(9)}> </div>
                 <div className={`${currentPlayerView.badge10 ? 'Bagde_win' : 'Badge'}`} id='BadgeChampion' onClick={()=> handleBadge(10)}> </div>
             </div>
@@ -143,7 +157,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                          attachTM={attachTM}
                          attachMega={attachMega}
                          onChangeState={onChangeState}
-                         onChangeStatus={onChangeStatus}/>
+                         onChangeStatus={onChangeStatus}
+                         statusCounter={pokemon.statusCounter}
+                         onDecreaseStatusCounter={onDecreaseStatusCounter}/>
                        
                     ))}
             {currentPlayerView.pokemons.length < 6 && <AddPokemon onAdd={onAddPokemon} currentPlayer={currentPlayerView} />}
@@ -158,7 +174,106 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
      
    
             <ModalMonedas show={showModalCoins} onClose={handleCloseModalCoins} currentPlayer={currentPlayerView} onUpdateCoins={onUpdateCoins}/>
-            <ModalTienda show={showModalStore} onClose={handleCloseModalStore} currentPlayer={currentPlayerView} onUpdateCoins={onUpdateCoins}/>
+            <ModalTienda show={showModalStore} onClose={handleCloseModalStore} currentPlayer={currentPlayerView} onMasterPurchase={onMasterPurchase}/>
+
+            {showPurchaseHistory && (
+                <div className="modal-backdrop" onClick={() => setShowPurchaseHistory(false)}>
+                    <div className="purchase-history-modal" onClick={e => e.stopPropagation()}>
+                        <div className="purchase-history-title">
+                            {historyTab === 'purchases' ? 'Historial de Compras' : historyTab === 'states' ? 'Historial de Estados' : 'Historial de Niveles'}
+                            <button className="purchase-history-close" onClick={() => setShowPurchaseHistory(false)}>✕</button>
+                        </div>
+                        <div className="purchase-history-tabs">
+                            <button
+                                className={`ph-tab${historyTab === 'purchases' ? ' ph-tab-active' : ''}`}
+                                onClick={() => setHistoryTab('purchases')}
+                            >Compras</button>
+                            <button
+                                className={`ph-tab${historyTab === 'states' ? ' ph-tab-active' : ''}`}
+                                onClick={() => setHistoryTab('states')}
+                            >Estados</button>
+                            <button
+                                className={`ph-tab${historyTab === 'levels' ? ' ph-tab-active' : ''}`}
+                                onClick={() => setHistoryTab('levels')}
+                            >Niveles</button>
+                        </div>
+                        {historyTab === 'purchases' ? (
+                            (game.purchaseHistory || []).length === 0 ? (
+                                <div className="purchase-history-empty">Sin compras registradas</div>
+                            ) : (
+                                <div className="purchase-history-list">
+                                    {[...(game.purchaseHistory || [])].reverse().map((entry, i) => (
+                                        <div key={i} className="purchase-history-item">
+                                            <span className="ph-round">R{entry.round}</span>
+                                            <span className="ph-player">{entry.playerName}</span>
+                                            <span className="ph-item">{entry.item}</span>
+                                            <span className="ph-price">-${entry.price}</span>
+                                            <span className="ph-coins-after">→ ${entry.coinsAfter}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        ) : historyTab === 'states' ? (
+                            (game.stateHistory || []).length === 0 ? (
+                                <div className="purchase-history-empty">Sin cambios de estado registrados</div>
+                            ) : (
+                                <div className="purchase-history-list">
+                                    {[...(game.stateHistory || [])].reverse().map((entry, i) => {
+                                        const sourceLabel = entry.source === 'manual-master' ? 'Manual (Master)' : entry.source === 'manual-player' ? `Manual (${entry.playerName})` : '';
+                                        return (
+                                            <div key={i} className="purchase-history-item">
+                                                <span className="ph-round">R{entry.round}</span>
+                                                <span className="ph-player">{entry.playerName}</span>
+                                                <span className="ph-item">{entry.pokemonName}</span>
+                                                <span className={`ph-state ph-state-${entry.newState?.toLowerCase()}`}>{entry.newState}</span>
+                                                {entry.rivalPokemonName && <span className="ph-rival-pkm">vs {entry.rivalPokemonName}</span>}
+                                                {entry.rivalName && <span className="ph-rival">{entry.rivalName}</span>}
+                                                {sourceLabel && <span className="ph-source">{sourceLabel}</span>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )
+                        ) : (
+                            (game.levelHistory || []).length === 0 ? (
+                                <div className="purchase-history-empty">Sin subidas de nivel registradas</div>
+                            ) : (
+                                <div className="purchase-history-list">
+                                    {[...(game.levelHistory || [])].reverse().map((entry, i) => {
+                                        const sourceLabel = entry.source === 'manual-master' ? 'Manual (Master)' : entry.source === 'manual-player' ? `Manual (${entry.playerName})` : '';
+                                        return (
+                                            <div key={i} className="purchase-history-item">
+                                                <span className="ph-round">R{entry.round}</span>
+                                                <span className="ph-player">{entry.playerName}</span>
+                                                <span className="ph-item">{entry.pokemonName}</span>
+                                                <span className="ph-level-change">Lv.{entry.previousLevel}→{entry.newLevel}</span>
+                                                {entry.rivalPokemonName && <span className="ph-rival-pkm">vs {entry.rivalPokemonName}</span>}
+                                                {entry.rivalName && <span className="ph-rival">{entry.rivalName}</span>}
+                                                {sourceLabel && <span className="ph-source">{sourceLabel}</span>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {(game.pendingPurchases || []).length > 0 && (
+                <div className="pending-purchases">
+                    <div className="pending-purchases-title">Solicitudes de compra</div>
+                    {game.pendingPurchases.map(req => (
+                        <div key={req.id} className="pending-purchase-item">
+                            <span className="pending-purchase-player">{req.playerName}</span>
+                            <span className="pending-purchase-item-name">{req.item}</span>
+                            <span className="pending-purchase-price">${req.price}</span>
+                            <button className="pending-approve" onClick={() => onApprovePurchase(req.id)}>✓</button>
+                            <button className="pending-deny" onClick={() => onDenyPurchase(req.id)}>✕</button>
+                        </div>
+                    ))}
+                </div>
+            )}
             <ModalBattle show={showModalBattle} onClose={handleCloseModalBattle} game={game} playerBattle={playerBattle} LeaderBattle={LeaderBattle}  />
           
                         
@@ -177,7 +292,14 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
             <div className='NextTurnButton' onClick={onNextTurn} > <div className='nextTurnImage'> </div>Next Turn</div>
             </div>
 
-            <div className='Botom_PlayerView'> 
+            <div className='Botom_PlayerView'>
+
+            <div
+                className={`dynamax-btn ${currentPlayerView.dynamax ? 'dynamax-on' : 'dynamax-off'}`}
+                onClick={() => toggleDynamax(currentPlayerView.id)}
+            >
+                <img src={dinamaxImg} alt="Dynamax" />
+            </div>
 
             <div className='WildPokemon_imput'>
              <input type="text" value={inputWildPokemon} onChange={handleInputChange} />
@@ -186,7 +308,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
             <button  className='BattleMenu_Button' onClick={handleOpenModalBattle} > Battle </button>
             <div onClick={handleOpenModalStore} className='Button-store'></div>
+            <div className='Button-purchase-history' onClick={() => setShowPurchaseHistory(v => !v)}></div>
                 <div className='Time_CurrentPlayer'>
+                    <h4>R{game.round}</h4>
                     <h4> {currentPlayerView.hours}hrs</h4>
                     <h4> {currentPlayerView.minutes}min</h4>
                     <h4> {currentPlayerView.seconds}sec</h4>

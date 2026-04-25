@@ -6,6 +6,7 @@ class Player {
         this.turn = turn;
         this.pokemons = [];
         this.megas = [];
+        this.gmaxes = [];
         this.coins = 3;
         this.isMyTurn = false;
         this.badge1 = false;
@@ -34,6 +35,7 @@ class Player {
         this.turnStartTime = null;
         this.totalPokemons =0;
         this.simRival = null;
+        this.dynamax = false;
 
 
     }
@@ -45,8 +47,9 @@ class Player {
     }
     addMega(pokemon) {
         this.megas.push(pokemon);
-       
-        // Lógica adicional para agregar Pokémon
+    }
+    addGMax(pokemon) {
+        this.gmaxes.push(pokemon);
     }
     addPokemonbyIndex(pokemon, index){
         this.pokemons[index] = pokemon;
@@ -60,6 +63,9 @@ class Player {
 
     removeMegaById(pokemonId) {
         this.megas = this.megas.filter(pokemon => pokemon.id !== pokemonId);
+    }
+    removeGMaxById(pokemonId) {
+        this.gmaxes = this.gmaxes.filter(pokemon => pokemon.id !== pokemonId);
     }
 
     updateNewCoins(newCoins) {
@@ -124,6 +130,19 @@ class Player {
             return;
         }
         pokemon.addExtra();
+        // Sincronizar megas y gmaxes vinculados a este pokemon
+        if (pokemon.attach === 'Mega') {
+            this.megas.forEach(mega => {
+                mega.extra = pokemon.extra;
+                mega.totalLevel = mega.level + mega.extra;
+            });
+        }
+        if (pokemon.gmaxPokedex) {
+            this.gmaxes.forEach(gmax => {
+                gmax.extra = pokemon.extra;
+                gmax.totalLevel = gmax.level + gmax.extra;
+            });
+        }
     }
 
     attachItemToPokemon(idPokemon, item){
@@ -169,6 +188,12 @@ class Player {
         }
         pokemon.setStatus(status);
         console.log("New status:" + pokemon.status);
+    }
+
+    decreaseStatusCounter(idPokemon){
+        const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
+        if (!pokemon) return;
+        pokemon.decreaseStatusCounter();
     }
 
     startTurn() {

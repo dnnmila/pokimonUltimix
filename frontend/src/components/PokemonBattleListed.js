@@ -1,20 +1,18 @@
 
 
 
-const PokemonBattleListed = ({pokemon,SelectPokemon}) => {
+const LEADER_PREFIXES = ['gym', 'Riv'];
+
+const PokemonBattleListed = ({pokemon, SelectPokemon, generation = 1}) => {
     let imageUrl;
 
-   
-    if (pokemon.pokedex.startsWith('gym')) {
-        imageUrl = require(`../images/Leaders/${pokemon.pokedex}.png`);
-      } 
-      else if (pokemon.pokedex.startsWith('M')){
-        //ajuste agregadno la carpeta de tokens ultimixdnn
-        //imageUrl = require(`../images/tokens_ultimix/${pokemon.pokedex}.png`);
-        imageUrl = require(`../images/tokens/${pokemon.pokedex}.png`);
-      } else{
-        imageUrl = require(`../images/POKEMON/0${pokemon.pokedex}.png`);
-      }
+    if (LEADER_PREFIXES.some(p => pokemon.pokedex.startsWith(p))) {
+        imageUrl = require(`../images/Leaders${generation}/${pokemon.pokedex}.png`);
+    } else if (pokemon.pokedex.startsWith('M') || pokemon.pokedex.startsWith('GM') || pokemon.pokedex.startsWith('A')) {
+        imageUrl = require(`../images/tokens_ultimix/${pokemon.pokedex}.png`);
+    } else {
+        imageUrl = require(`../images/POKEMON/${pokemon.pokedex}.png`);
+    }
 
    
 

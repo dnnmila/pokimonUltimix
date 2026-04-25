@@ -1,8 +1,10 @@
 import React, {useState} from 'react';
 import Types from './Types';
 import ModalAttach from './modals/ModalAttach';
+import ModalEvolveChoice from './modals/ModalEvolveChoice';
+import SERVER_IP from '../config';
 
-const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,attached, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus}) => {
+const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
    
     const img_id = `img_${id}`;
     const level_id = `level_${id}`;
@@ -10,8 +12,17 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
     const type_id1 = `types_${id}_1`;
     const type_id2 = `types_${id}_2`;
     const delete_id = `delete_${id}`;
-    //Ajuste de pokedes quitando un 0 ultimixdnn
-    const imageUrl = require(`../images/POKEMON/0${pokedex}.png`);
+    const getImageUrl = (id, forceToken = false) => {
+        if (forceToken) {
+            try { return require(`../images/tokens_ultimix/${id}.png`); } catch { return null; }
+        }
+        try {
+            return require(`../images/POKEMON/${id}.png`);
+        } catch {
+            try { return require(`../images/tokens_ultimix/${id}.png`); } catch { return null; }
+        }
+    };
+    const imageUrl = getImageUrl(pokedex, nextLevel === -1);
     const box_id = `div_${id}`;
 
     const type1_class = `type_${type1}`;
@@ -31,20 +42,46 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
         // Limpia el campo de entrada después de agregar
     };
 
-    const handleEvolvePokemon = () => {
-        console.log(evolution);
-        onEvolvePokemon(currentPlayer.id, id , evolution);
-        // Limpia el campo de entrada después de agregar
+    const handleEvolvePokemon = async () => {
+        if (nextLevel === -1) {
+            onEvolvePokemon(currentPlayer.id, id, evolution);
+            return;
+        }
+        try {
+            const res = await fetch(`${SERVER_IP}/get-possible-evolutions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pokedexId: pokedex }),
+            });
+            const options = await res.json();
+            if (options.length === 1) {
+                onEvolvePokemon(currentPlayer.id, id, options[0].POKEDEX);
+            } else if (options.length > 1) {
+                setEvolveOptions(options);
+                setShowEvolveModal(true);
+            } else {
+                onEvolvePokemon(currentPlayer.id, id, evolution);
+            }
+        } catch (e) {
+            onEvolvePokemon(currentPlayer.id, id, evolution);
+        }
+    };
+
+    const handleEvolveSelect = (newPokedex) => {
+        setShowEvolveModal(false);
+        onEvolvePokemon(currentPlayer.id, id, newPokedex);
     };
 
     const handleIncreaseLevel = () => {
         console.log ('Player ID: ' + currentPlayer.id);
         console.log ('pokemon ID :' + id);
-        onIncreaseLevel(currentPlayer.id,id)
+        onIncreaseLevel(currentPlayer.id, id, { source: 'manual-master' })
     }
 
 
     const [showModalAttach, setShowModalAttach] = useState(false);
+    const [showEvolveModal, setShowEvolveModal] = useState(false);
+    const [evolveOptions, setEvolveOptions] = useState([]);
 
 
     const handleOpenModalAttach = () => {
@@ -72,9 +109,13 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
         }
     };
 
-    const handleChangeState = ()=> {
-         onChangeState(currentPlayer.id, id);
+    const handleChangeState = () => {
+        onChangeState(currentPlayer.id, id, { source: 'manual-master' });
     }
+    const handleDecreaseStatusCounter = () => {
+        onDecreaseStatusCounter(currentPlayer.id, id);
+    };
+
     const handleChangeStatus = ()=> {
         if(status ==="Normal"){
         onChangeStatus(currentPlayer.id, id, "Asleep");
@@ -110,9 +151,12 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
             <h1 className="level_pokemon" > {level}</h1>
             {extra > 0 && <h1 className="level_extra"> + {extra} </h1>}
             </div>
-            {extra >= nextLevel && nextLevel !== 0 && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
+            {((extra >= nextLevel && nextLevel > 0) || nextLevel === -1) && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
             <h1 className="name_pokemon" id={name_id}> {name}</h1>
-            <div className={`status_pokemon ${status}`} onClick={handleChangeStatus} ></div>
+            <div className="status_wrapper">
+                <div className={`status_pokemon ${status}`} onClick={handleChangeStatus} ></div>
+                {statusCounter > 0 && <div className="status_counter" onClick={handleDecreaseStatusCounter}>{statusCounter}</div>}
+            </div>
             <div className="types_div"> 
             <Types Type={type1}  Clase={type1_class} type_id={type_id1}/>
             { type2_true === true && <Types Type={type2}  Clase={type2_class} type_id={type_id2}/>}
@@ -124,6 +168,7 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
             <div className="delete_pokemon" id={delete_id} onClick={handleDeletePokemon} > </div>
 
             <ModalAttach show={showModalAttach} onClose={handleCloseModalAttach} currentPlayer={currentPlayer} pokemonId={id} onAttach={onAttach} attachTM={attachTM} attachMega={attachMega}/>
+            <ModalEvolveChoice show={showEvolveModal} options={evolveOptions} onSelect={handleEvolveSelect} onClose={() => setShowEvolveModal(false)} />
         </div>
     )
 };

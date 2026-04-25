@@ -20,6 +20,8 @@ class Game {
         this.myRivalTotal=0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
         this.myBonusFinal = 0;
         this.rivalBonusFinal = 0;
         this.myBonusAtk1 = 0;
@@ -30,6 +32,11 @@ class Game {
         this.rivalBonusAtk3 = 0;
         this.battlePhase = 'PokemonSelection';
         this.battlePublic = false;
+        this.generation = 1;
+        this.pendingPurchases = [];
+        this.purchaseHistory = [];
+        this.stateHistory = [];
+        this.levelHistory = [];
 
     
 
@@ -74,7 +81,11 @@ class Game {
         console.log('setting battle pokemon for ' + player);
          console.log('setting battle PokemonId ' + pokemon);
         if (player === 'MyPlayer') {
-            this.addMyPlayerPkm(this.players[this.currentTurn].pokemons.find(p => p.id === pokemon));
+            const currentPlayer = this.players[this.currentTurn];
+            const found = currentPlayer.pokemons.find(p => p.id === pokemon)
+                || currentPlayer.megas.find(p => p.id === pokemon)
+                || (currentPlayer.gmaxes || []).find(p => p.id === pokemon);
+            this.addMyPlayerPkm(found);
         } else if (player === 'Rival') {
             this.addMyRivalPkm(this.CurrentRival?.pokemons?.find(p => p.id === pokemon));
         }
@@ -103,9 +114,14 @@ class Game {
         }
     }
 
-    setBattleDice(player, dice) {
-        if (player === 'MyPlayer') this.myPlayerDice = dice;
-        else if (player === 'Rival') this.myRivalDice = dice;
+    setBattleDice(player, dice, rows) {
+        if (player === 'MyPlayer') {
+            this.myPlayerDice = dice;
+            if (rows !== undefined) this.myPlayerDiceRows = rows;
+        } else if (player === 'Rival') {
+            this.myRivalDice = dice;
+            if (rows !== undefined) this.myRivalDiceRows = rows;
+        }
     }
 
     setBattleBonusFinal(player, bonus) {
@@ -132,6 +148,42 @@ class Game {
     setBattlePhase(phase) {
         console.log('setting battle phase ' + phase);
         this.battlePhase = phase;
+        if (phase === 'AttackSelection') {
+            this.myPlayerDice = 0;
+            this.myRivalDice = 0;
+            this.myPlayerDiceRows = [];
+            this.myRivalDiceRows = [];
+            this.myPlayerTotal = 0;
+            this.myRivalTotal = 0;
+        }
+    }
+
+    startSimMirror(playerId) {
+        const isCurrentTurn = this.players[this.currentTurn]?.id === playerId;
+        if (!isCurrentTurn) return;
+        const player = this.players.find(p => p.id === playerId);
+        if (!player?.simRival) return;
+        this.CurrentRival = player.simRival;
+        this.battlePublic = true;
+        this.battlePhase = 'PokemonSelection';
+        this.myPlayerPkm = [];
+        this.myRivalPkm = [];
+        this.myPlayerPkmAtk = [];
+        this.myRivalPkmAtk = [];
+        this.myPlayerTotal = 0;
+        this.myRivalTotal = 0;
+        this.myPlayerDice = 0;
+        this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        this.myBonusAtk1 = 0;
+        this.myBonusAtk2 = 0;
+        this.myBonusAtk3 = 0;
+        this.rivalBonusAtk1 = 0;
+        this.rivalBonusAtk2 = 0;
+        this.rivalBonusAtk3 = 0;
     }
 
     nextTurn() {
@@ -159,7 +211,28 @@ class Game {
                 this.weatherTurns +=1;
             }
         }
-    
+
+        this.battlePublic = false;
+        this.battlePhase = 'PokemonSelection';
+        this.myPlayerPkm = [];
+        this.myRivalPkm = [];
+        this.myPlayerPkmAtk = [];
+        this.myRivalPkmAtk = [];
+        this.myPlayerTotal = 0;
+        this.myRivalTotal = 0;
+        this.myPlayerDice = 0;
+        this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        this.myBonusAtk1 = 0;
+        this.myBonusAtk2 = 0;
+        this.myBonusAtk3 = 0;
+        this.rivalBonusAtk1 = 0;
+        this.rivalBonusAtk2 = 0;
+        this.rivalBonusAtk3 = 0;
+
     }
 
     previousTurn() {
@@ -181,6 +254,27 @@ class Game {
             this.players[this.currentTurn].startTurn();
             this.players[this.currentTurn].isMyTurn = true;
         }
+
+        this.battlePublic = false;
+        this.battlePhase = 'PokemonSelection';
+        this.myPlayerPkm = [];
+        this.myRivalPkm = [];
+        this.myPlayerPkmAtk = [];
+        this.myRivalPkmAtk = [];
+        this.myPlayerTotal = 0;
+        this.myRivalTotal = 0;
+        this.myPlayerDice = 0;
+        this.myRivalDice = 0;
+        this.myPlayerDiceRows = [];
+        this.myRivalDiceRows = [];
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        this.myBonusAtk1 = 0;
+        this.myBonusAtk2 = 0;
+        this.myBonusAtk3 = 0;
+        this.rivalBonusAtk1 = 0;
+        this.rivalBonusAtk2 = 0;
+        this.rivalBonusAtk3 = 0;
 
         if (this.currentTurn + 1 === this.players.length) {
             // Todos los jugadores han completado su turno, se terminó la ronda

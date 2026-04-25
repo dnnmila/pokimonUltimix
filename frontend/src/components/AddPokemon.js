@@ -15,10 +15,10 @@ const AddPokemon = ({ onAdd ,currentPlayer}) => {
         <div className="add_pokemon">
             <img className="Pokeball_image" src={pokeball} alt="pokeball" />
             <input
-                    type="number"
+                    type="text"
                     value={pokemonId}
                     onChange={(e) => setPokemonId(e.target.value)}
-                    placeholder="Número de Pokédex"
+                    placeholder="Número de Pokédex (ej: 76 o A76)"
                 />
                 <button onClick={handleAddPokemon}>Agregar Pokémon</button>
         </div>

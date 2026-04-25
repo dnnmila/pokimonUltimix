@@ -2,8 +2,17 @@
 
 
 const PokemonListed = ({pokemon}) => {
-    //Ajuste de pokedes quitando un 0 ultimixdnn
-    const imageUrl = require(`../images/POKEMON/0${pokemon.pokedex}.png`);
+    const getImageUrl = (id, forceToken = false) => {
+        if (forceToken) {
+            try { return require(`../images/tokens_ultimix/${id}.png`); } catch { return null; }
+        }
+        try {
+            return require(`../images/POKEMON/${id}.png`);
+        } catch {
+            try { return require(`../images/tokens_ultimix/${id}.png`); } catch { return null; }
+        }
+    };
+    const imageUrl = getImageUrl(pokemon.pokedex, pokemon.nextLevel === -1);
 
 
 

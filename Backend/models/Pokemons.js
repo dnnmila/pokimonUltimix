@@ -17,6 +17,7 @@ class Pokemons {
         this.state = "Alive";
         this.evolution = evolution;
         this.mega= mega;
+        this.statusCounter = 0;
     }
 
     addAttack1(attack1) {
@@ -51,14 +52,26 @@ class Pokemons {
     }
     setStatus(status){
         this.status = status;
+        if (status === 'Poisoned' || status === 'Burned') this.statusCounter = 4;
+        else if (status === 'Cursed') this.statusCounter = 2;
+        else this.statusCounter = 0;
+    }
+    decreaseStatusCounter(){
+        if (this.statusCounter > 0) {
+            this.statusCounter -= 1;
+            if (this.statusCounter === 0) this.status = 'Normal';
+        }
     }
     setState(){
         if(this.state === "Alive"){
             this.state = "Dead";
+            this.status = "Normal";
+            this.statusCounter = 0;
         }
         else{
             this.state = "Alive";
-            this.status = "Normal" ;
+            this.status = "Normal";
+            this.statusCounter = 0;
         }
     }
    

@@ -20,21 +20,28 @@
     width: 100%;
     justify-content: space-evenly;
     align-items: center;
-    margin-top: 8rem;
+    margin-top: 3rem;
 }
 .Elite-to-battle{
     display: flex;
     width: 100%;
     justify-content: space-evenly;
     align-items: center;
-    margin-top: 8rem;
+    margin-top: 2rem;
 }
 .Special-to-battle{
     display: flex;
     width: 100%;
     justify-content: space-evenly;
     align-items: center;
-    margin-top: 8rem;
+    margin-top: 3rem;
+}
+.Gary-to-battle{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1rem;
 }
 .close-blattle-modal{
     width: 6%;
@@ -67,68 +74,67 @@
 }
 
 .leader1{
-    background-image: url("../images/Leaders/gym1_1.png");
+    background-image: url("../images/Leaders1/gym1_1.png");
 }
 .leader2{
-    background-image: url("../images/Leaders/gym2_1.png");
+    background-image: url("../images/Leaders1/gym2_1.png");
 }
 .leader3{
-    background-image: url("../images/Leaders/gym3_1.png");
+    background-image: url("../images/Leaders1/gym3_1.png");
 }
 .leader4{
-    background-image: url("../images/Leaders/gym4_1.png");
+    background-image: url("../images/Leaders1/gym4_1.png");
 }
 .leader5{
-    background-image: url("../images/Leaders/gym5_1.png");
+    background-image: url("../images/Leaders1/gym5_1.png");
 }
 .leader6{
-    background-image: url("../images/Leaders/gym6_1.png");
+    background-image: url("../images/Leaders1/gym6_1.png");
 }
 .leader7{
-    background-image: url("../images/Leaders/gym7_1.png");
+    background-image: url("../images/Leaders1/gym7_1.png");
 }
 .leader8{
-    background-image: url("../images/Leaders/gym8_1.png");
+    background-image: url("../images/Leaders1/gym8_1.png");
 }
 .Elite1{
-    background-image: url("../images/Leaders/gymE1_1.png");
+    background-image: url("../images/Leaders1/gymE1_1.png");
 }
 .Elite2{
-    background-image: url("../images/Leaders/gymE2_1.png");
+    background-image: url("../images/Leaders1/gymE2_1.png");
 }
 .Elite3{
-    background-image: url("../images/Leaders/gymE3_1.png");
+    background-image: url("../images/Leaders1/gymE3_1.png");
 }
 .Elite4{
-    background-image: url("../images/Leaders/gymE4_1.png");
+    background-image: url("../images/Leaders1/gymE4_1.png");
 }
-.Red{
-    background-image: url("../images/Leaders/gymC1.png");
+.Rocket1{
+    background-image: url("../images/Leaders1/gymR1_1.png");
 }
 .Blue1{
-    background-image: url("../images/Leaders/gymB1_1.png");
+    background-image: url("../images/Leaders1/gymC1_1.png");
 }
 .Blue2{
-    background-image: url("../images/Leaders/gymB2_1.png");
+    background-image: url("../images/Leaders1/gymC2_1.png");
 }
 .Blue3{
-    background-image: url("../images/Leaders/gymB3_1.png");
+    background-image: url("../images/Leaders1/gymC3_1.png");
 }
-.Blue4{
-    background-image: url("../images/Leaders/gymB4_1.png");
+.GaryPink{
+    background-image: url("../images/Leaders1/RivPink1.png");
 }
-.Blue5{
-    background-image: url("../images/Leaders/gymB5_1.png");
+.GaryGreen{
+    background-image: url("../images/Leaders1/RivGreen1.png");
 }
-.Rocket{
-    background-image: url("../images/gymsCards/Rocket.png");
+.GaryBlue{
+    background-image: url("../images/Leaders1/RivBlue1.png");
 }
-
-.Rocket1{
-    background-image: url("../images/Leaders/gymR1_1.png");
+.GaryYellow{
+    background-image: url("../images/Leaders1/RivYellow1.png");
 }
-.Rocket2{
-    background-image: url("../images/Leaders/gymR2_1.png");
+.GaryRed{
+    background-image: url("../images/Leaders1/RivRed1.png");
 }
 
 

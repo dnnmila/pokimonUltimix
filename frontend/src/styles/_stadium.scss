@@ -1,3 +1,84 @@
+// ── Keyframes ──────────────────────────────────────────────
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-80px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(80px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.85); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.4); }
+    70%  { transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+@keyframes dicePick {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.4) rotate(-10deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+// ── Animation classes ───────────────────────────────────────
+.anim-slide-left  { animation: slideInLeft  0.4s ease both; }
+.anim-slide-right { animation: slideInRight 0.4s ease both; }
+.anim-fade-up     { animation: fadeSlideUp  0.35s ease both; }
+.anim-pop         { animation: popIn        0.45s cubic-bezier(.175,.885,.32,1.275) both; }
+.anim-dice        { animation: dicePick     0.3s ease both; }
+
+.total-win  { color: #5df56a; text-shadow: 0 0 18px #5df56a; }
+.total-lose { color: #ff4e4e; text-shadow: 0 0 18px #ff4e4e; }
+.total-tie  { color: #f0d060; text-shadow: 0 0 18px #f0d060; }
+
+@keyframes screenShake {
+    0%,100% { transform: translate(0, 0) rotate(0deg); }
+    10%     { transform: translate(-10px, -5px) rotate(-0.5deg); }
+    20%     { transform: translate(10px,  5px) rotate( 0.5deg); }
+    30%     { transform: translate(-8px,  3px) rotate(-0.3deg); }
+    40%     { transform: translate( 8px, -3px) rotate( 0.3deg); }
+    50%     { transform: translate(-5px,  2px); }
+    60%     { transform: translate( 5px, -2px); }
+    75%     { transform: translate(-3px,  1px); }
+    90%     { transform: translate( 2px, -1px); }
+}
+@keyframes typeFlash {
+    0%   { opacity: 0; }
+    15%  { opacity: 0.5; }
+    100% { opacity: 0; }
+}
+@keyframes loserShake {
+    0%,100% { transform: translateX(0) rotate(0deg); }
+    20%     { transform: translateX(-10px) rotate(-4deg); }
+    40%     { transform: translateX(10px)  rotate( 4deg); }
+    60%     { transform: translateX(-6px)  rotate(-2deg); }
+    80%     { transform: translateX(6px)   rotate( 2deg); }
+}
+@keyframes winnerPulse {
+    0%,100% { filter: brightness(100%); }
+    50%     { filter: brightness(140%) drop-shadow(0 0 12px #5df56a); }
+}
+
+.anim-screen-shake { animation: screenShake 0.65s ease both; }
+
+.type-flash-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    animation: typeFlash 0.55s ease forwards;
+}
+
+.loser-img {
+    animation: loserShake 0.55s ease both;
+    filter: brightness(30%) !important;
+}
+.winner-img {
+    animation: winnerPulse 0.8s ease both;
+}
+// ────────────────────────────────────────────────────────────
+
 .Stadium{
     width: 100vw;
     height: 100vh;
@@ -56,7 +137,8 @@
 .switch {
     position: absolute;
     top: 1rem;
-    right: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -106,7 +188,7 @@
     flex-direction: column;
     width: 50%;
     align-items: center;
-   margin-top: 25vh;
+   margin-top: 5vh;
 }
 
 
@@ -201,7 +283,62 @@
     flex-direction: column;
     margin-top: 1rem;
     position: absolute;
-    gap: .8rem;
+    gap: .5rem;
+}
+
+.my-dice-panel, .rival-dice-panel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.dice-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.2rem;
+    border-radius: 8px;
+}
+
+.dice-collapsed-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dice-full-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.dice-selected {
+    filter: brightness(100%) drop-shadow(0 0 6px #f0d060) !important;
+    transform: scale(1.15);
+}
+
+.dice-refresh {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: rgba(74,144,217,0.85);
+    color: white;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    &:hover {
+        background: rgba(74,144,217,1);
+        transform: rotate(-30deg) scale(1.15);
+    }
 }
 .MyDices{
 left: 2%;
@@ -332,13 +469,18 @@ top: 15%;
 
 .Attack-selected-mypoke,.Attack-selected-rival{
     position: absolute;
-    top :25%
+    top: 16%;
+    .Attack {
+        transform: rotate(0deg);
+        width: 28vh;
+        height: 7vw;
+    }
 }
 .Attack-selected-mypoke{
-    left: 21%;
+    left: 16%;
 }
 .Attack-selected-rival{
-    right: 21%;
+    right: 16%;
 }
 
 .myTotalFinal,.rivalTotalFinal{
@@ -405,4 +547,58 @@ top: 15%;
     align-items: center;
     background-color: #ee4141;
     color: aliceblue;
+}
+.levelup-prompt {
+    background: linear-gradient(160deg, #1a1a2e, #16213e);
+    border: 2px solid #f9d71c;
+    border-radius: 16px;
+    padding: 28px 36px;
+    text-align: center;
+    min-width: 280px;
+    box-shadow: 0 0 30px rgba(249, 215, 28, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: popIn 0.3s ease both;
+
+    .levelup-prompt-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #f9d71c;
+        letter-spacing: 1px;
+    }
+
+    .levelup-prompt-msg {
+        color: #e0e0e0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .levelup-prompt-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 6px;
+
+        button {
+            padding: 8px 28px;
+            border: none;
+            border-radius: 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: filter 0.15s;
+            &:hover { filter: brightness(1.2); }
+        }
+
+        .levelup-btn-yes {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .levelup-btn-no {
+            background-color: #c0392b;
+            color: white;
+        }
+    }
 }

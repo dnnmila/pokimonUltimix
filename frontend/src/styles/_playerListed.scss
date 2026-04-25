@@ -6,6 +6,20 @@
     height: 20;
 }
 
+.PlayerListedClass--active {
+    background-color: rgba(83, 116, 203, 0.2);
+    box-shadow: inset 4px 0 0 #FFD700, inset 0 0 30px rgba(255, 215, 0, 0.08);
+
+    .PlayerName {
+        color: #FFD700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    }
+
+    .PlayerPosition {
+        color: #FFD700;
+    }
+}
+
 .PlayerListedClass::after {
     content: '';
     position: absolute;
@@ -85,56 +99,14 @@
 }
 
 
-#badge1Won{
-    background-image: url("../images/badges/badge1.png");
+#badge1Won, #badge2Won, #badge3Won, #badge4Won,
+#badge5Won, #badge6Won, #badge7Won, #badge8Won {
     background-size: contain;
     background-repeat: no-repeat;
     height: 4vh;
-    width: 2vw;}    
+    width: 2vw;
+}
 
-
-#badge2Won{
-    background-image: url("../images/badges/badge2.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    height: 4vh;
-    width: 2vw;}
-#badge3Won{
-    background-image: url("../images/badges/badge3.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    height: 4vh;
-    width: 2vw;}
-#badge4Won{
-    background-image: url("../images/badges/badge4.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    height: 4vh;
-    width: 2vw;}
-#badge5Won{
-    background-image: url("../images/badges/badge5.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    height: 4vh;
-    width: 2vw;}
-#badge6Won{
-    background-image: url("../images/badges/badge6.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    height: 4vh;
-    width: 2vw;}
-#badge7Won{
-    background-image: url("../images/badges/badge7.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    height: 4vh;
-    width: 2vw;}
-#badge8Won{
-    background-image: url("../images/badges/badge8.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    height: 4vh;
-    width: 2vw;}
     #badge9Won{
         background-image: url("../images/badges/elite.png");
         background-size: contain;

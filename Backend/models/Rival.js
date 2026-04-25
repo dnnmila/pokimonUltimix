@@ -4,6 +4,9 @@ class Rival {
         this.id = id;
         this.name = name;
         this.pokemons = [];
+        this.megas = [];
+        this.gmaxes = [];
+        this.dynamax = false;
         this.award= '';
     }
 

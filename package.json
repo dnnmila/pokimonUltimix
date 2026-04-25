@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd Backend && node app.js",
-    "client": "cd frontend && npm start"
+    "server": "cd Backend && node --env-file=.env app.js",
+    "client": "REACT_APP_SERVER_IP=$(grep '^SERVER_IP=' Backend/.env | cut -d= -f2) npm start --prefix frontend"
   },
   "repository": {
     "type": "git",

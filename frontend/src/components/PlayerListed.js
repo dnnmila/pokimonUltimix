@@ -1,5 +1,14 @@
 import PokemonListed from "./PokemonListed";
-const PlayerListed = ({player, totalPLayers}) => {
+
+const getBadgeImg = (gen, num) => {
+    try {
+        return require(`../images/badges/badges${gen}/badge${num}.webp`);
+    } catch (e) {
+        try { return require(`../images/badges/badge${num}.png`); } catch { return null; }
+    }
+};
+
+const PlayerListed = ({player, totalPLayers, generation}) => {
     const badges = [player.badge1, player.badge2, player.badge3, player.badge4 , player.badge5 , player.badge6,player.badge7,player.badge8,player.badge9,player.badge10];
 
     const playerHeight = 100 / totalPLayers;
@@ -10,7 +19,7 @@ const PlayerListed = ({player, totalPLayers}) => {
 
 
     return (
-        <div className="PlayerListedClass" style={playerStyle} >
+        <div className={`PlayerListedClass ${player.isMyTurn ? 'PlayerListedClass--active' : ''}`} style={playerStyle} >
            
             <div className="Titles">
                 <div className="NamesAndPosition">
@@ -21,9 +30,24 @@ const PlayerListed = ({player, totalPLayers}) => {
                 </div>
             
                 <div className="PlayerBadges">
-                        {badges.map((badge, index) =>
-                        badge && <div key={player.name+"bagde"+index} className={`PlayerBagde${index + 1}`} id={`badge${index+1}Won`}> </div>
-                            )}
+                    {badges.map((badge, index) => {
+                        if (!badge) return null;
+                        const num = index + 1;
+                        if (num <= 8) {
+                            const img = getBadgeImg(generation || 1, num);
+                            return (
+                                <div
+                                    key={player.name + "badge" + num}
+                                    className={`PlayerBagde${num}`}
+                                    id={`badge${num}Won`}
+                                    style={img ? { backgroundImage: `url(${img})` } : {}}
+                                />
+                            );
+                        }
+                        return (
+                            <div key={player.name + "badge" + num} className={`PlayerBagde${num}`} id={`badge${num}Won`} />
+                        );
+                    })}
                 </div>
               
 

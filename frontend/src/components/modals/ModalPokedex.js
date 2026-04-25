@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import SERVER_IP from '../../config';
 
+
 const getToken = (pokedex) => {
     try {
-        return require(`../../images/tokens/${pokedex}.png`);
+        return require(`../../images/tokens_ultimix/${pokedex}.png`);
     } catch {
         return null;
     }
@@ -13,10 +14,12 @@ const TokenImg = ({ pokedex, isMega, isCurrent }) => {
     const img = getToken(pokedex);
     if (!img) return null;
     return (
-        <div
-            className={`pokedex-token ${isMega ? 'pokedex-token--mega' : ''} ${isCurrent ? 'pokedex-token--current' : ''}`}
-            style={{ backgroundImage: `url(${img})` }}
-        ></div>
+        <div className="pokedex-token-wrapper">
+            <div
+                className={`pokedex-token ${isMega ? 'pokedex-token--mega' : ''} ${isCurrent ? 'pokedex-token--current' : ''}`}
+                style={{ backgroundImage: `url(${img})` }}
+            ></div>
+        </div>
     );
 };
 
@@ -60,36 +63,71 @@ const ModalPokedex = ({ show, onClose, player }) => {
                             <div key={pokemon.id} className="pokedex-row">
                                 {!chain ? (
                                     <TokenImg pokedex={pokemon.pokedex} isCurrent />
-                                ) : (
+                                ) : Array.isArray(chain) ? (
                                     chain.map((step, index) => (
                                         <div key={step.pokedex} className="pokedex-step">
-                                            {index > 0 && (
-                                                <div className="pokedex-arrow">▶</div>
-                                            )}
-                                            <TokenImg
-                                                pokedex={step.pokedex}
-                                                isMega={step.isMega}
-                                                isCurrent={index === 0}
-                                            />
-                                            {step.branches.length > 0 && (
+                                            {index > 0 && <div className="pokedex-arrow">▶</div>}
+                                            <TokenImg pokedex={step.pokedex} isCurrent={index === 0} />
+                                            {/* GMax — inline */}
+                                            {step.gmax && (
                                                 <>
-                                                    <div className={`pokedex-arrow ${step.branches[0].isMega ? 'pokedex-arrow--mega' : ''}`}>
-                                                        {step.branches[0].isMega ? '' : '▶'}
+                                                    <div className="pokedex-arrow pokedex-arrow--gmax"></div>
+                                                    <TokenImg pokedex={step.gmax} />
+                                                </>
+                                            )}
+                                            {/* Megas — separadas */}
+                                            {step.megas && step.megas.length > 0 && (
+                                                <>
+                                                    <div className="pokedex-arrow pokedex-arrow--mega"></div>
+                                                    <div className="pokedex-branches">
+                                                        {step.megas.map(megaPokedex => (
+                                                            <div key={megaPokedex} className="pokedex-branch-group">
+                                                                <TokenImg pokedex={megaPokedex} isMega={true} />
+                                                            </div>
+                                                        ))}
                                                     </div>
+                                                </>
+                                            )}
+                                            {/* Ramas de evolución */}
+                                            {step.branches && step.branches.length > 0 && (
+                                                <>
+                                                    <div className="pokedex-arrow">▶</div>
                                                     <div className="pokedex-branches">
                                                         {step.branches.map(branch => (
-                                                            <TokenImg
-                                                                key={branch.pokedex}
-                                                                pokedex={branch.pokedex}
-                                                                isMega={branch.isMega}
-                                                            />
+                                                            <div key={branch.pokedex} className="pokedex-branch-group">
+                                                                <TokenImg pokedex={branch.pokedex} />
+                                                                {branch.gmax && (
+                                                                    <>
+                                                                        <div className="pokedex-arrow pokedex-arrow--gmax"></div>
+                                                                        <TokenImg pokedex={branch.gmax} />
+                                                                    </>
+                                                                )}
+                                                                {branch.megas && branch.megas.length > 0 && (
+                                                                    <>
+                                                                        <div className="pokedex-arrow pokedex-arrow--mega"></div>
+                                                                        <div className="pokedex-branches">
+                                                                            {branch.megas.map(megaPokedex => (
+                                                                                <div key={megaPokedex} className="pokedex-branch-group">
+                                                                                    <TokenImg pokedex={megaPokedex} isMega={true} />
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                                {branch.nextEvolution && (
+                                                                    <>
+                                                                        <div className="pokedex-arrow">▶</div>
+                                                                        <TokenImg pokedex={branch.nextEvolution} />
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 </>
                                             )}
                                         </div>
                                     ))
-                                )}
+                                ) : null}
                             </div>
                         );
                     })}

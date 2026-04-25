@@ -7,13 +7,13 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 
 
-import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById} from "../gameInstance.js";
+import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame, setGameRivals } from "../gameInstance.js";
 import { getIo } from "../socketIo.js";
 
 async function openDb() {
     return open({
-        filename: './db/pokimonDOUBLE.sqlite',
-       //filename: './db/pokimonULTIMIX.sqlite',
+        //filename: './db/pokimonDOUBLE.sqlite',
+       filename: './db/pokimonULTIMIX.sqlite',
         driver: sqlite3.Database
     });
 }
@@ -91,9 +91,12 @@ export const nextTurn = async (req, res) => {
         }
 
         game.nextTurn();
-        game.calculatePoints(); 
-        game.updatePlayerPositions(); 
-        updateGameAndNotify(); // Asegúrate de que esta función envíe una respuesta
+        game.calculatePoints();
+        game.updatePlayerPositions();
+        if (game.currentTurn === 0) {
+            saveGame();
+        }
+        updateGameAndNotify();
 
         res.status(200).json({ message: 'Turno avanzado' });
     } catch (error) {
@@ -173,8 +176,10 @@ export const wildBattle = async (req, res) => {
         const {pokemonId} = req.body;
         console.log(pokemonId);
 
-        //ajuste  Asegurarse de que pokemonId tenga siempre 3 dígitos ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
+        //ajuste  Asegurarse de que pokemonId tenga siempre 4 dígitos ultimixdnn
+        const rawWildId = pokemonId.toString().trim().toUpperCase();
+        const wildPrefixMatch = rawWildId.match(/^([A-Z]+)(\d+)$/);
+        const formattedPokemonId = wildPrefixMatch ? wildPrefixMatch[1] + wildPrefixMatch[2].padStart(4, '0') : rawWildId.padStart(4, '0');
         console.log('formattedPokemonId ' + formattedPokemonId);
 
         // Busca el Pokémon en la base de datos
@@ -229,67 +234,61 @@ export const wildBattle = async (req, res) => {
     }
 };
 
+// TODO: Pendiente de pruebas — cuando no es el turno del jugador, asigna el pokemon escaneado
+// como simRival personal del jugador (visible en SimPlayer) sin afectar el rival global del game.
 export const scanBattle = async (req, res) => {
     console.log('Wild Battle Scaned started');
     try {
         const { pokemonUID, playerButton } = req.body;
         const game = getGame();
 
-        if (playerButton && playerButton !== 'master') {
-            const playerIndex = parseInt(playerButton.replace('player', ''), 10) - 1;
-            if (playerIndex !== game.currentTurn) {
-                return res.status(200).json({ message: 'No es tu turno' });
-            }
-        }
-
-        const rival = getRivalrById('Rival');
         const db = await openDb();
-        console.log(pokemonUID);
-
-        // Asegurarse de que pokemonId tenga siempre 3 dígitos
-        
-
-        // Busca el Pokémon en la base de datos
         const pokemonData = await db.get("SELECT * FROM pokemons WHERE UID LIKE ?", ['%' + pokemonUID + '%']);
-        console.log(pokemonData);
-        const Attack1 = await getAttack(pokemonData.ATK1,db);
-        const Attack2 = await getAttack(pokemonData.ATK2,db);
-        const Attack3 = await getAttack(pokemonData.ATK3,db);
-       
-     
         if (!pokemonData) {
             return res.status(404).json({ message: 'Pokémon no encontrado' });
         }
 
-       
-        // Crear una instancia de Pokémon
+        const Attack1 = await getAttack(pokemonData.ATK1, db);
+        const Attack2 = await getAttack(pokemonData.ATK2, db);
+        const Attack3 = await getAttack(pokemonData.ATK3, db);
+
         const pokemon = new Pokemons(
-            pokemonData.UID,
-            pokemonData.POKEDEX,
-            pokemonData.NAME,
-            pokemonData.TYPE1,
-            pokemonData.TYPE2,
-            pokemonData.LEVEL,
-            Attack1,
-            Attack2,
-            Attack3,
-            pokemonData.NEXT_LEVEL,
-            pokemonData.EVOLUTION,
-            pokemonData.MEGA
+            pokemonData.UID, pokemonData.POKEDEX, pokemonData.NAME,
+            pokemonData.TYPE1, pokemonData.TYPE2, pokemonData.LEVEL,
+            Attack1, Attack2, Attack3,
+            pokemonData.NEXT_LEVEL, pokemonData.EVOLUTION, pokemonData.MEGA
         );
 
-        // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
+        // Si es master o es el turno del jugador → actualiza el rival global de game
+        if (!playerButton || playerButton === 'master') {
+            const rival = getRivalrById('Rival');
+            rival.addPokemon(pokemon);
+            game.wildBattleOn(rival);
+            console.log('Wild Pokemon added (master) ' + pokemon.name);
+        } else {
+            const playerIndex = parseInt(playerButton.replace('player', ''), 10) - 1;
+            const isMyTurn = playerIndex === game.currentTurn;
 
-        rival.addPokemon(pokemon);
+            if (isMyTurn) {
+                // Es su turno → actualiza rival global
+                const rival = getRivalrById('Rival');
+                rival.addPokemon(pokemon);
+                game.wildBattleOn(rival);
+                console.log('Wild Pokemon added (turn player) ' + pokemon.name);
+            }
 
-        game.wildBattleOn(rival);
-        
-        console.log('Wild Pokemon added ' + pokemon.name );
-      
+            // Siempre actualiza el simRival del jugador (sea o no su turno)
+            const player = game.players[playerIndex];
+            if (player) {
+                const simRival = new Rival('SimRival-' + player.id + '-' + Date.now(), 'Wild Pokemon');
+                simRival.addPokemon(pokemon);
+                player.setSimRival(simRival);
+                console.log('SimRival asignado a ' + player.name + ': ' + pokemon.name);
+            }
+        }
+
         updateGameAndNotify();
-        // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
-
-        res.status(200).json({ message: 'Pokémon salvaje Agregado'});
+        res.status(200).json({ message: 'Pokémon salvaje procesado', pokemon: pokemonData.NAME });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -386,7 +385,8 @@ export const leaderBattle = async (req, res) => {
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
     
         const game = getGame();
-        rival.add2Pokemon(pokemon1,pokemon2)
+        rival.add2Pokemon(pokemon1,pokemon2);
+        rival.badgeNum = badgeNum;
         console.log("Rival");
         console.log(rival);
 
@@ -403,6 +403,19 @@ export const leaderBattle = async (req, res) => {
     }
 };
 
+export const loadGameController = async (req, res) => {
+    try {
+        const game = loadGame();
+        const db = await openDb();
+        await loadRivalsForGeneration(game.generation || 1, db);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Partida cargada correctamente', round: game.round });
+    } catch (error) {
+        console.error('Error al cargar la partida:', error);
+        res.status(500).json({ message: 'No se encontró ningún auto-guardado' });
+    }
+};
+
 export const simWildBattle = async (req, res) => {
     console.log('Sim Wild Battle started');
     try {
@@ -413,8 +426,8 @@ export const simWildBattle = async (req, res) => {
         }
 
         const db = await openDb();
-        //ajuste 4a 3 digitos pokimonId ultimixdnn
-        const formattedPokemonId = pokemonId.toString().padStart(3, '0');
+        //ajuste 4 digitos pokimonId ultimixdnn
+        const formattedPokemonId = pokemonId.toString().padStart(4, '0');
         const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [formattedPokemonId]);
         if (!pokemonData) {
             return res.status(404).json({ message: 'Pokémon no encontrado' });
@@ -445,6 +458,29 @@ export const simWildBattle = async (req, res) => {
 
         updateGameAndNotify();
         res.status(200).json({ message: 'SimRival salvaje asignado al jugador ' + playerId });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const simPlayerBattle = async (req, res) => {
+    console.log('Sim Player Battle started');
+    try {
+        const { playerId, rivalPlayerId } = req.body;
+        const player = getPlayerById(playerId);
+        const rivalPlayer = getPlayerById(rivalPlayerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (!rivalPlayer) return res.status(404).json({ message: 'Jugador rival no encontrado' });
+
+        const simRival = new Rival('SimPlayer-' + rivalPlayerId, rivalPlayer.name);
+        simRival.pokemons = [...rivalPlayer.pokemons];
+        simRival.megas = [...(rivalPlayer.megas || [])];
+        simRival.gmaxes = [...(rivalPlayer.gmaxes || [])];
+        simRival.dynamax = rivalPlayer.dynamax || false;
+
+        player.setSimRival(simRival);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'SimRival jugador asignado a ' + playerId });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -576,9 +612,9 @@ export const setBattleBonusFinal = async (req, res) => {
 
 export const setBattleDice = async (req, res) => {
     try {
-        const { player, dice } = req.body;
+        const { player, dice, rows } = req.body;
         const game = getGame();
-        game.setBattleDice(player, dice);
+        game.setBattleDice(player, dice, rows);
         updateGameAndNotify();
         res.status(200).json({ message: 'Dado de batalla establecido' });
     } catch (error) {
@@ -593,6 +629,66 @@ export const setBattleBonuses = async (req, res) => {
         game.setBattleBonuses(player, b1, b2, b3);
         updateGameAndNotify();
         res.status(200).json({ message: 'Bonuses de batalla establecidos' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const requestPurchase = async (req, res) => {
+    try {
+        const { playerId, item, price } = req.body;
+        const game = getGame();
+        const player = game.players.find(p => p.id === playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (player.coins < price) return res.status(400).json({ message: 'Monedas insuficientes' });
+        const purchaseRequest = {
+            id: Date.now().toString(),
+            playerId: player.id,
+            playerName: player.name,
+            item,
+            price
+        };
+        game.pendingPurchases.push(purchaseRequest);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Solicitud enviada', purchaseId: purchaseRequest.id });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const approvePurchase = async (req, res) => {
+    try {
+        const { purchaseId } = req.body;
+        const game = getGame();
+        const request = game.pendingPurchases.find(r => r.id === purchaseId);
+        if (!request) return res.status(404).json({ message: 'Solicitud no encontrada' });
+        const player = game.players.find(p => p.id === request.playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (player.coins < request.price) return res.status(400).json({ message: 'Monedas insuficientes' });
+        const coinsAfter = player.coins - request.price;
+        player.updateNewCoins(coinsAfter);
+        game.pendingPurchases = game.pendingPurchases.filter(r => r.id !== purchaseId);
+        game.purchaseHistory.push({
+            playerName: request.playerName,
+            item: request.item,
+            price: request.price,
+            coinsAfter,
+            round: game.round
+        });
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Compra aprobada' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const denyPurchase = async (req, res) => {
+    try {
+        const { purchaseId } = req.body;
+        const game = getGame();
+        game.pendingPurchases = game.pendingPurchases.filter(r => r.id !== purchaseId);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Compra denegada' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -617,12 +713,106 @@ export const setBattlePhase = async (req, res) => {
         game.setBattlePhase(newPhase);
         updateGameAndNotify();
         res.status(200).json({ message: 'Fase de batalla establecida ' });
-        
 
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+};
+
+export const startSimMirror = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        game.startSimMirror(playerId);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Mirror de simulación iniciado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Carga rivales únicos desde DB para una generación y los inyecta al juego
+async function loadRivalsForGeneration(generation, db) {
+    const rows = await db.all(
+        "SELECT DISTINCT RIVAL_ID, RIVAL_NAME FROM pokemonsLeaders WHERE GENERATION = ? AND RIVAL_ID IS NOT NULL",
+        [generation]
+    );
+    setGameRivals(rows.map(r => ({ id: r.RIVAL_ID, name: r.RIVAL_NAME })));
 }
+
+export const setGeneration = async (req, res) => {
+    try {
+        const { generation } = req.body;
+        const db = await openDb();
+        const game = getGame();
+        game.generation = generation;
+        await loadRivalsForGeneration(generation, db);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Generación establecida', generation });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getLeadersByGeneration = async (req, res) => {
+    try {
+        const generation = parseInt(req.query.generation) || 1;
+        const db = await openDb();
+
+        // RIVAL_ID y RIVAL_NAME vienen directo de la DB — sin hardcode
+        const rows = await db.all(
+            "SELECT UID, POKEDEX, RIVAL_ID, RIVAL_NAME FROM pokemonsLeaders WHERE GENERATION = ? AND RIVAL_ID IS NOT NULL ORDER BY UID",
+            [generation]
+        );
+
+        const getCategory = (img) => {
+            if (!img) return 'other';
+            if (img.startsWith('gymE')) return 'elite';
+            if (img.startsWith('gymC')) return 'champion';
+            if (img.startsWith('gymR')) return 'rocket';
+            if (img.startsWith('gym'))  return 'gym';
+            if (img.startsWith('Riv'))  return 'rival';
+            return 'other';
+        };
+
+        // Agrupa por RIVAL_ID (viene de la DB)
+        const map = {};
+        for (const row of rows) {
+            const key = row.RIVAL_ID;
+            const num = parseInt(row.UID.match(/\d+$/)[0]);
+            if (!map[key]) map[key] = { rivalId: key, rivalName: row.RIVAL_NAME, img: row.POKEDEX, pokemons: [] };
+            map[key].pokemons.push({ uid: row.UID, num });
+        }
+
+        const CATEGORY_ORDER = ['gym', 'elite', 'champion', 'rocket', 'rival', 'other'];
+
+        const leaders = Object.values(map).map(l => {
+            const sorted = l.pokemons.sort((a, b) => a.num - b.num);
+            const category = getCategory(l.img);
+            const numMatch = l.img?.match(/(\d+)/);
+            const sortKey = numMatch ? parseInt(numMatch[1]) : 99;
+            return {
+                leaderKey: l.rivalId,
+                name: l.rivalName,
+                uid1: sorted[0]?.uid,
+                uid2: sorted[1]?.uid,
+                img: l.img,
+                category,
+                sortKey,
+            };
+        });
+
+        leaders.sort((a, b) => {
+            const catDiff = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+            if (catDiff !== 0) return catDiff;
+            return a.sortKey - b.sortKey;
+        });
+
+        res.status(200).json(leaders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
 

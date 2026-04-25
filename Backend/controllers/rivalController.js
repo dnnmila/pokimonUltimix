@@ -6,8 +6,8 @@ import { getGame ,getPlayerById,updateGameAndNotify,getRivalById } from '../game
 
 async function openDb() {
     return open({
-        filename: './db/pokimonDOUBLE.sqlite',
-        //filename: './db/pokimonULTIMIX.sqlite', 
+        //filename: './db/pokimonDOUBLE.sqlite',
+        filename: './db/pokimonULTIMIX.sqlite',
         driver: sqlite3.Database
     });
 }
