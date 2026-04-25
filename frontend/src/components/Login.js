@@ -30,7 +30,7 @@ function Login({ onLogin }) {
     return (
         <div style={styles.container}>
             <div style={styles.card}>
-                <h1 style={styles.title}>Pokemon Ultimix</h1>
+                <h1 style={styles.title}>Pokimooon Ultimix Megadeath</h1>
                 <form onSubmit={handleSubmit} style={styles.form}>
                     <input
                         type="password"
