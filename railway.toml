@@ -1,5 +1,5 @@
 [build]
-  buildCommand = "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix Backend"
+  buildCommand = "npm install --prefix frontend && CI=false npm run build --prefix frontend && npm install --prefix Backend"
 
 [deploy]
   startCommand = "cd Backend && node app.js"
