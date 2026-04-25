@@ -10,6 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const SERVER_IP = `http://${process.env.SERVER_IP}:3000`;
+const FRONTEND_URL = process.env.FRONTEND_URL || null;
 
 
 
@@ -20,9 +21,11 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = ['http://localhost:3000', SERVER_IP, FRONTEND_URL].filter(Boolean);
+
 const io = new SocketIOServer(server, {
     cors: {
-        origin: ['http://localhost:3000', SERVER_IP], // Permite conexiones WebSocket desde estos orígenes
+        origin: allowedOrigins,
         methods: ['GET', 'POST'],
         credentials: true
     }
@@ -32,9 +35,9 @@ initSocketIo(io); // Aquí inicializas Socket.io con la instancia 'io'
 
 // Habilita CORS para todas las solicitudes
 app.use(cors({
-    origin: ['http://localhost:3000', SERVER_IP], // Permite solicitudes desde estos orígenes
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
-    credentials: true // Si necesitas enviar cookies o headers de autorización
+    credentials: true
 }));
 
 // Ruta para archivos MP3 desde la carpeta `audio`
@@ -79,5 +82,5 @@ io.on('connection', (socket) => {
 });
 
 
-const PORT = 3001;  // Asegúrate de usar un puerto que no entre en conflicto con tu frontend
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
