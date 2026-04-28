@@ -18,7 +18,7 @@ import SERVER_IP from './config.js';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('authenticated'));
-  const [game, setGame] = useState({ players: [], currentTurn: 0 });
+  const [game, setGame] = useState({ players: [], currentTurn: 0, currentView: 0 });
   const [isGameStarted, setIsGameStarted] = useState(false);
 
   useEffect(() => {
