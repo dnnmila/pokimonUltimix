@@ -20,7 +20,7 @@ let game = new Game("xxx1");
 
 
 export const initializeGame = () =>{
-    // Solo el rival permanente de batallas salvajes — los líderes se cargan desde DB al setear generación
+    game = new Game("xxx1");
     game.rivals = [new Rival("Rival", "Wild Pokemon")];
     return game;
 };
