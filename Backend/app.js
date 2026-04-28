@@ -25,10 +25,7 @@ const allowedOrigins = ['http://localhost:3000', SERVER_IP, FRONTEND_URL].filter
 
 const io = new SocketIOServer(server, {
     cors: {
-        origin: function(origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-            else callback(new Error('CORS bloqueado'));
-        },
+        origin: true,
         methods: ['GET', 'POST'],
         credentials: true
     }
