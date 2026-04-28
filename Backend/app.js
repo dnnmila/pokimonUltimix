@@ -25,7 +25,10 @@ const allowedOrigins = ['http://localhost:3000', SERVER_IP, FRONTEND_URL].filter
 
 const io = new SocketIOServer(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: function(origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+            else callback(new Error('CORS bloqueado'));
+        },
         methods: ['GET', 'POST'],
         credentials: true
     }
@@ -54,6 +57,10 @@ app.get('/audio/:fileName', (req, res) => {
 
 // Ruta estática para servir todos los archivos de la carpeta `audio`
 app.use('/audio', express.static(path.join(__dirname, 'audio')));
+
+// Imágenes de tokens para la app iPad
+app.use('/images/tokens', express.static(path.join(__dirname, '../frontend/src/images/tokens_ultimix')));
+app.use('/images/pokemon', express.static(path.join(__dirname, '../frontend/src/images/POKEMON')));
 // Middleware para parsear JSON — preserva UIDs de barcode (números grandes) como strings
 app.use(express.text({ type: 'application/json' }));
 app.use((req, res, next) => {
