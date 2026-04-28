@@ -102,10 +102,12 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
   
 
+    if (!currentPlayerView) return null;
+
     return (
         <div className="CurrentPlayerView">
             <div className="Title_pokeApp">
-            
+
             <div className='Position_CurrentPlayer'> #{currentPlayerView.position} </div>
             <div className='Name_CurrentPlayer'> {currentPlayerView.name}</div>
             <div className='Points_CurrentPlayer'> {currentPlayerView.points}pts</div>
