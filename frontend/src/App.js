@@ -6,7 +6,6 @@ import SelectGeneration from './components/SelectGeneration.js';
 import Player from './components/Player.js';
 import Stadium from './components/Stadium.js';
 import SimPlayer from './components/SimPlayer.js';
-import Login from './components/Login.js';
 
 import AllPlayers from './components/AllPlayers.js';
 import { io } from 'socket.io-client';
@@ -17,7 +16,6 @@ import SERVER_IP from './config.js';
 
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('authenticated'));
   const [game, setGame] = useState({ players: [], currentTurn: 0, currentView: 0 });
   const [isGameStarted, setIsGameStarted] = useState(false);
 
@@ -832,10 +830,6 @@ const setGeneration = async (generation) => {
 
 
   
-if (!isAuthenticated) {
-    return <Login onLogin={() => { sessionStorage.setItem('authenticated', 'true'); setIsAuthenticated(true); }} />;
-}
-
 return (
     <Router>
         <Routes>
