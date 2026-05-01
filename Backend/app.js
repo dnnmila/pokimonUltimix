@@ -74,16 +74,6 @@ app.use((req, res, next) => {
 // Servir el frontend buildeado en producción
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-// Login
-app.post('/login', (req, res) => {
-    const { password } = req.body;
-    if (password === process.env.ACCESS_PASSWORD) {
-        res.json({ success: true });
-    } else {
-        res.status(401).json({ success: false });
-    }
-});
-
 // Usar las rutas del juego
 app.use(gameRouter);
 
