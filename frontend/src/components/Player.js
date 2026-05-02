@@ -18,7 +18,11 @@ const getBadgeImg = (gen, num) => {
 
 
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase}) => {
+const getPokedexImg = (pokedex) => {
+    try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
+};
+
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon}) => {
 
     const handleKeyDown = useCallback((event) => {
         switch(event.key) {
@@ -56,6 +60,18 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
     const [showModalBattle, setShowModalBattle] = useState(false);
     const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
     const [historyTab, setHistoryTab] = useState('purchases');
+    const [showTradeModal, setShowTradeModal] = useState(false);
+    const [tradeTargetPlayer, setTradeTargetPlayer] = useState(null);
+    const [tradeMyPkm, setTradeMyPkm] = useState(null);
+    const [tradeTargetPkm, setTradeTargetPkm] = useState(null);
+
+    const closeTrade = () => { setShowTradeModal(false); setTradeTargetPlayer(null); setTradeMyPkm(null); setTradeTargetPkm(null); };
+
+    const handleTrade = async () => {
+        if (!tradeMyPkm || !tradeTargetPkm || !tradeTargetPlayer) return;
+        await onTradePokemon(currentPlayerView.id, tradeMyPkm.id, tradeTargetPlayer.id, tradeTargetPkm.id);
+        closeTrade();
+    };
 
 
     const handleOpenModalCoins = () => {
@@ -177,6 +193,65 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
    
             <ModalMonedas show={showModalCoins} onClose={handleCloseModalCoins} currentPlayer={currentPlayerView} onUpdateCoins={onUpdateCoins}/>
             <ModalTienda show={showModalStore} onClose={handleCloseModalStore} currentPlayer={currentPlayerView} onMasterPurchase={onMasterPurchase}/>
+
+            {showTradeModal && (
+                <div className="modal-backdrop" onClick={closeTrade}>
+                    <div className="trade-modal" onClick={e => e.stopPropagation()}>
+                        <button className="trade-modal-close" onClick={closeTrade}>✕</button>
+                        {!tradeTargetPlayer ? (
+                            <>
+                                <div className="trade-modal-title">Intercambiar Pokémon</div>
+                                <div className="trade-modal-subtitle">Selecciona un jugador</div>
+                                <div className="trade-players-grid">
+                                    {AllPlayers.filter(p => p.id !== currentPlayerView.id).map(p => (
+                                        <div key={p.id} className="trade-player-card" onClick={() => setTradeTargetPlayer(p)}>
+                                            <div className="trade-player-name">{p.name}</div>
+                                            <div className="trade-player-count">{p.pokemons.length} Pokémon</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="trade-modal-title">{currentPlayerView.name} ⇄ {tradeTargetPlayer.name}</div>
+                                <div className="trade-teams">
+                                    <div className="trade-team-col">
+                                        <div className="trade-team-label">{currentPlayerView.name}</div>
+                                        {currentPlayerView.pokemons.map(pkm => {
+                                            const img = getPokedexImg(pkm.pokedex);
+                                            return (
+                                                <div key={pkm.id} className={`trade-pkm-card${tradeMyPkm?.id === pkm.id ? ' trade-pkm-selected' : ''}`} onClick={() => setTradeMyPkm(pkm)}>
+                                                    {img && <div className="trade-pkm-img" style={{ backgroundImage: `url(${img})` }} />}
+                                                    <div className="trade-pkm-name">{pkm.name}</div>
+                                                    <div className="trade-pkm-level">Lv.{pkm.level}{pkm.extra > 0 ? ` +${pkm.extra}` : ''}</div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="trade-divider">⇄</div>
+                                    <div className="trade-team-col">
+                                        <div className="trade-team-label">{tradeTargetPlayer.name}</div>
+                                        {tradeTargetPlayer.pokemons.map(pkm => {
+                                            const img = getPokedexImg(pkm.pokedex);
+                                            return (
+                                                <div key={pkm.id} className={`trade-pkm-card${tradeTargetPkm?.id === pkm.id ? ' trade-pkm-selected' : ''}`} onClick={() => setTradeTargetPkm(pkm)}>
+                                                    {img && <div className="trade-pkm-img" style={{ backgroundImage: `url(${img})` }} />}
+                                                    <div className="trade-pkm-name">{pkm.name}</div>
+                                                    <div className="trade-pkm-level">Lv.{pkm.level}{pkm.extra > 0 ? ` +${pkm.extra}` : ''}</div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="trade-modal-actions">
+                                    <button className="trade-back-btn" onClick={() => { setTradeTargetPlayer(null); setTradeMyPkm(null); setTradeTargetPkm(null); }}>← Volver</button>
+                                    <button className="trade-confirm-btn" disabled={!tradeMyPkm || !tradeTargetPkm} onClick={handleTrade}>Intercambiar</button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {showPurchaseHistory && (
                 <div className="modal-backdrop" onClick={() => setShowPurchaseHistory(false)}>
@@ -311,6 +386,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
             <button  className='BattleMenu_Button' onClick={handleOpenModalBattle} > Battle </button>
             <div onClick={handleOpenModalStore} className='Button-store'></div>
             <div className='Button-purchase-history' onClick={() => setShowPurchaseHistory(v => !v)}></div>
+            <div className='Button-trade' onClick={() => setShowTradeModal(true)}></div>
                 <div className='Time_CurrentPlayer'>
                     <h4>R{game.round}</h4>
                     <h4> {currentPlayerView.hours}hrs</h4>

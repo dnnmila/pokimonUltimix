@@ -975,3 +975,25 @@ export const toggleDynamax = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const tradePokemon = async (req, res) => {
+    try {
+        const { playerIdA, pokemonIdA, playerIdB, pokemonIdB } = req.body;
+        const playerA = getPlayerById(playerIdA);
+        const playerB = getPlayerById(playerIdB);
+        if (!playerA || !playerB) return res.status(404).json({ message: 'Jugador no encontrado' });
+
+        const indexA = playerA.pokemons.findIndex(p => p.id === pokemonIdA);
+        const indexB = playerB.pokemons.findIndex(p => p.id === pokemonIdB);
+        if (indexA === -1 || indexB === -1) return res.status(404).json({ message: 'Pokémon no encontrado' });
+
+        const temp = playerA.pokemons[indexA];
+        playerA.pokemons[indexA] = playerB.pokemons[indexB];
+        playerB.pokemons[indexB] = temp;
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Intercambio realizado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

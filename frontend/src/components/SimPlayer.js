@@ -7,6 +7,7 @@ import ModalPokedex from "./modals/ModalPokedex";
 import ModalLeaderViewer from "./modals/ModalLeaderViewer";
 import ModalTiendaSim from "./modals/ModalTiendaSim";
 import ModalRulesGuide from "./modals/ModalRulesGuide";
+import ModalEvolveChoice from "./modals/ModalEvolveChoice";
 import SERVER_IP from "../config.js";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
@@ -39,7 +40,7 @@ const TRAINER_CLASS = {
     Perry: 'trainer9', Richi: 'trainer10', Mono: 'trainer11', Foxi: 'trainer2',
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -68,9 +69,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [showOtherRivals, setShowOtherRivals] = useState(false);
     const [showTurnModal, setShowTurnModal] = useState(false);
     const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
-    const [showKOPrompt, setShowKOPrompt] = useState(false);
     const [gymLeaderBadgeNum, setGymLeaderBadgeNum] = useState(null);
     const [pendingBadge, setPendingBadge] = useState(false);
+    const [showEvolveModal, setShowEvolveModal] = useState(false);
+    const [evolveOptions, setEvolveOptions] = useState([]);
+    const [evolvingPkm, setEvolvingPkm] = useState(null);
     const [showBadgePrompt, setShowBadgePrompt] = useState(false);
     const isMyTurn = game.players[game.currentTurn]?.id === playerId;
     const isOfficialBattle = isMyTurn && game.battlePublic;
@@ -159,7 +162,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             }
         }
         if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
-            setShowKOPrompt(true);
+            onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
         }
     }, [myLocked, rivalLocked]);
 
@@ -217,6 +220,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
     const handleConfirmWildPokemon = async () => {
         if (!wildPokemonId) return;
+        prevSimRivalId.current = `SimRival-${playerId}`;
         await onSimWildBattle(playerId, wildPokemonId);
         if (isMyTurn) onStartSimMirror(playerId);
         setWildPokemonId('');
@@ -224,6 +228,37 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setWildChain(null);
         setShowWildModal(false);
         setShowSetup(false);
+    };
+
+    const handleSimEvolve = async (pkm) => {
+        if (pkm.nextLevel === -1) {
+            onEvolvePokemon(player.id, pkm.id, pkm.evolution);
+            return;
+        }
+        try {
+            const res = await fetch(`${SERVER_IP}/get-possible-evolutions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pokedexId: pkm.pokedex }),
+            });
+            const options = await res.json();
+            if (options.length === 1) {
+                onEvolvePokemon(player.id, pkm.id, options[0].POKEDEX);
+            } else if (options.length > 1) {
+                setEvolveOptions(options);
+                setEvolvingPkm(pkm);
+                setShowEvolveModal(true);
+            } else {
+                onEvolvePokemon(player.id, pkm.id, pkm.evolution);
+            }
+        } catch {
+            onEvolvePokemon(player.id, pkm.id, pkm.evolution);
+        }
+    };
+
+    const handleEvolveSelect = (newPokedex) => {
+        setShowEvolveModal(false);
+        if (evolvingPkm) onEvolvePokemon(player.id, evolvingPkm.id, newPokedex);
     };
 
     const handleSimLeader = async (leaderID, pkm1, pkm2, badgeNum = null) => {
@@ -363,7 +398,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         return { myB1, myB2, myB3, rivalB1, rivalB2, rivalB3 };
     }
 
-    const handleSelectMyPokemon = (pokemon) => {
+    const handleSelectMyPokemon = async (pokemon) => {
         setMyPokemon(pokemon);
         setMyPokemonImg(getPkmImg(pokemon.pokedex, generation));
         setMyPokemonType1_class(`type_${pokemon.type1}`);
@@ -372,16 +407,20 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyPkm_type_id2(`types_${pokemon.id}_2`);
         setMyPokemonSelected('true');
         if (isMyTurn) onHandleBattlePokemon('MyPlayer', pokemon.id);
+        if (rival?.name === 'Wild Pokemon') {
+            const wildPkm = rival.pokemons?.[0];
+            if (wildPkm) await handleSelectRivalPokemon(wildPkm, pokemon);
+        }
     };
 
-    const handleSelectRivalPokemon = async (pokemon) => {
+    const handleSelectRivalPokemon = async (pokemon, myPkm = myPokemon) => {
         setRivalPokemon(pokemon);
         setRivalPokemonImg(getPkmImg(pokemon.pokedex, generation));
         setRivalPokemonType1_class(`type_${pokemon.type1}`);
         setRivalPokemonType2_class(`type_${pokemon.type2}`);
         setRivalPkm_type_id1(`types_${pokemon.id}_1`);
         setRivalPkm_type_id2(`types_${pokemon.id}_2`);
-        const bonuses = await calculateBonus(myPokemon, pokemon);
+        const bonuses = await calculateBonus(myPkm, pokemon);
         setRivalPokemonSelected('true');
         if (isMyTurn) {
             onHandleBattlePokemon('Rival', pokemon.id);
@@ -847,6 +886,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                             {pkm.status !== 'Normal' && (
                                                 <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
                                             )}
+                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1) && (
+                                                <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -902,6 +944,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                             )}
                                             {pkm.status !== 'Normal' && (
                                                 <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
+                                            )}
+                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1) && (
+                                                <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
                                             )}
                                         </div>
                                     </div>
@@ -973,7 +1018,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             )}
 
             {/* Seleccion de pokemon del rival */}
-            {rival && !showSetup && myPokemonSelected === 'true' && rivalPokemonSelected === 'false' && (
+            {rival && !showSetup && myPokemonSelected === 'true' && rivalPokemonSelected === 'false' && rival.name !== 'Wild Pokemon' && (
                 <div className="rival-sim-main">
                     <div className="rival-name">{rival.name}</div>
                     <div className="rival_team">
@@ -1175,21 +1220,6 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 </div>
             )}
 
-            {showKOPrompt && (
-                <div className="modal-backdrop" onClick={() => setShowKOPrompt(false)}>
-                    <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
-                        <div className="levelup-prompt-title" style={{ color: '#e74c3c' }}>¡Derrota!</div>
-                        <div className="levelup-prompt-msg">
-                            {myPokemon?.name} fue noqueado por {rivalPokemon?.name}.
-                            <br />¿Marcar como noqueado?
-                        </div>
-                        <div className="levelup-prompt-buttons">
-                            <button className="levelup-btn-yes" onClick={() => { setShowKOPrompt(false); onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); }}>Sí</button>
-                            <button className="levelup-btn-no" onClick={() => setShowKOPrompt(false)}>No</button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {showLevelUpPrompt && (
                 <div className="modal-backdrop" onClick={() => setShowLevelUpPrompt(false)}>
@@ -1228,6 +1258,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     </div>
                 </div>
             )}
+            <ModalEvolveChoice show={showEvolveModal} options={evolveOptions} onSelect={handleEvolveSelect} onClose={() => setShowEvolveModal(false)} />
         </div>
     );
 };
