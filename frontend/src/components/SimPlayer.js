@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
+import PlayerListed from "./PlayerListed";
 import ModalPokedex from "./modals/ModalPokedex";
 import ModalLeaderViewer from "./modals/ModalLeaderViewer";
 import ModalTiendaSim from "./modals/ModalTiendaSim";
@@ -74,6 +75,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [showEvolveModal, setShowEvolveModal] = useState(false);
     const [evolveOptions, setEvolveOptions] = useState([]);
     const [evolvingPkm, setEvolvingPkm] = useState(null);
+    const [showAllPlayers, setShowAllPlayers] = useState(false);
     const [showBadgePrompt, setShowBadgePrompt] = useState(false);
     const isMyTurn = game.players[game.currentTurn]?.id === playerId;
     const isOfficialBattle = isMyTurn && game.battlePublic;
@@ -974,6 +976,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             <div className="sim-setup-btn-icon sim-topbar-store"></div>
                             <span>Tienda</span>
                         </div>
+                        <div className="sim-setup-btn" onClick={() => setShowAllPlayers(true)}>
+                            <div className="sim-setup-btn-icon sim-topbar-players"></div>
+                            <span>Jugadores</span>
+                        </div>
                     </div>
                 </div>
             )}
@@ -1259,6 +1265,20 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 </div>
             )}
             <ModalEvolveChoice show={showEvolveModal} options={evolveOptions} onSelect={handleEvolveSelect} onClose={() => setShowEvolveModal(false)} />
+
+            {showAllPlayers && (
+                <div className="modal-backdrop" onClick={() => setShowAllPlayers(false)}>
+                    <div className="sim-allplayers-modal" onClick={e => e.stopPropagation()}>
+                        <button className="trade-modal-close" onClick={() => setShowAllPlayers(false)}>✕</button>
+                        <div className="trade-modal-title">Jugadores</div>
+                        <div className="sim-allplayers-list">
+                            {[...game.players].sort((a, b) => a.position - b.position).map(p => (
+                                <PlayerListed key={p.id} player={p} totalPLayers={game.players.length} generation={generation} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

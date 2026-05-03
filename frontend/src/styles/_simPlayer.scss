@@ -40,6 +40,7 @@
 .sim-topbar-book     { background-image: url("../images/book2.png"); }
 .sim-topbar-store    { background-image: url("../images/mart.png"); }
 .sim-topbar-effects  { background-image: url("../images/claw.png"); }
+.sim-topbar-players  { background-image: url("../images/pokeRecords.png"); }
 
 .sim-store-button {
     // mantenido por compatibilidad, ya no se usa directamente
@@ -1413,6 +1414,74 @@
         width: 2.8rem;
         height: 2.8rem;
         font-size: 1.2rem;
+    }
+}
+
+// Modal All Players desde SimPlayer
+.sim-allplayers-modal {
+    background: linear-gradient(160deg, #1a1a2e, #16213e);
+    border: 2px solid #f0d080;
+    border-radius: 16px;
+    padding: 1.5rem 1.5rem 2rem;
+    position: relative;
+    width: 96vw;
+    height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(240, 208, 128, 0.25);
+    animation: popIn 0.25s ease both;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sim-allplayers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+    flex: 1;
+
+    .PlayerListedClass {
+        height: auto !important;
+        min-height: 80px;
+        border-radius: 10px;
+        border: 1px solid rgba(240, 208, 128, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .PlayerPosition, .PlayerName { font-size: 2rem; }
+    .PlayerPoints                { font-size: 1.1rem; }
+    .PlayerCoins, .PlayerTime    { font-size: 1.2rem; }
+
+    .isMyturn {
+        width: 2.2vw;
+        height: 3.5vh;
+    }
+
+    #badge1Won, #badge2Won, #badge3Won, #badge4Won,
+    #badge5Won, #badge6Won, #badge7Won, #badge8Won,
+    #badge9Won, #badge10Won {
+        height: 3.2vh;
+        width: 1.6vw;
+    }
+
+    .img_pokemon_listed,
+    .img_pokemon_listed_dead {
+        height: 7.5vh;
+        width: 8vw;
+    }
+
+    .level_pokekon_listed { font-size: 1.4rem; }
+
+    .attached {
+        width: 2.2vw;
+        height: 2.2vh;
+    }
+
+    .status {
+        width: 2.2vw;
+        height: 2.2vh;
+        font-size: 0.8rem;
     }
 }
 
