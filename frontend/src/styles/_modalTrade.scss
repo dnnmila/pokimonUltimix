@@ -1,0 +1,230 @@
+.Button-trade {
+    background-image: url("../images/changePoke.png");
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+    width: 5vw;
+    height: 8vh;
+    cursor: pointer;
+    &:hover { transform: scale(1.5); }
+}
+
+.trade-modal {
+    background: linear-gradient(160deg, #1a1a2e, #16213e);
+    border: 2px solid #f0d080;
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+    position: relative;
+    width: 88vw;
+    max-width: 1100px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(240, 208, 128, 0.25);
+    animation: popIn 0.25s ease both;
+}
+
+.trade-modal-close {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.9rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    &:hover { background: rgba(255, 80, 80, 0.5); border-color: white; }
+}
+
+.trade-modal-title {
+    font-size: 1.8rem;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: #f0d080;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.trade-modal-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    text-align: center;
+    margin-top: -0.6rem;
+}
+
+// Paso 1: grid de jugadores
+.trade-players-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2rem;
+    width: 100%;
+}
+
+.trade-player-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid rgba(162, 112, 216, 0.4);
+    border-radius: 10px;
+    padding: 1rem 2rem;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    min-width: 130px;
+
+    &:hover {
+        border-color: rgb(162, 112, 216);
+        background: rgba(162, 112, 216, 0.15);
+        transform: scale(1.05);
+    }
+}
+
+.trade-player-name {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: rgb(100, 150, 255);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.trade-player-count {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 0.25rem;
+}
+
+// Paso 2: dos columnas con los equipos
+.trade-teams {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.trade-divider {
+    font-size: 2.5rem;
+    color: #f0d080;
+    align-self: center;
+    flex-shrink: 0;
+    padding: 0 0.5rem;
+}
+
+.trade-team-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    max-width: 42%;
+}
+
+.trade-team-label {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: rgb(100, 150, 255);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    margin-bottom: 0.2rem;
+}
+
+.trade-pkm-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    padding: 0.5rem 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.12s;
+
+    &:hover {
+        border-color: rgba(162, 112, 216, 0.6);
+        background: rgba(162, 112, 216, 0.1);
+        transform: scale(1.02);
+    }
+
+    &.trade-pkm-selected {
+        border-color: #f0d080;
+        background: rgba(240, 208, 128, 0.12);
+        box-shadow: 0 0 10px rgba(240, 208, 128, 0.3);
+    }
+}
+
+.trade-pkm-img {
+    width: 4rem;
+    height: 4rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.trade-pkm-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    text-transform: capitalize;
+    flex: 1;
+}
+
+.trade-pkm-level {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    flex-shrink: 0;
+}
+
+.trade-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1.2rem;
+    width: 100%;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(240, 208, 128, 0.2);
+}
+
+.trade-back-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    padding: 0.5rem 1.6rem;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s;
+    &:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.04); }
+    &:active { transform: scale(0.97); }
+}
+
+.trade-confirm-btn {
+    background: linear-gradient(135deg, rgb(62, 88, 218), rgb(100, 130, 255));
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 24px;
+    padding: 0.5rem 2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(62, 88, 218, 0.5);
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+
+    &:hover:not(:disabled) {
+        transform: scale(1.06);
+        box-shadow: 0 6px 18px rgba(62, 88, 218, 0.7);
+    }
+
+    &:active:not(:disabled) { transform: scale(0.97); }
+
+    &:disabled {
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+        color: rgba(255, 255, 255, 0.35);
+        cursor: not-allowed;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
