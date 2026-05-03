@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
+import pokellamada from "../tones/pokellamada.mp3";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
@@ -80,8 +81,48 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const isMyTurn = game.players[game.currentTurn]?.id === playerId;
     const isOfficialBattle = isMyTurn && game.battlePublic;
 
+    const playTurnSound = () => {
+        try {
+            // eslint-disable-next-line
+            const ctx = new (window.AudioContext || window['webkitAudioContext'])();
+            const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+            notes.forEach((freq, i) => {
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.2);
+                osc.start(ctx.currentTime + i * 0.12);
+                osc.stop(ctx.currentTime + i * 0.12 + 0.2);
+            });
+        } catch (e) {}
+    };
+
+    const stopTurnAlert = () => {
+        clearTimeout(turnAlertTimer.current);
+        if (turnAudio.current) { turnAudio.current.pause(); turnAudio.current = null; }
+    };
+
     useEffect(() => {
-        if (isMyTurn) setShowTurnModal(true);
+        if (isMyTurn) {
+            setShowTurnModal(true);
+            playTurnSound();
+
+            // Crear y precargar el audio ahora (cercano a interacción del usuario)
+            const audio = new Audio(pokellamada);
+            audio.loop = true;
+            audio.preload = 'auto';
+            audio.load();
+            turnAudio.current = audio;
+
+            turnAlertTimer.current = setTimeout(() => {
+                if (turnAudio.current) turnAudio.current.play().catch(console.warn);
+            }, 5000);
+        }
+        return () => clearTimeout(turnAlertTimer.current);
     }, [game.currentTurn]);
 
     // Fases de batalla (mismo patron que Stadium)
@@ -169,7 +210,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     }, [myLocked, rivalLocked]);
 
     // Detectar pokemon escaneado por RFID → mostrar el mismo modal que búsqueda manual
-    const prevSimRivalId = React.useRef(null);
+    const prevSimRivalId  = useRef(null);
+    const turnAlertTimer  = useRef(null);
+    const turnAudio       = useRef(null);
     useEffect(() => {
         if (!player) return;
         const rival = player.simRival;
@@ -668,7 +711,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     <div className="turn-modal">
                         <div className="turn-modal-icon">⚡</div>
                         <div className="turn-modal-text">¡Es tu turno,<br /><span>{player.name}</span>!</div>
-                        <button className="turn-modal-btn" onClick={() => { setShowTurnModal(false); handleNewSimulation(); }}>OK</button>
+                        <button className="turn-modal-btn" onClick={() => { stopTurnAlert(); setShowTurnModal(false); handleNewSimulation(); }}>OK</button>
                     </div>
                 </div>
             )}

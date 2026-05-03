@@ -1,0 +1,84 @@
+.home-menu {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem;
+    background: linear-gradient(160deg, #0d0d1a, #1a1a2e, #16213e);
+}
+
+.home-menu-title {
+    font-size: 3rem;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: #f0d080;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 20px rgba(240, 208, 128, 0.5);
+    text-align: center;
+}
+
+.home-menu-section-label {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.home-menu-section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.8rem;
+}
+
+.home-menu-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(240, 208, 128, 0.3);
+    border-radius: 16px;
+    padding: 1.8rem 2.4rem;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    min-width: 140px;
+
+    &:hover {
+        transform: scale(1.08);
+        border-color: #f0d080;
+        background: rgba(240, 208, 128, 0.1);
+        box-shadow: 0 0 20px rgba(240, 208, 128, 0.25);
+    }
+
+    &:active { transform: scale(0.97); }
+
+    span {
+        color: white;
+        font-size: 1.2rem;
+        font-weight: bold;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        letter-spacing: 0.04em;
+    }
+
+    &--player {
+        border-color: rgba(100, 150, 255, 0.4);
+        &:hover {
+            border-color: rgb(100, 150, 255);
+            background: rgba(100, 150, 255, 0.1);
+            box-shadow: 0 0 20px rgba(100, 150, 255, 0.25);
+        }
+        span { color: rgb(140, 180, 255); }
+    }
+}
+
+.home-menu-card-icon {
+    width: 5rem;
+    height: 5rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}

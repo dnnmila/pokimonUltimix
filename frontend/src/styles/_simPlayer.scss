@@ -1485,4 +1485,52 @@
     }
 }
 
+@media (max-width: 768px) {
+    .sim-allplayers-modal {
+        padding: 1rem 0.6rem 1.2rem;
+        gap: 0.6rem;
+    }
+
+    .sim-allplayers-list {
+        gap: 0.4rem;
+
+        .PlayerListedClass { min-height: 55px; }
+
+        .PlayerPosition, .PlayerName { font-size: 1rem; }
+        .PlayerPoints                { font-size: 0.65rem; }
+        .PlayerCoins, .PlayerTime    { font-size: 0.65rem; }
+
+        .isMyturn {
+            width: 4vw;
+            height: 2vh;
+        }
+
+        #badge1Won, #badge2Won, #badge3Won, #badge4Won,
+        #badge5Won, #badge6Won, #badge7Won, #badge8Won,
+        #badge9Won, #badge10Won {
+            height: 2vh;
+            width: 3.5vw;
+        }
+
+        .img_pokemon_listed,
+        .img_pokemon_listed_dead {
+            height: 4.5vh;
+            width: 12vw;
+        }
+
+        .level_pokekon_listed { font-size: 0.7rem; }
+
+        .attached {
+            width: 3.5vw;
+            height: 1.8vh;
+        }
+
+        .status {
+            width: 3.5vw;
+            height: 1.8vh;
+            font-size: 0.55rem;
+        }
+    }
+}
+
 
