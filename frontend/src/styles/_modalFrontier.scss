@@ -1,0 +1,129 @@
+.frontier-modal {
+    background: linear-gradient(160deg, #1a1a2e, #16213e);
+    border: 2px solid #f0d080;
+    border-radius: 16px;
+    padding: 1.5rem 1.5rem 2rem;
+    position: relative;
+    width: 94vw;
+    max-width: 860px;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(240, 208, 128, 0.2);
+    animation: popIn 0.25s ease both;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.frontier-modal-title {
+    font-size: 1.8rem;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: #f0d080;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 0.06em;
+}
+
+.frontier-modal-subtitle {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    margin-top: -0.4rem;
+}
+
+.frontier-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+    width: 100%;
+}
+
+.frontier-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--fc);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: background 0.15s;
+
+    &--used {
+        border-color: rgba(255,255,255,0.1);
+        background: rgba(0,0,0,0.2);
+        opacity: 0.55;
+    }
+}
+
+.frontier-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.frontier-card-dot {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 50%;
+    background-color: var(--fc);
+    box-shadow: 0 0 6px var(--fc);
+    flex-shrink: 0;
+
+    .frontier-card--used & {
+        box-shadow: none;
+        filter: grayscale(1);
+        opacity: 0.4;
+    }
+}
+
+.frontier-card-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--fc);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    letter-spacing: 0.04em;
+
+    .frontier-card--used & { opacity: 0.5; }
+}
+
+.frontier-card-badge {
+    margin-left: auto;
+    font-size: 0.72rem;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    border-radius: 10px;
+    padding: 0.1rem 0.5rem;
+    letter-spacing: 0.04em;
+}
+
+.frontier-card-desc {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.4;
+}
+
+.frontier-toggle-btn {
+    align-self: flex-start;
+    margin-top: 0.2rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--fc);
+    border-radius: 20px;
+    color: var(--fc);
+    font-size: 0.82rem;
+    font-weight: bold;
+    padding: 0.25rem 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+
+    &:hover { background: rgba(255,255,255,0.14); transform: scale(1.04); }
+    &:active { transform: scale(0.97); }
+
+    &--used {
+        border-color: rgba(255,255,255,0.2);
+        color: rgba(255,255,255,0.4);
+    }
+}
+
+@media (max-width: 768px) {
+    .frontier-cards { grid-template-columns: 1fr; }
+}

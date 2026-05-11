@@ -17,9 +17,24 @@ const AllPlayers = () => {
     const [battlePhase, setBattlePhase] = useState('PokemonSelection');
     const [battleOn, setBattleOn] = useState('False');
 
+    const [turnElapsed, setTurnElapsed] = useState(0);
+
     const totalPLayers = players.length;
 
     let playersOrdered = [...players].sort((a, b) => a.position - b.position);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const current = players.find(p => p.isMyTurn);
+            if (current?.turnStartTime) {
+                setTurnElapsed(Math.floor((Date.now() - current.turnStartTime) / 1000));
+            } else {
+                setTurnElapsed(0);
+            }
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [players]);
+
     useEffect(() => {
         const socket = io(SERVER_IP);
 
@@ -63,7 +78,7 @@ const AllPlayers = () => {
         <div className='AllPlayers_class'>
             <div className='round-badge'>Ronda {game.round}</div>
             {playersOrdered.map(player => (
-                <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers} generation={game.generation}/>
+                <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers} generation={game.generation} turnElapsed={player.isMyTurn ? turnElapsed : 0}/>
             ))}
             <StadiumMirrorModal game={game} />
         </div>

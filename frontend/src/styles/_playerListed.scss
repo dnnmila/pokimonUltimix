@@ -1,22 +1,23 @@
 .PlayerListedClass{
     display: flex;
     align-items: center;
-    background-color: rgb(0, 0, 0, 0.507);
+    background-color: rgba(0, 0, 0, 0.65);
     position: relative;
     height: 20;
 }
 
 .PlayerListedClass--active {
-    background-color: rgba(83, 116, 203, 0.2);
-    box-shadow: inset 4px 0 0 #FFD700, inset 0 0 30px rgba(255, 215, 0, 0.08);
+    background-color: rgba(83, 116, 203, 0.35);
+    box-shadow: inset 5px 0 0 #FFD700, inset 0 0 40px rgba(255, 215, 0, 0.12);
 
     .PlayerName {
         color: #FFD700;
-        text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        text-shadow: 0 0 12px rgba(255, 215, 0, 0.9), 0 1px 3px rgba(0,0,0,0.9);
     }
 
     .PlayerPosition {
         color: #FFD700;
+        text-shadow: 0 0 12px rgba(255, 215, 0, 0.9), 0 1px 3px rgba(0,0,0,0.9);
     }
 }
 
@@ -25,9 +26,9 @@
     position: absolute;
     left: 10%;
     bottom: 0;
-    width: 80%; /* Ancho de la línea */
-    height: 2px; /* Altura de la línea */
-    background-color: #5374CB; /* Color de la línea */
+    width: 80%;
+    height: 2px;
+    background-color: rgba(100, 140, 255, 0.5);
   }
 
 .isMyturn{
@@ -69,35 +70,79 @@
 }
 
 .PlayerPosition{
-    color: #9A3B3B;
+    color: #ff8080;
     font-size: 3rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 .PlayerName{
-    color: #5374CB;
+    color: #88aaff;
     font-size: 3rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 .PlayerPoints{
-    color: #5374CB;
+    color: rgba(255,255,255,0.85);
     font-size: 1.5rem;
-    align-self: flex-end
+    align-self: flex-end;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
 }
 .CoinsAndTime{
-    width: 10% ;
-
+    width: 10%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 .PlayerCoins{
-    color: #E2CE18;
+    color: #f5e050;
     font-size: 2rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 .PlayerTime{
-    color: #5374CB;
+    color: rgba(255,255,255,0.8);
     font-size: 1.5rem;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+.PlayerTurnTimer{
+    color: #f0d080;
+    font-size: 1.3rem;
+    font-weight: bold;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 8px rgba(240, 208, 128, 0.6), 0 1px 3px rgba(0,0,0,0.9);
+    animation: timerPulse 1s ease-in-out infinite alternate;
 }
 
+@keyframes timerPulse {
+    from { opacity: 1; }
+    to   { opacity: 0.6; }
+}
+
+
+.PlayerFrontiers {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+.PlayerFrontierDot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.1);
+    box-shadow: none;
+    filter: grayscale(1);
+    opacity: 0.25;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+
+    &--used {
+        background-color: var(--fc);
+        box-shadow: 0 0 6px var(--fc);
+        filter: none;
+        opacity: 1;
+    }
+}
 
 #badge1Won, #badge2Won, #badge3Won, #badge4Won,
 #badge5Won, #badge6Won, #badge7Won, #badge8Won {

@@ -10,6 +10,8 @@ import ModalLeaderViewer from "./modals/ModalLeaderViewer";
 import ModalTiendaSim from "./modals/ModalTiendaSim";
 import ModalRulesGuide from "./modals/ModalRulesGuide";
 import ModalEvolveChoice from "./modals/ModalEvolveChoice";
+import ModalFrontier from "./modals/ModalFrontier";
+import MusicPlayer from "./MusicPlayer";
 import SERVER_IP from "../config.js";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
@@ -77,6 +79,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [evolveOptions, setEvolveOptions] = useState([]);
     const [evolvingPkm, setEvolvingPkm] = useState(null);
     const [showAllPlayers, setShowAllPlayers] = useState(false);
+    const [showFrontierModal, setShowFrontierModal] = useState(false);
+
+    const handleToggleFrontier = (frontierKey) => {
+        fetch(`${SERVER_IP}/toggle-frontier`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId: player.id, frontierKey }),
+        });
+    };
     const [showBadgePrompt, setShowBadgePrompt] = useState(false);
     const isMyTurn = game.players[game.currentTurn]?.id === playerId;
     const isOfficialBattle = isMyTurn && game.battlePublic;
@@ -731,6 +742,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 </div>
             )}
 
+
             <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
             <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} />
@@ -1023,6 +1035,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             <div className="sim-setup-btn-icon sim-topbar-players"></div>
                             <span>Jugadores</span>
                         </div>
+                        {generation === 2 && (
+                            <div className="sim-setup-btn" onClick={() => setShowFrontierModal(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-frontier"></div>
+                                <span>Frontera</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -1322,6 +1340,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     </div>
                 </div>
             )}
+            <ModalFrontier
+                show={showFrontierModal}
+                onClose={() => setShowFrontierModal(false)}
+                player={player}
+                onToggle={handleToggleFrontier}
+            />
+            <MusicPlayer />
         </div>
     );
 };
