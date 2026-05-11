@@ -567,7 +567,7 @@ export const attachMega  = async (req, res) => {
         if (!pokemon) {
             return res.status(404).json({ message: 'pokemon no encontrado' });
         }
-        if (pokemon.mega == 'Yes'){
+        if (pokemon.mega === 'Yes' || pokemon.mega === 'doble') {
 
             // Mega principal (almacenada en pokemon.evolution)
             const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokemon.evolution]);
@@ -993,6 +993,22 @@ export const tradePokemon = async (req, res) => {
 
         updateGameAndNotify();
         res.status(200).json({ message: 'Intercambio realizado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const VALID_FRONTIERS = ['frontierPink','frontierGreen','frontierBlue','frontierYellow','frontierRed','frontierGolden'];
+
+export const toggleFrontier = async (req, res) => {
+    try {
+        const { playerId, frontierKey } = req.body;
+        if (!VALID_FRONTIERS.includes(frontierKey)) return res.status(400).json({ message: 'Frontera no válida' });
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        player[frontierKey] = !player[frontierKey];
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Frontera actualizada' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
