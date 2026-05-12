@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import PlayerListed from './PlayerListed';
 import StadiumMirrorModal from './StadiumMirrorModal';
+import ModalVictory from './modals/ModalVictory';
 
 import SERVER_IP from '../config';
 
@@ -79,7 +80,10 @@ const AllPlayers = () => {
     return (
         <div className='AllPlayers_class'>
             <div className='round-badge'>Ronda {game.round}</div>
-            {game.paused && <div className="allplayers-paused-banner">⏸ JUEGO PAUSADO</div>}
+            {game.ended
+                ? <ModalVictory player={game.players.find(p => p.id === game.winner)} />
+                : game.paused && <div className="allplayers-paused-banner">⏸ JUEGO PAUSADO</div>
+            }
             {playersOrdered.map(player => (
                 <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers} generation={game.generation} turnElapsed={player.isMyTurn ? turnElapsed : 0}/>
             ))}

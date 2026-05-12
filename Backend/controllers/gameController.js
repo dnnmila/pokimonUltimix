@@ -754,6 +754,19 @@ export const setGeneration = async (req, res) => {
     }
 };
 
+export const endGame = async (req, res) => {
+    try {
+        const game = getGame();
+        game.paused = true;
+        game.pausedAt = null;
+        game.players.forEach(p => { p.turnStartTime = null; });
+        await updateGameAndNotify(game);
+        res.status(200).json({ ended: true });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const pauseGame = async (req, res) => {
     try {
         const game = getGame();

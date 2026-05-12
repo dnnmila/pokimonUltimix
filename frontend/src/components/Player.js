@@ -100,14 +100,13 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
     const handleBadge = (num) => {
         const badgeNumber = `badge${num}`;
-        console.log(badgeNumber);
-        console.log(currentPlayerView[badgeNumber]);
-    
         if (currentPlayerView[badgeNumber] === false) {
-            console.log("Enviar badge WIN");
+            if (num === 10) {
+                const ok = window.confirm(`¿Confirmas que ${currentPlayerView.name} ganó el juego?`);
+                if (!ok) return;
+            }
             badgeWon(currentPlayerView.id, num);
         } else {
-            console.log("Enviar badge Lost");
             badgeLost(currentPlayerView.id, num);
         }
     };
@@ -356,9 +355,6 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                         
 
         <div className='players_turns'>
-        <div className={`PauseGameButton ${game?.paused ? 'PauseGameButton--paused' : ''}`} onClick={onPauseGame}>
-            {game?.paused ? '▶ Reanudar' : '⏸ Pausar'}
-        </div>
         <div className='PrevTurnButton' onClick={onPrevTurn} > <div className='prevTurnImage'> </div>Prev Turn</div>
             {AllPlayers.map((player) => (
              <div 
@@ -395,6 +391,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                     <h4> {currentPlayerView.hours}hrs</h4>
                     <h4> {currentPlayerView.minutes}min</h4>
                     <h4> {currentPlayerView.seconds}sec</h4>
+                </div>
+                <div className={`PauseGameButton ${game?.paused ? 'PauseGameButton--paused' : ''}`} onClick={onPauseGame}>
+                    {game?.paused ? '▶' : '⏸'}
                 </div>
             </div>
         </div>

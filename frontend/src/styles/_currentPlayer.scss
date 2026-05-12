@@ -186,6 +186,22 @@ background-repeat: no-repeat;
     to   { box-shadow: 0 0 12px rgba(74,222,128,0.9); }
 }
 
+.EndGameButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.1);
+    border: 2px solid rgba(248, 113, 113, 0.4);
+    border-radius: 20px;
+    padding: 0.3rem 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+
+    &:hover { transform: scale(1.08); background: rgba(248,113,113,0.2); }
+}
+
 .NextTurnButton{
     display: flex;
     flex-direction: column;
