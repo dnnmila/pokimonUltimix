@@ -200,6 +200,7 @@ class Game {
                 }
 
         this.currentTurn = (this.currentTurn + 1) % this.players.length;
+        this.currentView = this.currentTurn;
         this.players[this.currentTurn].coins +=1;
 
 

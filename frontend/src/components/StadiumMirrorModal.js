@@ -86,6 +86,7 @@ const StadiumMirrorModal = ({ game }) => {
                 {game.battlePhase === 'AttackSelection'  && playerPkm && rivalPkm && (
                      <div className="mirror-attack-select-main">
                         <div className="mirror-mypkm-main">
+                            <div className="mirror-player-name">{player?.name}</div>
                             <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-mypkm-name">{playerPkm.name}</div>
                             <div className="mirror-mypkm-level">Lv: {playerPkm.totalLevel}</div>
@@ -104,6 +105,7 @@ const StadiumMirrorModal = ({ game }) => {
                         </div>
 
                         <div className="mirror-rivalpkm-main">
+                            <div className="mirror-rival-name">{rival?.name}</div>
                             <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-rivalpkm-name">{rivalPkm.name}</div>
                             <div className="mirror-rivalpkm-level">Lv: {rivalPkm.totalLevel}</div>
@@ -128,6 +130,7 @@ const StadiumMirrorModal = ({ game }) => {
 
 
                             <div className="mirror-mypkm-main">
+                            <div className="mirror-player-name">{player?.name}</div>
                             <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-mypkm-name">{playerPkm.name}</div>
                             <div className="mirror-mypkm-level">Lv: {playerPkm.totalLevel}</div>
@@ -151,6 +154,7 @@ const StadiumMirrorModal = ({ game }) => {
                         </div>
 
                         <div className="mirror-rivalpkm-main">
+                            <div className="mirror-rival-name">{rival?.name}</div>
                             <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex, game.generation)})` }}></div>
                             <div className="mirror-rivalpkm-name">{rivalPkm.name}</div>
                             <div className="mirror-rivalpkm-level">Lv: {rivalPkm.totalLevel}</div>
