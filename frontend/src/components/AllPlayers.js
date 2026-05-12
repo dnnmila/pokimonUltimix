@@ -25,15 +25,17 @@ const AllPlayers = () => {
 
     useEffect(() => {
         const interval = setInterval(() => {
+            if (game.paused) return;
             const current = players.find(p => p.isMyTurn);
             if (current?.turnStartTime) {
-                setTurnElapsed(Math.floor((Date.now() - current.turnStartTime) / 1000));
+                const ref = game.pausedAt || Date.now();
+                setTurnElapsed(Math.floor((ref - current.turnStartTime) / 1000));
             } else {
                 setTurnElapsed(0);
             }
         }, 1000);
         return () => clearInterval(interval);
-    }, [players]);
+    }, [players, game.paused, game.pausedAt]);
 
     useEffect(() => {
         const socket = io(SERVER_IP);
@@ -77,6 +79,7 @@ const AllPlayers = () => {
     return (
         <div className='AllPlayers_class'>
             <div className='round-badge'>Ronda {game.round}</div>
+            {game.paused && <div className="allplayers-paused-banner">⏸ JUEGO PAUSADO</div>}
             {playersOrdered.map(player => (
                 <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers} generation={game.generation} turnElapsed={player.isMyTurn ? turnElapsed : 0}/>
             ))}

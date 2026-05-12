@@ -754,6 +754,30 @@ export const setGeneration = async (req, res) => {
     }
 };
 
+export const pauseGame = async (req, res) => {
+    try {
+        const game = getGame();
+        if (!game.paused) {
+            game.paused = true;
+            game.pausedAt = Date.now();
+        } else {
+            if (game.pausedAt) {
+                const pausedDuration = Date.now() - game.pausedAt;
+                const currentPlayer = game.players[game.currentTurn];
+                if (currentPlayer?.turnStartTime) {
+                    currentPlayer.turnStartTime += pausedDuration;
+                }
+            }
+            game.paused = false;
+            game.pausedAt = null;
+        }
+        await updateGameAndNotify(game);
+        res.status(200).json({ paused: game.paused });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const getLeadersByGeneration = async (req, res) => {
     try {
         const generation = parseInt(req.query.generation) || 1;
