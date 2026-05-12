@@ -9,6 +9,7 @@ import SimPlayer from './components/SimPlayer.js';
 
 import AllPlayers from './components/AllPlayers.js';
 import HomeMenu from './components/HomeMenu.js';
+import ProgressChart from './components/ProgressChart.js';
 import { io } from 'socket.io-client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import "./styles/app.scss";
@@ -153,6 +154,14 @@ const pauseGame = async () => {
         await fetch(`${SERVER_IP}/pause-game`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     } catch (error) {
         console.error('Error al pausar el juego:', error);
+    }
+};
+
+const endGame = async () => {
+    try {
+        await fetch(`${SERVER_IP}/end-game`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    } catch (error) {
+        console.error('Error al terminar el juego:', error);
     }
 };
 
@@ -859,11 +868,12 @@ return (
             <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
-            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onTradePokemon={tradePokemon} onPauseGame={pauseGame}/>} />
+            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame}/>} />
             <Route path="/home" element={<HomeMenu />} />
             <Route path="/players" element={<AllPlayers />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
             <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon}/>} />
+            <Route path="/progress" element={<ProgressChart />} />
 
         </Routes>
     </Router>

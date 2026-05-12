@@ -39,8 +39,11 @@ class Game {
         this.levelHistory = [];
         this.paused = false;
         this.pausedAt = null;
+        this.ended = false;
+        this.winner = null;
+        this.badgeHistory = [];
 
-    
+
 
     }
 

@@ -7,6 +7,7 @@ import iconPlayers  from '../images/pokeRecords.png';
 import iconControl  from '../images/newHome.png';
 import iconBattle   from '../images/pokeStadium.png';
 import iconPokedex  from '../images/pokedex.png';
+import iconProgress from '../images/badges/campion.png';
 
 const HomeMenu = () => {
     const navigate = useNavigate();
@@ -36,6 +37,10 @@ const HomeMenu = () => {
                 <div className="home-menu-card" onClick={() => navigate('/battle')}>
                     <div className="home-menu-card-icon" style={{ backgroundImage: `url(${iconBattle})` }} />
                     <span>Batalla</span>
+                </div>
+                <div className="home-menu-card" onClick={() => navigate('/progress')}>
+                    <div className="home-menu-card-icon" style={{ backgroundImage: `url(${iconProgress})` }} />
+                    <span>Progreso</span>
                 </div>
             </div>
 

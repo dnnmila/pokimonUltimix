@@ -391,8 +391,18 @@ export const badgeWon  = async (req, res) => {
         if (!player) {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
-        player.BadgeWon(numBadge); 
+        player.BadgeWon(numBadge);
         console.log(player.name + ' badge WON: ' + numBadge);
+        const gameForHistory = getGame();
+        gameForHistory.badgeHistory.push({ round: gameForHistory.round, playerId: player.id, playerName: player.name, badge: numBadge, action: 'won' });
+        if (numBadge === 10) {
+            const game = getGame();
+            game.paused = true;
+            game.pausedAt = null;
+            game.ended = true;
+            game.winner = player.id;
+            game.players.forEach(p => { p.turnStartTime = null; });
+        }
         updateGameAndNotify();
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 
@@ -411,8 +421,16 @@ export const badgeLost = async (req, res) => {
         if (!player) {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
-        player.BadgeLost(numBadge); 
+        player.BadgeLost(numBadge);
         console.log(player.name + ' badge LOST: ' + numBadge);
+        const gameForLostHistory = getGame();
+        gameForLostHistory.badgeHistory.push({ round: gameForLostHistory.round, playerId: player.id, playerName: player.name, badge: numBadge, action: 'lost' });
+        if (numBadge === 10) {
+            const game = getGame();
+            game.ended = false;
+            game.winner = null;
+            game.paused = false;
+        }
         updateGameAndNotify();
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 
