@@ -158,6 +158,34 @@ background-repeat: no-repeat;
     background-repeat: no-repeat;
 }
 
+.PauseGameButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 0.3rem 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+
+    &:hover { transform: scale(1.08); background: rgba(255,255,255,0.18); }
+
+    &--paused {
+        color: #4ade80;
+        border-color: #4ade80;
+        background: rgba(74, 222, 128, 0.12);
+        animation: pausePulse 1.2s ease-in-out infinite alternate;
+    }
+}
+
+@keyframes pausePulse {
+    from { box-shadow: 0 0 4px rgba(74,222,128,0.4); }
+    to   { box-shadow: 0 0 12px rgba(74,222,128,0.9); }
+}
+
 .NextTurnButton{
     display: flex;
     flex-direction: column;

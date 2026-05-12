@@ -22,7 +22,7 @@ const getPokedexImg = (pokedex) => {
     try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
 };
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon}) => {
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon,onPauseGame}) => {
 
     const handleKeyDown = useCallback((event) => {
         switch(event.key) {
@@ -356,6 +356,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                         
 
         <div className='players_turns'>
+        <div className={`PauseGameButton ${game?.paused ? 'PauseGameButton--paused' : ''}`} onClick={onPauseGame}>
+            {game?.paused ? '▶ Reanudar' : '⏸ Pausar'}
+        </div>
         <div className='PrevTurnButton' onClick={onPrevTurn} > <div className='prevTurnImage'> </div>Prev Turn</div>
             {AllPlayers.map((player) => (
              <div 

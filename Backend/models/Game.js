@@ -37,6 +37,8 @@ class Game {
         this.purchaseHistory = [];
         this.stateHistory = [];
         this.levelHistory = [];
+        this.paused = false;
+        this.pausedAt = null;
 
     
 
