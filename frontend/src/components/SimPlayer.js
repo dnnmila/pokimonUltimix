@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import pokellamada from "../tones/pokellamada.mp3";
+import lifepointsSound from "../tones/lifepoints.mp3";
 import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
@@ -216,6 +217,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             }
         }
         if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
+            new Audio(lifepointsSound).play().catch(() => {});
             onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
         }
     }, [myLocked, rivalLocked]);

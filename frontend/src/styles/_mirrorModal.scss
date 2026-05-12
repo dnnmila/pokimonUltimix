@@ -19,8 +19,8 @@
 }
 
 .mirror-modal {
-    width: 85vw;
-    height: 85vh;
+    width: 95vw;
+    height: 95vh;
     border-radius: 20px;
     overflow: hidden;
     position: relative;
@@ -56,15 +56,16 @@
 // Basado en: .player-name
 .mirror-player-name {
     font-size: 4rem;
-    color: rgb(201, 183, 22);
+    color: #4ade80;
     margin-bottom: 1rem;
+    text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,1);
 }
 
-// Basado en: .rival-name
 .mirror-rival-name {
     font-size: 2rem;
-    color: rgb(30, 31, 31);
+    color: #ff8080;
     margin-bottom: 1rem;
+    text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,1);
 }
 
 // Basado en: .player_team, .rival_team
