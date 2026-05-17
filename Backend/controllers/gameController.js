@@ -265,6 +265,15 @@ export const scanBattle = async (req, res) => {
             rival.addPokemon(pokemon);
             game.wildBattleOn(rival);
             console.log('Wild Pokemon added (master) ' + pokemon.name);
+
+            // Asignar simRival al jugador en turno (igual que si fuera su botón)
+            const currentPlayer = game.players[game.currentTurn];
+            if (currentPlayer) {
+                const simRival = new Rival('SimRival-' + currentPlayer.id + '-' + Date.now(), 'Wild Pokemon');
+                simRival.addPokemon(pokemon);
+                currentPlayer.setSimRival(simRival);
+                console.log('SimRival (master) asignado a ' + currentPlayer.name + ': ' + pokemon.name);
+            }
         } else {
             const playerIndex = parseInt(playerButton.replace('player', ''), 10) - 1;
             const isMyTurn = playerIndex === game.currentTurn;
