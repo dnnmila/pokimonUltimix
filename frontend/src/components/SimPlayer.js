@@ -708,6 +708,16 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setGymLeaderBadgeNum(null);
         setPendingBadge(false);
         setShowBadgePrompt(false);
+        setShowPokedex(false);
+        setShowLeaderViewer(false);
+        setShowStore(false);
+        setShowRulesGuide(false);
+        setShowWildModal(false);
+        setShowOtherRivals(false);
+        setShowLevelUpPrompt(false);
+        setShowEvolveModal(false);
+        setShowAllPlayers(false);
+        setShowFrontierModal(false);
         if (isMyTurn && game.battlePublic) onToggleBattlePublic();
     };
 
