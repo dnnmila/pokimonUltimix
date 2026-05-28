@@ -45,7 +45,7 @@ const TRAINER_CLASS = {
     Perry: 'trainer9', Richi: 'trainer10', Mono: 'trainer11', Foxi: 'trainer2',
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -81,6 +81,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [evolvingPkm, setEvolvingPkm] = useState(null);
     const [showAllPlayers, setShowAllPlayers] = useState(false);
     const [showFrontierModal, setShowFrontierModal] = useState(false);
+    const [showCapturePrompt, setShowCapturePrompt] = useState(false);
+    const [showReplaceModal, setShowReplaceModal] = useState(false);
+    const [pendingCapturePokedex, setPendingCapturePokedex] = useState(null);
 
     const handleToggleFrontier = (frontierKey) => {
         fetch(`${SERVER_IP}/toggle-frontier`, {
@@ -202,11 +205,27 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
     }, [myAttackSelected, rivalAttackSelected]);
 
-    // Prompts de batalla oficial: solo cuando ambos dados están bloqueados y es batalla pública
+    // Prompts al terminar batalla (dados bloqueados)
     useEffect(() => {
         if (!myLocked || !rivalLocked) return;
-        if (!isOfficialBattle) return;
         if (!myPokemon || !rivalPokemon) return;
+
+        // Batalla contra pokemon salvaje: levelup → captura (secuencial)
+        if (rival?.name === 'Wild Pokemon') {
+            if (myTotal > rivalTotal) {
+                const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel;
+                if (canLevelUp) setShowLevelUpPrompt(true);
+                else setShowCapturePrompt(true);
+            }
+            if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
+                new Audio(lifepointsSound).play().catch(() => {});
+                onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
+            }
+            return;
+        }
+
+        // Batallas oficiales (líderes / jugadores)
+        if (!isOfficialBattle) return;
         if (myTotal > rivalTotal) {
             const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel;
             if (canLevelUp) setShowLevelUpPrompt(true);
@@ -699,6 +718,33 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRivalAttack(undefined);
         setMyStatus('Normal');
         setRivalStatus('Normal');
+        setShowCapturePrompt(false);
+    };
+
+    const handleAddToTeam = async (pokedexId) => {
+        if (!pokedexId) return;
+        if (player.pokemons.length >= 6) {
+            setPendingCapturePokedex(pokedexId);
+            setShowCapturePrompt(false);
+            setShowReplaceModal(true);
+            return;
+        }
+        await onAddPokemon(playerId, pokedexId);
+    };
+
+    const handleReplaceConfirm = async (removePokemonId) => {
+        setShowReplaceModal(false);
+        await onRemovePokemon(playerId, removePokemonId);
+        await onAddPokemon(playerId, pendingCapturePokedex);
+        setPendingCapturePokedex(null);
+    };
+
+    const handleCaptureDirect = async () => {
+        await handleAddToTeam(wildPokemonId);
+        setShowWildModal(false);
+        setWildPokemonId('');
+        setWildPreviewImg(null);
+        setWildChain(null);
     };
 
     // Botón home / modal de turno: vuelve al setup para elegir nuevo rival
@@ -718,6 +764,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowEvolveModal(false);
         setShowAllPlayers(false);
         setShowFrontierModal(false);
+        setShowCapturePrompt(false);
+        setShowReplaceModal(false);
+        setPendingCapturePokedex(null);
         if (isMyTurn && game.battlePublic) onToggleBattlePublic();
     };
 
@@ -740,6 +789,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             )}
                 {/* Home fijo siempre visible */}
             <div className="sim-home-button" onClick={handleNewSimulation}></div>
+
+            {/* Botón siguiente turno — solo cuando es el turno del jugador */}
+            {isMyTurn && (
+                <div className="sim-next-turn-btn" onClick={onNextTurn}>
+                    <div className="sim-next-turn-image"></div>
+                    Next Turn
+                </div>
+            )}
 
             {/* Botón flotante de guía de efectos — visible durante la batalla */}
             {rival && !showSetup && (
@@ -846,7 +903,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 );
                             })}
                         </div>
-                        <button className="sim-wild-modal-fight" onClick={handleConfirmWildPokemon}>⚔</button>
+                        <div className="sim-wild-modal-actions">
+                            <button className="sim-wild-modal-fight" onClick={handleConfirmWildPokemon}>⚔</button>
+                            <div className="sim-wild-modal-capture-wrapper">
+                                <button className="sim-wild-modal-capture" onClick={handleCaptureDirect} />
+                                <span className="sim-wild-modal-capture-label">Capturar</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -1300,6 +1363,43 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             )}
 
 
+            {showCapturePrompt && (
+                <div className="modal-backdrop" onClick={() => setShowCapturePrompt(false)}>
+                    <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
+                        <div className="levelup-prompt-title">¡Capturar!</div>
+                        <div className="levelup-prompt-msg">
+                            ¿Agregar <strong>{rivalPokemon?.name}</strong> al equipo?
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes" onClick={() => { setShowCapturePrompt(false); handleAddToTeam(rivalPokemon?.pokedex); }}>Sí</button>
+                            <button className="levelup-btn-no" onClick={() => setShowCapturePrompt(false)}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showReplaceModal && (
+                <div className="modal-backdrop">
+                    <div className="sim-replace-modal" onClick={e => e.stopPropagation()}>
+                        <div className="sim-replace-modal-title">Equipo lleno</div>
+                        <div className="sim-replace-modal-subtitle">
+                            Selecciona el Pokémon que quieres liberar para agregar a <strong>{pendingCapturePokedex}</strong>
+                        </div>
+                        <div className="sim-replace-modal-grid">
+                            {player.pokemons.map(pkm => {
+                                const pkmImg = getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation);
+                                return (
+                                    <div key={pkm.id} className="sim-replace-pkm-card" onClick={() => handleReplaceConfirm(pkm.id)}>
+                                        <div className="sim-replace-pkm-img" style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}} />
+                                        <div className="sim-replace-pkm-name">{pkm.name}</div>
+                                        <div className="sim-replace-pkm-level">Lv {pkm.level}{pkm.extra > 0 && <span>+{pkm.extra}</span>}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <button className="sim-replace-modal-cancel" onClick={() => { setShowReplaceModal(false); setPendingCapturePokedex(null); }}>Cancelar</button>
+                    </div>
+                </div>
+            )}
             {showLevelUpPrompt && (
                 <div className="modal-backdrop" onClick={() => setShowLevelUpPrompt(false)}>
                     <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
@@ -1310,7 +1410,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                         </div>
                         <div className="levelup-prompt-buttons">
                             <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); if (pendingBadge) { setPendingBadge(false); setShowBadgePrompt(true); } }}>Sí</button>
-                            <button className="levelup-btn-no" onClick={() => setShowLevelUpPrompt(false)}>No</button>
+                            <button className="levelup-btn-no" onClick={() => { setShowLevelUpPrompt(false); if (rival?.name === 'Wild Pokemon') setShowCapturePrompt(true); }}>No</button>
                         </div>
                     </div>
                 </div>
