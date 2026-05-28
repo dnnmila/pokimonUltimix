@@ -123,6 +123,17 @@ class Player {
         this.position = position;
     }
 
+    resolveBasePokemon(pkm) {
+        if (!pkm) return null;
+        const direct = this.pokemons.find(p => p.id === pkm.id);
+        if (direct) return direct;
+        if (pkm.pokedex && pkm.pokedex.startsWith('GM'))
+            return this.pokemons.find(p => p.gmaxPokedex === pkm.pokedex) || null;
+        if (pkm.pokedex && pkm.pokedex.startsWith('M'))
+            return this.pokemons.find(p => p.evolution === pkm.pokedex) || null;
+        return null;
+    }
+
     increasePokemonLevel(idPokemon){
         const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
         if (!pokemon) {
