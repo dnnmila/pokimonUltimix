@@ -475,6 +475,27 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         return { myB1, myB2, myB3, rivalB1, rivalB2, rivalB3 };
     }
 
+    const resolveBasePokemonId = (pkm) => {
+        if (!pkm) return null;
+        if (pkm.pokedex.startsWith('GM')) {
+            const base = (player.pokemons || []).find(p => p.gmaxPokedex === pkm.pokedex);
+            return base?.id ?? pkm.id;
+        }
+        if (pkm.pokedex.startsWith('M')) {
+            const base = (player.pokemons || []).find(p => p.evolution === pkm.pokedex);
+            return base?.id ?? pkm.id;
+        }
+        return pkm.id;
+    };
+
+    const knockOutIfAbandoned = () => {
+        if (!isMyTurn || !game.battlePublic) return;
+        if (myPokemonSelected !== 'true') return;
+        if (!myPokemon || myPokemon.state !== 'Alive') return;
+        if (myLocked && rivalLocked) return;
+        onChangeState(player.id, resolveBasePokemonId(myPokemon), { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
+    };
+
     const handleSelectMyPokemon = async (pokemon) => {
         setMyPokemon(pokemon);
         setMyPokemonImg(getPkmImg(pokemon.pokedex, generation));
@@ -747,8 +768,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setWildChain(null);
     };
 
+    const handleNextTurn = () => {
+        onNextTurn();
+    };
+
     // Botón home / modal de turno: vuelve al setup para elegir nuevo rival
     const handleNewSimulation = () => {
+        knockOutIfAbandoned();
         resetBattleState();
         setShowSetup(true);
         setGymLeaderBadgeNum(null);
@@ -792,7 +818,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
             {/* Botón siguiente turno — solo cuando es el turno del jugador */}
             {isMyTurn && (
-                <div className="sim-next-turn-btn" onClick={onNextTurn}>
+                <div className="sim-next-turn-btn" onClick={handleNextTurn}>
                     <div className="sim-next-turn-image"></div>
                     Next Turn
                 </div>
@@ -1409,7 +1435,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             <br />¿Subir de nivel?
                         </div>
                         <div className="levelup-prompt-buttons">
-                            <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); if (pendingBadge) { setPendingBadge(false); setShowBadgePrompt(true); } }}>Sí</button>
+                            <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, resolveBasePokemonId(myPokemon), { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); if (pendingBadge) { setPendingBadge(false); setShowBadgePrompt(true); } }}>Sí</button>
                             <button className="levelup-btn-no" onClick={() => { setShowLevelUpPrompt(false); if (rival?.name === 'Wild Pokemon') setShowCapturePrompt(true); }}>No</button>
                         </div>
                     </div>

@@ -90,6 +90,28 @@ export const nextTurn = async (req, res) => {
             }
         }
 
+        // Noquear pokemon si el jugador abandonó una batalla oficial a medias
+        if (game.battlePublic && game.battlePhase !== 'PokemonSelection') {
+            const currentPlayer = game.players[game.currentTurn];
+            const battlePkm = game.myPlayerPkm[game.myPlayerPkm.length - 1];
+            const playerWon = game.battlePhase === 'RollDice' && game.myPlayerTotal > game.myRivalTotal;
+            if (!playerWon && battlePkm) {
+                const target = currentPlayer.resolveBasePokemon(battlePkm);
+                if (target && target.state === 'Alive') {
+                    currentPlayer.changeState(target.id);
+                    const rivalPkm = game.myRivalPkm[game.myRivalPkm.length - 1];
+                    game.stateHistory.push({
+                        round: game.round,
+                        playerName: currentPlayer.name,
+                        pokemonName: target.name,
+                        rivalName: game.CurrentRival?.name || null,
+                        rivalPokemonName: rivalPkm?.name || null,
+                        source: 'sim-battle',
+                    });
+                }
+            }
+        }
+
         game.nextTurn();
         game.calculatePoints();
         game.updatePlayerPositions();
