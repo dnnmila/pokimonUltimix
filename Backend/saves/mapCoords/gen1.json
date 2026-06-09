@@ -1,0 +1,66 @@
+[
+  {
+    "order": 1,
+    "city": "Ciudad Plateada",
+    "leader": "Brock",
+    "type": "gym",
+    "x": 24.98,
+    "y": 20.37
+  },
+  {
+    "order": 2,
+    "city": "Ciudad Celeste",
+    "leader": "Misty",
+    "type": "gym",
+    "x": 64.67,
+    "y": 18.25
+  },
+  {
+    "order": 3,
+    "city": "Ciudad Carmín",
+    "leader": "Lt. Surge",
+    "type": "gym",
+    "x": 63.66,
+    "y": 55.62
+  },
+  {
+    "order": 4,
+    "city": "Ciudad Azulona",
+    "leader": "Erika",
+    "type": "gym",
+    "x": 47.66,
+    "y": 35.02
+  },
+  {
+    "order": 5,
+    "city": "Ciudad Fucsia",
+    "leader": "Koga",
+    "type": "gym",
+    "x": 50.38,
+    "y": 74.81
+  },
+  {
+    "order": 6,
+    "city": "Ciudad Azafran",
+    "leader": "Sabrina",
+    "type": "gym",
+    "x": 64.81,
+    "y": 36.63
+  },
+  {
+    "order": 7,
+    "city": "Isla Canela",
+    "leader": "Blaine",
+    "type": "gym",
+    "x": 23.24,
+    "y": 92.19
+  },
+  {
+    "order": 8,
+    "city": "Ciudad Verde",
+    "leader": "Giovanni",
+    "type": "gym",
+    "x": 24.09,
+    "y": 46.33
+  }
+]

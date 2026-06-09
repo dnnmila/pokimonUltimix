@@ -1,0 +1,476 @@
+.imap-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+}
+
+.imap-modal {
+    background: #1a1a2e;
+    border-radius: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+// Header
+.imap-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #16213e;
+    border-bottom: 1px solid #0f3460;
+    flex-shrink: 0;
+}
+
+.imap-progress {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.imap-progress-label {
+    font-size: 0.85rem;
+    color: #eee;
+    white-space: nowrap;
+}
+
+.imap-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #0f3460;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.imap-progress-fill {
+    height: 100%;
+    background: #27ae60;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.imap-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e94560;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    &:hover { background: #c0392b; }
+}
+
+// Body
+.imap-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+// Map
+.imap-map-container {
+    flex: 1;
+    overflow: scroll;
+    padding: 0;
+    cursor: default;
+    background: #111;
+}
+
+// Wrapper que abraza exactamente la imagen — los marcadores van aquí
+.imap-img-wrapper {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    flex-shrink: 0;
+}
+
+.imap-img {
+    display: block;
+    width: 1600px;   // grande fija — el contenedor hace scroll
+    height: auto;
+    pointer-events: none;
+}
+
+// Markers
+.imap-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #fff;
+
+    &:hover { transform: translate(-50%, -50%) scale(1.25); }
+
+    &.earned {
+        background: rgba(39, 174, 96, 0.85);
+        border-color: #2ecc71;
+        box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+    }
+
+    &.missing {
+        background: rgba(80, 80, 100, 0.85);
+        border-color: #999;
+    }
+
+    &.active {
+        transform: translate(-50%, -50%) scale(1.3);
+        box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.6);
+        border-color: #f39c12;
+        z-index: 20;
+    }
+}
+
+.imap-marker-badge {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+// Side panel
+.imap-panel {
+    width: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: #16213e;
+    border-left: 1px solid #0f3460;
+    transition: width 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    &.open, & {
+        width: 260px;
+    }
+}
+
+.imap-panel-leader-imgs {
+    display: flex;
+    width: 100%;
+}
+
+.imap-panel-leader-img {
+    width: 50%;
+    object-fit: contain;
+    display: block;
+}
+
+.imap-panel-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.imap-panel-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.imap-panel-badge-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.imap-panel-order {
+    font-size: 0.75rem;
+    color: #aaa;
+}
+
+.imap-panel-leader {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.imap-panel-city {
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.imap-panel-status {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+
+    &.earned  { background: rgba(39,174,96,0.2);  color: #2ecc71; }
+    &.missing { background: rgba(231,76,60,0.2);  color: #e74c3c; }
+}
+
+// Summary (panel closed)
+.imap-panel-badges-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    width: 100%;
+    overflow-y: auto;
+}
+
+.imap-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border: 1px solid transparent;
+
+    span {
+        font-size: 0.75rem;
+        color: #ccc;
+    }
+
+    &.earned {
+        border-color: rgba(46,204,113,0.3);
+        span { color: #2ecc71; }
+    }
+
+    &.missing {
+        border-color: rgba(150,150,150,0.2);
+        span { color: #888; }
+    }
+
+    &:hover { background: #0f3460; }
+}
+
+.imap-summary-badge {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    opacity: 1;
+
+    .missing & { opacity: 0.3; filter: grayscale(1); }
+}
+
+.imap-summary-badge-placeholder {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #888;
+}
+
+// ── Token placeholders ───────────────────────────────────────────
+.imap-token {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    background: var(--tc, #888);
+    border: 1.5px solid rgba(255,255,255,0.6);
+    opacity: 0.85;
+    z-index: 4;
+    pointer-events: none;
+}
+
+// ── Board nodes (pequeños) ───────────────────────────────────────
+.imap-board-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--nc, #888);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.45rem;
+    color: #fff;
+    font-weight: bold;
+    transition: transform 0.12s, box-shadow 0.12s;
+    opacity: 0.75;
+
+    &:hover { transform: translate(-50%,-50%) scale(1.4); opacity: 1; }
+
+    &.reachable {
+        opacity: 1;
+        width: 18px;
+        height: 18px;
+        background: #FFE500 !important;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #FFE500, 0 0 12px 4px rgba(255,229,0,0.7);
+        animation: imap-reachable 0.6s infinite alternate;
+        z-index: 15;
+        cursor: pointer;
+        color: #111;
+        font-size: 0;   // oculta el ícono del tipo — la forma ya indica "aquí puedes ir"
+    }
+
+    &.current-pos {
+        opacity: 0; // el pin del jugador lo cubre
+    }
+}
+
+@keyframes imap-reachable {
+    from { box-shadow: 0 0 0 2px #FFE500, 0 0 8px  3px rgba(255,229,0,0.5); }
+    to   { box-shadow: 0 0 0 4px #FFE500, 0 0 18px 6px rgba(255,229,0,0.9); }
+}
+
+// Gym markers: reachable state — mismo amarillo neón
+.imap-marker.reachable {
+    background: rgba(255,229,0,0.9) !important;
+    border-color: #fff !important;
+    box-shadow: 0 0 0 3px #FFE500, 0 0 16px 5px rgba(255,229,0,0.7) !important;
+    animation: imap-reachable 0.6s infinite alternate;
+    z-index: 25;
+}
+
+// ── Player pins ──────────────────────────────────────────────────
+.imap-player-pin {
+    position: absolute;
+    transform: translate(-50%, -110%); // arriba del nodo
+    width: 22px;
+    height: 22px;
+    border-radius: 50% 50% 50% 0;
+    rotate: -45deg;
+    background: var(--pc, #e74c3c);
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    z-index: 30;
+
+    span, &::after { rotate: 45deg; }
+
+    // texto sin rotación
+    &::after {
+        content: attr(title);
+        display: none;
+    }
+
+    > * { rotate: 45deg; }
+
+    &--me {
+        width: 26px;
+        height: 26px;
+        z-index: 35;
+        box-shadow: 0 0 0 3px rgba(255,255,255,0.4), 0 2px 8px rgba(0,0,0,0.5);
+    }
+}
+
+// ── Dados ────────────────────────────────────────────────────────
+.imap-dice-section {
+    padding: 10px 0 6px;
+    border-bottom: 1px solid #0f3460;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.imap-dice-label {
+    font-size: 0.72rem;
+    color: #aaa;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.imap-dice-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+}
+
+.imap-dice-btn {
+    padding: 6px 0;
+    border: 2px solid #0f3460;
+    border-radius: 5px;
+    background: #1a1a2e;
+    color: #ccc;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.12s;
+
+    &:hover { border-color: #fff; color: #fff; }
+    &.active { background: #e74c3c; border-color: #e74c3c; color: #fff; }
+}
+
+.imap-dice-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.7rem;
+    color: #27ae60;
+}
+
+// ── Lista de jugadores ───────────────────────────────────────────
+.imap-players-list {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #0f3460;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.imap-players-title {
+    font-size: 0.7rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.imap-player-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 0;
+    font-size: 0.75rem;
+
+    &.me { color: #fff; }
+}
+
+.imap-player-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.imap-player-name { flex: 1; color: #ccc; }
+.imap-player-loc  { font-size: 0.65rem; color: #666; max-width: 80px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
