@@ -1,0 +1,66 @@
+[
+  {
+    "order": 1,
+    "city": "Oreburgh City",
+    "leader": "Roark",
+    "type": "gym",
+    "x": 38,
+    "y": 64.31
+  },
+  {
+    "order": 2,
+    "city": "Ciudad Eterna",
+    "leader": "Gardenia",
+    "type": "gym",
+    "x": 36.63,
+    "y": 35.34
+  },
+  {
+    "order": 3,
+    "city": "Ciudad Mauville",
+    "leader": "Maylene",
+    "type": "gym",
+    "x": 77.96,
+    "y": 46.02
+  },
+  {
+    "order": 4,
+    "city": "Ciudad Pastoria",
+    "leader": "Crasher Wake",
+    "type": "gym",
+    "x": 66.8,
+    "y": 79.79
+  },
+  {
+    "order": 5,
+    "city": "Ciudad Hearthome",
+    "leader": "Fantina",
+    "type": "gym",
+    "x": 56.35,
+    "y": 62.62
+  },
+  {
+    "order": 6,
+    "city": "Ciudad Canalave",
+    "leader": "Byron",
+    "type": "gym",
+    "x": 8.07,
+    "y": 57.78
+  },
+  {
+    "order": 7,
+    "city": "Ciudad Snowpoint",
+    "leader": "Candice",
+    "type": "gym",
+    "x": 49.92,
+    "y": 9.7
+  },
+  {
+    "order": 8,
+    "city": "Ciudad Sunyshore",
+    "leader": "Volkner",
+    "type": "gym",
+    "x": 89.21,
+    "y": 72.12
+  }
+]

@@ -1,0 +1,598 @@
+// ── Layout ──────────────────────────────────────────────────────
+.mp-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #111;
+    color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+    overflow: hidden;
+}
+
+// ── Battle modal overlay ─────────────────────────────────────────
+.mbb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background-image: url("../images/pxfuel.jpg");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    color: initial; // reset heredado de .mp-page (#eee)
+}
+
+.mbb-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #fff;
+}
+.mbb-loading-spinner {
+    font-size: 3rem;
+    animation: mp-dice-spin 0.8s linear infinite;
+}
+.mbb-loading-text { font-size: 1rem; color: #ccc; }
+
+.mbb-title {
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+}
+
+.mbb-pokemon-select {
+    background: rgba(0,0,0,0.6);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.mbb-attack-select {
+    width: 100%;
+    height: 100%;
+}
+
+.mbb-dice-phase {
+    width: 100%;
+    height: 100%;
+}
+
+.mbb-confirm-btn {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 2px solid #f1c40f;
+    border-radius: 10px;
+    color: #f1c40f;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 50;
+    transition: all 0.15s;
+    &:hover { background: #0f3460; border-color: #fff; color: #fff; }
+}
+
+.mbb-winner { color: #2ecc71 !important; }
+.mbb-loser  { color: #e74c3c !important; }
+
+.mbb-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    color: #fff;
+    background: rgba(0,0,0,0.75);
+    border-radius: 12px;
+    padding: 32px;
+}
+.mbb-result-title { font-size: 1.4rem; font-weight: bold; }
+.mbb-result-img {
+    width: 120px; height: 120px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.mbb-close-btn {
+    margin-top: 16px;
+    padding: 8px 20px;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid #aaa;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    &:hover { background: rgba(231,76,60,0.4); border-color: #e74c3c; }
+}
+
+.mbb-flee-btn {
+    margin-top: 12px;
+    padding: 8px 20px;
+    background: rgba(20,20,20,0.85);
+    border: 2px solid #e74c3c;
+    border-radius: 10px;
+    color: #e74c3c;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s;
+    &:hover { background: rgba(231,76,60,0.2); }
+}
+
+// ── Header ───────────────────────────────────────────────────────
+.mp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    background: #16213e;
+    border-bottom: 2px solid #0f3460;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.mp-back-btn {
+    padding: 6px 12px;
+    border: 1.5px solid #0f3460;
+    border-radius: 6px;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transition: all 0.15s;
+    &:hover { border-color: #e94560; color: #fff; }
+}
+
+.mp-header-player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mp-header-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--pc, #e74c3c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.mp-header-name {
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.mp-header-coins {
+    font-size: 0.8rem;
+    color: #f1c40f;
+}
+
+.mp-header-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: #aaa;
+}
+
+.mp-header-badges { color: #27ae60; font-weight: bold; }
+.mp-header-loc    { color: #3498db; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+// ── Body ─────────────────────────────────────────────────────────
+.mp-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+// ── Mapa ─────────────────────────────────────────────────────────
+.mp-map-container {
+    flex: 1;
+    overflow: scroll;
+    background: #0a0a0a;
+    cursor: default;
+}
+
+.mp-img-wrapper {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    flex-shrink: 0;
+}
+
+.mp-img {
+    display: block;
+    width: 1600px;
+    height: auto;
+    pointer-events: none;
+}
+
+// ── Board nodes ───────────────────────────────────────────────────
+.mp-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--nc, #888);
+    border: 1.5px solid rgba(255,255,255,0.45);
+    cursor: pointer;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.42rem;
+    color: #fff;
+    font-weight: bold;
+    opacity: 0.7;
+    transition: transform 0.12s;
+
+    &:hover { transform: translate(-50%,-50%) scale(1.4); opacity: 1; }
+
+    &.reachable {
+        opacity: 1;
+        width: 18px;
+        height: 18px;
+        background: #FFE500 !important;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #FFE500, 0 0 12px 4px rgba(255,229,0,0.7);
+        animation: mp-reachable 0.6s infinite alternate;
+        z-index: 15;
+        cursor: pointer;
+        font-size: 0;
+    }
+
+    &.current { opacity: 0; }
+}
+
+@keyframes mp-reachable {
+    from { box-shadow: 0 0 0 2px #FFE500, 0 0 8px  3px rgba(255,229,0,0.5); }
+    to   { box-shadow: 0 0 0 4px #FFE500, 0 0 18px 6px rgba(255,229,0,0.9); }
+}
+
+// ── Token de Pokémon ──────────────────────────────────────────
+.mp-token-wrapper {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 58px;
+    height: 58px;
+    z-index: 4;
+    pointer-events: none;
+    perspective: 300px;
+    border-radius: 50%;
+
+    &.revealed .mp-token-back  { transform: rotateY(180deg); }
+    &.revealed .mp-token-front { transform: rotateY(0deg); }
+}
+
+.mp-token-face {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    transition: transform 0.5s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.mp-token-back  { transform: rotateY(0deg); }
+.mp-token-front { transform: rotateY(-180deg); }
+
+// ── Gym markers ───────────────────────────────────────────────────
+.mp-gym {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    transition: transform 0.15s;
+
+    &:hover { transform: translate(-50%,-50%) scale(1.2); }
+    &.earned  { background: rgba(39,174,96,0.85); border-color: #2ecc71; box-shadow: 0 0 10px rgba(46,204,113,0.5); }
+    &.missing { background: rgba(80,80,100,0.85); border-color: #999; }
+    &.active  { transform: translate(-50%,-50%) scale(1.25); border-color: #f39c12; z-index: 20; }
+    &.reachable {
+        background: rgba(255,229,0,0.9) !important;
+        border-color: #fff !important;
+        box-shadow: 0 0 0 3px #FFE500, 0 0 16px 5px rgba(255,229,0,0.7) !important;
+        animation: mp-reachable 0.6s infinite alternate;
+        z-index: 25;
+    }
+    &.current { opacity: 0; }
+}
+
+.mp-gym-badge {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+// ── Player pins ───────────────────────────────────────────────────
+.mp-pin {
+    position: absolute;
+    transform: translate(-50%, -110%);
+    width: 22px;
+    height: 22px;
+    border-radius: 50% 50% 50% 0;
+    rotate: -45deg;
+    background: var(--pc, #e74c3c);
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #fff;
+
+    > * { rotate: 45deg; }
+
+    &--me {
+        width: 28px;
+        height: 28px;
+        z-index: 35;
+        box-shadow: 0 0 0 3px rgba(255,255,255,0.4), 0 2px 10px rgba(0,0,0,0.6);
+    }
+}
+
+// ── Panel lateral ─────────────────────────────────────────────────
+.mp-panel {
+    width: 260px;
+    flex-shrink: 0;
+    background: #16213e;
+    border-left: 2px solid #0f3460;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+// Dados
+.mp-dice-section {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #0f3460;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.mp-dice-label {
+    font-size: 0.72rem;
+    color: #aaa;
+    display: block;
+    align-self: flex-start;
+}
+
+.mp-rechallenge-btn {
+    width: 100%;
+    padding: 8px 0;
+    background: rgba(231,76,60,0.15);
+    border: 2px solid #e74c3c;
+    border-radius: 8px;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s;
+    &:hover { background: rgba(231,76,60,0.3); }
+}
+
+.mp-dice-roll-btn {
+    width: 100%;
+    padding: 10px 0;
+    border: 2px solid #0f3460;
+    border-radius: 8px;
+    background: #1a1a2e;
+    color: #ccc;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s;
+    &:hover { border-color: #fff; color: #fff; background: #0f3460; }
+}
+
+.mp-dice-rolling {
+    font-size: 2.5rem;
+    animation: mp-dice-spin 0.5s ease infinite;
+}
+
+@keyframes mp-dice-spin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.3); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.mp-dice-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.mp-dice-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+@keyframes mp-dice-pop {
+    0%   { transform: scale(0.5) rotate(-15deg); opacity: 0; }
+    60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.mp-dice-anim {
+    animation: mp-dice-pop 0.4s cubic-bezier(.175,.885,.32,1.275) both;
+}
+
+.mp-dice-reroll {
+    width: 100%;
+    padding: 6px 0;
+    border: 1.5px solid #0f3460;
+    border-radius: 6px;
+    background: transparent;
+    color: #aaa;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.12s;
+    &:hover { border-color: #fff; color: #fff; }
+}
+
+.mp-dice-hint {
+    font-size: 0.7rem;
+    color: #27ae60;
+    align-self: flex-start;
+}
+
+// Info gym
+.mp-gym-info {
+    border: 1px solid #0f3460;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.mp-gym-info-imgs {
+    display: flex;
+    width: 100%;
+}
+
+.mp-gym-info-img {
+    width: 50%;
+    object-fit: contain;
+    display: block;
+}
+
+.mp-gym-info-details {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mp-gym-info-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #aaa;
+}
+
+.mp-gym-info-badge { width: 28px; height: 28px; object-fit: contain; }
+.mp-gym-info-name  { font-size: 0.95rem; font-weight: bold; color: #fff; }
+.mp-gym-info-city  { font-size: 0.78rem; color: #aaa; }
+
+.mp-gym-info-status {
+    font-size: 0.78rem;
+    font-weight: bold;
+    padding: 3px 7px;
+    border-radius: 4px;
+    text-align: center;
+    &.earned  { background: rgba(39,174,96,0.2); color: #2ecc71; }
+    &.missing { background: rgba(231,76,60,0.2); color: #e74c3c; }
+}
+
+.mp-challenge-btn {
+    margin-top: 6px;
+    width: 100%;
+    padding: 6px 0;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    &:hover { background: #c0392b; }
+}
+
+// Resumen medallas
+.mp-badges-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.mp-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-size: 0.78rem;
+    transition: background 0.1s;
+
+    &:hover { background: #0f3460; }
+    &.earned  { border-color: rgba(46,204,113,0.25); span { color: #2ecc71; } }
+    &.missing { span { color: #888; } }
+}
+
+.mp-badge-img         { width: 26px; height: 26px; object-fit: contain; .missing & { opacity: 0.3; filter: grayscale(1); } }
+.mp-badge-placeholder { width: 26px; height: 26px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #888; }
+
+// Lista jugadores
+.mp-players {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #0f3460;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.mp-players-title { font-size: 0.68rem; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.mp-player-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.75rem;
+    &.me { color: #fff; }
+}
+
+.mp-player-dot  { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; color: #fff; flex-shrink: 0; }
+.mp-player-name { flex: 1; color: #ccc; }
+.mp-player-loc  { font-size: 0.65rem; color: #666; max-width: 80px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

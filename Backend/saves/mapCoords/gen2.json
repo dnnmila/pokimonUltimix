@@ -1,0 +1,66 @@
+[
+  {
+    "order": 1,
+    "city": "Violet City",
+    "leader": "Falkner",
+    "type": "gym",
+    "x": 48.83,
+    "y": 44.61
+  },
+  {
+    "order": 2,
+    "city": "Azalea City",
+    "leader": "Bugsy",
+    "type": "gym",
+    "x": 35.28,
+    "y": 85.57
+  },
+  {
+    "order": 3,
+    "city": "Goldenrod City",
+    "leader": "Whitney",
+    "type": "gym",
+    "x": 38.28,
+    "y": 60.13
+  },
+  {
+    "order": 4,
+    "city": "Ecruteak City",
+    "leader": "Morty",
+    "type": "gym",
+    "x": 39.09,
+    "y": 20.83
+  },
+  {
+    "order": 5,
+    "city": "Ciudad Olivina",
+    "leader": "Chuck",
+    "type": "gym",
+    "x": 27.29,
+    "y": 45.05
+  },
+  {
+    "order": 6,
+    "city": "Ciudad Acero",
+    "leader": "Jasmine",
+    "type": "gym",
+    "x": 13.14,
+    "y": 69.9
+  },
+  {
+    "order": 7,
+    "city": "Ciudad Mahogany",
+    "leader": "Pryce",
+    "type": "gym",
+    "x": 59.23,
+    "y": 32.19
+  },
+  {
+    "order": 8,
+    "city": "Ciudad Blackthorn",
+    "leader": "Clair",
+    "type": "gym",
+    "x": 79.71,
+    "y": 23.84
+  }
+]

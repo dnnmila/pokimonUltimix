@@ -1,0 +1,66 @@
+[
+  {
+    "order": 1,
+    "city": "Ciudad Rocavelo",
+    "leader": "Roxanne",
+    "type": "gym",
+    "x": 7.57,
+    "y": 39.8
+  },
+  {
+    "order": 2,
+    "city": "Ciudad Dorsalia",
+    "leader": "Brawly",
+    "type": "gym",
+    "x": 9.57,
+    "y": 92.63
+  },
+  {
+    "order": 3,
+    "city": "Ciudad Mauville",
+    "leader": "Wattson",
+    "type": "gym",
+    "x": 34.41,
+    "y": 36.01
+  },
+  {
+    "order": 4,
+    "city": "Ciudad Lavaridge",
+    "leader": "Flannery",
+    "type": "gym",
+    "x": 19.18,
+    "y": 22.63
+  },
+  {
+    "order": 5,
+    "city": "Petalburg City",
+    "leader": "Norman",
+    "type": "gym",
+    "x": 4.14,
+    "y": 64.04
+  },
+  {
+    "order": 6,
+    "city": "Ciudad Fortree",
+    "leader": "Winona",
+    "type": "gym",
+    "x": 46.37,
+    "y": 6.76
+  },
+  {
+    "order": 7,
+    "city": "Mossdeep City",
+    "leader": "Tate & Liza",
+    "type": "gym",
+    "x": 91.38,
+    "y": 22.04
+  },
+  {
+    "order": 8,
+    "city": "Ciudad Sootópolis",
+    "leader": "Wallace",
+    "type": "gym",
+    "x": 73.09,
+    "y": 47.09
+  }
+]
