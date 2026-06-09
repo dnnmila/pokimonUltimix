@@ -1,10 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import PlayerListed from './PlayerListed';
 import StadiumMirrorModal from './StadiumMirrorModal';
 import ModalVictory from './modals/ModalVictory';
 
 import SERVER_IP from '../config';
+
+const ITEM_IMG_CLASS = {
+    'Pokeball': 'img-pokeball',
+    'Great Ball': 'img-greatBall',
+    'Ultra Ball': 'img-ultraBall',
+    'X Attack(1)': 'img-XAttk',
+    'X Attack(2)': 'img-XAttk',
+    'X Attack(3)': 'img-XAttk',
+    'Potion': 'img-potion',
+    'X Defense': 'img-XDef',
+    'Revive': 'img-Revive',
+    'X Accuracy': 'img-XAcc',
+    'Max Revive': 'img-MaxRevive',
+    'Guard Spec.': 'img-GuardSpec',
+    'Full Heal': 'img-FullHeal',
+    'TM': 'img-TM',
+    'Escape Rope': 'img-EscapeRope',
+    'Mega Bracelet': 'img-MegaBracelet',
+    'Bicycle': 'img-Bicycle',
+    'Mega Stone': 'img-MegaStone',
+    'Poke Doll': 'img-PokeDoll',
+    'Dynamax': 'img-Dynamax',
+};
 
 const AllPlayers = () => {
     const [game, setGame] = useState({ players: [], currentTurn: 0, battlePublic: false, myPlayerPkm: [], myRivalPkm: [], myPlayerPkmAtk: [], myRivalPkmAtk: [], myPlayerTotal: 0, myRivalTotal: 0, battlePhase: 'PokemonSelection' });
@@ -17,6 +40,9 @@ const AllPlayers = () => {
     const [myRivalTotal, setMyRivalTotal] = useState(0);
     const [battlePhase, setBattlePhase] = useState('PokemonSelection');
     const [battleOn, setBattleOn] = useState('False');
+    const [saleNotification, setSaleNotification] = useState(null);
+    const purchaseHistoryLenRef = useRef(0);
+    const saleTimerRef = useRef(null);
 
     const [turnElapsed, setTurnElapsed] = useState(0);
 
@@ -52,6 +78,15 @@ const AllPlayers = () => {
             setMyRivalTotal(updatedGame.myRivalTotal);
             setBattlePhase(updatedGame.battlePhase);
             setBattleOn(updatedGame.battleOn);
+
+            const history = updatedGame.purchaseHistory || [];
+            if (history.length > purchaseHistoryLenRef.current) {
+                const latest = history[history.length - 1];
+                if (saleTimerRef.current) clearTimeout(saleTimerRef.current);
+                setSaleNotification({ playerName: latest.playerName, item: latest.item });
+                saleTimerRef.current = setTimeout(() => setSaleNotification(null), 3000);
+            }
+            purchaseHistoryLenRef.current = history.length;
         });
 
         console.log('Socket conectado en AllPlayers');
@@ -84,6 +119,15 @@ const AllPlayers = () => {
                 ? <ModalVictory player={game.players.find(p => p.id === game.winner)} />
                 : game.paused && <div className="allplayers-paused-banner">⏸ JUEGO PAUSADO</div>
             }
+            {saleNotification && (
+                <div className="sale-notification">
+                    <div className={`sale-notification-img ${ITEM_IMG_CLASS[saleNotification.item] || ''}`}></div>
+                    <div className="sale-notification-text">
+                        SALE UN <span className="sale-notification-item">{saleNotification.item}</span> CON TODO
+                    </div>
+                    <div className="sale-notification-player">{saleNotification.playerName}</div>
+                </div>
+            )}
             {playersOrdered.map(player => (
                 <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers} generation={game.generation} turnElapsed={player.isMyTurn ? turnElapsed : 0}/>
             ))}

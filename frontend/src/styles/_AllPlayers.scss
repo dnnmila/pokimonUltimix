@@ -27,6 +27,72 @@
     to   { opacity: 1; }
 }
 
+.sale-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    background: linear-gradient(135deg, rgba(10, 10, 30, 0.97) 0%, rgba(30, 15, 60, 0.97) 100%);
+    border: 4px solid #f0d060;
+    border-radius: 20px;
+    padding: 2.5rem 4rem;
+    box-shadow: 0 0 60px rgba(240, 200, 50, 0.6), 0 0 120px rgba(240, 200, 50, 0.25);
+    animation: saleSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    pointer-events: none;
+    min-width: 500px;
+}
+
+.sale-notification-img {
+    width: 160px;
+    height: 160px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 0 18px rgba(255, 230, 80, 0.9));
+}
+
+.sale-notification-text {
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: #ffffff;
+    text-align: center;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 20px rgba(255, 220, 50, 0.8), 2px 2px 0 #000;
+    line-height: 1.2;
+}
+
+.sale-notification-item {
+    color: #f0d060;
+    text-transform: uppercase;
+}
+
+.sale-notification-player {
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #a0c8ff;
+    letter-spacing: 0.1em;
+    text-shadow: 1px 1px 0 #000;
+}
+
+@keyframes saleSlideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%) scale(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
 .round-badge {
     position: fixed;
     top: 1rem;
