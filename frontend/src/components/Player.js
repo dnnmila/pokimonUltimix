@@ -161,6 +161,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                          nextLevel = {pokemon.nextLevel}
                          evolution = {pokemon.evolution}
                          attached = {pokemon.attach}
+                         mega = {pokemon.mega}
                          type1={pokemon.type1}
                          type2={pokemon.type2}  
                          pokedex={pokemon.pokedex}

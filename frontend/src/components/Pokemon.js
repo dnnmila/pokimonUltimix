@@ -4,7 +4,7 @@ import ModalAttach from './modals/ModalAttach';
 import ModalEvolveChoice from './modals/ModalEvolveChoice';
 import SERVER_IP from '../config';
 
-const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
+const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached,mega, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
    
     const img_id = `img_${id}`;
     const level_id = `level_${id}`;
@@ -41,6 +41,9 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
         onDelete(currentPlayer.id, id);
         // Limpia el campo de entrada después de agregar
     };
+
+    // Fases 'evo' (Zygarde 10%/50%): solo evolucionan si tienen la mega piedra puesta
+    const canEvolveWithStone = mega === 'evo' && attached === 'Mega';
 
     const handleEvolvePokemon = async () => {
         if (nextLevel === -1) {
@@ -151,7 +154,7 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
             <h1 className="level_pokemon" > {level}</h1>
             {extra > 0 && <h1 className="level_extra"> + {extra} </h1>}
             </div>
-            {((extra >= nextLevel && nextLevel > 0) || nextLevel === -1) && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
+            {((extra >= nextLevel && nextLevel > 0) || nextLevel === -1 || canEvolveWithStone) && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
             <h1 className="name_pokemon" id={name_id}> {name}</h1>
             <div className="status_wrapper">
                 <div className={`status_pokemon ${status}`} onClick={handleChangeStatus} ></div>

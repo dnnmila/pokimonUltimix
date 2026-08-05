@@ -60,9 +60,21 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             .catch(console.error);
     }, [generation]);
 
+    // Catalogo para el autocompletado del buscador de salvajes (se pide una sola vez)
+    const [pokemonList, setPokemonList] = useState([]);
+
+    useEffect(() => {
+        fetch(`${SERVER_IP}/pokemon-list`)
+            .then(r => r.json())
+            .then(data => setPokemonList(Array.isArray(data) ? data : []))
+            .catch(console.error);
+    }, []);
+
     // Inputs para configurar el rival de simulacion
     const [showSetup, setShowSetup] = useState(false);
     const [wildPokemonId, setWildPokemonId] = useState('');
+    const [wildSuggestions, setWildSuggestions] = useState([]);
+    const [wildHighlight, setWildHighlight] = useState(-1);
     const [wildPreviewImg, setWildPreviewImg] = useState(null);
     const [wildChain, setWildChain] = useState(null);
     const [showWildModal, setShowWildModal] = useState(false);
@@ -258,6 +270,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         const pokedex = scannedPokemon.pokedex;
         const img = getSafePkmImg(pokedex, generation);
         setWildPokemonId(pokedex);
+        setWildSuggestions([]);
         setWildPreviewImg(img);
         setShowSetup(true);
 
@@ -275,17 +288,90 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         return <div className="sim-player">Jugador no encontrado.</div>;
     }
 
-    const handleSearchWildPokemon = async () => {
-        if (!wildPokemonId) return;
+    // Filtrado local del catalogo: por nombre o por POKEDEX.
+    // Prioriza los que empiezan por lo escrito para que "Rai" saque Raichu antes que Darkrai.
+    const buildWildSuggestions = (raw) => {
+        const q = raw.trim().toLowerCase();
+        if (!q) return [];
+        const rank = (p) => {
+            const n = p.name.toLowerCase();
+            const d = p.pokedex.toLowerCase();
+            if (n === q || d === q) return 0;
+            if (n.startsWith(q)) return 1;
+            if (d.startsWith(q)) return 2;
+            return 3;
+        };
+        return pokemonList
+            .filter(p => p.name.toLowerCase().includes(q) || p.pokedex.toLowerCase().includes(q))
+            .sort((a, b) => rank(a) - rank(b) || a.pokedex.localeCompare(b.pokedex))
+            .slice(0, 12);
+    };
+
+    const handleWildInputChange = (value) => {
+        setWildPokemonId(value);
+        setWildPreviewImg(null);
+        setWildSuggestions(buildWildSuggestions(value));
+        setWildHighlight(-1);
+    };
+
+    const handleSelectWildSuggestion = (pkm) => {
+        setWildSuggestions([]);
+        setWildHighlight(-1);
+        setWildPokemonId(pkm.pokedex);
+        searchWildPokemon(pkm.pokedex);
+    };
+
+    const handleWildInputKeyDown = (e) => {
+        if (wildSuggestions.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setWildHighlight(i => (i + 1) % wildSuggestions.length);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setWildHighlight(i => (i <= 0 ? wildSuggestions.length - 1 : i - 1));
+                return;
+            }
+            if (e.key === 'Escape') {
+                setWildSuggestions([]);
+                setWildHighlight(-1);
+                return;
+            }
+            if (e.key === 'Enter' && wildHighlight >= 0) {
+                e.preventDefault();
+                handleSelectWildSuggestion(wildSuggestions[wildHighlight]);
+                return;
+            }
+        }
+        if (e.key === 'Enter') handleSearchWildPokemon();
+    };
+
+    // Normaliza lo escrito a un POKEDEX valido: "26" -> "0026", "mx26" -> "MX0026".
+    // Ojo: hay POKEDEX con sufijo en minuscula (0718i, 0492e, P0128ii...), por eso
+    // primero se busca una coincidencia exacta en el catalogo antes de tocar el texto.
+    const normalizeWildId = (raw) => {
+        const clean = raw.toString().trim();
+        if (!clean) return '';
+        const exact = pokemonList.find(p => p.pokedex.toLowerCase() === clean.toLowerCase());
+        if (exact) return exact.pokedex;
+        // Solo se normaliza el formato "letras + numero"; cualquier otra cosa
+        // (p.ej. sufijos como 0718i) se respeta tal cual se escribio.
+        const m = clean.toUpperCase().match(/^([A-Z]*)(\d+)$/);
+        return m ? m[1] + m[2].padStart(4, '0') : clean;
+    };
+
+    const searchWildPokemon = async (rawId) => {
+        const id = normalizeWildId(rawId);
+        if (!id) return;
         try {
-            const padded = wildPokemonId.padStart(4, '0');
-            const img = getPkmImg(padded, generation);
+            const img = getPkmImg(id, generation);
             setWildPreviewImg(img);
-            setWildPokemonId(padded);
+            setWildPokemonId(id);
             const res = await fetch(`${SERVER_IP}/get-evolution-chain`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pokedexId: padded })
+                body: JSON.stringify({ pokedexId: id })
             });
             const data = await res.json();
             setWildChain(data);
@@ -295,17 +381,31 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
     };
 
+    const handleSearchWildPokemon = async () => {
+        if (!wildPokemonId) return;
+        // Si lo escrito coincide con un solo pokemon del catalogo, se usa ese
+        const matches = buildWildSuggestions(wildPokemonId);
+        const target = matches.length === 1 ? matches[0].pokedex : wildPokemonId;
+        setWildSuggestions([]);
+        setWildHighlight(-1);
+        await searchWildPokemon(target);
+    };
+
     const handleConfirmWildPokemon = async () => {
         if (!wildPokemonId) return;
         prevSimRivalId.current = `SimRival-${playerId}`;
         await onSimWildBattle(playerId, wildPokemonId);
         if (isMyTurn) onStartSimMirror(playerId);
         setWildPokemonId('');
+        setWildSuggestions([]);
         setWildPreviewImg(null);
         setWildChain(null);
         setShowWildModal(false);
         setShowSetup(false);
     };
+
+    // Fases 'evo' (Zygarde 10%/50%): solo evolucionan si tienen la mega piedra puesta
+    const canEvolveWithStone = (pkm) => pkm.mega === 'evo' && pkm.attach === 'Mega';
 
     const handleSimEvolve = async (pkm) => {
         if (pkm.nextLevel === -1) {
@@ -764,6 +864,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         await handleAddToTeam(wildPokemonId);
         setShowWildModal(false);
         setWildPokemonId('');
+        setWildSuggestions([]);
         setWildPreviewImg(null);
         setWildChain(null);
     };
@@ -1006,13 +1107,39 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 <div className="sim-player__setup">
                     {/* Wild pokemon */}
                     <div className="sim-player__setup-wild">
-                        <input
-                            type="number"
-                            placeholder="# Pokedex"
-                            value={wildPokemonId}
-                            onChange={(e) => { setWildPokemonId(e.target.value); setWildPreviewImg(null); }}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearchWildPokemon()}
-                        />
+                        <div className="sim-wild-search">
+                            <input
+                                type="text"
+                                placeholder="Nombre o # Pokedex"
+                                value={wildPokemonId}
+                                autoComplete="off"
+                                onChange={(e) => handleWildInputChange(e.target.value)}
+                                onKeyDown={handleWildInputKeyDown}
+                                onBlur={() => setTimeout(() => setWildSuggestions([]), 150)}
+                            />
+                            {wildSuggestions.length > 0 && (
+                                <ul className="sim-wild-suggestions">
+                                    {wildSuggestions.map((pkm, i) => {
+                                        const img = getSafePkmImg(pkm.pokedex, generation);
+                                        return (
+                                            <li
+                                                key={pkm.pokedex}
+                                                className={`sim-wild-suggestion ${i === wildHighlight ? 'is-active' : ''}`}
+                                                onMouseDown={(e) => { e.preventDefault(); handleSelectWildSuggestion(pkm); }}
+                                                onMouseEnter={() => setWildHighlight(i)}
+                                            >
+                                                <div
+                                                    className="sim-wild-suggestion-img"
+                                                    style={img ? { backgroundImage: `url(${img})` } : {}}
+                                                />
+                                                <span className="sim-wild-suggestion-name">{pkm.name}</span>
+                                                <span className="sim-wild-suggestion-id">{pkm.pokedex}</span>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+                        </div>
                         <button onClick={handleSearchWildPokemon}>Buscar</button>
                         {wildPreviewImg && (
                             <div className="sim-wild-preview" onClick={() => setShowWildModal(true)}>
@@ -1044,7 +1171,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                             {pkm.status !== 'Normal' && (
                                                 <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
                                             )}
-                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1) && (
+                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1 || canEvolveWithStone(pkm)) && (
                                                 <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
                                             )}
                                         </div>
@@ -1103,7 +1230,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                             {pkm.status !== 'Normal' && (
                                                 <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
                                             )}
-                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1) && (
+                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1 || canEvolveWithStone(pkm)) && (
                                                 <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
                                             )}
                                         </div>

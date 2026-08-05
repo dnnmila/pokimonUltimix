@@ -199,24 +199,27 @@ export const wildBattle = async (req, res) => {
         console.log(pokemonId);
 
         //ajuste  Asegurarse de que pokemonId tenga siempre 4 dígitos ultimixdnn
-        const rawWildId = pokemonId.toString().trim().toUpperCase();
-        const wildPrefixMatch = rawWildId.match(/^([A-Z]+)(\d+)$/);
-        const formattedPokemonId = wildPrefixMatch ? wildPrefixMatch[1] + wildPrefixMatch[2].padStart(4, '0') : rawWildId.padStart(4, '0');
-        console.log('formattedPokemonId ' + formattedPokemonId);
-
-        // Busca el Pokémon en la base de datos
-        const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [formattedPokemonId]);
+        // Hay POKEDEX con sufijo en minúscula (0718i, 0492e, P0128ii): se prueba tal cual
+        // antes de normalizar, porque toUpperCase() los rompería.
+        const rawWildId = pokemonId.toString().trim();
+        let pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [rawWildId]);
+        if (!pokemonData) {
+            const upperWildId = rawWildId.toUpperCase();
+            const wildPrefixMatch = upperWildId.match(/^([A-Z]+)(\d+)$/);
+            const formattedPokemonId = wildPrefixMatch ? wildPrefixMatch[1] + wildPrefixMatch[2].padStart(4, '0') : upperWildId.padStart(4, '0');
+            console.log('formattedPokemonId ' + formattedPokemonId);
+            pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? COLLATE NOCASE LIMIT 1", [formattedPokemonId]);
+        }
         console.log(pokemonData);
-        const Attack1 = await getAttack(pokemonData.ATK1,db);
-        const Attack2 = await getAttack(pokemonData.ATK2,db);
-        const Attack3 = await getAttack(pokemonData.ATK3,db);
-       
-     
+
         if (!pokemonData) {
             return res.status(404).json({ message: 'Pokémon no encontrado' });
         }
 
-       
+        const Attack1 = await getAttack(pokemonData.ATK1, db);
+        const Attack2 = await getAttack(pokemonData.ATK2, db);
+        const Attack3 = await getAttack(pokemonData.ATK3, db);
+
         // Crear una instancia de Pokémon
         const pokemon = new Pokemons(
             pokemonData.UID,
@@ -877,6 +880,35 @@ export const getLeadersByGeneration = async (req, res) => {
         });
 
         res.status(200).json(leaders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Lista de pokemon (formas Normal) para el autocompletado del buscador de salvajes.
+// Se pide una sola vez al abrir la pantalla y el filtrado se hace en el cliente.
+export const getPokemonList = async (req, res) => {
+    try {
+        const db = await openDb();
+
+        // NAME puede traer markup <i></i> en las formas alternas — se limpia para poder buscarlo
+        const rows = await db.all(
+            `SELECT POKEDEX, NAME, TYPE1, TYPE2, LEVEL
+             FROM pokemons
+             WHERE FORM = 'Normal' AND POKEDEX IS NOT NULL AND POKEDEX <> ''
+             GROUP BY POKEDEX
+             ORDER BY POKEDEX`
+        );
+
+        const list = rows.map(r => ({
+            pokedex: r.POKEDEX,
+            name: (r.NAME || '').replace(/<\/?i>/g, '').trim(),
+            type1: r.TYPE1,
+            type2: r.TYPE2,
+            level: r.LEVEL,
+        }));
+
+        res.status(200).json(list);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
