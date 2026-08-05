@@ -288,7 +288,10 @@ export const evolvePokemon = async (req, res) => {
             : Math.max(0, oldPkm.extra - oldPkm.nextLevel);
         newPokemon.extra = transferExtra;
         newPokemon.totalLevel = newPokemon.level + newPokemon.extra;
-        if (oldPkm.attach) {
+        // La mega piedra se consume al evolucionar una fase 'evo' (Zygarde 10% -> 50% -> Complete).
+        // El resto de items se conservan.
+        const megaStoneConsumed = oldPkm.mega === 'evo' && oldPkm.attach === 'Mega';
+        if (oldPkm.attach && !megaStoneConsumed) {
             newPokemon.attach = oldPkm.attach;
         }
         console.log(newPokemon);
@@ -585,7 +588,11 @@ export const attachMega  = async (req, res) => {
         if (!pokemon) {
             return res.status(404).json({ message: 'pokemon no encontrado' });
         }
-        if (pokemon.mega === 'Yes' || pokemon.mega === 'doble') {
+        // 'evo' (Zygarde 10%/50%): la piedra no crea una mega form, solo habilita
+        // la evolución a la siguiente fase. Se consume al evolucionar.
+        if (pokemon.mega === 'evo') {
+            pokemon.addAttach("Mega");
+        } else if (pokemon.mega === 'Yes' || pokemon.mega === 'doble') {
 
             // Mega principal (almacenada en pokemon.evolution)
             const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokemon.evolution]);
@@ -844,7 +851,8 @@ export const getEvolutionChain = async (req, res) => {
         };
 
         const getMegas = async (data) => {
-            if (!data.MEGA || data.MEGA === 'No') return [];
+            // 'evo': la mega piedra dispara una evolución normal, no una mega form
+            if (!data.MEGA || data.MEGA === 'No' || data.MEGA === 'evo') return [];
             if (data.MEGA === 'doble') {
                 const rows = await db.all(
                     "SELECT POKEDEX FROM pokemons WHERE PREEVOLUCION = ? AND FORM = 'Mega' GROUP BY POKEDEX ORDER BY POKEDEX",
@@ -869,7 +877,8 @@ export const getEvolutionChain = async (req, res) => {
             const bGmax = await getGmax(b.GMAX);
             const bMegas = await getMegas(b);
             const hasSingleLinearEvolution =
-                b.NEXT_LEVEL !== 0 && b.NEXT_LEVEL !== -1 &&
+                // 'evo' evoluciona con la piedra, no por niveles: NEXT_LEVEL=0 no lo corta
+                (b.MEGA === 'evo' || (b.NEXT_LEVEL !== 0 && b.NEXT_LEVEL !== -1)) &&
                 b.EVOLUTION && b.EVOLUTION !== '0000' && b.EVOLUTION !== 'pre' &&
                 (!b.EVOLUTION2 || b.EVOLUTION2 === '0000') &&
                 b.MEGA !== 'Yes' && b.MEGA !== 'doble';
@@ -916,7 +925,8 @@ export const getEvolutionChain = async (req, res) => {
                 if (b1) branches.push(b1);
                 if (b2) branches.push(b2);
             } else if (
-                data.NEXT_LEVEL !== 0 &&
+                // 'evo' evoluciona con la piedra, no por niveles: NEXT_LEVEL=0 no lo corta
+                (data.MEGA === 'evo' || data.NEXT_LEVEL !== 0) &&
                 data.EVOLUTION && data.EVOLUTION !== '0000' &&
                 data.MEGA !== 'Yes' && data.MEGA !== 'doble'
             ) {

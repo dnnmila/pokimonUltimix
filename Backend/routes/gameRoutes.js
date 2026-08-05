@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,setGeneration,getLeadersByGeneration,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame} from '../controllers/gameController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,setGeneration,getLeadersByGeneration,getPokemonList,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame} from '../controllers/gameController.js';
 import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,attachMega,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
@@ -51,6 +51,7 @@ router.post('/toggle-dynamax', toggleDynamax);
 router.post('/load-game', loadGameController);
 router.post('/set-generation', setGeneration);
 router.get('/get-leaders', getLeadersByGeneration);
+router.get('/pokemon-list', getPokemonList);
 router.post('/request-purchase', requestPurchase);
 router.post('/approve-purchase', approvePurchase);
 router.post('/deny-purchase', denyPurchase);
