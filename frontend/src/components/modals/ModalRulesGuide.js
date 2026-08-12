@@ -338,6 +338,8 @@ const SPECIAL_EFFECTS = [
     { name: 'Yawn',                    en: 'Opponent Pokémon gains the Sleep status at the beginning of the next battle round.',                                                                                            es: 'El Pokémon oponente gana el estado Dormido al comienzo de la siguiente ronda.' },
 ];
 
+// La tabla de tipos vive en ModalTypeChart, que se abre con su propio botón
+// flotante junto al de música.
 const TABS = ['Icons', 'Field', 'Status', 'Special'];
 
 const ModalRulesGuide = ({ show, onClose }) => {

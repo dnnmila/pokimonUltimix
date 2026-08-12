@@ -5,6 +5,12 @@ import AddPokemon from './AddPokemon';
 import ModalMonedas from './modals/ModalMonedas.js';
 import ModalTienda from './modals/ModalTienda.js';
 import ModalBattle from './modals/ModalBattle.js';
+import ModalSpecialAttacks from './modals/ModalSpecialAttacks.js';
+import { FIELD_MOVES } from '../battleRules';
+
+const getFieldCardImg = (id) => {
+    try { return require(`../images/Field Moves/${id}.png`); } catch { return null; }
+};
 
 const getBadgeImg = (gen, num) => {
     try {
@@ -22,7 +28,7 @@ const getPokedexImg = (pokedex) => {
     try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
 };
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon,onPauseGame}) => {
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon,onPauseGame,onSetFieldMove}) => {
 
     const handleKeyDown = useCallback((event) => {
         switch(event.key) {
@@ -58,6 +64,88 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
     const [showModalCoins, setShowModalCoins] = useState(false);
     const [showModalStore, setShowModalStore] = useState(false);
     const [showModalBattle, setShowModalBattle] = useState(false);
+    const [showSpecialAttacks, setShowSpecialAttacks] = useState(false);
+    const [showFieldPicker, setShowFieldPicker] = useState(false);
+    // Carta de un solo lado esperando que se elija a quién afecta
+    const [pendingCard, setPendingCard] = useState(null);
+    const [fieldWarning, setFieldWarning] = useState(null);
+
+    const fieldMoves = game.fieldMoves || [null, null];
+    const activeFieldCount = fieldMoves.filter(Boolean).length;
+
+    // El catálogo se parte en dos: las globales afectan a los dos lados, las de
+    // equipo solo al lado que se marque.
+    const globalCards = FIELD_MOVES.filter(c => c.scope === 'global');
+    const teamCards   = FIELD_MOVES.filter(c => c.scope === 'team');
+
+    // Hay 2 espacios; la carta entra en el primero libre
+    const placeCard = (cardId, owner) => {
+        const free = fieldMoves.findIndex(f => !f);
+        if (free === -1) {
+            setFieldWarning('Los 2 espacios están ocupados. Quita una carta antes de poner otra.');
+            return;
+        }
+        setFieldWarning(null);
+        onSetFieldMove(free, cardId, owner);
+    };
+
+    const removeCard = (cardId) => {
+        const idx = fieldMoves.findIndex(f => f && f.id === cardId);
+        if (idx !== -1) onSetFieldMove(idx, null, null);
+        setFieldWarning(null);
+    };
+
+    // Las globales se colocan de una; las de un solo lado preguntan el lado antes
+    const handlePickCard = (card) => {
+        if (fieldMoves.some(f => f && f.id === card.id)) return;   // ya está puesta
+        if (fieldMoves.every(Boolean)) {
+            setFieldWarning('Los 2 espacios están ocupados. Quita una carta antes de poner otra.');
+            return;
+        }
+        setFieldWarning(null);
+        if (card.scope === 'global') placeCard(card.id, null);
+        else setPendingCard(card);
+    };
+
+    const closeFieldPicker = () => {
+        setShowFieldPicker(false);
+        setPendingCard(null);
+        setFieldWarning(null);
+    };
+
+    const renderFieldOption = (card) => {
+        const img = getFieldCardImg(card.id);
+        const active = fieldMoves.find(f => f && f.id === card.id);
+        return (
+            <div key={card.id}
+                 className={`field-option${active ? ' field-option--in-use' : ''}`}
+                 title={card.note || ''}
+                 onClick={() => handlePickCard(card)}>
+                {img
+                    ? <img className="field-option-img" src={img} alt={card.id} />
+                    : <div className="field-option-name">{card.es}</div>}
+                {active ? (
+                    <div className="field-option-active">
+                        <span className={`field-option-side field-option-side--${active.owner || 'global'}`}>
+                            {card.scope === 'global' ? 'En juego'
+                                : active.owner === 'player' ? 'En juego · Jugador'
+                                : 'En juego · Rival'}
+                        </span>
+                        <button className="field-option-remove"
+                                onClick={(e) => { e.stopPropagation(); removeCard(card.id); }}>
+                            Quitar
+                        </button>
+                    </div>
+                ) : (
+                    <div className="field-option-tag">
+                        {card.kind === 'reminder'
+                            ? <span className="field-tag-manual">manual</span>
+                            : <span className="field-tag-auto">automático</span>}
+                    </div>
+                )}
+            </div>
+        );
+    };
     const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
     const [historyTab, setHistoryTab] = useState('purchases');
     const [showTradeModal, setShowTradeModal] = useState(false);
@@ -352,6 +440,80 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                 </div>
             )}
             <ModalBattle show={showModalBattle} onClose={handleCloseModalBattle} game={game} playerBattle={playerBattle} LeaderBattle={LeaderBattle}  />
+            <ModalSpecialAttacks show={showSpecialAttacks} onClose={() => setShowSpecialAttacks(false)} />
+
+            {showFieldPicker && (
+                <div className="modal-backdrop" onClick={closeFieldPicker}>
+                    <div className="field-picker" onClick={e => e.stopPropagation()}>
+                        <div className="field-picker-title">
+                            Cartas de campo
+                            <button className="field-picker-close" onClick={closeFieldPicker}>✕</button>
+                        </div>
+
+                        {fieldWarning && <div className="field-warning">{fieldWarning}</div>}
+
+                        {pendingCard ? (
+                            <div className="field-side-step">
+                                <div className="field-side-step-card">
+                                    {getFieldCardImg(pendingCard.id) && (
+                                        <img className="field-side-step-img"
+                                             src={getFieldCardImg(pendingCard.id)}
+                                             alt={pendingCard.id} />
+                                    )}
+                                    <div className="field-side-step-name">{pendingCard.es}</div>
+                                    {pendingCard.note && (
+                                        <div className="field-side-step-note">{pendingCard.note}</div>
+                                    )}
+                                </div>
+                                <div className="field-side-step-ask">
+                                    ¿A qué lado afecta?
+                                </div>
+                                <div className="field-side-step-btns">
+                                    <button className="field-side-btn field-side-btn--player"
+                                            onClick={() => { placeCard(pendingCard.id, 'player'); setPendingCard(null); }}>
+                                        Jugador
+                                    </button>
+                                    <button className="field-side-btn field-side-btn--rival"
+                                            onClick={() => { placeCard(pendingCard.id, 'rival'); setPendingCard(null); }}>
+                                        Rival
+                                    </button>
+                                </div>
+                                <button className="field-side-cancel" onClick={() => setPendingCard(null)}>
+                                    ← Volver
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="field-group">
+                                    <div className="field-group-title field-group-title--global">
+                                        Afectan a los dos lados
+                                        <span className="field-group-count">{globalCards.length}</span>
+                                    </div>
+                                    <div className="field-picker-grid">{globalCards.map(renderFieldOption)}</div>
+                                </div>
+
+                                <div className="field-group">
+                                    <div className="field-group-title field-group-title--team">
+                                        Afectan a un solo lado
+                                        <span className="field-group-count">{teamCards.length}</span>
+                                    </div>
+                                    <div className="field-picker-grid">{teamCards.map(renderFieldOption)}</div>
+                                </div>
+                            </>
+                        )}
+
+                        <div className="field-picker-note">
+                            Las cartas <strong>automáticas</strong> se suman solas al total de batalla.
+                            Las <strong>manuales</strong> solo se muestran como recordatorio a los jugadores.
+                            Todas se descartan al pasar de turno.
+                            <br />
+                            En las cartas de un solo lado, el <strong>lado afectado</strong> es quien recibe
+                            el efecto: en Spikes / Stealth Rock / Toxic Spikes es quien lo sufre,
+                            en Mist / Safeguard / Renewal es quien se beneficia.
+                        </div>
+                    </div>
+                </div>
+            )}
           
                         
 
@@ -384,6 +546,13 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
             </div>
 
             <button  className='BattleMenu_Button' onClick={handleOpenModalBattle} > Battle </button>
+            <div className='Button-special-attacks' title='Ataques especiales' onClick={() => setShowSpecialAttacks(true)}>✦</div>
+            <div className={`Button-field ${activeFieldCount > 0 ? 'Button-field--active' : ''}`}
+                 title='Cartas de campo'
+                 onClick={() => setShowFieldPicker(true)}>
+                <span className='Button-field-icon'>🌐</span>
+                {activeFieldCount > 0 && <span className='Button-field-count'>{activeFieldCount}</span>}
+            </div>
             <div onClick={handleOpenModalStore} className='Button-store'></div>
             <div className='Button-purchase-history' onClick={() => setShowPurchaseHistory(v => !v)}></div>
             <div className='Button-trade' onClick={() => setShowTradeModal(true)}></div>

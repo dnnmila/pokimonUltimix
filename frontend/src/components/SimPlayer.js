@@ -12,8 +12,11 @@ import ModalTiendaSim from "./modals/ModalTiendaSim";
 import ModalRulesGuide from "./modals/ModalRulesGuide";
 import ModalEvolveChoice from "./modals/ModalEvolveChoice";
 import ModalFrontier from "./modals/ModalFrontier";
+import ModalAttach from "./modals/ModalAttach";
+import ModalTypeChart from "./modals/ModalTypeChart";
 import MusicPlayer from "./MusicPlayer";
 import SERVER_IP from "../config.js";
+import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove } from "../battleRules";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
 
@@ -39,17 +42,52 @@ const getPokemonImg = (pokedex) => {
     try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
 };
 
+const getFieldCardImg = (id) => {
+    try { return require(`../images/Field Moves/${id}.png`); } catch { return null; }
+};
+
+const getTypeIcon = (type) => {
+    try { return require(`../images/Types/${type}.png`); } catch { return null; }
+};
+
+// Los rivales vienen por color de casilla (RivPink1, RivBlue2, …)
+const RIVAL_COLORS = {
+    Pink:   { hex: '#e91e63', label: 'Rosa' },
+    Green:  { hex: '#27ae60', label: 'Verde' },
+    Yellow: { hex: '#f1c40f', label: 'Amarillo' },
+    Blue:   { hex: '#3498db', label: 'Azul' },
+    Red:    { hex: '#e74c3c', label: 'Rojo' },
+    Purple: { hex: '#9b59b6', label: 'Morado' },
+};
+
+const getRivalColor = (img) => {
+    const match = /^Riv([A-Za-z]+?)\d*$/.exec(img || '');
+    return match ? match[1] : null;
+};
+
 const TRAINER_CLASS = {
     Mila: 'trainer1', Wuicho: 'trainer2', Kevin: 'trainer3', Kampis: 'trainer4',
     Mandito: 'trainer5', Doc: 'trainer6', Tacho: 'trainer7', Fede: 'trainer8',
     Perry: 'trainer9', Richi: 'trainer10', Mono: 'trainer11', Foxi: 'trainer2',
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
     const generation = game?.generation || 1;
+    const fieldMoves = (game?.fieldMoves || []).filter(Boolean);
+    // Clave estable para detectar cuándo el master cambió las cartas de campo
+    const fieldKey = JSON.stringify(game?.fieldMoves || []);
+
+    // Item + cartas de campo. Con Dormido/Paralizado/Congelado el ataque queda
+    // anulado, así que las cartas que dependen del ataque tampoco cuentan; el item
+    // y las que pegan al valor final siguen aplicando.
+    const computeExtra = (pkm, attack, status, side) => {
+        const always = getItemBonus(pkm) + getFieldFinalBonus(pkm, fieldMoves, side);
+        const nullified = status === 'Asleep' || status === 'Paralized' || status === 'Frozen';
+        return always + (nullified ? 0 : getFieldAttackBonus(attack, fieldMoves, side));
+    };
 
     const [leaders, setLeaders] = useState([]);
 
@@ -84,6 +122,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [showRulesGuide, setShowRulesGuide] = useState(false);
     const [pendingRequest, setPendingRequest] = useState(null);
     const [showOtherRivals, setShowOtherRivals] = useState(false);
+    const [selectedLeader, setSelectedLeader] = useState(null);
+    const [attachPkmId, setAttachPkmId] = useState(null);
+    // Carta de campo abierta a tamaño completo para leer su efecto
+    const [expandedField, setExpandedField] = useState(null);
+    const [showTypeChart, setShowTypeChart] = useState(false);
     const [showTurnModal, setShowTurnModal] = useState(false);
     const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
     const [gymLeaderBadgeNum, setGymLeaderBadgeNum] = useState(null);
@@ -183,6 +226,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [RivalBonusAttack2, setRivalBonusAttack2] = useState(0);
     const [RivalBonusAttack3, setRivalBonusAttack3] = useState(0);
 
+    // Suma de bonos de item + clima. Se guarda en estado porque el handler del
+    // dado no sabe en qué rama de estado quedó el Pokémon.
+    const [myExtra, setMyExtra] = useState(0);
+    const [rivalExtra, setRivalExtra] = useState(0);
+
     const [myTotal, setMyTotal] = useState(0);
     const [rivalTotal, setRivalTotal] = useState(0);
     const [myAttackPower, setMyAttackPower] = useState(0);
@@ -252,6 +300,29 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
         }
     }, [myLocked, rivalLocked]);
+
+    // Si el master pone o quita una carta de campo a media batalla, hay que rehacer
+    // el total: el extra se guarda en estado al elegir el ataque y se quedaría viejo.
+    useEffect(() => {
+        if (myPokemon && myAttackSelected === 'true') {
+            const newExtra = computeExtra(myPokemon, myAttack, myStatus, 'player');
+            if (newExtra !== myExtra) {
+                const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, myDice, newExtra);
+                setMyExtra(newExtra);
+                setMyTotal(newTotal);
+                if (isMyTurn) onHandleTotales('MyPlayer', newTotal);
+            }
+        }
+        if (rivalPokemon && rivalAttackSelected === 'true') {
+            const newExtra = computeExtra(rivalPokemon, rivalAttack, rivalStatus, 'rival');
+            if (newExtra !== rivalExtra) {
+                const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, rivalDice, newExtra);
+                setRivalExtra(newExtra);
+                setRivalTotal(newTotal);
+                if (isMyTurn) onHandleTotales('Rival', newTotal);
+            }
+        }
+    }, [fieldKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Detectar pokemon escaneado por RFID → mostrar el mismo modal que búsqueda manual
     const prevSimRivalId  = useRef(null);
@@ -448,6 +519,106 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowSetup(false);
     };
 
+    // Las dos columnas del equipo usan la misma tarjeta
+    const renderMiniPkm = (pkm) => {
+        const pkmImg = getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation);
+        const canEvolve = (pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1 || canEvolveWithStone(pkm);
+        return (
+            <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
+                <div className="sim-mini-pkm-img"
+                    style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
+                    onClick={() => onChangeState(player.id, pkm.id, { source: 'manual-player', playerName: player.name })} />
+                <div className="sim-mini-pkm-name">{pkm.name}</div>
+                <div className="sim-mini-pkm-level">
+                    {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
+                </div>
+                <div className="sim-mini-pkm-icons">
+                    {pkm.status !== 'Normal' && (
+                        <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
+                    )}
+                    {canEvolve && (
+                        <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
+                    )}
+                </div>
+                {/* Barra propia: la imagen de arriba ya es el toggle de estado, así que el
+                    attach necesita un target grande que no compita con ella */}
+                <div className={`sim-mini-attach-bar ${pkm.attach !== 'None' ? 'sim-mini-attach-bar--filled' : ''}`}
+                     title={pkm.attach !== 'None' ? 'Cambiar item' : 'Adjuntar item'}
+                     onClick={() => setAttachPkmId(pkm.id)}>
+                    {pkm.attach !== 'None'
+                        ? <div className={`sim-mini-attach attached-item ${getAttachedClass(pkm.attach)}`} />
+                        : 'Attach'}
+                </div>
+            </div>
+        );
+    };
+
+    // Elite 4, Campeón y Rival comparten la misma tarjeta y vista previa del equipo.
+    // El color solo aplica a los rivales (RivPink1, RivBlue2…); en los demás queda en null.
+    const renderLeaderGroup = (label, list) => {
+        const selectedHere = selectedLeader && list.some(l => l.leaderKey === selectedLeader.leaderKey);
+        const selColor = selectedHere ? RIVAL_COLORS[getRivalColor(selectedLeader.img)] : null;
+        return (
+            <div className="sim-other-rivals-group">
+                <div className="sim-other-rivals-label">{label}</div>
+                <div className="sim-other-rivals-row">
+                    {list.map(l => {
+                        const img = l.img ? getSafePkmImg(l.img, generation) : null;
+                        const color = RIVAL_COLORS[getRivalColor(l.img)];
+                        const isSelected = selectedLeader?.leaderKey === l.leaderKey;
+                        return <div key={l.leaderKey}
+                            className={`Elite sim-rival-card ${isSelected ? 'sim-rival-card--selected' : ''}`}
+                            title={color ? color.label : l.name}
+                            style={{
+                                ...(img ? { backgroundImage: `url(${img})` } : {}),
+                                ...(color ? { borderColor: color.hex } : {}),
+                                ...(isSelected ? { boxShadow: `0 0 14px ${color ? color.hex : '#f0d080'}` } : {}),
+                            }}
+                            onClick={() => setSelectedLeader(isSelected ? null : l)} />;
+                    })}
+                </div>
+
+                {selectedHere && (
+                    <div className="sim-rival-preview" style={selColor ? { borderColor: selColor.hex } : {}}>
+                        <div className="sim-rival-preview-title">
+                            {selectedLeader.name}
+                            {selColor && <span className="sim-rival-preview-color"
+                                                style={{ color: selColor.hex }}> · {selColor.label}</span>}
+                        </div>
+                        <div className="sim-rival-preview-team">
+                            {(selectedLeader.team || []).map(pkm => {
+                                const pkmImg = getSafePkmImg(pkm.img, generation);
+                                return (
+                                    <div key={pkm.uid} className="sim-rival-preview-pkm">
+                                        {pkmImg
+                                            ? <img className="sim-rival-preview-img" src={pkmImg} alt={pkm.name} />
+                                            : <div className="sim-rival-preview-img" />}
+                                        <div className="sim-rival-preview-name">{pkm.name}</div>
+                                        <div className="sim-rival-preview-level">Lv.{pkm.level}</div>
+                                        <div className="sim-rival-preview-types">
+                                            <div className={`sim-rival-preview-type Attack_${pkm.type1}`} />
+                                            {pkm.type2 && pkm.type2 !== 'NONE' && (
+                                                <div className={`sim-rival-preview-type Attack_${pkm.type2}`} />
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <button className="sim-rival-challenge-btn"
+                                onClick={() => {
+                                    handleSimLeader(selectedLeader.leaderKey, selectedLeader.uid1, selectedLeader.uid2);
+                                    setSelectedLeader(null);
+                                    setShowOtherRivals(false);
+                                }}>
+                            Retar a {selectedLeader.name}
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const handleRequestPurchase = async (item, price) => {
         try {
             const res = await fetch(`${SERVER_IP}/request-purchase`, {
@@ -629,11 +800,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     };
 
     const handleSelectMyAttack = (attack, bonus) => {
+        const extra = computeExtra(myPokemon, attack, myStatus, 'player');
         setMyAttack(attack);
         setMyAttackPower(attack.strength);
         setMyBonus(bonus);
         setMyBonusFinal(bonus);
-        setMyTotal(attack.strength + bonus + myPokemon.totalLevel);
+        setMyExtra(extra);
+        setMyTotal(attack.strength + bonus + myPokemon.totalLevel + extra);
         setMyAttackSelected('true');
         if (isMyTurn) {
             onHandleBattleAttack('MyPlayer', attack.id);
@@ -642,11 +815,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     };
 
     const handleSelectRivalAttack = (attack, bonus) => {
+        const extra = computeExtra(rivalPokemon, attack, rivalStatus, 'rival');
         setRivalAttack(attack);
         setRivalAttackPower(attack.strength);
         setRivalBonus(bonus);
         setRivalBonusFinal(bonus);
-        setRivalTotal(attack.strength + bonus + rivalPokemon.totalLevel);
+        setRivalExtra(extra);
+        setRivalTotal(attack.strength + bonus + rivalPokemon.totalLevel + extra);
         setRivalAttackSelected('true');
         if (isMyTurn) {
             onHandleBattleAttack('Rival', attack.id);
@@ -654,8 +829,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
     };
 
-    function sumTotal(level, attackStrength, bonus, dice) {
-        return level + attackStrength + bonus + dice;
+    function sumTotal(level, attackStrength, bonus, dice, extra = 0) {
+        return level + attackStrength + bonus + dice + extra;
     }
 
     const getStatusClass = (status) => {
@@ -668,24 +843,25 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
     const handleMyStatus = (newStatus) => {
         let newBonusFinal, newTotal;
+        // computeExtra ya descuenta las cartas de ataque si el estado lo anula
+        const newExtra = computeExtra(myPokemon, myAttack, newStatus, 'player');
+        setMyStatus(newStatus);
+        setMyExtra(newExtra);
         if (newStatus === "Asleep" || newStatus === "Paralized" || newStatus === "Frozen") {
             newBonusFinal = 0;
-            newTotal = sumTotal(myPokemon.totalLevel, 0, 0, myDice);
-            setMyStatus(newStatus);
+            newTotal = sumTotal(myPokemon.totalLevel, 0, 0, myDice, newExtra);
             setMyAttackPower(0);
             setMyBonusFinal(0);
             setMyTotal(newTotal);
         } else if (newStatus === "Burned") {
             newBonusFinal = myBonus;
-            newTotal = sumTotal(myPokemon.totalLevel, myAttack.strength - 1, myBonus, myDice);
-            setMyStatus(newStatus);
+            newTotal = sumTotal(myPokemon.totalLevel, myAttack.strength - 1, myBonus, myDice, newExtra);
             setMyAttackPower(myAttack.strength - 1);
             setMyBonusFinal(myBonus);
             setMyTotal(newTotal);
         } else {
             newBonusFinal = myBonus;
-            newTotal = sumTotal(myPokemon.totalLevel, myAttack.strength, myBonus, myDice);
-            setMyStatus(newStatus);
+            newTotal = sumTotal(myPokemon.totalLevel, myAttack.strength, myBonus, myDice, newExtra);
             setMyAttackPower(myAttack.strength);
             setMyBonusFinal(myBonus);
             setMyTotal(newTotal);
@@ -698,24 +874,24 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
     const handleRivalStatus = (newStatus) => {
         let newBonusFinal, newTotal;
+        const newExtra = computeExtra(rivalPokemon, rivalAttack, newStatus, 'rival');
+        setRivalStatus(newStatus);
+        setRivalExtra(newExtra);
         if (newStatus === "Asleep" || newStatus === "Paralized" || newStatus === "Frozen") {
             newBonusFinal = 0;
-            newTotal = sumTotal(rivalPokemon.totalLevel, 0, 0, rivalDice);
-            setRivalStatus(newStatus);
+            newTotal = sumTotal(rivalPokemon.totalLevel, 0, 0, rivalDice, newExtra);
             setRivalAttackPower(0);
             setRivalBonusFinal(0);
             setRivalTotal(newTotal);
         } else if (newStatus === "Burned") {
             newBonusFinal = rivalBonus;
-            newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttack.strength - 1, rivalBonus, rivalDice);
-            setRivalStatus(newStatus);
+            newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttack.strength - 1, rivalBonus, rivalDice, newExtra);
             setRivalAttackPower(rivalAttack.strength - 1);
             setRivalBonusFinal(rivalBonus);
             setRivalTotal(newTotal);
         } else {
             newBonusFinal = rivalBonus;
-            newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttack.strength, rivalBonus, rivalDice);
-            setRivalStatus(newStatus);
+            newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttack.strength, rivalBonus, rivalDice, newExtra);
             setRivalAttackPower(rivalAttack.strength);
             setRivalBonusFinal(rivalBonus);
             setRivalTotal(newTotal);
@@ -735,7 +911,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         newRows[rowIndex] = dice;
         setMyDiceRows(newRows);
         const newDice = calcDiceSum(newRows);
-        const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, newDice);
+        const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, newDice, myExtra);
         setMyDice(newDice);
         setMyTotal(newTotal);
         if (rowIndex === newRows.length - 1) setMyLocked(true);
@@ -757,7 +933,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyDiceRows(newRows);
         setMyLocked(false);
         const newDice = calcDiceSum(newRows);
-        const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, newDice);
+        const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, newDice, myExtra);
         setMyDice(newDice);
         setMyTotal(newTotal);
         if (isMyTurn) {
@@ -773,7 +949,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         newRows[rowIndex] = dice;
         setRivalDiceRows(newRows);
         const newDice = calcDiceSum(newRows);
-        const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, newDice);
+        const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, newDice, rivalExtra);
         setRivalDice(newDice);
         setRivalTotal(newTotal);
         if (rowIndex === newRows.length - 1) setRivalLocked(true);
@@ -795,7 +971,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRivalDiceRows(newRows);
         setRivalLocked(false);
         const newDice = calcDiceSum(newRows);
-        const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, newDice);
+        const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, newDice, rivalExtra);
         setRivalDice(newDice);
         setRivalTotal(newTotal);
         if (isMyTurn) {
@@ -829,6 +1005,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRivalAttackSelected('false');
         setMyTotal(0);
         setRivalTotal(0);
+        setMyExtra(0);
+        setRivalExtra(0);
         setMyDice(0);
         setRivalDice(0);
         setMyDiceRows([null]);
@@ -840,6 +1018,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyStatus('Normal');
         setRivalStatus('Normal');
         setShowCapturePrompt(false);
+        setExpandedField(null);
     };
 
     const handleAddToTeam = async (pokedexId) => {
@@ -930,6 +1109,51 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 <div className="rules-guide-float-btn" onClick={() => setShowRulesGuide(true)}>?</div>
             )}
 
+            {/* Cartas de campo activas. Solo durante la selección de ataque y los
+                dados — misma condición que la pantalla de batalla — para no
+                estorbar en el home ni al elegir Pokémon. */}
+            {fieldMoves.length > 0 && !showSetup
+                && myPokemonSelected === 'true' && rivalPokemonSelected === 'true' && (
+                <div className="sim-field-hud">
+                    {fieldMoves.map((slot, i) => {
+                        const card = getFieldMove(slot.id);
+                        if (!card) return null;
+                        // Tres estados distintos: global, tu lado, el lado del rival
+                        const tone = card.scope === 'global'
+                            ? 'global'
+                            : (slot.owner === 'player' ? 'mine' : 'rival');
+                        return (
+                            <div key={i}
+                                 className={`sim-field-card sim-field-card--${tone}`}
+                                 title="Toca para ver el efecto"
+                                 onClick={() => setExpandedField(card.id)}>
+                                <div className="sim-field-card-emoji">{card.emoji}</div>
+                                <div className="sim-field-card-name">{card.es}</div>
+                                <div className="sim-field-card-side">
+                                    {tone === 'global' ? 'los dos lados'
+                                        : tone === 'mine' ? 'tu lado' : 'lado del rival'}
+                                </div>
+                                {card.kind === 'reminder' && (
+                                    <div className="sim-field-card-manual">manual</div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* La carta a tamaño completo, para leer su efecto */}
+            {expandedField && (
+                <div className="sim-field-zoom" onClick={() => setExpandedField(null)}>
+                    {getFieldCardImg(expandedField)
+                        ? <img className="sim-field-zoom-img"
+                               src={getFieldCardImg(expandedField)}
+                               alt={expandedField} />
+                        : <div className="sim-field-zoom-fallback">{expandedField}</div>}
+                    <div className="sim-field-zoom-hint">Toca para cerrar</div>
+                </div>
+            )}
+
             {/* Info nombre/monedas — solo en setup */}
             {(!rival || showSetup) && (
                 <div className="sim-player-info">
@@ -943,6 +1167,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
             <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} />
             <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
+            <ModalAttach
+                show={attachPkmId !== null}
+                onClose={() => setAttachPkmId(null)}
+                currentPlayer={player}
+                pokemonId={attachPkmId}
+                onAttach={onAttach}
+                attachTM={attachTM}
+                attachMega={attachMega}
+            />
 
             {/* Modal info pokemon salvaje */}
             {showWildModal && wildChain && (
@@ -1043,11 +1276,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
             {/* Modal rivales secundarios */}
             {showOtherRivals && (
-                <div className="modal-backdrop" onClick={() => setShowOtherRivals(false)}>
+                <div className="modal-backdrop" onClick={() => { setShowOtherRivals(false); setSelectedLeader(null); }}>
                     <div className="sim-other-rivals-modal" onClick={e => e.stopPropagation()}>
                         <div className="sim-other-rivals-title">
                             Elite 4 / Campeón / Rival
-                            <button className="sim-other-rivals-close" onClick={() => setShowOtherRivals(false)}>✕</button>
+                            <button className="sim-other-rivals-close" onClick={() => { setShowOtherRivals(false); setSelectedLeader(null); }}>✕</button>
                         </div>
 
                         {/* Jugadores */}
@@ -1065,39 +1298,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 </div>
                             </div>
                         )}
-                        <div className="sim-other-rivals-group">
-                            <div className="sim-other-rivals-label">Elite 4</div>
-                            <div className="sim-other-rivals-row">
-                                {leaders.filter(l => l.category === 'elite').map(l => {
-                                    const img = l.img ? getPkmImg(l.img, generation) : null;
-                                    return <div key={l.leaderKey} className="Elite"
-                                        style={img ? { backgroundImage: `url(${img})` } : {}}
-                                        onClick={() => { handleSimLeader(l.leaderKey, l.uid1, l.uid2); setShowOtherRivals(false); }} />;
-                                })}
-                            </div>
-                        </div>
-                        <div className="sim-other-rivals-group">
-                            <div className="sim-other-rivals-label">Campeón / Especial</div>
-                            <div className="sim-other-rivals-row">
-                                {leaders.filter(l => l.category === 'champion' || l.category === 'rocket').map(l => {
-                                    const img = l.img ? getPkmImg(l.img, generation) : null;
-                                    return <div key={l.leaderKey} className="Elite"
-                                        style={img ? { backgroundImage: `url(${img})` } : {}}
-                                        onClick={() => { handleSimLeader(l.leaderKey, l.uid1, l.uid2); setShowOtherRivals(false); }} />;
-                                })}
-                            </div>
-                        </div>
-                        <div className="sim-other-rivals-group">
-                            <div className="sim-other-rivals-label">Rival</div>
-                            <div className="sim-other-rivals-row">
-                                {leaders.filter(l => l.category === 'rival').map(l => {
-                                    const img = l.img ? getPkmImg(l.img, generation) : null;
-                                    return <div key={l.leaderKey} className="Elite"
-                                        style={img ? { backgroundImage: `url(${img})` } : {}}
-                                        onClick={() => { handleSimLeader(l.leaderKey, l.uid1, l.uid2); setShowOtherRivals(false); }} />;
-                                })}
-                            </div>
-                        </div>
+                        {renderLeaderGroup('Elite 4', leaders.filter(l => l.category === 'elite'))}
+                        {renderLeaderGroup('Campeón / Especial', leaders.filter(l => l.category === 'champion' || l.category === 'rocket'))}
+                        {renderLeaderGroup('Rival — elige el color de tu casilla', leaders.filter(l => l.category === 'rival'))}
                     </div>
                 </div>
             )}
@@ -1153,31 +1356,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
                         {/* Pokemon 0-2 */}
                         <div className="sim-team-col">
-                            {player.pokemons.slice(0, 3).map(pkm => {
-                                const pkmImg = getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation);
-                                return (
-                                    <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
-                                        <div className="sim-mini-pkm-img"
-                                            style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
-                                            onClick={() => onChangeState(player.id, pkm.id, { source: 'manual-player', playerName: player.name })} />
-                                        <div className="sim-mini-pkm-name">{pkm.name}</div>
-                                        <div className="sim-mini-pkm-level">
-                                            {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
-                                        </div>
-                                        <div className="sim-mini-pkm-icons">
-                                            {pkm.attach !== 'None' && (
-                                                <div className={`sim-mini-attach attached-item ${getAttachedClass(pkm.attach)}`} />
-                                            )}
-                                            {pkm.status !== 'Normal' && (
-                                                <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
-                                            )}
-                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1 || canEvolveWithStone(pkm)) && (
-                                                <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {player.pokemons.slice(0, 3).map(renderMiniPkm)}
                         </div>
 
                         {/* Centro: líderes + rivals btn */}
@@ -1212,31 +1391,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
                         {/* Pokemon 3-5 */}
                         <div className="sim-team-col">
-                            {player.pokemons.slice(3, 6).map(pkm => {
-                                const pkmImg = getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation);
-                                return (
-                                    <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
-                                        <div className="sim-mini-pkm-img"
-                                            style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
-                                            onClick={() => onChangeState(player.id, pkm.id, { source: 'manual-player', playerName: player.name })} />
-                                        <div className="sim-mini-pkm-name">{pkm.name}</div>
-                                        <div className="sim-mini-pkm-level">
-                                            {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
-                                        </div>
-                                        <div className="sim-mini-pkm-icons">
-                                            {pkm.attach !== 'None' && (
-                                                <div className={`sim-mini-attach attached-item ${getAttachedClass(pkm.attach)}`} />
-                                            )}
-                                            {pkm.status !== 'Normal' && (
-                                                <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
-                                            )}
-                                            {((pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1 || canEvolveWithStone(pkm)) && (
-                                                <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {player.pokemons.slice(3, 6).map(renderMiniPkm)}
                         </div>
 
                     </div>
@@ -1430,12 +1585,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             <div className='MyPokemon'>
                                 <div className='Attack-selected-mypoke'><Attack attack={myAttack} bonus={myBonusFinal} /></div>
                                 <div className='MyTotal_label'>
-                                    <div>Level</div>+<div>Attack</div>+<div>Bonus</div>+<div>Dice</div>=<div>Total</div>
+                                    <div>Level</div>+<div>Attack</div>+<div>Bonus</div>+<div>Extra</div>+<div>Dice</div>=<div>Total</div>
                                 </div>
                                 <div className='MyTotal'>
                                     <div>{myPokemon.totalLevel}</div>+
                                     <div>{myAttackPower}</div>+
                                     <div>{myBonusFinal}</div>+
+                                    <div className={myExtra !== 0 ? 'total-extra-on' : ''}>{myExtra}</div>+
                                     <div>{calcDiceSum(myDiceRows)}</div>=
                                     <div>{myTotal}</div>
                                 </div>
@@ -1466,12 +1622,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             <div className='RivalPokemon'>
                                 <div className='Attack-selected-rival'><Attack attack={rivalAttack} bonus={rivalBonusFinal} /></div>
                                 <div className='RivalTotal_label'>
-                                    <div>Level</div>+<div>Attack</div>+<div>Bonus</div>+<div>Dice</div>=<div>Total</div>
+                                    <div>Level</div>+<div>Attack</div>+<div>Bonus</div>+<div>Extra</div>+<div>Dice</div>=<div>Total</div>
                                 </div>
                                 <div className='RivalTotal'>
                                     <div>{rivalPokemon.totalLevel}</div>+
                                     <div>{rivalAttackPower}</div>+
                                     <div>{rivalBonusFinal}</div>+
+                                    <div className={rivalExtra !== 0 ? 'total-extra-on' : ''}>{rivalExtra}</div>+
                                     <div>{calcDiceSum(rivalDiceRows)}</div>=
                                     <div>{rivalTotal}</div>
                                 </div>
@@ -1612,6 +1769,19 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onToggle={handleToggleFrontier}
             />
             <MusicPlayer />
+
+            {/* Tabla de tipos: siempre accesible, al lado del botón de música.
+                El icono son 4 tipos reales del juego, para que se lea de golpe. */}
+            <div className="type-chart-fab" title="Tabla de tipos" onClick={() => setShowTypeChart(true)}>
+                <div className="type-chart-fab-grid">
+                    {['FIRE', 'WATER', 'GRASS', 'ELECTRIC'].map(t => {
+                        const img = getTypeIcon(t);
+                        return <div key={t} className="type-chart-fab-type"
+                                    style={img ? { backgroundImage: `url(${img})` } : {}} />;
+                    })}
+                </div>
+            </div>
+            <ModalTypeChart show={showTypeChart} onClose={() => setShowTypeChart(false)} />
         </div>
     );
 };

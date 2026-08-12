@@ -586,6 +586,20 @@ export const changeWeather = async (req, res) => {
     }
 };
 
+// Coloca o quita una carta de campo en uno de los 2 espacios.
+// slot: 0 | 1 · id: null para vaciar · owner: 'player' | 'rival' (solo cartas de equipo)
+export const setFieldMove = async (req, res) => {
+    try {
+        const { slot, id, owner } = req.body;
+        const game = getGame();
+        game.setFieldMove(slot, id, owner);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Carta de campo actualizada', fieldMoves: game.fieldMoves });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 //New Battle features
 
 export const setMyBattlePokemon = async (req, res) => {
@@ -832,7 +846,10 @@ export const getLeadersByGeneration = async (req, res) => {
 
         // RIVAL_ID y RIVAL_NAME vienen directo de la DB — sin hardcode
         const rows = await db.all(
-            "SELECT UID, POKEDEX, RIVAL_ID, RIVAL_NAME FROM pokemonsLeaders WHERE GENERATION = ? AND RIVAL_ID IS NOT NULL ORDER BY UID",
+            `SELECT UID, POKEDEX, NAME, LEVEL, TYPE1, TYPE2, RIVAL_ID, RIVAL_NAME
+             FROM pokemonsLeaders
+             WHERE GENERATION = ? AND RIVAL_ID IS NOT NULL
+             ORDER BY UID`,
             [generation]
         );
 
@@ -852,7 +869,16 @@ export const getLeadersByGeneration = async (req, res) => {
             const key = row.RIVAL_ID;
             const num = parseInt(row.UID.match(/\d+$/)[0]);
             if (!map[key]) map[key] = { rivalId: key, rivalName: row.RIVAL_NAME, img: row.POKEDEX, pokemons: [] };
-            map[key].pokemons.push({ uid: row.UID, num });
+            map[key].pokemons.push({
+                uid: row.UID,
+                num,
+                // Cada Pokémon del líder tiene su propia imagen (RivPink1 / RivPink2, gym1_1 / gym1_2…)
+                img: row.POKEDEX,
+                name: (row.NAME || '').replace(/<\/?i>/g, '').trim(),
+                level: row.LEVEL,
+                type1: row.TYPE1,
+                type2: row.TYPE2,
+            });
         }
 
         const CATEGORY_ORDER = ['gym', 'elite', 'champion', 'rocket', 'rival', 'other'];
@@ -868,6 +894,8 @@ export const getLeadersByGeneration = async (req, res) => {
                 uid1: sorted[0]?.uid,
                 uid2: sorted[1]?.uid,
                 img: l.img,
+                // Equipo completo, para poder mostrarlo antes de retar
+                team: sorted,
                 category,
                 sortKey,
             };
@@ -909,6 +937,47 @@ export const getPokemonList = async (req, res) => {
         }));
 
         res.status(200).json(list);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Metrónomo: devuelve un Pokémon al azar para que el master lea su carta física.
+// Solo formas normales con POKEDEX de 4 dígitos (sin megas, G-Max ni formas alternas).
+export const getRandomPokemon = async (req, res) => {
+    try {
+        const { color } = req.query;
+        const db = await openDb();
+
+        const filters = [
+            "FORM = 'Normal'",
+            "POKEDEX GLOB '[0-9][0-9][0-9][0-9]'"
+        ];
+        const params = [];
+        if (color) {
+            filters.push('TOKEN_COLOR = ?');
+            params.push(color);
+        }
+
+        const row = await db.get(
+            `SELECT POKEDEX, NAME, TYPE1, TYPE2, LEVEL, TOKEN_COLOR
+             FROM pokemons
+             WHERE ${filters.join(' AND ')}
+             ORDER BY RANDOM()
+             LIMIT 1`,
+            params
+        );
+
+        if (!row) return res.status(404).json({ message: 'Sin Pokémon para ese color' });
+
+        res.status(200).json({
+            pokedex: row.POKEDEX,
+            name: (row.NAME || '').replace(/<\/?i>/g, '').trim(),
+            type1: row.TYPE1,
+            type2: row.TYPE2,
+            level: row.LEVEL,
+            tokenColor: row.TOKEN_COLOR,
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

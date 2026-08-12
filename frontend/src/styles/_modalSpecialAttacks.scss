@@ -1,0 +1,257 @@
+.special-attacks-modal{
+    background-color: rgb(28, 28, 40);
+    color: beige;
+    width: 46vw;
+    min-width: 560px;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 1.25rem 1.75rem 1.75rem;
+    border-radius: 8px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sa-title{
+    position: relative;
+    width: 100%;
+    text-align: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+}
+.sa-close{
+    position: absolute;
+    top: -.25rem;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: rgba(237, 227, 241, .6);
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+.sa-close:hover{ color: coral; }
+
+.sa-tabs{
+    display: flex;
+    gap: .5rem;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+.sa-tab{
+    flex: 1;
+    padding: .45rem .5rem;
+    font-size: .95rem;
+    border: solid 1px rgba(224, 226, 247, .25);
+    border-radius: 6px;
+    background-color: transparent;
+    color: rgba(237, 227, 241, .65);
+    cursor: pointer;
+}
+.sa-tab-active{
+    background-color: rgba(255, 127, 80, .18);
+    border-color: coral;
+    color: beige;
+}
+
+.sa-panel{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.sa-result-box{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    width: 100%;
+    min-height: 18vh;
+    box-sizing: border-box;
+    padding: 1rem;
+    border: solid 1px rgba(224, 226, 247, .25);
+    border-radius: 8px;
+    background-color: rgba(245, 247, 249, .06);
+}
+.sa-result-box--metro{
+    gap: .9rem;
+    margin-top: .75rem;
+    padding: 1.25rem;
+}
+.sa-placeholder{
+    color: rgba(237, 227, 241, .4);
+    font-style: italic;
+    font-size: .9rem;
+    text-align: center;
+}
+.sa-error{
+    color: #e74c3c;
+    font-size: .9rem;
+    text-align: center;
+}
+
+/* ── Dado de tipos ─────────────────────────────────────────── */
+.sa-type-icon{
+    width: min(14vw, 22vh);
+    height: min(14vw, 22vh);
+    min-width: 130px;
+    min-height: 130px;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.sa-type-name{
+    font-size: 2.2rem;
+    letter-spacing: .14em;
+    color: coral;
+}
+.sa-spinning{
+    opacity: .55;
+}
+
+/* ── Metronomo ─────────────────────────────────────────────── */
+.sa-color-label{
+    align-self: flex-start;
+    font-size: .85rem;
+    color: rgba(237, 227, 241, .6);
+    margin-bottom: .4rem;
+}
+.sa-colors{
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+.sa-color{
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    border: solid 2px transparent;
+    cursor: pointer;
+    transition: transform .12s ease;
+}
+.sa-color:hover{ transform: scale(1.12); }
+.sa-color-selected{
+    border-color: beige;
+    transform: scale(1.12);
+}
+.sa-color-any{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(245, 247, 249, .12);
+    color: rgba(237, 227, 241, .75);
+    font-size: 1rem;
+}
+
+.sa-token-wrap{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(38vw, 56vh);
+    height: min(38vw, 56vh);
+    min-width: 320px;
+    min-height: 320px;
+    flex-shrink: 0;
+    border: solid 3px rgba(224, 226, 247, .35);
+    border-radius: 50%;
+    background-color: rgba(245, 247, 249, .08);
+    overflow: hidden;
+    cursor: zoom-in;
+}
+.sa-token-img{
+    width: 98%;
+    height: 98%;
+    object-fit: contain;
+    /* Los tokens son de 914x914, así que aguantan el escalado sin verse pixeleados */
+    image-rendering: -webkit-optimize-contrast;
+}
+.sa-token-missing{
+    font-size: 1.1rem;
+    color: rgba(237, 227, 241, .5);
+}
+.sa-pkm-info{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+}
+.sa-pkm-name{
+    font-size: 1.6rem;
+}
+.sa-pkm-types{
+    display: flex;
+    gap: .4rem;
+}
+.sa-type-mini{
+    width: 2.6rem;
+    height: 2.6rem;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.sa-pkm-meta{
+    font-size: .9rem;
+    color: rgba(237, 227, 241, .5);
+}
+
+/* Zoom a pantalla completa para leer los ataques del token */
+.sa-zoom-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    background-color: rgba(10, 10, 16, .93);
+    cursor: zoom-out;
+}
+.sa-zoom-img{
+    width: auto;
+    height: auto;
+    max-width: 94vw;
+    max-height: 88vh;
+    object-fit: contain;
+}
+.sa-zoom-hint{
+    color: rgba(237, 227, 241, .55);
+    font-size: .95rem;
+}
+
+.sa-roll-btn{
+    margin-top: 1.25rem;
+    padding: .5rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    background-color: coral;
+    color: rgb(28, 28, 40);
+    cursor: pointer;
+}
+.sa-roll-btn:disabled{
+    background-color: rgba(245, 247, 249, .15);
+    color: rgba(237, 227, 241, .35);
+    cursor: not-allowed;
+}
+
+/* Boton en la barra inferior del master */
+.Button-special-attacks{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3vw;
+    height: 3vw;
+    border-radius: 50%;
+    background-color: rgba(255, 127, 80, .18);
+    border: solid 1px coral;
+    color: beige;
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+.Button-special-attacks:hover{
+    background-color: rgba(255, 127, 80, .35);
+}
