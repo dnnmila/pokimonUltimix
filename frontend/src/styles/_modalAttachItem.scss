@@ -2,7 +2,9 @@
     background-color: rgb(28, 28, 40);
     color: beige;
     width: 23vw;
-    height: 50vh;
+    height: auto;
+    min-height: 50vh;
+    max-height: 85vh;
     padding: 1.5rem;
     border-radius: 5px;
     z-index: 2; /* Asegúrate de que sea más alto que el resto del contenido */
@@ -68,15 +70,24 @@ transform: scale(1.5);
     background-size: contain;
     background-position: center center;
     background-repeat: no-repeat;
+    transition: transform .12s ease;
 }
 .TM-attack:hover{
     cursor: pointer;
     transform: scale(1.5);
 }
+/* La selección se mantiene aunque el cursor se vaya (va después de :hover a propósito) */
+.TM-attack--selected,
+.TM-attack--selected:hover{
+    transform: scale(1.35);
+    filter: drop-shadow(0 0 4px coral);
+}
 .Type-TM{
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: .35rem;
     width: 90%;
 }
 .Attach-TM-options{
@@ -84,6 +95,50 @@ transform: scale(1.5);
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
+}
+
+/* Resumen del TM antes de adjuntarlo */
+.TM-preview{
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 90%;
+    box-sizing: border-box;
+    padding: .5rem .75rem;
+    margin-bottom: .75rem;
+    border: solid 1px rgba(224, 226, 247, .35);
+    border-radius: 8px;
+    background-color: rgba(245, 247, 249, .08);
+}
+.TM-preview-icon{
+    width: 3vw;
+    height: 5vh;
+    flex-shrink: 0;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+.TM-preview-icon--empty{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: rgba(237, 227, 241, .4);
+    border: dashed 1px rgba(237, 227, 241, .3);
+    border-radius: 50%;
+}
+.TM-preview-type{
+    font-size: 1.1rem;
+    letter-spacing: .05em;
+}
+.TM-preview-power{
+    font-size: .9rem;
+    color: coral;
+}
+.TM-preview--placeholder{
+    color: rgba(237, 227, 241, .45);
+    font-style: italic;
 }
 
 .Level-TM-options{
@@ -96,9 +151,45 @@ transform: scale(1.5);
 .TM-Level{
     color: rgb(237, 227, 241);
     font-size: 1.5rem;
+    transition: transform .12s ease, color .12s ease;
 }
 .TM-Level:hover{
     cursor: pointer;
     transform: scale(1.5);
     color: coral;
+}
+.TM-Level--selected,
+.TM-Level--selected:hover{
+    transform: scale(1.4);
+    color: coral;
+    text-shadow: 0 0 6px rgba(255, 127, 80, .6);
+}
+
+.TM-actions{
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1.25rem;
+}
+.TM-add-btn,
+.TM-back-btn{
+    padding: .4rem 1.2rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+.TM-add-btn{
+    background-color: coral;
+    color: rgb(28, 28, 40);
+}
+.TM-add-btn:disabled{
+    background-color: rgba(245, 247, 249, .15);
+    color: rgba(237, 227, 241, .35);
+    cursor: not-allowed;
+}
+.TM-back-btn{
+    background-color: transparent;
+    color: rgba(237, 227, 241, .7);
+    border: solid 1px rgba(224, 226, 247, .35);
 }

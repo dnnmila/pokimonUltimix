@@ -11,6 +11,9 @@ class Game {
         this.CurrentRival ={};
         this.weather = 'Normal';
         this.weatherTurns = 0;
+        // 2 espacios de carta de campo. Cada slot: { id, owner } | null
+        // owner es 'player' o 'rival' en las cartas de equipo, null en las globales.
+        this.fieldMoves = [null, null];
         //Battle
         this.myPlayerPkm= [];
         this.myPlayerPkmAtk= [];
@@ -50,6 +53,16 @@ class Game {
     changeWeather(weather) {
         this.weather = weather;
         this.weatherTurns = 0;
+    }
+
+    setFieldMove(slot, id, owner) {
+        if (slot !== 0 && slot !== 1) return;
+        if (!this.fieldMoves) this.fieldMoves = [null, null];
+        this.fieldMoves[slot] = id ? { id, owner: owner || null } : null;
+    }
+
+    clearFieldMoves() {
+        this.fieldMoves = [null, null];
     }
 
     addPlayer(player) {
@@ -220,6 +233,8 @@ class Game {
 
         this.battlePublic = false;
         this.battlePhase = 'PokemonSelection';
+        // Las cartas de campo se descartan al terminar la batalla
+        this.clearFieldMoves();
         this.myPlayerPkm = [];
         this.myRivalPkm = [];
         this.myPlayerPkmAtk = [];
@@ -263,6 +278,8 @@ class Game {
 
         this.battlePublic = false;
         this.battlePhase = 'PokemonSelection';
+        // Las cartas de campo se descartan al terminar la batalla
+        this.clearFieldMoves();
         this.myPlayerPkm = [];
         this.myRivalPkm = [];
         this.myPlayerPkmAtk = [];

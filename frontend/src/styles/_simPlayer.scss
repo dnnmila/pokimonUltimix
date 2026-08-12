@@ -561,10 +561,41 @@
     align-items: center;
     gap: 0.3rem;
     min-height: 1.4rem;
+}
+
+// Barra de attach al pie de la tarjeta. Ancho completo a propósito: la imagen
+// de arriba es el toggle de estado y los targets chicos se confundían con ella.
+.sim-mini-attach-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 1.5rem;
+    margin-top: 0.15rem;
+    border: 1px dashed rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+
+    &:hover {
+        border-color: #f0d080;
+        color: #f0d080;
+        background: rgba(240, 208, 128, 0.1);
+    }
+
+    &.sim-mini-attach-bar--filled {
+        border-style: solid;
+        border-color: rgba(162, 112, 216, 0.6);
+        background: rgba(162, 112, 216, 0.12);
+    }
 
     .attached-item {
-        width: 1.4rem;
-        height: 1.4rem;
+        width: 1.3rem;
+        height: 1.3rem;
         margin-top: 0;
         background-size: contain;
         background-repeat: no-repeat;
@@ -748,6 +779,97 @@
     justify-content: center;
 }
 
+// Rival por color de casilla: se elige el color y se ve el equipo antes de retar
+.sim-rival-card {
+    border: 3px solid transparent;
+    box-sizing: border-box;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.sim-rival-card--selected {
+    transform: scale(1.06);
+}
+
+.sim-rival-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    margin-top: 1rem;
+    padding: 1rem 1.25rem 1.25rem;
+    border: 2px solid rgba(240, 208, 128, 0.5);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sim-rival-preview-title {
+    color: #f0d080;
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+}
+.sim-rival-preview-color {
+    font-weight: bold;
+}
+
+.sim-rival-preview-team {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.sim-rival-preview-pkm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sim-rival-preview-img {
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.sim-rival-preview-name {
+    color: white;
+    font-size: 1.05rem;
+    font-weight: bold;
+}
+
+.sim-rival-preview-level {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.sim-rival-preview-types {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.15rem;
+}
+.sim-rival-preview-type {
+    width: 2rem;
+    height: 2rem;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.sim-rival-challenge-btn {
+    padding: 0.55rem 1.8rem;
+    font-size: 1.05rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    background: #f0d080;
+    color: rgb(20, 20, 35);
+    cursor: pointer;
+
+    &:hover { background: #f6e2a6; }
+}
+
 .sim-player-rival-card {
     display: flex;
     flex-direction: column;
@@ -858,6 +980,11 @@
 
     .sim-mini-pkm-icons {
         min-height: 1.1rem;
+    }
+
+    .sim-mini-attach-bar {
+        min-height: 1.25rem;
+        font-size: 0.6rem;
         .attached-item { width: 1.1rem; height: 1.1rem; }
     }
 
@@ -924,6 +1051,11 @@
 
     .sim-mini-pkm-icons {
         min-height: 1.1rem;
+    }
+
+    .sim-mini-attach-bar {
+        min-height: 1.25rem;
+        font-size: 0.6rem;
         .attached-item { width: 1.1rem; height: 1.1rem; }
     }
 
@@ -1225,6 +1357,142 @@
 
     &::-webkit-scrollbar { width: 5px; }
     &::-webkit-scrollbar-thumb { background: rgba(74,144,217,0.5); border-radius: 4px; }
+}
+
+// ── Tabla de tipos ──────────────────────────────────────────────────────────
+// Botón flotante, hermano del de música (que va en bottom 1.5 / left 1.5)
+.type-chart-fab {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 5.6rem;
+    z-index: 9999;
+    width: 3.2rem;
+    height: 3.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e, #2a2a4e);
+    border: 2px solid #4a90d9;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(74, 144, 217, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(74, 144, 217, 0.6);
+    }
+}
+// 4 iconos de tipo en rejilla 2x2 dentro del círculo
+.type-chart-fab-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    width: 2.1rem;
+    height: 2.1rem;
+}
+.type-chart-fab-type {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.type-chart-modal {
+    background: rgba(8, 8, 24, 0.98);
+    border: 2px solid #4a90d9;
+    border-radius: 14px;
+    padding: 1.2rem;
+    width: 92vw;
+    max-width: 680px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+.type-chart-title {
+    position: relative;
+    text-align: center;
+    color: #4a90d9;
+    font-size: 1.3rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+}
+.type-chart-close {
+    position: absolute;
+    top: -0.2rem;
+    right: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+.type-chart-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { width: 5px; }
+    &::-webkit-scrollbar-thumb { background: rgba(74, 144, 217, 0.5); border-radius: 4px; }
+}
+.type-chart-note {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+.type-chart-img {
+    width: 100%;
+    max-width: 620px;
+    height: auto;
+    border-radius: 8px;
+    cursor: zoom-in;
+}
+.type-chart-empty {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    text-align: center;
+    line-height: 1.6;
+}
+
+// A pantalla completa, para leer los iconos chicos
+.type-chart-zoom {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1rem;
+    background: rgba(6, 6, 14, 0.95);
+    cursor: zoom-out;
+    overflow: auto;
+}
+.type-chart-zoom-img {
+    max-width: 96vw;
+    max-height: 88vh;
+    object-fit: contain;
+}
+.type-chart-zoom-hint {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .type-chart-fab {
+        bottom: 1rem;
+        left: 4.4rem;
+        width: 2.8rem;
+        height: 2.8rem;
+    }
+    .type-chart-fab-grid { width: 1.8rem; height: 1.8rem; }
 }
 
 // Tab iconos

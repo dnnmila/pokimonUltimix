@@ -1,0 +1,374 @@
+// ── Botón de cartas de campo en la barra inferior del master ────────────────
+.Button-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3vw;
+    height: 3vw;
+    border-radius: 50%;
+    background-color: rgba(120, 180, 240, 0.18);
+    border: solid 1px #78b4f0;
+    font-size: 1.3rem;
+    cursor: pointer;
+
+    &:hover { background-color: rgba(120, 180, 240, 0.35); }
+}
+.Button-field--active {
+    border-color: #f0d080;
+    background-color: rgba(240, 208, 128, 0.25);
+}
+.Button-field-count {
+    position: absolute;
+    top: -0.3rem;
+    right: -0.3rem;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f0d080;
+    color: rgb(20, 20, 35);
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+// ── Modal del master ────────────────────────────────────────────────────────
+.field-picker {
+    background-color: rgb(28, 28, 40);
+    color: beige;
+    width: 62vw;
+    min-width: 620px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem 1.5rem;
+    border-radius: 8px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.field-picker-title {
+    position: relative;
+    text-align: center;
+    font-size: 1.4rem;
+}
+.field-picker-close {
+    position: absolute;
+    top: -0.25rem;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: rgba(237, 227, 241, 0.6);
+    font-size: 1.1rem;
+    cursor: pointer;
+
+    &:hover { color: coral; }
+}
+
+// Aviso cuando los 2 espacios ya están ocupados
+.field-warning {
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(231, 76, 60, 0.6);
+    border-radius: 8px;
+    background: rgba(231, 76, 60, 0.15);
+    color: #f0a0a0;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+// Estado de una carta que ya está en juego
+.field-option-active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    width: 100%;
+}
+.field-option-side {
+    font-size: 0.55rem;
+    letter-spacing: 0.03em;
+    text-align: center;
+    line-height: 1.2;
+}
+.field-option-side--global { color: #78b4f0; }
+.field-option-side--player { color: #7ed67e; }
+.field-option-side--rival  { color: #e88; }
+
+.field-option-remove {
+    width: 100%;
+    padding: 0.1rem;
+    border: none;
+    border-radius: 4px;
+    background: rgba(231, 76, 60, 0.75);
+    color: white;
+    font-size: 0.6rem;
+    cursor: pointer;
+
+    &:hover { background: rgba(231, 76, 60, 1); }
+}
+
+// Paso intermedio: la carta ya está elegida y falta decir a quién afecta
+.field-side-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 1rem;
+    border: 2px solid #e8a87e;
+    border-radius: 12px;
+    background: rgba(232, 168, 126, 0.08);
+}
+.field-side-step-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+.field-side-step-img {
+    width: 9rem;
+    height: 9rem;
+    object-fit: contain;
+    border-radius: 8px;
+}
+.field-side-step-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+.field-side-step-note {
+    max-width: 26rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(237, 227, 241, 0.65);
+}
+.field-side-step-ask {
+    font-size: 1.1rem;
+    color: #e8a87e;
+    font-weight: bold;
+}
+.field-side-step-btns {
+    display: flex;
+    gap: 1rem;
+}
+.field-side-btn {
+    padding: 0.6rem 2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border: 2px solid;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.field-side-btn--player {
+    border-color: #7ed67e;
+    color: #7ed67e;
+
+    &:hover { background: rgba(126, 214, 126, 0.18); }
+}
+.field-side-btn--rival {
+    border-color: #e88;
+    color: #e88;
+
+    &:hover { background: rgba(238, 136, 136, 0.18); }
+}
+.field-side-cancel {
+    background: transparent;
+    border: none;
+    color: rgba(237, 227, 241, 0.55);
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:hover { color: beige; }
+}
+
+// Catálogo, partido por alcance
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+    background: rgba(245, 247, 249, 0.04);
+}
+.field-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid rgba(224, 226, 247, 0.15);
+}
+.field-group-title--global { color: #78b4f0; }
+.field-group-title--team   { color: #e8a87e; }
+.field-group-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: beige;
+    font-size: 0.65rem;
+}
+
+.field-picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+}
+.field-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    width: 6.5rem;
+    padding: 0.35rem;
+    border: 1px solid rgba(224, 226, 247, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+
+    &:hover {
+        border-color: #78b4f0;
+        transform: translateY(-2px);
+    }
+}
+.field-option--in-use {
+    border-color: #f0d080;
+    background: rgba(240, 208, 128, 0.12);
+}
+.field-option-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    border-radius: 4px;
+}
+.field-option-name {
+    font-size: 0.7rem;
+    text-align: center;
+}
+.field-option-tag { font-size: 0.55rem; }
+.field-tag-auto   { color: #7ed67e; }
+.field-tag-manual { color: #e8c07e; }
+
+.field-picker-note {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: rgba(237, 227, 241, 0.5);
+    text-align: center;
+}
+
+// ── HUD de cartas de campo en SimPlayer ─────────────────────────────────────
+.sim-field-hud {
+    position: fixed;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    max-width: 92vw;
+}
+
+.sim-field-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    width: 6.5rem;
+    padding: 0.5rem 0.4rem 0.45rem;
+    border: 2px solid;
+    border-radius: 12px;
+    background: rgba(10, 10, 30, 0.92);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+
+    &:hover { transform: translateY(2px) scale(1.04); }
+}
+
+.sim-field-card-emoji {
+    font-size: 2.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+.sim-field-card-name {
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.15;
+}
+.sim-field-card-side {
+    font-size: 0.6rem;
+    color: rgba(237, 227, 241, 0.55);
+}
+.sim-field-card-manual {
+    margin-top: 0.15rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: rgba(240, 208, 128, 0.2);
+    color: #f0d080;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+// Tres tonos: global, tu lado, lado del rival
+.sim-field-card--global {
+    border-color: rgba(120, 180, 240, 0.75);
+    box-shadow: 0 0 12px rgba(120, 180, 240, 0.3);
+    .sim-field-card-name { color: #78b4f0; }
+}
+.sim-field-card--mine {
+    border-color: rgba(126, 214, 126, 0.75);
+    box-shadow: 0 0 12px rgba(126, 214, 126, 0.3);
+    .sim-field-card-name { color: #7ed67e; }
+}
+.sim-field-card--rival {
+    border-color: rgba(231, 76, 60, 0.75);
+    box-shadow: 0 0 12px rgba(231, 76, 60, 0.3);
+    .sim-field-card-name { color: #e88; }
+}
+
+// La carta a tamaño completo
+.sim-field-zoom {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: rgba(10, 10, 16, 0.93);
+    cursor: zoom-out;
+}
+.sim-field-zoom-img {
+    max-width: 88vw;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 12px;
+}
+.sim-field-zoom-fallback {
+    color: rgba(237, 227, 241, 0.6);
+    font-size: 1.2rem;
+}
+.sim-field-zoom-hint {
+    color: rgba(237, 227, 241, 0.55);
+    font-size: 0.95rem;
+}
+
+// Resalta la columna Extra del desglose cuando no es 0
+.total-extra-on {
+    color: #78b4f0;
+    font-weight: bold;
+}

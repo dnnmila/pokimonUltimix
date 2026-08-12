@@ -1,6 +1,8 @@
 
 import React ,{ useState }from 'react';
+import POKEMON_TYPES from '../../pokemonTypes';
 
+const TM_POWERS = [1,2,3,4,5];
 
 const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,attachMega}) => {
     const [openTM, setOpenTM] = useState('false');
@@ -46,11 +48,15 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
     }
 
     const handleOpenTM = () => {
+        setTmType(undefined);
+        setTmLevel(0);
         setOpenTM('true');
     }
     const handleCloseTM = () => {
         setOpenTM('false');
     }
+
+    const tmReady = tmType !== undefined && tmLevel > 0;
 
     return (
         <div className="modal-backdrop">
@@ -66,34 +72,39 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
                <div onClick={() => attachItemHandle(currentPlayer,pokemonId,"None")} className='Attach-item-option attach-Remove'></div>
                </div> )}
                {openTM === 'true' && ( <div className='Attach-TM-options'>
+                    <div className='TM-preview'>
+                        {tmType
+                            ? <div className={`TM-preview-icon Attack_${tmType}`}></div>
+                            : <div className='TM-preview-icon TM-preview-icon--empty'>?</div>}
+                        <div className='TM-preview-text'>
+                            <div className={`TM-preview-type ${!tmType ? 'TM-preview--placeholder' : ''}`}>
+                                {tmType || 'Elige un tipo'}
+                            </div>
+                            <div className={`TM-preview-power ${tmLevel === 0 ? 'TM-preview--placeholder' : ''}`}>
+                                {tmLevel > 0 ? `Power ${tmLevel}` : 'Elige el power'}
+                            </div>
+                        </div>
+                    </div>
                     <div className='Type-TM' >
-                        <div className="TM-attack Attack_NORMAL" onClick={()=>handleTM_type("NORMAL")}></div>
-                        <div className="TM-attack Attack_BUG" onClick={()=>handleTM_type("BUG")}></div>
-                        <div className="TM-attack Attack_DARK" onClick={()=>handleTM_type("DARK")}></div>
-                        <div className="TM-attack Attack_DRAGON" onClick={()=>handleTM_type("DRAGON")}></div>
-                        <div className="TM-attack Attack_ELECTRIC" onClick={()=>handleTM_type("ELECTRIC")}></div>
-                        <div className="TM-attack Attack_FAIRY" onClick={()=>handleTM_type("FAIRY")}></div>
-                        <div className="TM-attack Attack_FIGHTING" onClick={()=>handleTM_type("FIGHTING")}></div>
-                        <div className="TM-attack Attack_FIRE" onClick={()=>handleTM_type("FIRE")}></div>
-                        <div className="TM-attack Attack_FLYING" onClick={()=>handleTM_type("FLYING")}></div>
-                        <div className="TM-attack Attack_GHOST" onClick={()=>handleTM_type("GHOST")}></div>
-                        <div className="TM-attack Attack_GRASS" onClick={()=>handleTM_type("GRASS")}></div>
-                        <div className="TM-attack Attack_GROUND" onClick={()=>handleTM_type("GROUND")}></div>
-                        <div className="TM-attack Attack_ICE" onClick={()=>handleTM_type("ICE")}></div>
-                        <div className="TM-attack Attack_POISON" onClick={()=>handleTM_type("POISON")}></div>
-                        <div className="TM-attack Attack_PSYCHIC" onClick={()=>handleTM_type("PSYCHIC")}></div>
-                        <div className="TM-attack Attack_ROCK" onClick={()=>handleTM_type("ROCK")}></div>
-                        <div className="TM-attack Attack_STEEL" onClick={()=>handleTM_type("STEEL")}></div>
-                        <div className="TM-attack Attack_WATER" onClick={()=>handleTM_type("WATER")}></div>
+                        {POKEMON_TYPES.map(type => (
+                            <div key={type}
+                                 className={`TM-attack Attack_${type} ${tmType === type ? 'TM-attack--selected' : ''}`}
+                                 onClick={()=>handleTM_type(type)}></div>
+                        ))}
                     </div>
                     <div className='Level-TM-options'>
-                        <div className="TM-Level" onClick={()=>handleTM_Level(1)}>1</div>
-                        <div className="TM-Level" onClick={()=>handleTM_Level(2)}>2</div>
-                        <div className="TM-Level" onClick={()=>handleTM_Level(3)}>3</div>
-                        <div className="TM-Level" onClick={()=>handleTM_Level(4)}>4</div>
-                        <div className="TM-Level" onClick={()=>handleTM_Level(5)}>5</div>
+                        {TM_POWERS.map(level => (
+                            <div key={level}
+                                 className={`TM-Level ${tmLevel === level ? 'TM-Level--selected' : ''}`}
+                                 onClick={()=>handleTM_Level(level)}>{level}</div>
+                        ))}
                     </div>
-                    <button onClick={() => attachTMHandle(currentPlayer,pokemonId)} className='close-modal'>Add TM</button>
+                    <div className='TM-actions'>
+                        <button onClick={handleCloseTM} className='TM-back-btn'>Volver</button>
+                        <button onClick={() => attachTMHandle(currentPlayer,pokemonId)}
+                                className='TM-add-btn'
+                                disabled={!tmReady}>Add TM</button>
+                    </div>
                </div>)}
                 <button onClick={onClose} className='close-modal'>close</button>
             </div>
