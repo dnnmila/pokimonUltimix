@@ -103,18 +103,8 @@
 
   
 }
-.sim-player__setup{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    font-size: 1.5rem;
-
-}
+// .sim-player__setup vivía aquí duplicado y solo lo usa SimPlayer; su única
+// definición está ahora en _simPlayer.scss, que se importa después.
 .player-sim-main,.rival-sim-main{
      display: flex;
     flex-direction: column;

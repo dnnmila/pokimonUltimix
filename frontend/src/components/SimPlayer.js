@@ -14,7 +14,6 @@ import ModalEvolveChoice from "./modals/ModalEvolveChoice";
 import ModalFrontier from "./modals/ModalFrontier";
 import ModalAttach from "./modals/ModalAttach";
 import ModalTypeChart from "./modals/ModalTypeChart";
-import MusicPlayer from "./MusicPlayer";
 import SERVER_IP from "../config.js";
 import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove } from "../battleRules";
 
@@ -49,6 +48,65 @@ const getFieldCardImg = (id) => {
 const getTypeIcon = (type) => {
     try { return require(`../images/Types/${type}.png`); } catch { return null; }
 };
+
+// ── Retratos de líderes ─────────────────────────────────────────────────────
+// Van en images/leader_portraits/gen<numero>/ y se aceptan dos nomenclaturas,
+// la que resulte más cómoda al guardarlos:
+//   1. Por nombre del líder, en minúsculas y sin espacios ni signos:
+//      brock.png, misty.png, tateliza.png, crasherwake.png
+//   2. Por posición del gimnasio: gym1.png … gym8.png
+// Se prueba primero el nombre. Formatos: png, webp o jpg.
+// Mientras no exista el archivo, quien llama cae al token de carta de siempre.
+const PORTRAIT_EXT = ['png', 'webp', 'jpg'];
+
+// Sin acentos, sin espacios ni signos: "Tate & Liza" → "tateliza"
+const slugLeader = (s) => (s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// El require dinámico lanza cuando el archivo no está, y esta pantalla se
+// repinta con cada evento del socket: sin caché serían decenas de throws por render
+const portraitCache = {};
+
+const getLeaderPortrait = (img, name, generation = 1) => {
+    const cacheKey = `${generation}|${img}|${name}`;
+    if (cacheKey in portraitCache) return portraitCache[cacheKey];
+
+    // gym1_1 → gym1 (el _1/_2 es cuál de sus dos Pokémon, no hace al retrato)
+    const candidates = [slugLeader(name), (img || '').replace(/_\d+$/, '')].filter(Boolean);
+    let found = null;
+    for (const base of candidates) {
+        for (const ext of PORTRAIT_EXT) {
+            try {
+                found = require(`../images/leader_portraits/gen${generation}/${base}.${ext}`);
+                break;
+            } catch { /* ese nombre no existe, se sigue probando */ }
+        }
+        if (found) break;
+    }
+    portraitCache[cacheKey] = found;
+    return found;
+};
+
+const TYPE_COLORS = {
+    NORMAL: '#a8a878', BUG: '#a8b820', DARK: '#705848', DRAGON: '#7038f8',
+    ELECTRIC: '#f0c020', FAIRY: '#ee99ac', FIGHTING: '#c03028', FIRE: '#f08030',
+    FLYING: '#a890f0', GHOST: '#705898', GRASS: '#78c850', GROUND: '#e0c068',
+    ICE: '#98d8d8', POISON: '#a040a0', PSYCHIC: '#f85888', ROCK: '#b8a038',
+    STEEL: '#b8b8d0', WATER: '#6890f0',
+};
+
+const TYPE_ES = {
+    NORMAL: 'Normal', BUG: 'Bicho', DARK: 'Siniestro', DRAGON: 'Dragón',
+    ELECTRIC: 'Eléctrico', FAIRY: 'Hada', FIGHTING: 'Lucha', FIRE: 'Fuego',
+    FLYING: 'Volador', GHOST: 'Fantasma', GRASS: 'Planta', GROUND: 'Tierra',
+    ICE: 'Hielo', POISON: 'Veneno', PSYCHIC: 'Psíquico', ROCK: 'Roca',
+    STEEL: 'Acero', WATER: 'Agua',
+};
+
+const typeKey   = (t) => (t || '').toString().toUpperCase();
+const typeColor = (t) => TYPE_COLORS[typeKey(t)] || '#7a7a8c';
+const typeLabel = (t) => TYPE_ES[typeKey(t)] || typeKey(t);
 
 // Los rivales vienen por color de casilla (RivPink1, RivBlue2, …)
 const RIVAL_COLORS = {
@@ -519,39 +577,75 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowSetup(false);
     };
 
-    // Las dos columnas del equipo usan la misma tarjeta
+    // Tarjeta del equipo. Las seis van en una sola fila central.
     const renderMiniPkm = (pkm) => {
         const pkmImg = getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation);
         const canEvolve = (pkm.extra >= pkm.nextLevel && pkm.nextLevel > 0) || pkm.nextLevel === -1 || canEvolveWithStone(pkm);
+        const isDead = pkm.state === 'Dead';
+        // El boceto trae una barra de HP, pero aquí no hay puntos de vida: lo que sí
+        // avanza es el progreso hacia la evolución, así que la barra muestra eso.
+        const goal = pkm.nextLevel > 0 ? pkm.nextLevel : 0;
+        const pct  = goal ? Math.min(100, Math.round((pkm.extra / goal) * 100)) : 0;
+        const toggleState = () => onChangeState(player.id, pkm.id, { source: 'manual-player', playerName: player.name });
+
         return (
-            <div key={pkm.id} className={`sim-mini-pkm ${pkm.state === 'Dead' ? 'sim-mini-pkm--dead' : ''}`}>
-                <div className="sim-mini-pkm-img"
-                    style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
-                    onClick={() => onChangeState(player.id, pkm.id, { source: 'manual-player', playerName: player.name })} />
-                <div className="sim-mini-pkm-name">{pkm.name}</div>
-                <div className="sim-mini-pkm-level">
-                    {pkm.level}{pkm.extra > 0 && <span className="sim-mini-pkm-extra"> +{pkm.extra}</span>}
+            <div key={pkm.id}
+                 className={`sim-pkm-card ${isDead ? 'sim-pkm-card--dead' : ''}`}
+                 style={{ '--pkm-type': typeColor(pkm.type1) }}>
+
+                <div className="sim-pkm-card-head">
+                    <span className="sim-pkm-card-name">{pkm.name}</span>
+                    <span className="sim-pkm-card-lvl">
+                        Nv {pkm.level}{pkm.extra > 0 && <em>+{pkm.extra}</em>}
+                    </span>
                 </div>
-                <div className="sim-mini-pkm-icons">
-                    {pkm.status !== 'Normal' && (
-                        <div className={`status_pokemon ${pkm.status} sim-mini-status`} />
-                    )}
-                    {canEvolve && (
-                        <div className="button_evolve" onClick={() => handleSimEvolve(pkm)} />
-                    )}
+
+                {/* La ilustración sigue siendo el toggle de estado, como hasta ahora */}
+                <div className="sim-pkm-card-art"
+                     title={isDead ? 'Marcar como disponible' : 'Marcar como debilitado'}
+                     style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}}
+                     onClick={toggleState}>
+                    <div className="sim-pkm-card-icons">
+                        {pkm.status !== 'Normal' && (
+                            <div className={`status_pokemon ${pkm.status} sim-pkm-card-status`} />
+                        )}
+                        {canEvolve && (
+                            <div className="button_evolve sim-pkm-card-evolve"
+                                 title="Evolucionar"
+                                 onClick={(e) => { e.stopPropagation(); handleSimEvolve(pkm); }} />
+                        )}
+                    </div>
                 </div>
-                {/* Barra propia: la imagen de arriba ya es el toggle de estado, así que el
-                    attach necesita un target grande que no compita con ella */}
-                <div className={`sim-mini-attach-bar ${pkm.attach !== 'None' ? 'sim-mini-attach-bar--filled' : ''}`}
-                     title={pkm.attach !== 'None' ? 'Cambiar item' : 'Adjuntar item'}
-                     onClick={() => setAttachPkmId(pkm.id)}>
-                    {pkm.attach !== 'None'
-                        ? <div className={`sim-mini-attach attached-item ${getAttachedClass(pkm.attach)}`} />
-                        : 'Attach'}
+
+                <div className="sim-pkm-card-bar"
+                     title={goal ? `${pkm.extra} / ${goal} para evolucionar` : 'Sin evolución pendiente'}>
+                    <span style={{ width: `${pct}%` }} />
+                </div>
+
+                {/* Attach ancho a propósito: la ilustración de arriba ya es un target
+                    grande y los botones chicos se confundían con ella */}
+                <div className="sim-pkm-card-foot">
+                    <div className={`sim-mini-attach-bar ${pkm.attach !== 'None' ? 'sim-mini-attach-bar--filled' : ''}`}
+                         title={pkm.attach !== 'None' ? 'Cambiar item' : 'Adjuntar item'}
+                         onClick={() => setAttachPkmId(pkm.id)}>
+                        {pkm.attach !== 'None'
+                            ? <div className={`sim-mini-attach attached-item ${getAttachedClass(pkm.attach)}`} />
+                            : '+ Attach'}
+                    </div>
+                    <div className={`sim-pkm-card-ko ${isDead ? 'sim-pkm-card-ko--on' : ''}`}
+                         title={isDead ? 'Marcar como disponible' : 'Marcar como debilitado'}
+                         onClick={toggleState} />
                 </div>
             </div>
         );
     };
+
+    // Hueco vacío del equipo, para que la fila de seis no se descuadre
+    const renderEmptySlot = (i) => (
+        <div key={`empty-${i}`} className="sim-pkm-card sim-pkm-card--empty">
+            <div className="sim-pkm-card-empty-mark" />
+        </div>
+    );
 
     // Elite 4, Campeón y Rival comparten la misma tarjeta y vista previa del equipo.
     // El color solo aplica a los rivales (RivPink1, RivBlue2…); en los demás queda en null.
@@ -1052,6 +1146,16 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         onNextTurn();
     };
 
+    // ── Progreso de gimnasios ────────────────────────────────────────────────
+    // El número de medalla sigue siendo la posición del líder en la lista, igual
+    // que antes; de ahí salen tanto la barra de medallas como el estado de cada
+    // tarjeta (ganada / siguiente / pendiente).
+    const gymLeaders = leaders.filter(l => l.category === 'gym');
+    const badgeWonAt = (idx) => Boolean(player[`badge${idx + 1}`]);
+    const badgesWon  = gymLeaders.reduce((n, _, idx) => n + (badgeWonAt(idx) ? 1 : 0), 0);
+    const nextGymIdx = gymLeaders.findIndex((_, idx) => !badgeWonAt(idx));
+    const teamSlots  = Array.from({ length: 6 }, (_, i) => (player.pokemons || [])[i] || null);
+
     // Botón home / modal de turno: vuelve al setup para elegir nuevo rival
     const handleNewSimulation = () => {
         knockOutIfAbandoned();
@@ -1093,11 +1197,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     </div>
                 </div>
             )}
-                {/* Home fijo siempre visible */}
-            <div className="sim-home-button" onClick={handleNewSimulation}></div>
+            {/* Home solo fuera del setup: estando ya en casa no lleva a ningún lado */}
+            {rival && !showSetup && (
+                <div className="sim-home-button" onClick={handleNewSimulation}></div>
+            )}
 
-            {/* Botón siguiente turno — solo cuando es el turno del jugador */}
-            {isMyTurn && (
+            {/* Botón siguiente turno — solo cuando es el turno del jugador.
+                En el setup no se usa este: la barra inferior ya lo trae inline. */}
+            {isMyTurn && rival && !showSetup && (
                 <div className="sim-next-turn-btn" onClick={handleNextTurn}>
                     <div className="sim-next-turn-image"></div>
                     Next Turn
@@ -1154,14 +1261,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 </div>
             )}
 
-            {/* Info nombre/monedas — solo en setup */}
-            {(!rival || showSetup) && (
-                <div className="sim-player-info">
-                    <span className="sim-player-info-name">{player.name}</span>
-                    <span className="sim-player-info-coins">${player.coins}</span>
-                </div>
-            )}
-
+            {/* El nombre y las monedas viven ahora en la cabecera del setup */}
 
             <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
@@ -1308,123 +1408,203 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             {/* Setup principal */}
             {(!rival || showSetup) && (
                 <div className="sim-player__setup">
-                    {/* Wild pokemon */}
-                    <div className="sim-player__setup-wild">
-                        <div className="sim-wild-search">
-                            <input
-                                type="text"
-                                placeholder="Nombre o # Pokedex"
-                                value={wildPokemonId}
-                                autoComplete="off"
-                                onChange={(e) => handleWildInputChange(e.target.value)}
-                                onKeyDown={handleWildInputKeyDown}
-                                onBlur={() => setTimeout(() => setWildSuggestions([]), 150)}
-                            />
-                            {wildSuggestions.length > 0 && (
-                                <ul className="sim-wild-suggestions">
-                                    {wildSuggestions.map((pkm, i) => {
-                                        const img = getSafePkmImg(pkm.pokedex, generation);
-                                        return (
-                                            <li
-                                                key={pkm.pokedex}
-                                                className={`sim-wild-suggestion ${i === wildHighlight ? 'is-active' : ''}`}
-                                                onMouseDown={(e) => { e.preventDefault(); handleSelectWildSuggestion(pkm); }}
-                                                onMouseEnter={() => setWildHighlight(i)}
-                                            >
-                                                <div
-                                                    className="sim-wild-suggestion-img"
-                                                    style={img ? { backgroundImage: `url(${img})` } : {}}
-                                                />
-                                                <span className="sim-wild-suggestion-name">{pkm.name}</span>
-                                                <span className="sim-wild-suggestion-id">{pkm.pokedex}</span>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
+
+                    {/* ── Cabecera: entrenador + medallas ───────────────────── */}
+                    <header className="sim-hud-header">
+                        <div className="sim-hud-trainer">
+                            <div className={`sim-hud-trainer-img image-trainer ${TRAINER_CLASS[player.name] || 'trainer1'}`} />
+                            <div className="sim-hud-trainer-meta">
+                                <div className="sim-hud-trainer-name">{player.name}</div>
+                                <div className="sim-hud-trainer-coins">${player.coins}</div>
+                            </div>
+                        </div>
+
+                        <div className="sim-hud-badges">
+                            <div className="sim-hud-badges-title">
+                                Medallas · {badgesWon} de {gymLeaders.length || 8}
+                            </div>
+                            <div className="sim-hud-badges-row">
+                                {gymLeaders.map((l, idx) => {
+                                    const badgeImg = getBadgeImg(generation, idx + 1);
+                                    const hasBadge = badgeWonAt(idx);
+                                    return (
+                                        <div key={l.leaderKey} className="sim-hud-badge-slot">
+                                            <div className={`sim-hud-badge ${hasBadge ? 'Bagde_win' : 'Badge'}`}
+                                                 style={badgeImg ? { backgroundImage: `url(${badgeImg})` } : {}} />
+                                            <span className={`sim-hud-badge-name ${hasBadge ? 'is-won' : ''}`}>{l.name}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* ── Equipo: las seis en una fila ──────────────────────── */}
+                    <section className="sim-hud-team">
+                        <div className="sim-hud-section-title">
+                            <span>Mi equipo</span>
+                            <i />
+                            <span className="sim-hud-section-count">
+                                {(player.pokemons || []).length}/6
+                            </span>
+                        </div>
+                        <div className="sim-hud-team-row">
+                            {teamSlots.map((pkm, i) => (pkm ? renderMiniPkm(pkm) : renderEmptySlot(i)))}
+                        </div>
+                    </section>
+
+                    {/* ── Líderes de gimnasio + desafío final ───────────────── */}
+                    <section className="sim-hud-arena">
+                        <div className="sim-hud-leaders">
+                            <div className="sim-hud-section-title">
+                                <span>Líderes de gimnasio</span>
+                                <i />
+                            </div>
+                            <div className="sim-hud-leaders-grid">
+                                {gymLeaders.map((l, idx) => {
+                                    const badgeNum = idx + 1;
+                                    // Retrato si ya lo tenemos; si no, el token de carta de siempre
+                                    const portrait = getLeaderPortrait(l.img, l.name, generation);
+                                    const art = portrait || (l.img ? getSafePkmImg(l.img, generation) : null);
+                                    const type = l.team?.[0]?.type1;
+                                    const level = Math.max(...(l.team || []).map(p => Number(p.level) || 0), 0);
+                                    const won = badgeWonAt(idx);
+                                    const isNext = idx === nextGymIdx;
+                                    const status = won ? 'won' : isNext ? 'next' : 'pending';
+                                    return (
+                                        <div key={l.leaderKey}
+                                             className={`sim-leader-card sim-leader-card--${status}`}
+                                             title={`Retar a ${l.name}`}
+                                             onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2, badgeNum)}>
+                                            <div className={`sim-leader-card-art ${portrait ? '' : 'sim-leader-card-art--token'}`}
+                                                 style={art ? { backgroundImage: `url(${art})` } : {}} />
+                                            <div className="sim-leader-card-body">
+                                                <div className="sim-leader-card-name">{l.name}</div>
+                                                <div className="sim-leader-card-meta">
+                                                    {type && (
+                                                        <span className="sim-leader-card-type"
+                                                              style={{ backgroundColor: typeColor(type) }}>
+                                                            {typeLabel(type)}
+                                                        </span>
+                                                    )}
+                                                    {level > 0 && <span className="sim-leader-card-lvl">Nv {level}</span>}
+                                                </div>
+                                                <div className="sim-leader-card-status">
+                                                    {won ? 'Ganada' : isNext ? 'Siguiente' : 'Pendiente'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Buscador de salvajes. Aquí tiene sitio de sobra, y sobre todo
+                            el desplegable cae dentro de su propia columna en vez de
+                            abrirse encima de las tarjetas de los líderes. */}
+                        <div className="sim-hud-wild">
+                            <div className="sim-hud-wild-title">Pokémon salvaje</div>
+                            <div className="sim-wild-search">
+                                <input
+                                    type="text"
+                                    placeholder="Nombre o # Pokedex"
+                                    value={wildPokemonId}
+                                    autoComplete="off"
+                                    onChange={(e) => handleWildInputChange(e.target.value)}
+                                    onKeyDown={handleWildInputKeyDown}
+                                    onBlur={() => setTimeout(() => setWildSuggestions([]), 150)}
+                                />
+                                {wildSuggestions.length > 0 && (
+                                    <ul className="sim-wild-suggestions">
+                                        {wildSuggestions.map((pkm, i) => {
+                                            const img = getSafePkmImg(pkm.pokedex, generation);
+                                            return (
+                                                <li
+                                                    key={pkm.pokedex}
+                                                    className={`sim-wild-suggestion ${i === wildHighlight ? 'is-active' : ''}`}
+                                                    // El mousedown solo frena el blur del input. Si además
+                                                    // seleccionara aquí, la lista desaparecería antes del click
+                                                    // y ese click caería sobre lo que quedó debajo.
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={(e) => { e.stopPropagation(); handleSelectWildSuggestion(pkm); }}
+                                                    onMouseEnter={() => setWildHighlight(i)}
+                                                >
+                                                    <div
+                                                        className="sim-wild-suggestion-img"
+                                                        style={img ? { backgroundImage: `url(${img})` } : {}}
+                                                    />
+                                                    <span className="sim-wild-suggestion-name">{pkm.name}</span>
+                                                    <span className="sim-wild-suggestion-id">{pkm.pokedex}</span>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </div>
+                            <button className="sim-hud-search-btn" onClick={handleSearchWildPokemon}>Buscar</button>
+
+                            {wildPreviewImg
+                                ? (
+                                    <div className="sim-wild-preview" title="Ver al salvaje"
+                                         onClick={() => setShowWildModal(true)}>
+                                        <img src={wildPreviewImg} alt={wildPokemonId} className="sim-wild-preview-img" />
+                                        <span className="sim-wild-preview-hint">Toca para pelear o capturar</span>
+                                    </div>
+                                )
+                                : <div className="sim-hud-wild-empty">Busca un Pokémon para enfrentarlo o capturarlo</div>}
+                        </div>
+                    </section>
+
+                    {/* ── Barra inferior: desafío final + herramientas + turno ── */}
+                    <footer className="sim-hud-actions">
+                        {/* El desafío final no se bloquea: la etiqueta solo informa del avance */}
+                        <div className="sim-hud-elite-btn" onClick={() => setShowOtherRivals(true)}>
+                            <div className="sim-hud-elite-btn-icon" />
+                            <div className="sim-hud-elite-btn-text">
+                                <span className="sim-hud-elite-btn-title">Elite 4 · Campeón · Rival</span>
+                                <span className="sim-hud-elite-btn-note">
+                                    {gymLeaders.length && badgesWon >= gymLeaders.length
+                                        ? '¡Listo para el desafío final!'
+                                        : `${badgesWon} de ${gymLeaders.length || 8} medallas`}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="sim-hud-tools">
+                            <div className="sim-setup-btn" onClick={() => setShowPokedex(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-pokedex"></div>
+                                <span>Pokedex</span>
+                            </div>
+                            <div className="sim-setup-btn" onClick={() => setShowLeaderViewer(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-book"></div>
+                                <span>Guia</span>
+                            </div>
+                            <div className="sim-setup-btn" onClick={() => setShowRulesGuide(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-effects"></div>
+                                <span>Efectos</span>
+                            </div>
+                            <div className={`sim-setup-btn ${pendingRequest ? 'sim-store-button--pending' : ''}`} onClick={() => setShowStore(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-store"></div>
+                                <span>Tienda</span>
+                            </div>
+                            <div className="sim-setup-btn" onClick={() => setShowAllPlayers(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-players"></div>
+                                <span>Jugadores</span>
+                            </div>
+                            {generation === 2 && (
+                                <div className="sim-setup-btn" onClick={() => setShowFrontierModal(true)}>
+                                    <div className="sim-setup-btn-icon sim-topbar-frontier"></div>
+                                    <span>Frontera</span>
+                                </div>
                             )}
                         </div>
-                        <button onClick={handleSearchWildPokemon}>Buscar</button>
-                        {wildPreviewImg && (
-                            <div className="sim-wild-preview" onClick={() => setShowWildModal(true)}>
-                                <img src={wildPreviewImg} alt={wildPokemonId} className="sim-wild-preview-img" />
+
+                        {isMyTurn && (
+                            <div className="sim-hud-next" onClick={handleNextTurn}>
+                                Next Turn <span>→</span>
                             </div>
                         )}
-                    </div>
-
-                    {/* Fila central: equipo izquierda | líderes | equipo derecha */}
-                    <div className="sim-setup-center-row">
-
-                        {/* Pokemon 0-2 */}
-                        <div className="sim-team-col">
-                            {player.pokemons.slice(0, 3).map(renderMiniPkm)}
-                        </div>
-
-                        {/* Centro: líderes + rivals btn */}
-                        <div className="sim-setup-center">
-                            <div className="sim-gym-leaders">
-                                <div className="sim-gym-leaders-title">Líderes de Gimnasio</div>
-                                <div className="sim-gym-leaders-grid">
-                                    {leaders.filter(l => l.category === 'gym').map((l, idx) => {
-                                        const img = l.img ? getPkmImg(l.img, generation) : null;
-                                        const badgeNum = idx + 1;
-                                        const badgeImg = getBadgeImg(generation, badgeNum);
-                                        const hasBadge = player[`badge${badgeNum}`];
-                                        return (
-                                            <div key={l.leaderKey} className="sim-gym-leader-wrapper">
-                                                <div className="sim-gym-leader-card"
-                                                    style={img ? { backgroundImage: `url(${img})` } : {}}
-                                                    onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2, badgeNum)} />
-                                                <div
-                                                    className={hasBadge ? 'Bagde_win sim-badge' : 'Badge sim-badge'}
-                                                    style={badgeImg ? { backgroundImage: `url(${badgeImg})` } : {}}
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                            <div className="sim-other-rivals-btn" onClick={() => setShowOtherRivals(true)}>
-                                <div className="sim-other-rivals-btn-icon"></div>
-                                <span>Elite 4 / Campeón / Rival</span>
-                            </div>
-                        </div>
-
-                        {/* Pokemon 3-5 */}
-                        <div className="sim-team-col">
-                            {player.pokemons.slice(3, 6).map(renderMiniPkm)}
-                        </div>
-
-                    </div>
-
-                    {/* Botones inferiores */}
-                    <div className="sim-setup-bottom-btns">
-                        <div className="sim-setup-btn" onClick={() => setShowPokedex(true)}>
-                            <div className="sim-setup-btn-icon sim-topbar-pokedex"></div>
-                            <span>Pokedex</span>
-                        </div>
-                        <div className="sim-setup-btn" onClick={() => setShowLeaderViewer(true)}>
-                            <div className="sim-setup-btn-icon sim-topbar-book"></div>
-                            <span>Guia</span>
-                        </div>
-                        <div className="sim-setup-btn" onClick={() => setShowRulesGuide(true)}>
-                            <div className="sim-setup-btn-icon sim-topbar-effects"></div>
-                            <span>Efectos</span>
-                        </div>
-                        <div className={`sim-setup-btn ${pendingRequest ? 'sim-store-button--pending' : ''}`} onClick={() => setShowStore(true)}>
-                            <div className="sim-setup-btn-icon sim-topbar-store"></div>
-                            <span>Tienda</span>
-                        </div>
-                        <div className="sim-setup-btn" onClick={() => setShowAllPlayers(true)}>
-                            <div className="sim-setup-btn-icon sim-topbar-players"></div>
-                            <span>Jugadores</span>
-                        </div>
-                        {generation === 2 && (
-                            <div className="sim-setup-btn" onClick={() => setShowFrontierModal(true)}>
-                                <div className="sim-setup-btn-icon sim-topbar-frontier"></div>
-                                <span>Frontera</span>
-                            </div>
-                        )}
-                    </div>
+                    </footer>
                 </div>
             )}
 
@@ -1768,7 +1948,6 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 player={player}
                 onToggle={handleToggleFrontier}
             />
-            <MusicPlayer />
 
             {/* Tabla de tipos: siempre accesible, al lado del botón de música.
                 El icono son 4 tipos reales del juego, para que se lea de golpe. */}

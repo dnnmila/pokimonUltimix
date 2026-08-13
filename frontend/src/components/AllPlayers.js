@@ -6,6 +6,8 @@ import ModalVictory from './modals/ModalVictory';
 
 import SERVER_IP from '../config';
 
+// Cubre el catálogo de las dos tiendas: la del master (ModalTienda) y la del
+// SimPlayer (ModalTiendaSim, alineada con la tabla física "Item Costs").
 const ITEM_IMG_CLASS = {
     'Pokeball': 'img-pokeball',
     'Great Ball': 'img-greatBall',
@@ -27,9 +29,27 @@ const ITEM_IMG_CLASS = {
     'Mega Stone': 'img-MegaStone',
     'Poke Doll': 'img-PokeDoll',
     'Dynamax': 'img-Dynamax',
+    'Boost Item': 'img-boostItem',
+    'Vitamin': 'img-vitamin',
+    'Legendary Evo. Item': 'img-legendaryEvo',
+    'Apricorn': 'img-apricorn',
+    'TM Case': 'img-TM',
+    'Type Enhancer': 'img-typeEnhancer',
+    'Max Potion': 'img-maxPotion',
+    'Z-Ring': 'img-zRing',
+    'Dynamax Band': 'img-Dynamax',
+    'Tera Orb': 'img-teraOrb',
+    'Running Shoes': 'img-runningShoes',
+    'Repel': 'img-repel',
+    'Berry': 'img-berry',
+    'Black Flute': 'img-blackFlute',
 };
 
-const AllPlayers = () => {
+// showOverlays = false deja la tabla limpia: fuera el espejo de la batalla, el
+// aviso de compra en la tienda y el modal de victoria, o sea todo lo que tapa el
+// marcador. Es lo que usa la ruta /score (ver Score.js). El aviso de pausa se
+// queda: es una franja fina arriba y explica por qué se paró el reloj.
+const AllPlayers = ({ showOverlays = true }) => {
     const [game, setGame] = useState({ players: [], currentTurn: 0, battlePublic: false, myPlayerPkm: [], myRivalPkm: [], myPlayerPkmAtk: [], myRivalPkmAtk: [], myPlayerTotal: 0, myRivalTotal: 0, battlePhase: 'PokemonSelection' });
     const [players, setPlayers] = useState([]);
     const [myPlayerPkm, setMyPlayerPkm] = useState([]);
@@ -45,8 +65,6 @@ const AllPlayers = () => {
     const saleTimerRef = useRef(null);
 
     const [turnElapsed, setTurnElapsed] = useState(0);
-
-    const totalPLayers = players.length;
 
     let playersOrdered = [...players].sort((a, b) => a.position - b.position);
 
@@ -114,12 +132,24 @@ const AllPlayers = () => {
 
     return (
         <div className='AllPlayers_class'>
-            <div className='round-badge'>Ronda {game.round}</div>
-            {game.ended
-                ? <ModalVictory player={game.players.find(p => p.id === game.winner)} />
-                : game.paused && <div className="allplayers-paused-banner">⏸ JUEGO PAUSADO</div>
-            }
-            {saleNotification && (
+            <header className="apl-topbar">
+                <h1 className="apl-topbar-title">Tabla de totales</h1>
+                <div className="apl-topbar-round">Ronda <b>{game.round}</b></div>
+            </header>
+
+            <div className="apl-colheads">
+                <span>Entrenador y medallas</span>
+                <span>Equipo</span>
+                <span>Totales</span>
+            </div>
+
+            {showOverlays && game.ended && (
+                <ModalVictory player={game.players.find(p => p.id === game.winner)} />
+            )}
+            {!game.ended && game.paused && (
+                <div className="allplayers-paused-banner">⏸ JUEGO PAUSADO</div>
+            )}
+            {showOverlays && saleNotification && (
                 <div className="sale-notification">
                     <div className={`sale-notification-img ${ITEM_IMG_CLASS[saleNotification.item] || ''}`}></div>
                     <div className="sale-notification-text">
@@ -128,10 +158,14 @@ const AllPlayers = () => {
                     <div className="sale-notification-player">{saleNotification.playerName}</div>
                 </div>
             )}
-            {playersOrdered.map(player => (
-                <PlayerListed key={player.id} player={player} totalPLayers={totalPLayers} generation={game.generation} turnElapsed={player.isMyTurn ? turnElapsed : 0}/>
-            ))}
-            <StadiumMirrorModal game={game} />
+            {/* Las filas se reparten el alto sobrante: ya no hace falta calcular
+                vh por jugador como antes */}
+            <div className="apl-rows">
+                {playersOrdered.map(player => (
+                    <PlayerListed key={player.id} player={player} generation={game.generation} turnElapsed={player.isMyTurn ? turnElapsed : 0}/>
+                ))}
+            </div>
+            {showOverlays && <StadiumMirrorModal game={game} />}
         </div>
     );
 };

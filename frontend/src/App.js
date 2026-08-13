@@ -8,6 +8,7 @@ import Stadium from './components/Stadium.js';
 import SimPlayer from './components/SimPlayer.js';
 
 import AllPlayers from './components/AllPlayers.js';
+import Score from './components/Score.js';
 import HomeMenu from './components/HomeMenu.js';
 import ProgressChart from './components/ProgressChart.js';
 import { io } from 'socket.io-client';
@@ -886,6 +887,9 @@ return (
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
             <Route path="/home" element={<HomeMenu />} />
             <Route path="/players" element={<AllPlayers />} />
+            {/* Marcador limpio para dejar fijo en otra pantalla. React Router
+                no distingue mayúsculas, así que /Score entra por aquí igual. */}
+            <Route path="/Table" element={<Score />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
             <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega}/>} />
             <Route path="/progress" element={<ProgressChart />} />

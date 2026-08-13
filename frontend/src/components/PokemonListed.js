@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { typeColor } from '../pokemonTypes';
 
 const PokemonListed = ({pokemon}) => {
     const [showToken, setShowToken] = useState(false);
@@ -20,13 +21,31 @@ const PokemonListed = ({pokemon}) => {
 
     const imageUrl = (showToken || forceToken || !spriteUrl) ? (tokenUrl || spriteUrl) : spriteUrl;
 
-    return (
-        <div className="PokemonListed" onClick={() => setShowToken(v => !v)} title={showToken ? 'Ver sprite' : 'Ver token'}>
-                <div className= {pokemon.state === "Alive" ? "img_pokemon_listed"  : "img_pokemon_listed_dead" }style={{ backgroundImage: `url(${imageUrl})`}}> </div>
-                <div className={`attached attached-${pokemon.attach}`}></div>
-                <div className={`status ${pokemon.status}`}></div>
-                <div className="level_pokekon_listed">{pokemon.totalLevel}</div>
+    const isDead = pokemon.state !== 'Alive';
+    const hasItem = pokemon.attach && pokemon.attach !== 'None';
+    const hasStatus = pokemon.status && pokemon.status !== 'Normal';
 
+    return (
+        // El objeto adjunto no necesita leyenda: se dibuja el item sobre la
+        // ilustración y la tarjeta se marca con el aro dorado del atributo.
+        <div className={`apl-pkm ${isDead ? 'apl-pkm--dead' : ''} ${hasItem ? 'apl-pkm--item' : ''}`}
+             style={{ '--pkm-type': typeColor(pokemon.type1) }}
+             onClick={() => setShowToken(v => !v)}
+             title={showToken ? 'Ver sprite' : 'Ver token'}>
+
+            <div className="apl-pkm-art" style={{ backgroundImage: `url(${imageUrl})` }}>
+                {hasStatus && <div className={`apl-pkm-status ${pokemon.status}`} />}
+                {hasItem && (
+                    <div className="apl-pkm-attach" title={pokemon.attach}>
+                        <i className={`attached-${pokemon.attach}`} />
+                    </div>
+                )}
+            </div>
+
+            <div className="apl-pkm-foot">
+                <span className="apl-pkm-name">{pokemon.name}</span>
+                <span className="apl-pkm-lvl">{pokemon.totalLevel}</span>
+            </div>
         </div>
     );
 };

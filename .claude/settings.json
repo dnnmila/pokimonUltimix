@@ -1,7 +1,36 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(python3 -)",
+      "Bash(npx sass *)",
+      "Bash(npx babel *)",
+      "Bash(npx react-scripts *)",
+      "Bash(curl -s --max-time 5 http://localhost:3001/get-game)",
+      "Read(//Applications/Google Chrome.app/**)",
+      "Read(//Applications/**)",
+      "Bash(\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless --disable-gpu --allow-file-access-from-files --hide-scrollbars --window-size=1180,820 --screenshot=ipad.png --virtual-time-budget=4000 harness.html)",
+      "Bash(\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless --disable-gpu --hide-scrollbars --window-size=1180,820 --screenshot=ipad2.png --virtual-time-budget=5000 \"http://localhost:3001/__harness.html\")",
+      "Bash(git diff *)",
+      "Bash(curl -s --max-time 5 http://localhost:3001/)",
+      "Bash(rm -f src/images/leader_portraits/1/brock.webp src/images/leader_portraits/1/gym2.webp build/__h2.html)",
+      "Bash(rmdir src/images/leader_portraits/1)",
+      "Bash(rm -f frontend/build/__h3.html frontend/build/__h2.html frontend/build/__harness.html)",
+      "Bash(pkill -f \"Google Chrome.*headless\")",
+      "Bash(python3 /private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/gen_harness.py)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=1180,900 --screenshot=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/v3.png --virtual-time-budget=6000 http://localhost:3001/__h4.html)",
+      "Bash(python3 gen_harness.py)",
+      "Bash(\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless --disable-gpu --hide-scrollbars --window-size=1180,900 --screenshot=\"/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/v4.png\" --virtual-time-budget=6000 \"http://localhost:3001/__h4.html\")",
+      "Bash(rm -f frontend/build/__h4.html)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=1180,900 --screenshot=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/v6.png --virtual-time-budget=6000 http://localhost:3001/__h4.html)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=1180,900 --screenshot=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/store2.png --virtual-time-budget=6000 http://localhost:3001/__h4.html)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=1180,620 --screenshot=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/text.png --virtual-time-budget=6000 http://localhost:3001/__t.html)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=470,400 --screenshot=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/guide.png --virtual-time-budget=5000 http://localhost:3001/__t.html)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu --hide-scrollbars --window-size=390,844 --screenshot=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/dbg2.png --virtual-time-budget=5000 http://localhost:3001/__h4.html)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --hide-scrollbars --window-size=1300,900 --screenshot=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/49b9136c-9ed2-442d-8203-44c1ea3b1c91/scratchpad/frames.png --virtual-time-budget=6000 http://localhost:3001/__frames.html)",
+      "Bash(python3 \"/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/5b8b11d6-fb28-4cc1-ab16-cfd09394b954/scratchpad/crop_items.py\")",
+      "Bash(BUILD_PATH=/private/tmp/claude-501/-Users-dnnmila-Desktop-Pokemon-Ultimix-v1/5b8b11d6-fb28-4cc1-ab16-cfd09394b954/scratchpad/verifybuild npm run build)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
