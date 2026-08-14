@@ -1,90 +1,230 @@
-.gen-select {
+// ═══════════════════════════════════════════════════════════════════════════
+// SELECCIÓN DE GENERACIÓN — misma paleta clara que el HUD de SimPlayer y el
+// Marcador: banda azul arriba, fondo verde→arena y tarjetas crema. Cada región
+// aporta su propio color de acento (--gen-color) desde data/generations.js.
+// ═══════════════════════════════════════════════════════════════════════════
+.gen-screen {
+    --hud-blue:      #1a6ec0;
+    --hud-blue-deep: #14589e;
+    --hud-card:      #fdfbf4;
+    --hud-ink:       #1b2433;
+    --hud-dim:       #626d7e;
+    --hud-gold:      #e8a317;
+    --hud-shadow:    0 2px 7px rgba(20, 32, 56, 0.2);
+    --hud-shadow-lg: 0 4px 14px rgba(20, 32, 56, 0.26);
+    --hud-radius:    14px;
+
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 2rem;
-    width: 100%;
-    min-height: 100vh;
+    gap: 1vh;
+    height: 100vh;
+    width: 100vw;
+    padding: 0.9vh 0.9vw 1.2vh;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: var(--hud-ink);
+    background:
+        linear-gradient(180deg,
+            #9ccf98 0%,
+            #b6d9a4 14%,
+            #dcd7ae 38%,
+            #e8dfb2 62%,
+            #e3d9a8 100%);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
 
-    &__title {
-        color: white;
-        font-size: 2rem;
-        font-weight: bold;
-        text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
-        margin-bottom: 2rem;
-        letter-spacing: 2px;
+// ── Banda superior ─────────────────────────────────────────────────────────
+.gen-topbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+    padding: 0.6vh 1rem;
+    border-radius: var(--hud-radius);
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    box-shadow: var(--hud-shadow-lg);
+    color: #fff;
+}
+
+.gen-topbar__back {
+    flex-shrink: 0;
+    width: clamp(2.2rem, 5vh, 3.2rem);
+    height: clamp(2.2rem, 5vh, 3.2rem);
+    border: none;
+    border-radius: 12px;
+    background: var(--hud-card);
+    box-shadow: 0 3px 0 rgba(10, 42, 78, 0.6);
+    color: var(--hud-blue-deep);
+    font-size: clamp(1.1rem, 2.8vh, 1.7rem);
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+
+    &:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(10, 42, 78, 0.6); }
+}
+
+.gen-topbar__title {
+    flex: 1;
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.1rem, 3.4vh, 2.3rem);
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+
+// ── Pasos 1·2·3 ────────────────────────────────────────────────────────────
+.gen-steps {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.gen-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.25rem 0.85rem 0.25rem 0.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: clamp(0.6rem, 1.6vh, 0.9rem);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+
+    b {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.7em;
+        height: 1.7em;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.28);
+        font-size: 1.05em;
     }
 
-    &__grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        width: 90%;
-        max-width: 1100px;
+    &--done {
+        color: #fff;
+        b { background: #5fbf6a; }
+    }
+
+    &--active {
+        background: var(--hud-card);
+        color: var(--hud-ink);
+        box-shadow: var(--hud-shadow);
+        font-weight: bold;
+        b { background: var(--hud-gold); color: #3a2a06; }
     }
 }
 
-.gen-card {
-    border-radius: 16px;
-    overflow: hidden;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-    transition: transform 0.2s, box-shadow 0.2s;
-    background-color: #1a1a2e;
-    border: 2px solid rgba(255,255,255,0.1);
+// ── Rejilla 3×3 ────────────────────────────────────────────────────────────
+.gen-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: clamp(0.5rem, 1.4vh, 1rem);
+}
 
-    &:hover:not(&--locked) {
-        transform: scale(1.05);
-        box-shadow: 0 10px 30px rgba(59, 76, 202, 0.7);
-        border-color: #3B4CCA;
+.gen-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: var(--hud-radius);
+    border: 3px solid var(--gen-color);
+    background: var(--gen-tint);
+    box-shadow: var(--hud-shadow);
+    cursor: pointer;
+    transition: transform 0.14s, box-shadow 0.14s;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--hud-shadow-lg);
     }
+
+    &:active { transform: translateY(0); }
 
     &--locked {
-        cursor: not-allowed;
-        opacity: 0.5;
-        filter: grayscale(60%);
-    }
+        border-color: rgba(27, 36, 51, 0.14);
+        background: rgba(255, 255, 255, 0.35);
+        box-shadow: none;
+        cursor: default;
+        filter: saturate(0.15);
 
-    &__map {
-        width: 100%;
-        height: 180px;
-        background-size: cover;
-        background-position: center;
-        background-color: #0d0d1a;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+        &:hover { transform: none; box-shadow: none; }
 
-    &__soon {
-        color: rgba(255,255,255,0.6);
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-        background: rgba(0,0,0,0.4);
-        padding: 4px 10px;
-        border-radius: 20px;
+        .gen-card__region { color: var(--hud-dim); }
     }
+}
 
-    &__info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.6rem 1rem;
-        background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(4px);
-    }
+.gen-card__map {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background-color: rgba(255, 255, 255, 0.45);
+    background-size: cover;
+    background-position: center;
+}
 
-    &__gen {
-        color: #FFCB05;
-        font-weight: bold;
-        font-size: 0.9rem;
-        letter-spacing: 1px;
-    }
+.gen-card__gen {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0.1rem 0.7rem;
+    border-radius: 999px;
+    background: var(--hud-gold);
+    box-shadow: var(--hud-shadow);
+    color: #3a2a06;
+    font-size: clamp(0.55rem, 1.4vh, 0.82rem);
+    font-weight: bold;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 
-    &__region {
-        color: white;
-        font-size: 1rem;
-        font-weight: bold;
-        letter-spacing: 1px;
+    .gen-card--locked & {
+        background: rgba(27, 36, 51, 0.12);
+        box-shadow: none;
+        color: var(--hud-dim);
     }
+}
+
+.gen-card__lock {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.75);
+    font-size: 0.95rem;
+}
+
+.gen-card__info {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-shrink: 0;
+    padding: 0.45rem 0.7rem;
+    background: var(--hud-card);
+    border-top: 2px solid var(--gen-color);
+}
+
+.gen-card__region {
+    font-size: clamp(0.85rem, 2.4vh, 1.5rem);
+    font-weight: bold;
+    letter-spacing: 0.02em;
+}
+
+.gen-card__gyms {
+    font-size: clamp(0.55rem, 1.5vh, 0.85rem);
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    color: var(--hud-dim);
 }

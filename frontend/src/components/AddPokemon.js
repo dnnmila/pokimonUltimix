@@ -1,26 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import pokeball from "../images/Poke_Ball.png";
+import PokemonNameSearch from './PokemonNameSearch';
 
 const AddPokemon = ({ onAdd ,currentPlayer}) => {
 
-    const [pokemonId, setPokemonId] = useState('');
-    const handleAddPokemon = () => {
-        onAdd(currentPlayer.id, pokemonId);
-        setPokemonId(''); // Limpia el campo de entrada después de agregar
+    // Se puede escribir el nombre ("pika") o el número de Pokédex ("25", "A25");
+    // el buscador resuelve lo escrito a un POKEDEX antes de agregarlo.
+    const handleAddPokemon = (pokedex) => {
+        onAdd(currentPlayer.id, pokedex);
     };
 
-   
-
     return (
-        <div className="add_pokemon">
-            <img className="Pokeball_image" src={pokeball} alt="pokeball" />
-            <input
-                    type="text"
-                    value={pokemonId}
-                    onChange={(e) => setPokemonId(e.target.value)}
-                    placeholder="Número de Pokédex (ej: 76 o A76)"
-                />
-                <button onClick={handleAddPokemon}>Agregar Pokémon</button>
+        <div className="add_pokemon pv-slot">
+            <img className="Pokeball_image pv-slot-ball" src={pokeball} alt="pokeball" />
+            <div className="pv-slot-title">Agregar Pokémon</div>
+            <PokemonNameSearch
+                layout="column"
+                placeholder="Nombre o Pokédex"
+                buttonLabel="Agregar"
+                inputClassName="pv-slot-input"
+                buttonClassName="pv-slot-button"
+                clearOnSubmit
+                onSubmit={handleAddPokemon}
+            />
         </div>
     );
 };

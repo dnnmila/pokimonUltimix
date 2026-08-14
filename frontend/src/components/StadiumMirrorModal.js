@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import Types from "./Types";
-import PokemonBattleListed from "./PokemonBattleListed";
 import Attack from "./Attacks";
+import SimBattleSelect from "./SimBattleSelect";
+import SERVER_IP from "../config.js";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
 
@@ -11,6 +13,16 @@ const getPkmImg = (pokedex, generation = 1) => {
 };
 
 const StadiumMirrorModal = ({ game }) => {
+    // Los Pokémon de los líderes traen POKEDEX de carta, así que SimBattleSelect
+    // resuelve su sprite por nombre contra este catálogo. Se pide una sola vez.
+    const [pokemonList, setPokemonList] = useState([]);
+    useEffect(() => {
+        fetch(`${SERVER_IP}/pokemon-list`)
+            .then(r => r.json())
+            .then(data => setPokemonList(Array.isArray(data) ? data : []))
+            .catch(console.error);
+    }, []);
+
     if (!game.battlePublic) return null;
 
     const player = game.players[game.currentTurn];
@@ -24,62 +36,20 @@ const StadiumMirrorModal = ({ game }) => {
         <div className="mirror-modal-backdrop">
             <div className="mirror-modal">
 
-                {/* Fase: seleccion de pokemon */}
-                {game.battlePhase === 'PokemonSelection' && (
-                    <div className="mirror-pkm-selection">
-                        {player && (
-                            <div className="mirror-player-main">
-                                <div className="mirror-player-name">{player.name}</div>
-                                <div className="mirror-player-team">
-                                    {(player.pokemons || []).map((pokemon) => (
-                                        <PokemonBattleListed
-                                            key={player.name + pokemon.id}
-                                            pokemon={pokemon}
-                                            SelectPokemon={() => {}}
-                                            generation={game.generation}
-                                        />
-                                    ))}
-                                </div>
-                                <div className="mirror-player-team">
-                                    {(player.megas || []).map((pokemon) => (
-                                        <PokemonBattleListed
-                                            key={player.name + pokemon.id}
-                                            pokemon={pokemon}
-                                            SelectPokemon={() => {}}
-                                            generation={game.generation}
-                                        />
-                                    ))}
-                                </div>
-                                {player.dynamax && (
-                                <div className="mirror-player-team">
-                                    {(player.gmaxes || []).map((pokemon) => (
-                                        <PokemonBattleListed
-                                            key={player.name + pokemon.id}
-                                            pokemon={pokemon}
-                                            SelectPokemon={() => {}}
-                                            generation={game.generation}
-                                        />
-                                    ))}
-                                </div>
-                                )}
-                            </div>
-                        )}
-                        {rival && (
-                            <div className="mirror-rival-main">
-                                <div className="mirror-rival-name">{rival.name}</div>
-                                <div className="mirror-rival-team">
-                                    {(rival.pokemons || []).map((pokemon, index) => (
-                                        <PokemonBattleListed
-                                            key={rival.name + index}
-                                            pokemon={pokemon}
-                                            SelectPokemon={() => {}}
-                                            generation={game.generation}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                {/* Fase: selección de Pokémon. Es la misma pantalla que ve el
+                    jugador en su tablet, en modo solo lectura: lo que va tocando
+                    aparece marcado aquí en cuanto lo toca. */}
+                {game.battlePhase === 'PokemonSelection' && player && rival && (
+                    <SimBattleSelect
+                        readOnly
+                        player={player}
+                        rival={rival}
+                        generation={game.generation}
+                        pokemonList={pokemonList}
+                        selectedMine={playerPkm}
+                        selectedTheirs={rivalPkm}
+                        formsView={game.simFormsView}
+                    />
                 )}
 
                 {/* Fase: ataque y dados - tokens grandes a los lados */}

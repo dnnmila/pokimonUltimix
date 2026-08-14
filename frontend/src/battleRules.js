@@ -12,6 +12,17 @@ export const ITEM_BONUS = {
     Claw:    0,
     MT:      0,   // el TM ya reemplaza el ataque 3
     Mega:    0,   // la mega ya cambia de forma
+    // Items de apoyo: son marcadores, su efecto lo aplican los jugadores a mano
+    // (monedas, exp, curación...). Poner un número aquí lo suma al total.
+    Berry:      0,
+    AmuletCoin: 0,
+    Leftovers:  0,
+    LuckyEgg:   0,
+    Eviolite:   0,
+    KingsRock:  0,
+    WideLens:   0,
+    ZoomLens:   0,
+    ExpShare:   0,
 };
 
 // ─── Cartas de campo ─────────────────────────────────────────────────────────

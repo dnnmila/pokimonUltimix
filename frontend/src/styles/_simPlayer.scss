@@ -1,11 +1,4 @@
-// botones inferiores del setup
-.sim-setup-bottom-btns {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    margin-top: 0.5rem;
-}
-
+// Botones de herramientas de la barra inferior del setup (.sim-hud-tools)
 .sim-setup-btn {
     display: flex;
     flex-direction: column;
@@ -24,7 +17,7 @@
 
     &:hover {
         transform: scale(1.15);
-        span { color: #f0d080; }
+        span { color: var(--hud-accent); }
     }
 }
 
@@ -113,7 +106,7 @@
 .sim-store-pending-text {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #4a90d9;
+    color: var(--hud-link);
 }
 .sim-store-pending-item {
     font-size: 1.1rem;
@@ -124,10 +117,6 @@
     color: #888;
 }
 
-.store-option--disabled {
-    opacity: 0.4;
-    pointer-events: none;
-}
 
 .sim-home-button {
     position: fixed;
@@ -154,7 +143,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: rgb(230, 159, 26);
+    color: var(--hud-gold);
     font-weight: bold;
     font-size: 0.85rem;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
@@ -232,31 +221,17 @@
 
 .leader-viewer-button { display: none; } // reemplazado por topbar
 
-.sim-player-info {
-    position: fixed;
-    top: 0.8rem;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    background-color: rgba(0, 0, 0, 0.55);
-    border-radius: 20px;
-    padding: 0.3rem 1.2rem;
-    z-index: 200;
-}
-.sim-player-info-name {
-    color: white;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-.sim-player-info-coins {
-    color: #f0d080;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
+// El nombre y las monedas ya viven en .sim-hud-header
 
 .sim-player {
+    // Tema claro, como el boceto: las secciones llevan el color y las tarjetas
+    // van blancas con texto oscuro. --hud-ink es el texto por defecto; sobre las
+    // bandas azules y el panel morado se fuerza blanco a mano.
+    //
+    // La paleta ya no se declara aquí: vive completa en :root (_tokens.scss) y
+    // los temas la sobrescriben desde _simThemes.scss con la clase
+    // .sim-player--<tema>. Este bloque solo consume los tokens.
+
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -264,62 +239,234 @@
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
+    // Los temas tiñen la foto de fondo sin sustituirla: por defecto el color es
+    // transparente y el modo normal, así que la imagen sale tal cual.
+    background-color: var(--hud-bg-blend);
+    background-blend-mode: var(--hud-bg-blend-mode);
+}
 
-    &--my-turn {
-        border: 3px solid rgb(180, 0, 255);
-        animation: simTurnBorderPulse 1s ease-in-out infinite;
+// Aquí vivían .sim-player--my-turn y su animación simTurnBorderPulse: un borde
+// morado que parpadeaba alrededor de toda la pantalla cuando te tocaba el turno.
+// Se quitó porque ningún color quedaba bien con las paletas de los temas. El
+// aviso de turno no se pierde: lo sigue dando el modal, que además suena.
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETUP — HUD por bandas. Medido para iPad 10ª gen en horizontal (1180×820).
+// La paleta vive en estas variables: el resto del bloque solo las consume, así
+// que virar a un tema claro es cambiar aquí y nada más.
+// ═══════════════════════════════════════════════════════════════════════════
+.sim-player__setup {
+
+    display: flex;
+    flex-direction: column;
+    // Explícitos a propósito: las bandas se estiran a todo el ancho y arrancan
+    // arriba, sin depender de qué hoja se importe antes
+    align-items: stretch;
+    justify-content: flex-start;
+    font-size: 1rem;
+    width: 100%;
+    // Es flex item de .sim-player: sin esto no baja de su ancho min-content
+    // (lo marcaban las 8 medallas) y desbordaba la pantalla en móvil
+    min-width: 0;
+    height: 100%;
+    padding: 0.7rem 1rem 0.7rem;
+    // Opaco a propósito: tapa la foto de .sim-player sin quitársela a las
+    // pantallas de batalla, que siguen usándola. El verde y la arena del boceto
+    // van aquí; el azul lo ponen la cabecera y la barra inferior.
+    background:
+        linear-gradient(180deg,
+            var(--hud-field-1) 0%,
+            var(--hud-field-2) 14%,
+            var(--hud-field-3) 38%,
+            var(--hud-field-4) 62%,
+            var(--hud-field-5) 100%);
+    color: var(--hud-ink);
+    gap: 0.7rem;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+// Título de banda: texto + línea que se come el espacio sobrante + contador
+.sim-hud-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.78rem;
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--hud-ink);
+
+    i {
+        flex: 1;
+        height: 1px;
+        background: var(--hud-line);
     }
 }
 
-@keyframes simTurnBorderPulse {
-    0%   { box-shadow: inset 0 0 20px 4px rgba(180, 0, 255, 0.4), 0 0 20px 4px rgba(180, 0, 255, 0.5); }
-    50%  { box-shadow: inset 0 0 40px 12px rgba(180, 0, 255, 0.7), 0 0 40px 12px rgba(140, 0, 220, 0.8); }
-    100% { box-shadow: inset 0 0 20px 4px rgba(180, 0, 255, 0.4), 0 0 20px 4px rgba(180, 0, 255, 0.5); }
+.sim-hud-section-count {
+    color: var(--hud-dim);
+    letter-spacing: 0.08em;
 }
 
-.sim-player__setup {
+// ── Banda 1: entrenador + medallas ──────────────────────────────────────────
+.sim-hud-header {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    padding-top: 5rem;
-    background-color: rgba(0, 0, 0, 0.55);
-    color: white;
-    gap: 1.5rem;
+    gap: 1.2rem;
+    flex-shrink: 0;
+    // El botón home no se dibuja en el setup, así que la banda usa todo el ancho.
+    // A la derecha se reserva el hueco de la mascota del tema (0 si no la hay).
+    padding: 0.5rem calc(1rem + var(--hud-band-mascot-space)) 0.5rem 1rem;
+    // Dos capas: la mascota del tema encima (o `none`) y el degradado debajo
+    background:
+        var(--hud-band-mascot),
+        linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    background-blend-mode: var(--hud-band-blend);
+    border-radius: var(--hud-radius);
+    box-shadow: var(--hud-shadow-lg);
+    color: #fff;
     box-sizing: border-box;
 }
 
-.sim-player__setup-wild {
+// La ficha entera abre los ajustes, así que se comporta como un botón: cursor,
+// realce al pasar y un engranaje que aparece encima del retrato para que se vea
+// que hay algo que tocar (en tablet no hay hover que valga como pista).
+.sim-hud-trainer {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.7rem;
+    flex-shrink: 0;
+    padding: 0.25rem 1.1rem 0.25rem 0.3rem;
+    background: var(--hud-card);
+    border-radius: 999px;
+    box-shadow: var(--hud-shadow);
+    color: var(--hud-ink);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
 
-    input {
-        padding: 0.3rem 0.6rem;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        font-size: 0.95rem;
-        width: 11rem;
-        text-align: center;
-
-        // ocultar flechas del input number
-        &::-webkit-outer-spin-button,
-        &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        &[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--hud-shadow-lg);
     }
 
-    button {
-        padding: 0.3rem 0.8rem;
-        border-radius: 8px;
-        background-color: rgb(78, 64, 234);
-        color: white;
-        border: none;
-        font-size: 0.9rem;
-        cursor: pointer;
-        &:hover { background-color: rgb(234, 78, 64); transform: scale(1.05); }
-    }
+    &:active { transform: translateY(0); }
+}
+
+// Envuelve al retrato para poder colgarle el engranaje en una esquina
+.sim-hud-trainer-portrait {
+    position: relative;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.sim-hud-trainer-gear {
+    position: absolute;
+    right: -0.1rem;
+    bottom: -0.1rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    border-radius: 50%;
+    background: var(--hud-blue);
+    color: #fff;
+    border: 2px solid var(--hud-card);
+    box-shadow: var(--hud-shadow);
+    pointer-events: none;
+}
+
+// El retrato se pone inline desde getTrainerImage(); aquí solo el tamaño
+.sim-hud-trainer-img {
+    width: 3.4rem !important;
+    height: 3.4rem !important;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 3px solid #e05a4e;
+    background-color: var(--hud-paper-3);
+    background-size: cover;
+    background-position: center top;
+}
+
+.sim-hud-trainer-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.sim-hud-trainer-name {
+    font-size: 1.15rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.sim-hud-trainer-coins {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: var(--hud-gold-ink);
+    line-height: 1;
+}
+
+.sim-hud-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.sim-hud-badges-title {
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.sim-hud-badges-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+// Agrupadas a la izquierda en vez de repartidas por todo el ancho: con 8 sueltas
+// los nombres quedaban demasiado separados para leerlos como una fila
+.sim-hud-badge-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    flex: 0 1 5.2rem;
+    min-width: 0;
+}
+
+// Gana a .Badge / .Bagde_win de _badge.scss, que vienen en vw/vh
+.sim-hud-badge {
+    width: 2.3rem !important;
+    height: 2.3rem !important;
+    filter: none !important;
+
+    &.Badge { opacity: 0.55; filter: grayscale(1) brightness(1.7) !important; }
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+}
+
+.sim-hud-badge-name {
+    font-size: 0.62rem;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+
+    &.is-won { color: #fff; }
 }
 
 // Autocompletado del buscador de salvajes
@@ -339,7 +486,7 @@
     list-style: none;
     max-height: 15rem;
     overflow-y: auto;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 10px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
@@ -357,8 +504,8 @@
     color: white;
 
     &.is-active {
-        background-color: rgba(78, 64, 234, 0.5);
-        color: #f0d080;
+        background-color: var(--hud-highlight);
+        color: var(--hud-accent);
     }
 }
 
@@ -388,8 +535,8 @@
 
 // Modal pokemon salvaje
 .sim-wild-modal {
-    background: rgba(10, 10, 30, 0.97);
-    border: 2px solid #f0d080;
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-accent);
     border-radius: 14px;
     padding: 2rem 2.5rem;
     display: flex;
@@ -457,110 +604,241 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.4rem;
+    flex: 1;
+    min-height: 0;
     cursor: pointer;
     transition: transform 0.15s;
 
     &:hover {
-        transform: scale(1.08);
-        .sim-wild-preview-label { color: #f0d080; }
+        transform: scale(1.06);
+        .sim-wild-preview-label { color: var(--hud-accent); }
     }
 }
 
 .sim-wild-preview-img {
-    width: 8rem;
-    height: 8rem;
+    width: 100%;
+    max-width: 10rem;
+    max-height: 10rem;
     object-fit: contain;
-    border-radius: 10px;
-    border: 2px solid rgba(240, 208, 128, 0.5);
-    background: rgba(0,0,0,0.4);
-    padding: 0.3rem;
-    box-shadow: 0 0 12px rgba(240, 208, 128, 0.3);
+    border-radius: 12px;
+    border: 2px solid rgba(var(--hud-accent-rgb), 0.5);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 0.4rem;
+    box-shadow: 0 0 16px rgba(var(--hud-accent-rgb), 0.35);
+    animation: simWildPop 0.25s ease-out;
+    box-sizing: border-box;
+}
+
+@keyframes simWildPop {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
 }
 
 .sim-wild-preview-label { display: none; }
 
-// ── Layout 3+3 equipo ────────────────────────────────────────
-.sim-setup-center-row {
+// ── Banda 2: el equipo, las seis en una fila ────────────────────────────────
+// Equipo y arena comparten ancho para que sus bordes queden alineados
+.sim-hud-team {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    justify-content: space-between;
-    padding: 0 1rem;
+    flex-direction: column;
+    gap: 0.45rem;
+    flex-shrink: 0;
+    padding: 0.2rem 0.3rem 0.3rem;
     box-sizing: border-box;
 }
 
-.sim-setup-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
-}
-
-.sim-team-col {
-    display: flex;
-    flex-direction: column;
+.sim-hud-team-row {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.6rem;
-    align-items: center;
+    align-items: stretch;
 }
 
-.sim-mini-pkm {
+// Tarjeta de Pokémon. --pkm-type lo inyecta el componente con el color del tipo 1.
+.sim-pkm-card {
+    --pkm-type: #7a7a8c;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.15rem;
-    background: rgba(0, 0, 0, 0.55);
-    border: 1px solid rgba(162, 112, 216, 0.5);
-    border-radius: 10px;
-    padding: 0.3rem 0.5rem;
-    width: 7rem;
+    min-width: 0;
+    border-radius: 11px;
+    // El respaldo va primero: Safari por debajo de 16.2 ignora color-mix()
+    border: 2px solid rgba(var(--hud-ink-rgb), 0.15);
+    border: 2px solid color-mix(in srgb, var(--pkm-type) 60%, transparent);
+    background: var(--hud-card);
+    color: var(--hud-ink);
+    box-shadow: var(--hud-shadow);
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 
-    &.sim-mini-pkm--dead {
-        opacity: 0.4;
-        filter: grayscale(80%);
+    &:hover {
+        transform: translateY(-2px);
+        border-color: var(--pkm-type);
+        box-shadow: var(--hud-shadow-lg);
+    }
+
+    &--dead {
+        opacity: 0.45;
+        filter: grayscale(85%);
+    }
+
+    &--empty {
+        border-style: dashed;
+        border-color: rgba(var(--hud-ink-rgb), 0.25);
+        background: rgba(255, 255, 255, 0.35);
+        box-shadow: none;
+        align-items: center;
+        justify-content: center;
+        min-height: 11.8rem;
+        &:hover { transform: none; border-color: rgba(var(--hud-ink-rgb), 0.25); box-shadow: none; }
     }
 }
 
-.sim-mini-pkm-img {
-    width: 4rem;
-    height: 4rem;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+.sim-pkm-card-empty-mark {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    border: 2px dashed rgba(var(--hud-ink-rgb), 0.3);
 }
 
-.sim-mini-pkm-name {
-    font-size: 0.7rem;
+.sim-pkm-card-head {
+    display: flex;
+    // center, no baseline: el nivel ahora lleva la pastilla del extra dentro
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+    padding: 0.3rem 0.45rem;
+    background: var(--pkm-type);
+    background: color-mix(in srgb, var(--pkm-type) 72%, #fff);
+    color: var(--hud-ink);
+}
+
+.sim-pkm-card-name {
+    font-size: 0.86rem;
     font-weight: bold;
-    color: rgb(162, 112, 216);
-    text-align: center;
     line-height: 1.1;
-    max-width: 6.5rem;
-    overflow: hidden;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.sim-mini-pkm-level {
-    font-size: 1rem;
-    font-weight: bold;
-    color: rgb(162, 112, 216);
-    font-family: 'Times New Roman', serif;
+.sim-pkm-card-lvl {
+    flex-shrink: 0;
     display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.95rem;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+
+    // El extra va en pastilla dorada: tiene que cantar por encima del nivel
+    // normal de un vistazo
+    em {
+        font-style: normal;
+        font-size: 0.92em;
+        line-height: 1;
+        color: #fff;
+        background: #e8801a;
+        border-radius: 999px;
+        padding: 0.1rem 0.32rem;
+        box-shadow: 0 1px 4px rgba(232, 128, 26, 0.55);
+    }
+}
+
+// Alta a propósito: la ficha cuadrada apretaba demasiado la ilustración
+.sim-pkm-card-art {
+    position: relative;
+    height: 7.4rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: var(--hud-paper-2);
+    cursor: pointer;
+    transition: background-color 0.15s;
+
+    &:hover { background-color: var(--hud-paper-hover); }
+}
+
+// Estado y evolución flotan sobre la ilustración para no robarle alto a la tarjeta
+.sim-pkm-card-icons {
+    position: absolute;
+    top: 0.2rem;
+    right: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     gap: 0.2rem;
 }
 
-.sim-mini-pkm-extra {
-    color: rgb(162, 112, 216);
+.sim-pkm-card-status {
+    width: 1.3rem !important;
+    height: 1.3rem !important;
 }
 
-.sim-mini-pkm-icons {
+.sim-pkm-card-evolve {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+    cursor: pointer;
+}
+
+// Ocupa el lugar del HP del boceto: progreso hacia la evolución
+.sim-pkm-card-bar {
+    height: 0.35rem;
+    margin: 0.3rem 0.45rem 0;
+    border-radius: 999px;
+    background: var(--hud-paper-deep);
+    overflow: hidden;
+
+    span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--pkm-type), #56b45f);
+        transition: width 0.25s ease-out;
+    }
+}
+
+.sim-pkm-card-foot {
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     gap: 0.3rem;
-    min-height: 1.4rem;
+    padding: 0.35rem 0.45rem 0.45rem;
+}
+
+// Botón redondo de debilitado: el mismo toggle que la ilustración, pero explícito
+.sim-pkm-card-ko {
+    flex-shrink: 0;
+    width: 1.75rem;
+    border-radius: 7px;
+    border: 1px solid rgba(231, 76, 60, 0.45);
+    background: rgba(231, 76, 60, 0.12);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s, border-color 0.15s;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0.75rem;
+        height: 0.75rem;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        border: 2px solid #e74c3c;
+    }
+
+    &:hover {
+        background: rgba(231, 76, 60, 0.3);
+        border-color: #e74c3c;
+    }
+
+    &--on {
+        background: #e74c3c;
+        border-color: #e74c3c;
+        &::after { border-color: #fff; background: #fff; }
+    }
 }
 
 // Barra de attach al pie de la tarjeta. Ancho completo a propósito: la imagen
@@ -569,28 +847,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    min-height: 1.5rem;
-    margin-top: 0.15rem;
-    border: 1px dashed rgba(255, 255, 255, 0.4);
-    border-radius: 6px;
-    font-size: 0.7rem;
+    flex: 1;
+    min-width: 0;
+    min-height: 1.75rem;
+    border: 1px dashed rgba(var(--hud-ink-rgb), 0.35);
+    border-radius: 7px;
+    font-size: 0.66rem;
     font-weight: bold;
     letter-spacing: 0.04em;
-    color: rgba(255, 255, 255, 0.6);
+    color: #6b7482;
     cursor: pointer;
     transition: border-color 0.15s, color 0.15s, background 0.15s;
 
     &:hover {
-        border-color: #f0d080;
-        color: #f0d080;
-        background: rgba(240, 208, 128, 0.1);
+        border-color: var(--hud-blue);
+        color: var(--hud-blue);
+        background: rgba(var(--hud-blue-rgb), 0.09);
     }
 
     &.sim-mini-attach-bar--filled {
         border-style: solid;
-        border-color: rgba(162, 112, 216, 0.6);
-        background: rgba(162, 112, 216, 0.12);
+        border-color: rgba(var(--hud-purple-rgb), 0.45);
+        background: rgba(var(--hud-purple-rgb), 0.1);
     }
 
     .attached-item {
@@ -603,110 +881,378 @@
     }
 }
 
-.sim-mini-status {
-    width: 1.4rem !important;
-    height: 1.4rem !important;
+// ── Banda 3: líderes de gimnasio + desafío final ────────────────────────────
+.sim-hud-arena {
+    display: flex;
+    gap: 0.7rem;
+    flex: 1;
+    min-height: 0;
 }
 
-// ── Fin layout 3+3 ───────────────────────────────────────────
-
-.sim-gym-leaders {
+.sim-hud-leaders {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
+    gap: 0.45rem;
+    flex: 1;
+    min-width: 0;
+    padding: 0.2rem 0.3rem 0.3rem;
+    box-sizing: border-box;
 }
 
-.sim-gym-leaders-title {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #f0d080;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.sim-gym-leaders-grid {
+.sim-hud-leaders-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 0.55rem;
+    flex: 1;
+    min-height: 0;
 }
 
-.sim-gym-leader-wrapper {
+// Tarjeta del líder: retrato a la izquierda, datos a la derecha
+.sim-leader-card {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-.sim-badge {
-    width: 5vw;
-    height: 5vw;
-    max-width: 40px;
-    max-height: 40px;
-    min-width: 28px;
-    min-height: 28px;
-    pointer-events: none;
-}
-
-.sim-gym-leader-card {
-    width: 9vw;
-    height: 9vw;
-    max-width: 120px;
-    max-height: 120px;
-    min-width: 70px;
-    min-height: 70px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    border-radius: 12px;
-    border: 2px solid rgba(240, 208, 128, 0.5);
-    background-color: rgba(0,0,0,0.4);
+    align-items: stretch;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.35rem;
+    border-radius: 11px;
+    border: 2px solid rgba(var(--hud-ink-rgb), 0.15);
+    background: var(--hud-card);
+    color: var(--hud-ink);
+    box-shadow: var(--hud-shadow);
     cursor: pointer;
     transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
 
     &:hover {
-        transform: scale(1.12);
-        border-color: #f0d080;
-        box-shadow: 0 0 12px rgba(240, 208, 128, 0.6);
+        transform: translateY(-2px);
+        box-shadow: var(--hud-shadow-lg);
+    }
+
+    &--won  { border-color: #5cb463; }
+    &--next { border-color: #e8912a; }
+}
+
+// Con retrato conviene recortar (cover, anclado arriba: la cara manda).
+// El token de carta lleva marco propio, así que ese se muestra entero (contain).
+.sim-leader-card-art {
+    flex-shrink: 0;
+    // Ancha a propósito: con cover, una columna estrecha recortaba a los líderes
+    // por los lados y se perdía medio personaje
+    width: 6rem;
+    border-radius: 8px;
+    background-color: var(--hud-paper-3);
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+
+    &--token {
+        background-size: contain;
+        background-position: center;
     }
 }
 
-// Botón para el resto
-.sim-other-rivals-btn {
+.sim-leader-card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.22rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.sim-leader-card-name {
+    font-size: 0.92rem;
+    font-weight: bold;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// Envuelve en vez de recortar: con el retrato más ancho, "ELÉCTRICO" ya no
+// cabía junto al nivel y salía cortado
+.sim-leader-card-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.35rem;
+    min-width: 0;
+}
+
+.sim-leader-card-type {
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.58rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--hud-ink);
+    border: 1px solid rgba(var(--hud-ink-rgb), 0.18);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sim-leader-card-lvl {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: var(--hud-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+.sim-leader-card-status {
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    color: var(--hud-dim-2);
+
+    .sim-leader-card--won  & { color: #2e8b45; }
+    .sim-leader-card--next & { color: #d4761a; }
+}
+
+// Panel del buscador de salvajes, en la columna derecha de la arena.
+// Aquí el desplegable cae dentro de su propia columna en lugar de abrirse sobre
+// las tarjetas de los líderes, que era de donde salían los toques cruzados.
+.sim-hud-wild {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.4rem;
-    cursor: pointer;
-    transition: transform 0.15s;
+    gap: 0.6rem;
+    flex-shrink: 0;
+    width: 13.5rem;
+    padding: 0.8rem;
+    border-radius: var(--hud-radius);
+    // Mismo morado que tenía el panel del desafío final en este sitio
+    border: none;
+    background: linear-gradient(160deg, var(--hud-panel), var(--hud-panel-deep));
+    box-shadow: var(--hud-shadow-lg);
+    color: #fff;
+    box-sizing: border-box;
 
-    span {
-        color: white;
-        font-size: 0.95rem;
-        font-weight: bold;
-        letter-spacing: 0.04em;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    .sim-wild-search { width: 100%; display: block; }
+
+    // Aquí sobra alto, así que la lista va en el flujo en vez de flotar: no tapa
+    // el botón Buscar y no hay forma de que un toque llegue a lo que hay detrás
+    .sim-wild-suggestions {
+        position: static;
+        max-height: 11rem;
+        margin-top: 0.35rem;
+        box-shadow: none;
     }
 
+    input {
+        width: 100%;
+        padding: 0.5rem 0.7rem;
+        border-radius: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.95);
+        font-size: 0.9rem;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .sim-hud-search-btn { width: 100%; }
+}
+
+.sim-hud-wild-title {
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--hud-accent-warm);
+}
+
+.sim-hud-wild-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0 0.4rem;
+}
+
+.sim-wild-preview-hint {
+    font-size: 0.66rem;
+    text-align: center;
+    color: var(--hud-accent-warm);
+}
+
+// ── Botón del desafío final, ahora en la barra inferior ─────────────────────
+.sim-hud-elite-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+    padding: 0.4rem 0.9rem 0.4rem 0.6rem;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--hud-panel), var(--hud-panel-deep-2));
+    box-shadow: var(--hud-shadow);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+
     &:hover {
-        transform: scale(1.15);
-        span { color: #f0d080; }
+        transform: translateY(-2px);
+        box-shadow: var(--hud-shadow-lg);
     }
 }
 
-.sim-other-rivals-btn-icon {
-    width: 4rem;
-    height: 4rem;
+.sim-hud-elite-btn-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    flex-shrink: 0;
     background-image: url("../images/corona.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+    filter: drop-shadow(0 0 8px rgba(var(--hud-accent-rgb), 0.5));
+}
+
+.sim-hud-elite-btn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.sim-hud-elite-btn-title {
+    font-size: 0.82rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    color: var(--hud-accent-warm);
+    white-space: nowrap;
+}
+
+.sim-hud-elite-btn-note {
+    font-size: 0.66rem;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+}
+
+// ── Banda 4: buscador + herramientas + turno ────────────────────────────────
+// position + z-index para que el desplegable del buscador, que se abre hacia
+// arriba, quede por encima de la zona de líderes y se coma él los toques
+.sim-hud-actions {
+    position: relative;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+    padding: 0.5rem 0.9rem;
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    border-radius: var(--hud-radius);
+    box-shadow: var(--hud-shadow-lg);
+    box-sizing: border-box;
+}
+
+.sim-hud-search-btn {
+    padding: 0.45rem 1.1rem;
+    border-radius: 9px;
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    font-size: 0.88rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.15s;
+
+    &:hover { background-color: #c33c38; transform: scale(1.05); }
+}
+
+// Herramientas como pastillas horizontales: el icono de 4rem apilado sobre el
+// texto se comía demasiado alto de la barra
+// En Johto (generación 2) se suma "Frontera" y son siete botones, más el
+// desafío final y Next Turn: en el iPad no cabían y el último quedaba debajo
+// del botón naranja. Las medidas se apretaron para que entren los siete, y
+// además cada botón puede encoger y recortar su etiqueta, así que si algún día
+// se añade otro la barra se estrecha en vez de desbordarse.
+.sim-hud-tools {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 0;
+
+    .sim-setup-btn {
+        flex-direction: row;
+        gap: 0.35rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 9px;
+        border: none;
+        background: var(--hud-card);
+        box-shadow: var(--hud-shadow);
+        transition: transform 0.15s, box-shadow 0.15s;
+        // Encogen antes que desbordar
+        min-width: 0;
+        flex-shrink: 1;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hud-shadow-lg);
+            span { color: var(--hud-ink); }
+        }
+    }
+
+    // flex-shrink: 0 para que al apretarse la barra se recorte la etiqueta y
+    // nunca el icono, que es lo que de verdad identifica al botón
+    .sim-setup-btn-icon { width: 1.4rem; height: 1.4rem; flex-shrink: 0; }
+
+    // El de tipos es el único que no lleva imagen de fondo: dentro tiene la
+    // misma rejilla 2x2 que el botón flotante de la batalla, y aquí se estira
+    // al tamaño del resto de iconos
+    .sim-setup-btn-icon--types .type-chart-fab-grid {
+        width: 100%;
+        height: 100%;
+    }
+
+    .sim-setup-btn span {
+        font-size: 0.72rem;
+        color: var(--hud-ink);
+        text-shadow: none;
+        // Última red: si aun así falta sitio, la etiqueta se recorta con puntos
+        // suspensivos en lugar de empujar al botón vecino
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.sim-hud-next {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    padding: 0.6rem 1.3rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f0973a, #e2701c);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 3px 12px rgba(226, 112, 28, 0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+
+    span { font-size: 1.1rem; line-height: 1; }
+
+    &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 18px rgba(226, 112, 28, 0.7);
+    }
 }
 
 // Modal Elite4 / Campeón / Rival
 .sim-other-rivals-modal {
-    background: rgba(10, 10, 30, 0.97);
-    border: 2px solid #f0d080;
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-accent);
     border-radius: 14px;
     padding: 2rem;
     width: 90vw;
@@ -717,31 +1263,36 @@
     flex-direction: column;
     gap: 1.5rem;
 
+    // El encuadre de la carta lo traía la regla global .Leader,.Elite del modal
+    // de batalla del máster, que ya no existe: ahora se declara aquí
     .Elite {
         width: 110px;
         height: 110px;
         flex-shrink: 0;
         border-radius: 10px;
-        border: 2px solid rgba(240, 208, 128, 0.4);
+        border: 2px solid rgba(var(--hud-accent-rgb), 0.4);
         background-color: rgba(0,0,0,0.3);
+        background-size: contain;
+        background-position: center center;
+        background-repeat: no-repeat;
         transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
 
         &:hover {
             transform: scale(1.1);
-            border-color: #f0d080;
-            box-shadow: 0 0 12px rgba(240, 208, 128, 0.6);
+            border-color: var(--hud-accent);
+            box-shadow: 0 0 12px rgba(var(--hud-accent-rgb), 0.6);
         }
     }
 }
 
 .sim-other-rivals-title {
-    color: #f0d080;
+    color: var(--hud-accent);
     font-size: 1.4rem;
     font-weight: bold;
     text-align: center;
     position: relative;
     padding-bottom: 0.6rem;
-    border-bottom: 1px solid rgba(240,208,128,0.3);
+    border-bottom: 1px solid rgba(var(--hud-accent-rgb), 0.3);
 }
 
 .sim-other-rivals-close {
@@ -779,95 +1330,47 @@
     justify-content: center;
 }
 
-// Rival por color de casilla: se elige el color y se ve el equipo antes de retar
+// Un toque reta directo, así que la tarjeta ya no tiene estado "seleccionada":
+// aquí vivían .sim-rival-card--selected y todo el bloque .sim-rival-preview* con
+// su botón de retar. Se fueron con la vista previa del equipo, que ahora enseña
+// la propia pantalla de selección de combatientes.
 .sim-rival-card {
     border: 3px solid transparent;
     box-sizing: border-box;
     transition: transform 0.15s, box-shadow 0.15s;
 }
-.sim-rival-card--selected {
-    transform: scale(1.06);
+
+// Retrato de cuerpo entero: la caja cuadrada de .Elite lo dejaba diminuto.
+// La llevan todas las del grupo, tengan retrato o no, para que la fila no
+// quede a dos alturas cuando alguno cae a la carta.
+.sim-rival-card--tall {
+    width: 108px;
+    height: 150px;
+    background-position: center bottom;
 }
 
-.sim-rival-preview {
+.sim-rival-choice {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.9rem;
-    margin-top: 1rem;
-    padding: 1rem 1.25rem 1.25rem;
-    border: 2px solid rgba(240, 208, 128, 0.5);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.sim-rival-preview-title {
-    color: #f0d080;
-    font-size: 1.2rem;
-    font-weight: bold;
-    letter-spacing: 0.04em;
-}
-.sim-rival-preview-color {
-    font-weight: bold;
-}
-
-.sim-rival-preview-team {
-    display: flex;
-    gap: 2rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.sim-rival-preview-pkm {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-.sim-rival-preview-img {
-    width: 130px;
-    height: 130px;
-    object-fit: contain;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.sim-rival-preview-name {
-    color: white;
-    font-size: 1.05rem;
-    font-weight: bold;
-}
-
-.sim-rival-preview-level {
-    color: #aaa;
-    font-size: 0.9rem;
-}
-
-.sim-rival-preview-types {
-    display: flex;
     gap: 0.35rem;
-    margin-top: 0.15rem;
-}
-.sim-rival-preview-type {
-    width: 2rem;
-    height: 2rem;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.sim-rival-challenge-btn {
-    padding: 0.55rem 1.8rem;
-    font-size: 1.05rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    background: #f0d080;
-    color: rgb(20, 20, 35);
     cursor: pointer;
+    max-width: 120px;
+}
 
-    &:hover { background: #f6e2a6; }
+.sim-rival-choice-name {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.15;
+}
+
+.sim-rival-choice-sub {
+    color: #aaa;
+    font-size: 0.72rem;
+    text-align: center;
+    line-height: 1.1;
 }
 
 .sim-player-rival-card {
@@ -884,10 +1387,14 @@
 .sim-player-rival-img {
     width: 5rem !important;
     height: 7rem !important;
+    // Antes las traía .image-trainer, que ya no existe
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
 }
 
 .sim-player-rival-name {
-    color: rgb(244, 170, 191);
+    color: var(--hud-pink);
     font-size: 0.9rem;
     font-weight: bold;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
@@ -922,144 +1429,145 @@
     }
 }
 
-// ─── MÓVIL: Setup vertical ───────────────────────────────────────────────────
-@media (max-width: 768px) and (orientation: portrait) {
+// ─── SETUP: pantallas por debajo del iPad horizontal ────────────────────────
+// La medida de referencia del HUD es el iPad 10ª gen en horizontal (1180×820).
+// Lo de abajo es degradación razonable; el pulido fino de móvil queda pendiente.
+
+// ─── SETUP por debajo del iPad horizontal ───────────────────────────────────
+// Aquí la arena pasa a columna y ya no cabe todo de una: la pantalla scrollea y
+// cada sección toma su alto natural. Sin soltar el `flex: 1` heredado, la
+// rejilla de líderes se comprimía, se desbordaba por abajo y la barra inferior
+// (que va en z-index 50 por el desplegable) le pasaba por encima.
+@media (max-width: 1100px) {
     .sim-player__setup {
-        padding-top: 4rem;
-        gap: 0.6rem;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 
-    .sim-gym-leaders-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.5rem;
-    }
-
-    .sim-gym-leader-card {
-        width: 18vw;
-        height: 18vw;
-        min-width: 50px;
-        min-height: 50px;
-    }
-
-    .sim-gym-leaders-title { font-size: 1rem; }
-
-    .sim-setup-btn-icon,
-    .sim-other-rivals-btn-icon { width: 3rem; height: 3rem; }
-
-    .sim-setup-btn span,
-    .sim-other-rivals-btn span { font-size: 0.8rem; }
-
-    .sim-setup-bottom-btns { gap: 1.5rem; }
-
-    // Portrait: columnas se vuelven filas horizontales (3 arriba + 3 abajo)
-    .sim-setup-center-row {
+    .sim-hud-arena {
+        flex: none;
         flex-direction: column;
-        padding: 0;
-        gap: 0.5rem;
+        min-height: 0;
     }
 
-    .sim-team-col {
+    .sim-hud-leaders { flex: none; }
+
+    .sim-hud-leaders-grid {
+        flex: none;
+        grid-auto-rows: auto;
+    }
+
+    // El buscador pasa a franja horizontal bajo los líderes
+    .sim-hud-wild {
+        width: 100%;
         flex-direction: row;
-        gap: 0.4rem;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.7rem;
+        padding: 0.5rem 0.9rem;
+
+        .sim-wild-search { width: auto; flex: 1; max-width: 16rem; }
+        .sim-hud-search-btn { width: auto; }
+    }
+
+    .sim-hud-wild-empty { flex: 1; text-align: left; justify-content: flex-start; }
+    .sim-wild-preview { flex-direction: row; gap: 0.4rem; flex: none; }
+    .sim-wild-preview-img { max-width: 4.5rem; max-height: 4.5rem; }
+
+    // Seis en fila deja los nombres en "Go…"; de aquí para abajo van 3+3
+    .sim-hud-team-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    // En una sola fila los tres bloques se pisaban entre sí
+    .sim-hud-actions {
+        flex-wrap: wrap;
         justify-content: center;
+        row-gap: 0.6rem;
     }
 
-    .sim-mini-pkm {
-        width: 5.5rem;
-        padding: 0.25rem 0.4rem;
-        gap: 0.1rem;
-    }
-
-    .sim-mini-pkm-img {
-        width: 3rem;
-        height: 3rem;
-    }
-
-    .sim-mini-pkm-name { font-size: 0.6rem; }
-    .sim-mini-pkm-level { font-size: 0.7rem; }
-
-    .sim-mini-pkm-icons {
-        min-height: 1.1rem;
-    }
-
-    .sim-mini-attach-bar {
-        min-height: 1.25rem;
-        font-size: 0.6rem;
-        .attached-item { width: 1.1rem; height: 1.1rem; }
-    }
-
-    .sim-mini-status { width: 1.1rem !important; height: 1.1rem !important; }
+    .sim-hud-tools { gap: 1rem; }
+    .sim-setup-btn-icon { width: 3rem; height: 3rem; }
+    .sim-setup-btn span { font-size: 0.8rem; }
 }
 
-// ─── MÓVIL: Setup horizontal ─────────────────────────────────────────────────
-@media (max-width: 900px) and (orientation: landscape) {
+// ─── MÓVIL: Setup ───────────────────────────────────────────────────────────
+@media (max-width: 768px) {
     .sim-player__setup {
-        padding-top: 3rem;
-        padding-bottom: 0.5rem;
-        gap: 0.6rem;
-        justify-content: flex-start;
-        overflow-y: auto;
+        padding: 0.5rem;
+        gap: 0.5rem;
     }
 
-    .sim-player-info { font-size: 0.85rem; padding: 0.2rem 0.8rem; }
+    .sim-hud-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        // sin hueco para el home: en el setup no se dibuja
+        padding: 0.5rem 0.6rem;
+    }
 
-    .sim-gym-leaders-title { font-size: 0.9rem; }
+    // Sigue siendo la pastilla blanca; solo se ajusta al contenido
+    .sim-hud-trainer {
+        align-self: flex-start;
+        padding: 0.2rem 0.9rem 0.2rem 0.25rem;
+    }
 
-    .sim-gym-leaders { gap: 0.4rem; }
+    .sim-hud-trainer-img { width: 2.4rem !important; height: 2.4rem !important; }
+    .sim-hud-trainer-name { font-size: 1rem; }
+    .sim-hud-badge { width: 1.7rem !important; height: 1.7rem !important; }
+    .sim-hud-badge-name { font-size: 0.5rem; }
 
-    .sim-gym-leaders-grid {
-        grid-template-columns: repeat(8, 1fr);
+    // Ocho de ancho no caben: envuelven en dos filas de cuatro
+    .sim-hud-badges-row {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.3rem;
+    }
+
+    .sim-hud-badge-slot { flex: 0 1 20%; }
+
+    // Tres arriba y tres abajo, como estaba el equipo antes en vertical
+    .sim-hud-team-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.4rem;
     }
 
-    .sim-gym-leader-card {
-        width: 9vw;
-        height: 9vw;
-        min-width: 44px;
-        min-height: 44px;
-        max-width: 70px;
-        max-height: 70px;
+    .sim-pkm-card-art { height: 4rem; }
+    .sim-pkm-card-name { font-size: 0.7rem; }
+    .sim-pkm-card-lvl { font-size: 0.8rem; }
+    .sim-pkm-card--empty { min-height: 8rem; }
+
+    .sim-hud-leaders-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.4rem;
     }
 
-    .sim-setup-btn-icon,
-    .sim-other-rivals-btn-icon { width: 2.5rem; height: 2.5rem; }
+    // Alto mínimo para que la tarjeta no se aplaste con el retrato dentro
+    .sim-leader-card { min-height: 4.6rem; }
+    .sim-leader-card-art { width: 3.2rem; }
+    .sim-leader-card-name { font-size: 0.8rem; }
 
-    .sim-setup-btn span,
-    .sim-other-rivals-btn span { font-size: 0.75rem; }
-
-    .sim-setup-bottom-btns { gap: 1.2rem; margin-top: 0.2rem; }
-
-    .sim-player__setup-wild input { width: 9rem; font-size: 0.85rem; }
-    .sim-player__setup-wild button { font-size: 0.8rem; padding: 0.2rem 0.6rem; }
-
-    // Landscape: mantiene 3 columnas pero más compacto
-    .sim-setup-center-row { padding: 0 0.4rem; }
-
-    .sim-mini-pkm {
-        width: 5.5rem;
-        padding: 0.25rem 0.4rem;
-        gap: 0.1rem;
+    .sim-hud-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.6rem;
+        padding: 0.5rem;
     }
 
-    .sim-mini-pkm-img {
-        width: 3rem;
-        height: 3rem;
+    .sim-hud-wild {
+        flex-direction: column;
+        align-items: stretch;
+
+        .sim-wild-search { max-width: none; }
+        .sim-hud-search-btn { width: 100%; }
+        input { font-size: 0.85rem; }
     }
 
-    .sim-mini-pkm-name { font-size: 0.6rem; }
-    .sim-mini-pkm-level { font-size: 0.7rem; }
+    .sim-hud-elite-btn { width: 100%; justify-content: center; }
 
-    .sim-mini-pkm-icons {
-        min-height: 1.1rem;
-    }
+    .sim-hud-tools { gap: 0.9rem; }
+    .sim-setup-btn-icon { width: 2.5rem; height: 2.5rem; }
+    .sim-setup-btn span { font-size: 0.7rem; }
 
-    .sim-mini-attach-bar {
-        min-height: 1.25rem;
-        font-size: 0.6rem;
-        .attached-item { width: 1.1rem; height: 1.1rem; }
-    }
-
-    .sim-mini-status { width: 1.1rem !important; height: 1.1rem !important; }
+    .sim-hud-next { padding: 0.5rem 1rem; font-size: 0.85rem; }
 }
 
 // ─── MÓVIL: Batalla vertical ── scoped bajo .sim-player ─────────────────────
@@ -1172,6 +1680,29 @@
 // ─── MÓVIL: Batalla landscape ── scoped bajo .sim-player ─────────────────────
 // Todos los overrides están bajo .sim-player para NO afectar Stadium ni MirrorModal
 
+// ─── Modales del setup (solo en SimPlayer) ──────────────────────────────────
+// Iban a 90-95vh: llegaban al borde inferior y quedaban debajo de los botones
+// flotantes, que estaban en un z-index más alto que el backdrop.
+.sim-player {
+    // Por encima de home, Next Turn y la tabla de tipos (todos en 300)
+    .modal-backdrop { z-index: 900; }
+
+    .modal-pokedex {
+        width: min(62rem, 84vw);
+        height: auto;
+        max-height: 76vh;
+        padding: 1.3rem 1.4rem;
+        gap: 1rem;
+    }
+
+    // Sin esto la lista no se encoge y el alto automático la desbordaría
+    .pokedex-list {
+        flex: 1;
+        min-height: 0;
+    }
+
+}
+
 // ─── MÓVIL: Modales Pokedex y Tienda (solo en SimPlayer) ────────────────────
 @media (max-width: 900px) {
 
@@ -1202,48 +1733,6 @@
         .pokedex-list { gap: 0.6rem; }
     }
 
-    // Tienda SimPlayer — layout rejilla compacta
-    .sim-player .modal-store {
-        width: 95vw;
-        height: 92vh;
-        padding: 0.8rem;
-
-        .store_all_options {
-            width: 100%;
-            gap: 0.3rem;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        .store-option {
-            width: 100%;
-            height: 7vh;
-            margin: 0;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.1rem;
-        }
-
-        .store-option-img { width: 7vw; height: 4vh; }
-
-        .store-option-name {
-            font-size: 0.6rem;
-            text-align: center;
-            line-height: 1.1;
-        }
-
-        .store-option-cost {
-            position: static;
-            width: auto;
-            height: auto;
-            font-size: 0.75rem;
-            background-image: none;
-            color: #f0d080;
-        }
-
-        .store-option:hover { transform: scale(1.1); }
-    }
 }
 
 // ─── Modal Guía de Efectos ───────────────────────────────────────────────────
@@ -1253,8 +1742,8 @@
 }
 
 .rules-guide-modal {
-    background: rgba(8, 8, 24, 0.98);
-    border: 2px solid #4a90d9;
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-link);
     border-radius: 14px;
     padding: 1.2rem 1.2rem 1rem;
     width: 92vw;
@@ -1289,7 +1778,7 @@
 }
 
 .rules-guide-title {
-    color: #f0d080;
+    color: var(--hud-accent);
     font-size: 1.2rem;
     font-weight: bold;
     letter-spacing: 0.05em;
@@ -1312,13 +1801,13 @@
     transition: background 0.15s, color 0.15s;
 
     &.active {
-        background: #f0d080;
-        border-color: #f0d080;
+        background: var(--hud-accent);
+        border-color: var(--hud-accent);
         color: #111;
     }
     &:hover:not(.active) {
-        background: rgba(240,208,128,0.2);
-        color: #f0d080;
+        background: rgba(var(--hud-accent-rgb), 0.2);
+        color: var(--hud-accent);
     }
 }
 
@@ -1340,12 +1829,12 @@
     transition: background 0.15s, color 0.15s;
 
     &.active {
-        background: #4a90d9;
-        border-color: #4a90d9;
+        background: var(--hud-link);
+        border-color: var(--hud-link);
         color: white;
     }
     &:hover:not(.active) {
-        background: rgba(74,144,217,0.3);
+        background: rgba(var(--hud-link-rgb), 0.3);
         color: white;
     }
 }
@@ -1356,37 +1845,40 @@
     padding-right: 0.3rem;
 
     &::-webkit-scrollbar { width: 5px; }
-    &::-webkit-scrollbar-thumb { background: rgba(74,144,217,0.5); border-radius: 4px; }
+    &::-webkit-scrollbar-thumb { background: rgba(var(--hud-link-rgb), 0.5); border-radius: 4px; }
 }
 
 // ── Tabla de tipos ──────────────────────────────────────────────────────────
 // Botón flotante, hermano del de música (que va en bottom 1.5 / left 1.5)
+// Arriba a la derecha, solo en la pantalla de batalla: en el setup tapaba la
+// cabecera y el acceso se movió a la barra de herramientas de abajo.
+// z-index en la misma familia que home y Next Turn, por debajo de los modales.
 .type-chart-fab {
     position: fixed;
-    bottom: 1.5rem;
-    left: 5.6rem;
-    z-index: 9999;
+    top: 1.1rem;
+    right: 1.6rem;
+    z-index: 300;
     width: 3.2rem;
     height: 3.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1a1a2e, #2a2a4e);
-    border: 2px solid #4a90d9;
+    background: var(--hud-card);
+    border: 2px solid rgba(255, 255, 255, 0.85);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 12px rgba(74, 144, 217, 0.35);
+    box-shadow: 0 2px 8px rgba(12, 40, 80, 0.45);
     transition: transform 0.15s, box-shadow 0.15s;
 
     &:hover {
         transform: scale(1.1);
-        box-shadow: 0 0 20px rgba(74, 144, 217, 0.6);
+        box-shadow: 0 4px 14px rgba(12, 40, 80, 0.6);
     }
 }
 // 4 iconos de tipo en rejilla 2x2 dentro del círculo
 .type-chart-fab-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1px;
     width: 2.1rem;
     height: 2.1rem;
@@ -1398,8 +1890,8 @@
 }
 
 .type-chart-modal {
-    background: rgba(8, 8, 24, 0.98);
-    border: 2px solid #4a90d9;
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-link);
     border-radius: 14px;
     padding: 1.2rem;
     width: 92vw;
@@ -1412,7 +1904,7 @@
 .type-chart-title {
     position: relative;
     text-align: center;
-    color: #4a90d9;
+    color: var(--hud-link);
     font-size: 1.3rem;
     font-weight: bold;
     letter-spacing: 0.04em;
@@ -1439,7 +1931,7 @@
     overflow-y: auto;
 
     &::-webkit-scrollbar { width: 5px; }
-    &::-webkit-scrollbar-thumb { background: rgba(74, 144, 217, 0.5); border-radius: 4px; }
+    &::-webkit-scrollbar-thumb { background: rgba(var(--hud-link-rgb), 0.5); border-radius: 4px; }
 }
 .type-chart-note {
     font-size: 0.8rem;
@@ -1471,7 +1963,7 @@
     justify-content: center;
     gap: 0.6rem;
     padding: 1rem;
-    background: rgba(6, 6, 14, 0.95);
+    background: var(--hud-modal-bg);
     cursor: zoom-out;
     overflow: auto;
 }
@@ -1486,9 +1978,11 @@
 }
 
 @media (max-width: 768px) {
+    // Mismo rincón que en escritorio: si aquí se dejaran bottom/left, el
+    // elemento quedaría con las cuatro posiciones puestas a la vez
     .type-chart-fab {
-        bottom: 1rem;
-        left: 4.4rem;
+        top: 0.8rem;
+        right: 0.8rem;
         width: 2.8rem;
         height: 2.8rem;
     }
@@ -1562,7 +2056,7 @@
 }
 
 .rules-guide-effect-name {
-    color: #f0d080;
+    color: var(--hud-accent);
     font-size: 0.75rem;
     font-weight: bold;
     white-space: nowrap;
@@ -1664,14 +2158,14 @@
     box-sizing: border-box;
     padding: 0.4rem 0.7rem;
     border-radius: 8px;
-    border: 1px solid rgba(74,144,217,0.5);
+    border: 1px solid rgba(var(--hud-link-rgb), 0.5);
     background: rgba(255,255,255,0.07);
     color: white;
     font-size: 0.85rem;
     margin-bottom: 0.4rem;
 
     &::placeholder { color: #888; }
-    &:focus { outline: none; border-color: #4a90d9; }
+    &:focus { outline: none; border-color: var(--hud-link); }
 }
 
 .rules-guide-status {
@@ -1688,13 +2182,15 @@
 }
 
 // Botón flotante de reglas (durante la batalla)
+// Abajo a la izquierda: arriba a la derecha chocaba con la tabla de tipos.
+// Ese rincón quedó libre al quitar el reproductor de música.
 .rules-guide-float-btn {
     position: fixed;
-    top: 0.8rem;
-    right: 0.8rem;
+    bottom: 1.1rem;
+    left: 1.1rem;
     width: 2.6rem;
     height: 2.6rem;
-    background: rgba(74,144,217,0.85);
+    background: rgba(var(--hud-link-rgb), 0.85);
     border: 2px solid rgba(255,255,255,0.3);
     border-radius: 50%;
     display: flex;
@@ -1709,7 +2205,7 @@
 
     &:hover {
         transform: scale(1.15);
-        background: rgba(74,144,217,1);
+        background: rgba(var(--hud-link-rgb), 1);
     }
 }
 
@@ -1736,8 +2232,9 @@
         width: 2.2rem;
         height: 2.2rem;
         font-size: 1rem;
-        top: 0.4rem;
-        right: 0.4rem;
+        // Mismo rincón que en escritorio: arriba a la derecha vive la tabla de tipos
+        bottom: 0.6rem;
+        left: 0.6rem;
     }
 }
 
@@ -1873,8 +2370,8 @@
 
 // Modal de reemplazo de pokemon (equipo lleno)
 .sim-replace-modal {
-    background: rgba(10, 10, 30, 0.97);
-    border: 2px solid #f0d080;
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-accent);
     border-radius: 14px;
     padding: 1.8rem 2rem;
     display: flex;
@@ -1886,7 +2383,7 @@
 }
 
 .sim-replace-modal-title {
-    color: #f0d080;
+    color: var(--hud-accent);
     font-size: 1.3rem;
     font-weight: bold;
     letter-spacing: 0.05em;
@@ -1903,7 +2400,7 @@
 
 .sim-replace-modal-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.8rem;
     width: 100%;
 }
@@ -1914,7 +2411,7 @@
     align-items: center;
     gap: 0.2rem;
     background: rgba(255, 255, 255, 0.06);
-    border: 2px solid rgba(240, 208, 128, 0.3);
+    border: 2px solid rgba(var(--hud-accent-rgb), 0.3);
     border-radius: 10px;
     padding: 0.6rem 0.4rem;
     cursor: pointer;
@@ -1947,7 +2444,7 @@
 }
 
 .sim-replace-pkm-level {
-    color: rgb(162, 112, 216);
+    color: var(--hud-lilac);
     font-size: 0.8rem;
     font-weight: bold;
 
@@ -1969,22 +2466,23 @@
 
 @media (max-width: 768px) {
     .sim-replace-modal { padding: 1.2rem 1rem; gap: 1rem; }
-    .sim-replace-modal-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .sim-replace-modal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
     .sim-replace-pkm-img { width: 3rem; height: 3rem; }
     .sim-replace-pkm-name { font-size: 0.65rem; }
 }
 
 // Modal All Players desde SimPlayer
 .sim-allplayers-modal {
-    background: linear-gradient(160deg, #1a1a2e, #16213e);
-    border: 2px solid #f0d080;
+    background: linear-gradient(160deg, var(--hud-dark), var(--hud-dark-2));
+    border: 2px solid var(--hud-accent);
     border-radius: 16px;
     padding: 1.5rem 1.5rem 2rem;
     position: relative;
-    width: 96vw;
-    height: 92vh;
+    width: min(70rem, 88vw);
+    height: auto;
+    max-height: 76vh;
     overflow-y: auto;
-    box-shadow: 0 0 30px rgba(240, 208, 128, 0.25);
+    box-shadow: 0 0 30px rgba(var(--hud-accent-rgb), 0.25);
     animation: popIn 0.25s ease both;
     display: flex;
     flex-direction: column;
@@ -2002,7 +2500,7 @@
         height: auto !important;
         min-height: 80px;
         border-radius: 10px;
-        border: 1px solid rgba(240, 208, 128, 0.2);
+        border: 1px solid rgba(var(--hud-accent-rgb), 0.2);
         background: rgba(255, 255, 255, 0.04);
     }
 
@@ -2090,4 +2588,239 @@
     }
 }
 
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODALES — cáscara común
+// Todos comparten el mismo papel claro, título azul y sombra, para que hablen
+// el mismo idioma que el home. Va al final del archivo a propósito: así gana
+// sobre las reglas de cada modal sin necesidad de !important.
+// Todo cuelga de .sim-player, así la pantalla del máster (Player.js) no cambia.
+// ═══════════════════════════════════════════════════════════════════════════
+.sim-player {
+
+    // El velo se oscurece un poco: los modales ahora son claros y necesitan
+    // separarse del fondo
+    .modal-backdrop,
+    .rules-guide-backdrop,
+    .turn-modal-backdrop,
+    .leader-viewer-overlay {
+        background-color: var(--hud-veil);
+    }
+
+    .modal-pokedex,
+    .modal-store,
+    .modal-attach,
+    .modal-evolve-choice,
+    .frontier-modal,
+    .rules-guide-modal,
+    .type-chart-modal,
+    .leader-viewer-modal,
+    .sim-wild-modal,
+    .sim-other-rivals-modal,
+    .sim-allplayers-modal,
+    .sim-replace-modal,
+    .sim-settings-modal,
+    .turn-modal,
+    .levelup-prompt {
+        background: var(--hud-card);
+        background-image: none;
+        color: var(--hud-ink);
+        border: 2px solid rgba(var(--hud-ink-rgb), 0.12);
+        border-radius: 16px;
+        box-shadow: 0 14px 44px rgba(10, 24, 50, 0.45);
+    }
+
+    // Títulos: todos igual, con su regla inferior
+    .Title-modal,
+    .trade-modal-title,
+    .type-chart-title,
+    .rules-guide-title,
+    .modal-evolve-choice__title,
+    .sim-replace-modal-title,
+    .sim-other-rivals-title,
+    .frontier-modal-title,
+    .sim-settings-title,
+    .levelup-prompt-title {
+        color: var(--hud-ink);
+        font-weight: bold;
+        letter-spacing: 0.04em;
+        text-shadow: none;
+    }
+
+    // Texto secundario dentro de los modales
+    .sim-replace-modal-subtitle,
+    .sim-other-rivals-label,
+    .levelup-prompt-msg,
+    .TM-Level {
+        color: var(--hud-dim);
+    }
+
+    // Filas y celdas con fondo propio: de translúcido oscuro a papel
+    .pokedex-row,
+    .store-option,
+    .sim-allplayers-list .PlayerListedClass {
+        background: var(--hud-paper);
+        border-color: rgba(var(--hud-ink-rgb), 0.14);
+        color: var(--hud-ink);
+    }
+
+    .store-option-cost { color: var(--hud-gold-ink-deep); }
+
+    // Cierres: círculo claro con aspa oscura, igual en todos
+    .trade-modal-close,
+    .sim-wild-modal-close,
+    .sim-other-rivals-close,
+    .rules-guide-close,
+    .leader-viewer-close,
+    .pokedex-close {
+        background: var(--hud-paper-2);
+        color: var(--hud-ink);
+        border: 1px solid rgba(var(--hud-ink-rgb), 0.15);
+        text-shadow: none;
+
+        &:hover { background: var(--hud-paper-hover); }
+    }
+
+    // Botón genérico de los modales (Cerrar, Sí/No…)
+    .modal-store > button,
+    .modal-attach > button,
+    .levelup-btn-yes,
+    .levelup-btn-no,
+    .turn-modal-btn {
+        padding: 0.45rem 1.5rem;
+        border-radius: 9px;
+        border: none;
+        background: var(--hud-blue);
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.85rem;
+        cursor: pointer;
+        box-shadow: var(--hud-shadow);
+        transition: background 0.15s, transform 0.15s;
+
+        &:hover { background: var(--hud-blue-deep); transform: translateY(-1px); }
+    }
+
+    .levelup-btn-no { background: var(--hud-dim-2); &:hover { background: #6f7887; } }
+
+    // ── Interiores que asumían fondo oscuro ─────────────────────────────────
+    // Texto claro y paneles translúcidos blancos que sobre el papel claro
+    // quedaban invisibles.
+    .turn-modal-text {
+        color: var(--hud-ink);
+        span { color: #d4761a; }
+    }
+
+    .sim-wild-modal-name,
+    .sim-rival-choice-name,
+    .rules-guide-tab,
+    .sim-replace-modal-subtitle strong {
+        color: var(--hud-ink);
+    }
+
+    .sim-wild-modal-capture-label,
+    .type-chart-note,
+    .type-chart-empty,
+    .rules-guide-field-note,
+    .rules-guide-effect-desc,
+    .pokedex-empty {
+        color: var(--hud-dim);
+    }
+
+    .rules-guide-effect-name { color: var(--hud-blue-deep); }
+
+    // ── Guía de Efectos ──────────────────────────────────────────────────────
+    // Toda su escala de grises estaba calculada para fondo oscuro (#ddd, #ccc,
+    // #999, #888…): sobre papel claro se lavaba entera.
+    .rules-guide-effect-desc,
+    .rules-guide-white-title,
+    .rules-guide-field-name,
+    .rules-guide-effect-title {
+        color: var(--hud-ink);
+    }
+
+    // "Cartas blancas" queda en banda clara con texto oscuro y "Cartas negras"
+    // al revés: la propia cabecera dice de qué tipo de carta habla
+    .rules-guide-black-title {
+        background: var(--hud-band-dark);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .rules-guide-note,
+    .rules-guide-empty,
+    .rules-guide-field-placeholder,
+    .rules-guide-lang-btn {
+        color: var(--hud-dim);
+    }
+
+    .rules-guide-tab {
+        color: var(--hud-ink);
+        &.is-active { color: #fff; }
+    }
+
+    // ── Tabla de jugadores ───────────────────────────────────────────────────
+    // Mismo caso: la ficha era una tarjeta oscura y todos sus textos eran claros.
+    .sim-allplayers-list {
+        .PlayerName      { color: var(--hud-blue-deep); }
+        .PlayerPosition  { color: #c0392b; }
+        .PlayerPoints    { color: var(--hud-ink); }
+        .PlayerCoins     { color: var(--hud-gold-ink-deep); }
+        .PlayerTime      { color: var(--hud-dim); }
+        .PlayerTurnTimer { color: var(--hud-gold-ink); }
+        .PlayerFrontierDot { background-color: rgba(var(--hud-ink-rgb), 0.12); }
+
+        .PlayerListedClass--active {
+            background: var(--hud-tint);
+            border-color: var(--hud-blue);
+            .PlayerName, .PlayerPoints { color: var(--hud-blue-deep); }
+        }
+    }
+
+    // El precio en ámbar claro sobre papel se leía a duras penas
+    .store-option-name { color: var(--hud-ink); }
+
+    .type-chart-close {
+        background: var(--hud-paper-2);
+        color: var(--hud-ink);
+        border: 1px solid rgba(var(--hud-ink-rgb), 0.15);
+        &:hover { background: var(--hud-paper-hover); }
+    }
+
+    // Paneles interiores: de blanco translúcido (invisible) a papel algo más tostado
+    .rules-guide-white-title,
+    .rules-guide-effect-white,
+    .rules-guide-effect-icon-placeholder,
+    .rules-guide-field-note,
+    .rules-guide-field-placeholder,
+    .sim-replace-pkm-card,
+    .sim-other-rivals-modal .sim-other-rivals-row {
+        background: var(--hud-paper);
+        border-color: rgba(var(--hud-ink-rgb), 0.14);
+    }
+
+    .rules-guide-search {
+        background: #fff;
+        color: var(--hud-ink);
+        border: 1px solid rgba(var(--hud-ink-rgb), 0.2);
+    }
+
+    .rules-guide-lang-btn,
+    .rules-guide-tab {
+        background: var(--hud-paper);
+        border-color: rgba(var(--hud-ink-rgb), 0.2);
+
+        &.is-active {
+            background: var(--hud-blue);
+            border-color: var(--hud-blue);
+            color: #fff;
+        }
+    }
+
+    .sim-replace-modal-cancel {
+        background: var(--hud-paper-2);
+        color: var(--hud-ink);
+    }
+}
 

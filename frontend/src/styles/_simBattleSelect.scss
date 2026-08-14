@@ -1,0 +1,829 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// SELECCIÓN DE COMBATIENTES — pantalla única (SimBattleSelect)
+// Medida para iPad 10ª gen en horizontal (1180×820), igual que el resto del HUD.
+// Todo sale de los tokens --hud-*, así que cambia sola con el tema del jugador.
+// ═══════════════════════════════════════════════════════════════════════════
+.sbs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    padding: 0.6rem 0.9rem;
+    gap: 0.6rem;
+    box-sizing: border-box;
+    font-size: 1rem;
+    color: var(--hud-ink);
+    // Opaco a propósito: tapa la foto de .sim-player, igual que el setup
+    background: linear-gradient(180deg,
+        var(--hud-field-1) 0%,
+        var(--hud-field-2) 14%,
+        var(--hud-field-3) 42%,
+        var(--hud-field-4) 72%,
+        var(--hud-field-5) 100%);
+    overflow: hidden;
+}
+
+// ── Barra superior ──────────────────────────────────────────────────────────
+.sbs-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-shrink: 0;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--hud-radius);
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    box-shadow: var(--hud-shadow-lg);
+    color: #fff;
+}
+
+.sbs-back {
+    flex-shrink: 0;
+    width: 2.4rem;
+    height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    line-height: 1;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.28); transform: translateX(-2px); }
+}
+
+.sbs-title {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sbs-title-main {
+    font-size: 1.15rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.sbs-title-sub {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+}
+
+// Las herramientas se van al extremo derecho de la barra
+.sbs-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+}
+
+.sbs-tool {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    font-size: 1.05rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.28); transform: scale(1.06); }
+
+    // Mismo icono de 4 tipos que el botón flotante de la batalla
+    &--types .type-chart-fab-grid {
+        width: 1.8rem;
+        height: 1.8rem;
+    }
+
+    &--turn {
+        background: var(--hud-gold);
+        border-color: transparent;
+        letter-spacing: -0.08em;
+    }
+}
+
+// ── Bandas de los dos lados ─────────────────────────────────────────────────
+.sbs-side {
+    display: flex;
+    min-height: 0;
+    padding: 0.5rem 0.7rem 0.6rem;
+    border-radius: var(--hud-radius);
+    box-sizing: border-box;
+
+    // El rival va en fila: la figura a la izquierda y su equipo a la derecha
+    &--rival {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 1rem;
+        flex: 1.25;
+        // Sin esto, un equipo de seis desbordaba la banda por arriba y los
+        // círculos se dibujaban encima de la barra superior
+        overflow: hidden;
+        background: linear-gradient(100deg,
+            rgba(var(--hud-purple-rgb), 0.22),
+            rgba(var(--hud-purple-rgb), 0.04) 55%);
+        border: 1px solid rgba(var(--hud-ink-rgb), 0.12);
+    }
+
+    &--mine {
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+        background: rgba(255, 255, 255, 0.34);
+        border: 1px solid rgba(var(--hud-ink-rgb), 0.12);
+    }
+}
+
+// ── Carta del Pokémon rival elegido (izquierda de la banda) ─────────────────
+.sbs-cardview {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+.sbs-cardview-img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    box-shadow: var(--hud-shadow-lg);
+    cursor: zoom-in;
+    transition: transform 0.15s;
+
+    &:hover { transform: scale(1.03); }
+}
+
+.sbs-cardview-empty {
+    align-self: center;
+    padding: 1rem 1.2rem;
+    border-radius: 10px;
+    border: 1px dashed rgba(var(--hud-ink-rgb), 0.28);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--hud-dim);
+}
+
+// ── Alineación del rival: líder primero y su equipo a su derecha ────────────
+.sbs-lineup {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 1.2rem;
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+// ── Figura del rival (arcade): cuerpo entero + placa con el nombre ──────────
+.sbs-figure {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    flex: 0 0 auto;
+    width: 15rem;
+    min-height: 0;
+    // El lineup alinea abajo para que los círculos se apoyen en la misma línea;
+    // el líder es la excepción: ocupa toda la banda y así asoma por encima de ellos
+    align-self: stretch;
+}
+
+.sbs-figure-art {
+    flex: 1;
+    width: 100%;
+    // Suelo: cuando la banda no tiene alto propio (móvil, donde cada sección
+    // toma su alto natural) un `flex: 1` sin más colapsaría la figura a 0
+    min-height: 11rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    // Apoyada abajo, como un personaje de pie sobre la placa
+    background-position: center bottom;
+    filter: drop-shadow(0 6px 10px rgba(var(--hud-shadow-rgb), 0.45));
+}
+
+// El salvaje no es un entrenador de cuerpo entero: su sprite se centra y se
+// deja algo más pequeño para que no salga pixelado a lo ancho
+.sbs-figure--wild .sbs-figure-art {
+    background-position: center center;
+    background-size: 80% auto;
+}
+
+// Placa inclinada, como el rótulo de un selector de personaje
+.sbs-plate {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 100%;
+    padding: 0.3rem 0.9rem;
+    box-sizing: border-box;
+    background: linear-gradient(180deg, var(--hud-gold), var(--hud-gold-ink));
+    box-shadow: var(--hud-shadow-lg);
+    color: #fff;
+    transform: skewX(-10deg);
+
+    // El texto vuelve a la vertical: solo la placa va inclinada
+    > * { transform: skewX(10deg); }
+}
+
+.sbs-plate-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    line-height: 1.05;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.sbs-plate-role {
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+// La medalla en juego, colgada del hombro de la figura
+.sbs-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2.8rem;
+    height: 2.8rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 2px 5px rgba(var(--hud-shadow-rgb), 0.5));
+}
+
+// ── Cabecera del lado propio ────────────────────────────────────────────────
+.sbs-side-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-shrink: 0;
+}
+
+.sbs-portrait {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-color: var(--hud-paper-2);
+    border: 2px solid var(--hud-gold);
+    box-shadow: var(--hud-shadow);
+
+    &--me { border-color: var(--hud-link); }
+}
+
+.sbs-side-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sbs-side-name {
+    font-size: 1.05rem;
+    font-weight: bold;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sbs-side-role {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--hud-dim);
+}
+
+// ── Equipo del rival: círculos ──────────────────────────────────────────────
+// Van dentro del lineup, a la derecha del líder.
+// Rejilla y no flex-wrap: con `flex-wrap` el contenedor se quedaba con el ancho
+// máximo de una fila sin envolver, así que al envolver (rivales de seis) sobraba
+// un hueco muerto entre el entrenador y sus Pokémon. Con columnas explícitas el
+// bloque mide justo lo que ocupa.
+.sbs-orbs {
+    --orb-cols: 2;
+    display: grid;
+    grid-template-columns: repeat(var(--orb-cols), auto);
+    align-content: end;
+    justify-items: center;
+    gap: 0.6rem 1.2rem;
+    min-width: 0;
+    // Red de seguridad: si aun así no cabe, la rejilla scrollea en lugar de
+    // desbordarse por arriba sobre la barra superior
+    max-height: 100%;
+    overflow-y: auto;
+    // El padding de arriba no es estético: la etiqueta "Elegido" sobresale por
+    // encima del círculo y sin ese hueco la recorta el propio contenedor de scroll
+    padding: 0.8rem 0 0.4rem;
+}
+
+// A partir de cinco Pokémon (Elite 4, otro jugador con equipo lleno) los
+// círculos se encogen para que quepan dos filas sin comerse la banda
+.sbs-orbs--dense {
+    gap: 0.4rem 0.8rem;
+
+    .sbs-orb      { width: 5.4rem; }
+    .sbs-orb-disc { width: 4.6rem; height: 4.6rem; border-width: 2px; }
+    .sbs-orb-name { font-size: 0.72rem; }
+    .sbs-orb-lvl  { font-size: 0.7rem; min-width: 1.35rem; }
+    .sbs-orb-types span { font-size: 0.52rem; padding: 0.02rem 0.3rem; }
+    .sbs-orb-tag  { font-size: 0.5rem; padding: 0.05rem 0.35rem; }
+    .sbs-orb-status { width: 1.1rem !important; height: 1.1rem !important; }
+}
+
+.sbs-orb {
+    --pkm-type: #7a7a8c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    width: 7.2rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+
+    &:hover { transform: translateY(-3px); }
+
+    &--dead { opacity: 0.5; filter: grayscale(80%); }
+}
+
+.sbs-orb-disc {
+    position: relative;
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 50%;
+    background-size: 78%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: var(--hud-card);
+    border: 3px solid rgba(var(--hud-ink-rgb), 0.18);
+    border: 3px solid color-mix(in srgb, var(--pkm-type) 55%, transparent);
+    box-shadow: var(--hud-shadow);
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    // Respaldo: la carta del líder es vertical y no llena el círculo con el 78%
+    &--card { background-size: cover; background-position: center 30%; }
+}
+
+.sbs-orb--chosen .sbs-orb-disc {
+    border-color: var(--hud-gold);
+    box-shadow: 0 0 0 4px rgba(var(--hud-accent-rgb), 0.45), var(--hud-shadow-lg);
+}
+
+.sbs-orb-lvl {
+    position: absolute;
+    left: -0.2rem;
+    bottom: 0.1rem;
+    min-width: 1.6rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: var(--hud-panel);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    box-shadow: var(--hud-shadow);
+}
+
+// Es una insignia, no un botón: sin el reset heredaría el scale de .status_pokemon
+.sbs-orb-status {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+    pointer-events: none;
+}
+
+.sbs-orb-tag {
+    position: absolute;
+    top: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--hud-gold);
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: bold;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.sbs-orb-name {
+    font-size: 0.88rem;
+    font-weight: bold;
+    line-height: 1.1;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sbs-orb-types {
+    display: flex;
+    gap: 0.2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    span {
+        padding: 0.05rem 0.4rem;
+        border-radius: 999px;
+        font-size: 0.58rem;
+        font-weight: bold;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+}
+
+// ── Equipo propio: tarjetas ─────────────────────────────────────────────────
+.sbs-cards {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-top: 0.2rem;
+}
+
+// ── Interruptor equipo / formas especiales ──────────────────────────────────
+.sbs-switch {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    margin-left: auto;
+    padding: 2px;
+    border-radius: 999px;
+    background: rgba(var(--hud-ink-rgb), 0.1);
+}
+
+.sbs-switch-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hud-dim);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    b {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 999px;
+        background: rgba(var(--hud-ink-rgb), 0.12);
+        font-size: 0.66rem;
+    }
+
+    &:hover { color: var(--hud-ink); }
+
+    &.is-on {
+        background: var(--hud-gold);
+        color: #fff;
+        box-shadow: var(--hud-shadow);
+        b { background: rgba(0, 0, 0, 0.22); color: #fff; }
+    }
+}
+
+.sbs-card {
+    --pkm-type: #7a7a8c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 7.4rem;
+    padding: 0.3rem 0.35rem 0.45rem;
+    border-radius: 11px;
+    box-sizing: border-box;
+    background: var(--hud-card);
+    border: 2px solid rgba(var(--hud-ink-rgb), 0.15);
+    border: 2px solid color-mix(in srgb, var(--pkm-type) 55%, transparent);
+    box-shadow: var(--hud-shadow);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+
+    &:hover { transform: translateY(-3px); box-shadow: var(--hud-shadow-lg); }
+
+    &--dead { opacity: 0.55; filter: grayscale(80%); }
+
+    &--chosen {
+        border-color: var(--hud-gold);
+        box-shadow: 0 0 0 3px rgba(var(--hud-accent-rgb), 0.5), var(--hud-shadow-lg);
+        transform: translateY(-3px);
+    }
+
+}
+
+.sbs-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 1.3rem;
+}
+
+.sbs-card-lvl {
+    min-width: 1.5rem;
+    padding: 0.02rem 0.35rem;
+    border-radius: 999px;
+    background: var(--pkm-type);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.sbs-card-status {
+    width: 1.3rem !important;
+    height: 1.3rem !important;
+    pointer-events: none;
+}
+
+.sbs-card-art {
+    position: relative;
+    width: 100%;
+    height: 5rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.sbs-card-ko {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-12deg);
+    padding: 0.05rem 0.45rem;
+    border-radius: 5px;
+    background: rgba(231, 76, 60, 0.9);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+}
+
+.sbs-card-name {
+    font-size: 0.82rem;
+    font-weight: bold;
+    line-height: 1.15;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sbs-card-types {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.22rem;
+
+    i {
+        display: block;
+        width: 1.5rem;
+        height: 0.25rem;
+        border-radius: 999px;
+    }
+}
+
+.sbs-empty {
+    align-self: center;
+    margin: auto;
+    font-size: 0.85rem;
+    color: var(--hud-dim);
+}
+
+// ── Barra inferior ──────────────────────────────────────────────────────────
+.sbs-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-shrink: 0;
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--hud-radius);
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    box-shadow: var(--hud-shadow-lg);
+    color: #fff;
+}
+
+.sbs-pick {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    flex: 1;
+
+    &--rival {
+        justify-content: flex-end;
+        text-align: right;
+    }
+}
+
+.sbs-pick-art {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-size: 80%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.sbs-pick-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sbs-pick-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sbs-pick-name {
+    font-size: 1rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sbs-vs {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    color: var(--hud-accent);
+}
+
+.sbs-fight {
+    flex-shrink: 0;
+    padding: 0.6rem 2rem;
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--hud-accent-warm), var(--hud-gold));
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--hud-shadow-lg);
+    cursor: pointer;
+    transition: transform 0.15s, filter 0.15s;
+
+    &:hover { transform: scale(1.03); filter: brightness(1.08); }
+
+    &--off {
+        background: rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.45);
+        box-shadow: none;
+        cursor: default;
+        &:hover { transform: none; filter: none; }
+    }
+}
+
+// ── Modo espejo (marcador del máster) ───────────────────────────────────────
+// La misma pantalla, sin nada que tocar. `pointer-events: none` de una vez:
+// mata clics y estados hover sin tener que desandar regla por regla.
+.sbs--mirror {
+    pointer-events: none;
+    border-radius: inherit;
+
+    // Sin barra inferior, la banda propia puede respirar más
+    .sbs-side--mine { flex: 1.1; }
+
+    // El `stretch` heredado estiraba las tarjetas a todo el alto de la banda,
+    // que aquí es una pantalla entera. Que tomen su alto y se centren.
+    .sbs-cards {
+        align-items: center;
+        align-content: center;
+    }
+
+    // Lo elegido tiene que leerse desde lejos, no de cerca como en la tablet
+    .sbs-card--chosen {
+        box-shadow: 0 0 0 5px rgba(var(--hud-accent-rgb), 0.6), var(--hud-shadow-lg);
+    }
+
+    .sbs-orb--chosen .sbs-orb-disc {
+        box-shadow: 0 0 0 6px rgba(var(--hud-accent-rgb), 0.55), var(--hud-shadow-lg);
+    }
+}
+
+// ── Carta a pantalla completa ───────────────────────────────────────────────
+.sbs-zoom {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    background: var(--hud-veil);
+    cursor: zoom-out;
+}
+
+.sbs-zoom-img {
+    max-width: 90vw;
+    max-height: 82vh;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.sbs-zoom-hint {
+    color: #fff;
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+// ── Pantallas por debajo del iPad horizontal ────────────────────────────────
+@media (max-width: 1100px) {
+    .sbs { overflow-y: auto; }
+
+    .sbs-figure { width: 11rem; }
+    .sbs-figure-art { min-height: 9rem; }
+    .sbs-plate-name { font-size: 1.15rem; }
+    .sbs-badge { width: 2.2rem; height: 2.2rem; }
+
+    .sbs-orb { width: 6rem; }
+    .sbs-orb-disc { width: 5.2rem; height: 5.2rem; }
+    .sbs-card { width: 6.2rem; }
+    .sbs-card-art { height: 4.2rem; }
+}
+
+@media (max-width: 780px) {
+    .sbs-title-sub { display: none; }
+    // Sin alto propio: cada banda toma el suyo y la pantalla scrollea
+    .sbs-side { flex: none; }
+
+    // La carta pasa debajo: en vertical no hay ancho para las dos columnas
+    .sbs-side--rival { flex-direction: column-reverse; align-items: stretch; }
+    .sbs-cardview { flex: none; justify-content: center; }
+    .sbs-cardview-img { max-height: 16rem; }
+
+    .sbs-figure { width: 7.5rem; }
+    .sbs-figure-art { min-height: 9rem; }
+    .sbs-orbs { justify-content: center; }
+
+    .sbs-side-head { flex-wrap: wrap; }
+    .sbs-switch { width: 100%; margin: 0.4rem 0 0; }
+    .sbs-switch-btn { flex: 1; justify-content: center; }
+
+    .sbs-footer { flex-wrap: wrap; }
+    .sbs-fight { width: 100%; text-align: center; padding: 0.55rem 1rem; }
+}

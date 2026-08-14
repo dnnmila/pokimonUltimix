@@ -7,7 +7,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 
 
-import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame, setGameRivals } from "../gameInstance.js";
+import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame, getSaveInfo, setGameRivals } from "../gameInstance.js";
 import { getIo } from "../socketIo.js";
 
 async function openDb() {
@@ -437,6 +437,15 @@ export const leaderBattle = async (req, res) => {
     }
 };
 
+export const saveInfoController = async (req, res) => {
+    try {
+        res.status(200).json(getSaveInfo());
+    } catch (error) {
+        console.error('Error al leer el auto-guardado:', error);
+        res.status(200).json({ exists: false });
+    }
+};
+
 export const loadGameController = async (req, res) => {
     try {
         const game = loadGame();
@@ -748,6 +757,20 @@ export const toggleBattlePublic = async (_req, res) => {
         game.toggleBattlePublic();
         updateGameAndNotify();
         res.status(200).json({ message: 'Battle public toggled', battlePublic: game.battlePublic });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Qué pestaña del equipo mira el jugador (equipo normal / megas y G-Max).
+// Es puro reflejo para el espejo del marcador: no cambia nada de la batalla.
+export const setFormsView = async (req, res) => {
+    try {
+        const { showForms } = req.body;
+        const game = getGame();
+        game.simFormsView = !!showForms;
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Vista de formas establecida' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

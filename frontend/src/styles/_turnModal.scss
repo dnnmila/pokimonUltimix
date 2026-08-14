@@ -45,6 +45,27 @@
     line-height: 1;
 }
 
+// La mascota del tema, cuando el tema tiene una, en lugar del rayo. Rebota en
+// vez de girar: el sprite tiene arriba y abajo, y balancearlo como al emoji
+// quedaba mareante.
+.turn-modal-mascot {
+    height: 6.5rem;
+    width: auto;
+    animation: turn-mascot-bounce 0.9s ease-in-out infinite;
+
+    // Los sprites animados son pixel art de ~80px y hay que ampliarlos sin
+    // suavizado; los renders grandes no llevan esta clase
+    &--pixel {
+        image-rendering: pixelated;
+        image-rendering: -webkit-optimize-contrast;
+    }
+}
+
+@keyframes turn-mascot-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-0.7rem) scale(1.06); }
+}
+
 .turn-modal-text {
     text-align: center;
     font-size: 1.8rem;

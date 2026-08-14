@@ -1,4 +1,5 @@
 import PokemonListed from "./PokemonListed";
+import { getTrainerImage } from "../data/trainers";
 
 const FRONTIERS = [
     { key: 'frontierPink',   color: '#f472b6', label: 'Rosa' },
@@ -8,6 +9,8 @@ const FRONTIERS = [
     { key: 'frontierRed',    color: '#f87171', label: 'Roja' },
     { key: 'frontierGolden', color: '#c084fc', label: 'Legendaria' },
 ];
+
+const TEAM_SLOTS = 6;
 
 const getBadgeImg = (gen, num) => {
     try {
@@ -23,75 +26,83 @@ const formatTurnTime = (secs) => {
     return `${m}:${s}`;
 };
 
-const PlayerListed = ({player, totalPLayers, generation, turnElapsed = 0}) => {
+const PlayerListed = ({player, generation, turnElapsed = 0}) => {
     const badges = [player.badge1, player.badge2, player.badge3, player.badge4 , player.badge5 , player.badge6,player.badge7,player.badge8,player.badge9,player.badge10];
+    const gymBadges = badges.slice(0, 8);
+    const eliteWon = badges[8];
+    const championWon = badges[9];
 
-    const playerHeight = 100 / totalPLayers;
-
-    const playerStyle = {
-        height: `${playerHeight}vh`
-    };
-
+    const pokemons = player.pokemons || [];
+    const emptySlots = Math.max(0, TEAM_SLOTS - pokemons.length);
 
     return (
-        <div className={`PlayerListedClass ${player.isMyTurn ? 'PlayerListedClass--active' : ''}`} style={playerStyle} >
-           
-            <div className="Titles">
-                <div className="NamesAndPosition">
-                {player.isMyTurn && <div className="isMyturn"> </div>}
-                    <div className="PlayerPosition">{player.position}.</div>
-                    <div className="PlayerName">{player.name}</div>
-                    <div className="PlayerPoints">{player.points} points</div>
+        <div className={`apl-row ${player.isMyTurn ? 'apl-row--active' : ''}`}>
+
+            {/* ── Entrenador y medallas ─────────────────────────────────── */}
+            {/* Dos líneas: retrato + nombre arriba, y las medallas abajo a todo
+                el ancho de la columna, que es lo que les deja tamaño de verdad */}
+            <div className="apl-trainer">
+                <div className="apl-trainer-top">
+                    <div className="apl-rank">{player.position}</div>
+                    <div className="apl-avatar" style={{ backgroundImage: `url(${getTrainerImage(player.name)})` }} />
+                    <div className="apl-name">{player.name}</div>
                 </div>
-            
-                {generation === 2 && (
-                    <div className="PlayerFrontiers">
-                        {FRONTIERS.map(({ key, color, label }) => (
-                            <div
-                                key={key}
-                                className={`PlayerFrontierDot ${player[key] ? 'PlayerFrontierDot--used' : ''}`}
-                                style={{ '--fc': color }}
-                                title={label}
-                            />
-                        ))}
-                    </div>
-                )}
-                <div className="PlayerBadges">
-                    {badges.map((badge, index) => {
-                        if (!badge) return null;
-                        const num = index + 1;
-                        if (num <= 8) {
+
+                <div className="apl-identity">
+                    {/* Sin contador: las medallas encendidas ya dicen cuántas lleva */}
+                    <div className="apl-badges">
+                        {gymBadges.map((won, index) => {
+                            const num = index + 1;
                             const img = getBadgeImg(generation || 1, num);
                             return (
-                                <div
-                                    key={player.name + "badge" + num}
-                                    className={`PlayerBagde${num}`}
-                                    id={`badge${num}Won`}
-                                    style={img ? { backgroundImage: `url(${img})` } : {}}
-                                />
+                                <div key={player.name + 'badge' + num}
+                                     className={`apl-badge ${won ? 'apl-badge--won' : ''}`}
+                                     style={img ? { backgroundImage: `url(${img})` } : {}} />
                             );
-                        }
-                        return (
-                            <div key={player.name + "badge" + num} className={`PlayerBagde${num}`} id={`badge${num}Won`} />
-                        );
-                    })}
-                </div>
-              
+                        })}
+                        {eliteWon && <div className="apl-badge apl-badge--won apl-badge--elite" title="Alto Mando" />}
+                        {championWon && <div className="apl-badge apl-badge--won apl-badge--champion" title="Campeón" />}
+                    </div>
 
+                    {generation === 2 && (
+                        <div className="apl-frontiers">
+                            {FRONTIERS.map(({ key, color, label }) => (
+                                <div
+                                    key={key}
+                                    className={`apl-frontier ${player[key] ? 'apl-frontier--used' : ''}`}
+                                    style={{ '--fc': color }}
+                                    title={label}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
-            <div className="AllPokemons"> 
-                    {player.pokemons && player.pokemons.map((pokemon, index) => (
-                       <PokemonListed key = {player.name + pokemon.id} pokemon={pokemon}  />
+
+            {/* ── Equipo ────────────────────────────────────────────────── */}
+            <div className="apl-team">
+                {pokemons.map(pokemon => (
+                    <PokemonListed key={player.name + pokemon.id} pokemon={pokemon} />
+                ))}
+                {Array.from({ length: emptySlots }, (_, i) => (
+                    <div key={`empty-${i}`} className="apl-pkm apl-pkm--empty" />
                 ))}
             </div>
-            <div className="CoinsAndTime">
-                <div className="PlayerCoins">${player.coins}</div>
-                <div className="PlayerTime">{player.hours} : {player.minutes} : {player.seconds}</div>
-                {player.isMyTurn && (
-                    <div className="PlayerTurnTimer">{formatTurnTime(turnElapsed)}</div>
-                )}
+
+            {/* ── Totales ───────────────────────────────────────────────── */}
+            <div className="apl-totals">
+                <div className="apl-points">{player.points}<span>pts</span></div>
+                <div className="apl-coins">${player.coins}</div>
+                {/* Reloj acumulado y cronómetro del turno en la misma línea: con
+                    ocho jugadores la fila no da para una cuarta */}
+                <div className="apl-clock">
+                    <span className="apl-time">{player.hours}:{player.minutes}:{player.seconds}</span>
+                    {player.isMyTurn && (
+                        <span className="apl-turn-timer">{formatTurnTime(turnElapsed)}</span>
+                    )}
+                </div>
             </div>
-           
+
         </div>
     );
 };

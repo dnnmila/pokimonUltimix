@@ -1,0 +1,109 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// Paleta compartida del nuevo diseño.
+//
+// Los mismos valores estaban copiados en _game.scss, _menuPlayers.scss y
+// _simPlayer.scss. Aquí viven una sola vez, en :root, para que Player los
+// consuma sin hacer una cuarta copia. Las hojas viejas siguen declarando los
+// suyos localmente (valores idénticos): sus definiciones ganan por
+// especificidad, así que nada cambia de aspecto por esto.
+//
+// Estos son los valores del tema por defecto (Ultimix). _simThemes.scss los
+// sobrescribe sobre .sim-player--<tema>; todo lo que hay debajo del contenedor
+// los hereda, incluidos los modales, porque ninguno de ellos redeclara la
+// paleta por su cuenta.
+//
+// DOS FAMILIAS, y la diferencia importa:
+//
+//   MARCA     — bandas, tarjetas, papel, acentos. Vira con el tema.
+//   SEMÁNTICA — verde = vida, rojo = KO, naranja = evolución/siguiente.
+//               NO vira: si el tema Gengar pintara la barra de vida de morado
+//               se perdería la lectura de un vistazo en plena partida. Estos
+//               colores siguen escritos literales allí donde se usan, salvo
+//               los tres de abajo que ya venían de antes.
+// ═══════════════════════════════════════════════════════════════════════════
+:root {
+    // ── Marca: banda principal (cabecera y barra inferior) ──────────────────
+    --hud-blue:          #1a6ec0;
+    --hud-blue-deep:     #14589e;
+    --hud-blue-rgb:      26, 110, 192;
+
+    // ── Marca: superficies ──────────────────────────────────────────────────
+    --hud-card:          #fdfbf4;  // tarjetas claras sobre las bandas
+    --hud-paper:         #f2eee0;  // familia arena, de más claro a más oscuro
+    --hud-paper-2:       #eeead9;
+    --hud-paper-3:       #e9e6dc;
+    --hud-paper-hover:   #e4dfc9;
+    --hud-paper-deep:    #d9d3bd;
+    --hud-tint:          #e8f0fb;  // lavado frío para filas destacadas
+
+    // ── Marca: fondo del setup (degradado de cinco paradas) ─────────────────
+    --hud-field-1:       #9ccf98;
+    --hud-field-2:       #b6d9a4;
+    --hud-field-3:       #dcd7ae;
+    --hud-field-4:       #e8dfb2;
+    --hud-field-5:       #e3d9a8;
+
+    // ── Marca: tinte de la foto de fondo de .sim-player ─────────────────────
+    // Por defecto no tiñe nada; los temas oscuros lo usan para bajar la foto.
+    --hud-bg-blend:      transparent;
+    --hud-bg-blend-mode: normal;
+
+    // ── Marca: mascota del tema en la banda de cabecera ─────────────────────
+    // Va como capa de background —no como ::after— para no meter un elemento
+    // posicionado en un contenedor cuyos hijos no lo están: así no hay riesgo
+    // de que se cuele por delante de las medallas. `none` es una capa válida,
+    // de modo que por defecto la banda queda exactamente como estaba.
+    //
+    // El `space` reserva sitio a la derecha de la banda para que las ocho
+    // medallas no lleguen a pisar a la mascota en pantallas estrechas. A 0 el
+    // calc() da el padding original.
+    --hud-band-mascot:       none;
+    --hud-band-blend:        normal;
+    --hud-band-mascot-space: 0rem;
+
+    // ── Marca: texto ────────────────────────────────────────────────────────
+    --hud-ink:           #1b2433;
+    --hud-ink-rgb:       27, 36, 51;
+    --hud-dim:           #626d7e;
+    --hud-dim-2:         #8a94a3;
+
+    // ── Marca: acentos ──────────────────────────────────────────────────────
+    --hud-accent:        #f0d080;  // el dorado que remata bordes y títulos
+    --hud-accent-rgb:    240, 208, 128;
+    --hud-accent-soft:   #f6e2a6;
+    --hud-accent-warm:   #ffd479;
+    --hud-gold:          #e8a317;  // monedas
+    --hud-gold-ink:      #b8791a;  // monedas sobre fondo claro
+    --hud-gold-ink-deep: #8a5c0a;
+    --hud-link:          #4a90d9;
+    --hud-link-rgb:      74, 144, 217;
+
+    // ── Marca: morados (panel del desafío final, etiquetas de nivel) ────────
+    --hud-purple:        #4b2f92;
+    --hud-purple-rgb:    75, 47, 146;
+    --hud-panel:         #5b3aa8;
+    --hud-panel-deep:    #33206a;
+    --hud-panel-deep-2:  #3a2270;
+    --hud-lilac:         #a270d8;
+    --hud-pink:          #f4aabf;
+
+    // ── Marca: superficies oscuras (modales de batalla y de reemplazo) ──────
+    --hud-dark:          #1a1a2e;
+    --hud-dark-2:        #16213e;
+    --hud-band-dark:     #2b3560;
+    --hud-modal-bg:      rgba(10, 10, 30, 0.97);
+    --hud-veil:          rgba(8, 18, 38, 0.55);
+    --hud-highlight:     rgba(78, 64, 234, 0.5);
+
+    // ── Marca: líneas, sombras, radio ───────────────────────────────────────
+    --hud-line:          rgba(var(--hud-ink-rgb), 0.2);
+    --hud-shadow-rgb:    20, 32, 56;
+    --hud-shadow:        0 2px 7px rgba(var(--hud-shadow-rgb), 0.2);
+    --hud-shadow-lg:     0 4px 14px rgba(var(--hud-shadow-rgb), 0.26);
+    --hud-radius:        14px;
+
+    // ── Semántica: fija en todos los temas ──────────────────────────────────
+    --hud-orange:        #e07a20;
+    --hud-red:           #d4483b;
+    --hud-green:         #4a9d5f;
+}

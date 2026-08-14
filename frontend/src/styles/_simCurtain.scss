@@ -1,0 +1,131 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// CORTINA DE TRANSICIÓN DEL TEMA
+//
+// Dos hojas que se cierran sobre la pantalla, la mascota del tema en medio, y
+// las hojas que se vuelven a abrir ya sobre la pantalla de batalla. Solo se
+// monta en temas con mascota (hoy, Gengar).
+//
+// Los colores salen de los tokens del tema, así que la cortina de cada tema
+// sale a juego sin escribir nada aquí. Las duraciones están duplicadas en
+// SimThemeCurtain.js: si se cambian, hay que cambiarlas en los dos sitios.
+// ═══════════════════════════════════════════════════════════════════════════
+.sim-curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;   // por encima de todo, incluidos los modales (10000)
+    overflow: hidden;
+    // En reposo no debe robar ni un toque: las hojas están fuera de pantalla
+    // pero el contenedor sigue montado.
+    pointer-events: none;
+
+    &--in,
+    &--hold,
+    &--out {
+        // Mientras dura la transición sí bloquea: un toque a ciegas sobre la
+        // pantalla que hay debajo lanzaría acciones que no se ven.
+        pointer-events: auto;
+    }
+}
+
+.sim-curtain-panel {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    // El pixel de más cierra la costura sin desplazar la junta: las dos hojas
+    // se encuentran en el 50% justo, que es donde se centra la mascota.
+    height: calc(50% + 1px);
+    transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    // Las dos hojas van claras en el borde de la pantalla y oscuras en la
+    // junta: el centro queda en penumbra y el halo de la mascota destaca
+    &--top {
+        top: 0;
+        transform: translateY(-100%);
+        background: linear-gradient(180deg, var(--hud-panel), var(--hud-panel-deep));
+    }
+
+    &--bottom {
+        bottom: 0;
+        transform: translateY(100%);
+        background: linear-gradient(0deg, var(--hud-panel), var(--hud-panel-deep));
+        // La línea de acento la dibuja esta hoja, que es la que se pinta al
+        // final: puesta en la de arriba quedaba tapada por esta
+        box-shadow: 0 -2px 0 var(--hud-accent);
+    }
+}
+
+// Cerradas: las dos hojas al centro
+.sim-curtain--in,
+.sim-curtain--hold {
+    .sim-curtain-panel--top,
+    .sim-curtain-panel--bottom { transform: translateY(0); }
+}
+
+// Al abrir la duración es algo mayor, para que la pantalla nueva se descubra
+// con menos prisa de la que se tapó
+.sim-curtain--out .sim-curtain-panel {
+    transition-duration: 300ms;
+}
+
+// Solo la mascota va centrada: así cae justo sobre la junta de las dos hojas y
+// parece que sale de la grieta. El rótulo se posiciona aparte, porque metido en
+// el mismo flujo desplazaba al grupo entero y la junta cortaba a la mascota por
+// la barriga.
+.sim-curtain-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 200ms ease;
+}
+
+.sim-curtain--hold .sim-curtain-center { opacity: 1; }
+
+.sim-curtain-mascot {
+    width: clamp(8rem, 22vh, 13rem);
+    height: auto;
+    // El arte tiene fondo transparente: el halo lo separa de la hoja
+    filter: drop-shadow(0 0 22px rgba(var(--hud-accent-rgb), 0.7));
+    animation: simCurtainFloat 1.6s ease-in-out infinite;
+
+    // Los sprites animados son pixel art de ~80px: ampliados con el suavizado
+    // del navegador salen emborronados, y así se ven como lo que son
+    &--pixel {
+        image-rendering: pixelated;
+        image-rendering: -webkit-optimize-contrast;   // Safari viejo
+        // El sprite ya se mueve por su cuenta: el vaivén se queda solo como
+        // apoyo, sin competir con su animación
+        animation-duration: 2.4s;
+    }
+}
+
+// Colgado del centro hacia abajo, fuera del flujo de la mascota
+.sim-curtain-label {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    margin-top: clamp(5rem, 13vh, 7.5rem);
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: bold;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--hud-accent);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes simCurtainFloat {
+    0%, 100% { transform: translateY(-0.3rem); }
+    50%      { transform: translateY(0.3rem); }
+}
+
+// Quien pida menos movimiento no llega a ver la cortina —el hook la salta
+// entera—, pero si el ajuste cambia a media transición esto la deja quieta.
+@media (prefers-reduced-motion: reduce) {
+    .sim-curtain-panel { transition: none; }
+    .sim-curtain-mascot { animation: none; }
+    .sim-curtain-center { transition: none; }
+}

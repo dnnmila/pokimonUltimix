@@ -60,44 +60,5 @@ background-repeat: no-repeat;
 $ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
 $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
 
-@media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
-    .add_pokemon{
-        margin-top: 1rem;
-        height: 60vh;
-        width: 15vw;
-        border-color: palevioletred;
-        border-style: solid;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items:center;
-        background-color:rgba(0, 0, 0, 0.9);
-    
-        input{ 
-            height: 3vh;
-            color: aliceblue;
-            background-color: rgb(170, 64, 170) ;
-            text-align: center;
-            font-size: .8rem;
-            width: 80%;
-    
-        }
-        button{
-            margin-top: 2rem;
-            height: 6vh;
-            width: 8vw;
-            background-color: rgb(242, 72, 72);
-            color: rgb(255, 255, 255);
-            border-radius: 60%;
-            border-color: rgb(242, 72, 72);
-            
-        }
-        button:hover{
-                transform: scale(1.5);
-                cursor: pointer;
-           
-        }
-        
-    }
-
-}
+// El override de .add_pokemon para iPad se retiró: el hueco lo dimensiona ahora
+// .pv-slot con clamp(). .button_evolve se queda porque lo usa SimPlayer.

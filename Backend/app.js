@@ -6,6 +6,7 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
 import { init as initSocketIo } from './socketIo.js';
+import { getGame } from './gameInstance.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -85,6 +86,11 @@ app.get('*', (req, res) => {
 
 io.on('connection', (socket) => {
     console.log('Un usuario se ha conectado');
+
+    // El estado solo viajaba con cada `updateGameAndNotify`, así que una pestaña
+    // recién abierta se quedaba en blanco ("Jugador no encontrado") hasta que el
+    // máster tocaba algo. Se le manda el estado actual nada más conectar.
+    socket.emit('gameUpdated', getGame());
 
     socket.on('disconnect', () => {
         console.log('Un usuario se ha desconectado');

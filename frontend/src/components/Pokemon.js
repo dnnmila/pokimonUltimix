@@ -3,6 +3,7 @@ import Types from './Types';
 import ModalAttach from './modals/ModalAttach';
 import ModalEvolveChoice from './modals/ModalEvolveChoice';
 import SERVER_IP from '../config';
+import { attachIconStyle, attachLabel } from '../attachItems';
 
 const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached,mega, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
    
@@ -95,22 +96,6 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
         setShowModalAttach(false);
     };
 
-    const getAttachedClass = (attached) => {
-        switch (attached) {
-            case "MT":
-                return "attached-mt";
-            case "Protein":
-                return "attached-protein";
-            case "Potion":
-                return "attached-potion";
-            case "Claw":
-                return "attached-claw";
-            case "Mega":
-                return "attached-mega";
-            default:
-                return "attached-none";
-        }
-    };
 
     const handleChangeState = () => {
         onChangeState(currentPlayer.id, id, { source: 'manual-master' });
@@ -147,28 +132,61 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
    }
 
 
+    const isAlive = state === "Alive";
+    const canEvolve = (extra >= nextLevel && nextLevel > 0) || nextLevel === -1 || canEvolveWithStone;
+
     return (
-        <div className="pokemon" id={box_id} >
-            <div className={state === "Alive" ? "img_pokemon" : "img_pokemon_dead" }  id={img_id} style={{ backgroundImage: `url(${imageUrl})`}} onClick={()=>handleChangeState()}> </div>
-            <div className= "level_total" id={level_id} onClick={handleIncreaseLevel}> 
-            <h1 className="level_pokemon" > {level}</h1>
-            {extra > 0 && <h1 className="level_extra"> + {extra} </h1>}
+        // El tipo principal tiñe el borde y el fondo de la tarjeta
+        <div className={`pokemon pv-card pv-card--${type1}${isAlive ? '' : ' pv-card--fainted'}`} id={box_id} >
+
+            {/* ── Zona de arte: sprite sobre el fondo del tipo ──────────────── */}
+            <div className="pv-card-art">
+                <div className={`pv-card-sprite ${isAlive ? "img_pokemon" : "img_pokemon_dead"}`}
+                     id={img_id}
+                     style={{ backgroundImage: `url(${imageUrl})`}}
+                     title={isAlive ? 'Debilitar' : 'Revivir'}
+                     onClick={()=>handleChangeState()}> </div>
+
+                {/* Esquina sup. izquierda: estado alterado (click = siguiente) */}
+                <div className="pv-card-status">
+                    <div className={`status_pokemon ${status}`} title={status} onClick={handleChangeStatus} ></div>
+                    {statusCounter > 0 && <div className="status_counter" title='Bajar contador' onClick={handleDecreaseStatusCounter}>{statusCounter}</div>}
+                </div>
+
+                {/* Esquina sup. derecha: vivo / debilitado */}
+                <div className={`pv-card-state ${isAlive ? 'is-alive' : 'is-fainted'}`}
+                     title={isAlive ? 'Debilitar' : 'Revivir'}
+                     onClick={()=>handleChangeState()} />
+
+                {canEvolve && <div className="pv-card-evolve button_evolve" title='Evolucionar' onClick={handleEvolvePokemon}> </div>}
             </div>
-            {((extra >= nextLevel && nextLevel > 0) || nextLevel === -1 || canEvolveWithStone) && <div className="button_evolve" onClick={handleEvolvePokemon}> </div>}
-            <h1 className="name_pokemon" id={name_id}> {name}</h1>
-            <div className="status_wrapper">
-                <div className={`status_pokemon ${status}`} onClick={handleChangeStatus} ></div>
-                {statusCounter > 0 && <div className="status_counter" onClick={handleDecreaseStatusCounter}>{statusCounter}</div>}
+
+            {/* ── Zona de datos ────────────────────────────────────────────── */}
+            <div className="pv-card-info">
+                <div className="pv-card-head">
+                    <span className="pv-card-name" id={name_id}>{name}</span>
+                    <div className="pv-card-level level_total" id={level_id} title='Subir nivel' onClick={handleIncreaseLevel}>
+                        <span className="pv-card-level-value">{level}</span>
+                        {extra > 0 && <span className="pv-card-level-extra">+{extra}</span>}
+                        {nextLevel > 0 && <span className="pv-card-level-next">→{nextLevel}</span>}
+                    </div>
+                </div>
+
+                <div className="pv-card-types types_div">
+                    <Types Type={type1}  Clase={type1_class} type_id={type_id1}/>
+                    { type2_true === true && <Types Type={type2}  Clase={type2_class} type_id={type_id2}/>}
+                </div>
+
+                <div className="pv-card-actions">
+                    {attached === "None"
+                        ? <div className="pv-card-attach" onClick={handleOpenModalAttach}>Adjuntar</div>
+                        : <div className="pv-card-attached attached-item"
+                               style={attachIconStyle(attached)}
+                               title={attachLabel(attached)}
+                               onClick={handleOpenModalAttach}></div>}
+                    <div className="pv-card-delete delete_pokemon" id={delete_id} title='Quitar del equipo' onClick={handleDeletePokemon} > </div>
+                </div>
             </div>
-            <div className="types_div"> 
-            <Types Type={type1}  Clase={type1_class} type_id={type_id1}/>
-            { type2_true === true && <Types Type={type2}  Clase={type2_class} type_id={type_id2}/>}
-            </div>
-            {attached === "None" && <div className="attath_button" onClick={handleOpenModalAttach}>Attach</div>}
-              {attached !== "None" && (
-                <div className={`attached-item ${getAttachedClass(attached)}` } onClick={handleOpenModalAttach}></div>
-            )}
-            <div className="delete_pokemon" id={delete_id} onClick={handleDeletePokemon} > </div>
 
             <ModalAttach show={showModalAttach} onClose={handleCloseModalAttach} currentPlayer={currentPlayer} pokemonId={id} onAttach={onAttach} attachTM={attachTM} attachMega={attachMega}/>
             <ModalEvolveChoice show={showEvolveModal} options={evolveOptions} onSelect={handleEvolveSelect} onClose={() => setShowEvolveModal(false)} />

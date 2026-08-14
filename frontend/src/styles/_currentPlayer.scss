@@ -1,58 +1,12 @@
+// El fondo y el layout en columna los pone ahora _playerHud.scss
 .CurrentPlayerView{
-    background-image: url('../images/Bg_Control.jpg');
-    background-size:cover;
-    background-repeat: no-repeat;
     width: 100vw;
     height: 100vh;
+}
 
-}
-.Title_pokeApp{
-    display: flex;
-    width: 90vw;
-    margin-left: 0vw;
-    justify-content: center;
-    align-items: center;
-    padding-top: 1rem;
-    
-}
-.Position_CurrentPlayer{
-    font-size: 4rem;
-    color: rgb(62, 88, 218);
-    width: 5%;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-}
-.Name_CurrentPlayer{
-    font-size: 4rem;
-    color: rgb(62, 88, 218);
-    width: 15%;
-    justify-content: left;
-    align-items: center;
-    display: flex;
-}
-.Points_CurrentPlayer{
-    font-size: 2.5rem;
-    color: rgb(134, 36, 167);
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    position: absolute;
-    left: 4%;
-    top: 8%;
-    width: 5%;
-
-
-}
-.Money_CurrentPlayer{
-    font-size: 4rem;
-    color: rgb(199, 146, 2);
-    width:5%;
-}
-.Money_CurrentPlayer:hover{
-    cursor: pointer;
-    transform: scale(1.5);
-}
+// .Title_pokeApp, .Position_CurrentPlayer, .Name_CurrentPlayer,
+// .Points_CurrentPlayer y .Money_CurrentPlayer se retiraron: la banda superior
+// vive en _playerHud.scss (.pv-topbar y compañía).
 
 .dynamax-btn {
     width: 4rem;
@@ -92,31 +46,8 @@
 }
 
 
-.players_turns{
-    display: flex;
-    width: 80vw;
-    margin-left: 10vw;
-    justify-content: space-evenly;
-    align-items: center;
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-}
-
-.player_turn_box{
-    border-color: palevioletred;
-    border-style: solid;
-    background-color:rgba(0, 0, 0, 0.9);
-    color: aliceblue;
-    padding: 1rem;
-}
-
-.player_ON_turn{
-    border-color: palevioletred;
-    border-style: solid;
-    background-color:aliceblue;
-    color: rgba(0, 0, 0, 0.9);
-    padding: 1rem;
-}
+// El roadmap de turnos (.players_turns, .player_turn_box, .player_ON_turn)
+// vive ahora en _playerHud.scss como .pv-turns / .pv-turn-chip.
 
 .prevPlayerView{
 width: 2.5vw;
@@ -148,15 +79,6 @@ background-repeat: no-repeat;
      }
 
 
-
-.nextTurnImage{
-    background-image: url('../images/nextPlayer.png');
-    height: 5vh;
-    width: 3vw;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
 
 .PauseGameButton {
     display: flex;
@@ -202,41 +124,9 @@ background-repeat: no-repeat;
     &:hover { transform: scale(1.08); background: rgba(248,113,113,0.2); }
 }
 
-.NextTurnButton{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: rgb(230, 159, 26);
-    font-weight: bold;
-}
+// .NextTurnButton / .PrevTurnButton / .prevTurnImage se retiraron: las flechas
+// de turno son ahora .pv-turn-nav en _playerHud.scss.
 
-.NextTurnButton:hover{
-    cursor: pointer;
-    transform: scale(1.5);
-}
-
-.PrevTurnButton{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: rgb(3, 183, 72);
-    font-weight: bold;
-}
-.PrevTurnButton:hover{
-    cursor: pointer;
-    transform: scale(1.5);
-}
-
-.prevTurnImage{
-    background-image: url('../images/prevPlayer.png');
-    height: 5vh;
-    width: 3vw;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-}
 .Botom_PlayerView{
     display: flex;
     align-items: center;
@@ -354,112 +244,143 @@ margin-left: 0rem;
     &:hover { transform: scale(1.5); }
 }
 
+// ── Historial (compras / estados / niveles) ─────────────────────────────────
+// Panel claro con cabecera azul, como el resto del juego. Los tamaños bajaron:
+// 1.6rem por fila era enorme y cabían pocas líneas.
 .purchase-history-modal {
-    background-color: rgba(10, 10, 30, 0.97);
-    border: 2px solid #f0d080;
-    border-radius: 14px;
-    padding: 2.5rem;
+    background-color: var(--hud-card);
+    border: 3px solid var(--hud-blue);
+    border-radius: var(--hud-radius);
+    padding: 0;
     width: 95vw;
     max-width: 1200px;
     height: 85vh;
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0;
+    overflow: hidden;
+    box-shadow: var(--hud-shadow-lg);
 }
 .purchase-history-title {
-    color: #f0d080;
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    color: #fff;
     font-weight: bold;
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     text-align: center;
     position: relative;
-    padding-bottom: 0.6rem;
-    border-bottom: 1px solid rgba(240,208,128,0.3);
+    padding: 0.8rem 3rem;
+    border-bottom: none;
 }
 .purchase-history-close {
     position: absolute;
-    right: 0;
-    top: 0;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid #aaa;
-    border-radius: 6px;
+    right: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.16);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 8px;
     color: white;
     cursor: pointer;
-    font-size: 1.8rem;
+    font-size: 1.2rem;
     line-height: 1;
-    padding: 0.1rem 0.6rem;
-    &:hover { background: rgba(255,80,80,0.5); border-color: white; }
+    padding: 0.15rem 0.6rem;
+    &:hover { background: var(--hud-red); border-color: #fff; }
 }
 .purchase-history-list {
     overflow-y: auto;
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.35rem;
+    padding: 0.8rem 1.2rem 1.2rem;
 }
 .purchase-history-item {
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: white;
-    font-size: 1.6rem;
-    padding: 0.7rem 1rem;
-    border-radius: 8px;
-    background-color: rgba(255,255,255,0.06);
+    color: var(--hud-ink);
+    font-size: 1rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--hud-line);
+    background-color: #fff;
+
+    &:hover { background-color: #eef4fb; }
 }
-.ph-round       { color: #bbb; min-width: 4rem; font-size: 1.4rem; }
-.ph-player      { color: #7ecfff; font-weight: bold; flex: 1; }
-.ph-item        { flex: 1.5; }
-.ph-price       { color: #ff8080; min-width: 4.5rem; text-align: right; font-weight: bold; }
-.ph-coins-after { color: #7ef0a0; min-width: 5rem; text-align: right; font-weight: bold; }
-.purchase-history-empty {
-    color: #888;
+.ph-round {
+    min-width: 3.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 6px;
+    background: var(--hud-blue);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: bold;
     text-align: center;
-    font-size: 1.5rem;
+}
+.ph-player      { color: var(--hud-blue-deep); font-weight: bold; flex: 1; }
+.ph-item        { flex: 1.5; }
+.ph-price       { color: var(--hud-red); min-width: 4.5rem; text-align: right; font-weight: bold; }
+.ph-coins-after { color: #2f8f4e; min-width: 5rem; text-align: right; font-weight: bold; }
+.purchase-history-empty {
+    color: var(--hud-dim);
+    text-align: center;
+    font-size: 1.1rem;
     padding: 2.5rem;
 }
 .purchase-history-tabs {
     display: flex;
     gap: 0.5rem;
     justify-content: center;
+    padding: 0.8rem 1.2rem 0;
 }
 .ph-tab {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(240,208,128,0.3);
-    border-radius: 8px;
-    color: #ccc;
+    background: #fff;
+    border: 2px solid var(--hud-line);
+    border-radius: 10px;
+    color: var(--hud-dim);
     cursor: pointer;
-    font-size: 1.4rem;
-    padding: 0.4rem 1.6rem;
-    &:hover { background: rgba(240,208,128,0.15); color: white; }
+    font-size: 0.95rem;
+    font-weight: bold;
+    padding: 0.35rem 1.4rem;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    &:hover { background: #eef4fb; color: var(--hud-blue-deep); }
 }
 .ph-tab-active {
-    background: rgba(240,208,128,0.2);
-    border-color: #f0d080;
-    color: #f0d080;
+    background: var(--hud-blue);
+    border-color: var(--hud-blue);
+    color: #fff;
     font-weight: bold;
+    &:hover { background: var(--hud-blue-deep); color: #fff; }
 }
 .ph-state { font-weight: bold; min-width: 4.5rem; text-align: right; }
-.ph-state-alive { color: #7ef0a0; }
-.ph-state-dead  { color: #ff8080; }
+.ph-state-alive { color: #2f8f4e; }
+.ph-state-dead  { color: var(--hud-red); }
+.ph-level-change { font-weight: bold; min-width: 5.5rem; text-align: right; color: var(--hud-blue-deep); }
+.ph-rival-pkm, .ph-rival, .ph-source { color: var(--hud-dim); font-size: 0.85rem; }
 
+// ── Solicitudes de compra (aviso flotante) ──────────────────────────────────
+// Baja a la esquina inferior derecha: arriba tapaba las medallas de la banda
 .pending-purchases {
     position: fixed;
-    top: 1rem;
+    bottom: 6.5rem;
     right: 1rem;
-    background-color: rgba(0, 0, 0, 0.85);
-    border: 1px solid gold;
-    border-radius: 10px;
-    padding: 0.6rem 0.8rem;
+    background-color: var(--hud-card);
+    border: 3px solid var(--hud-gold);
+    border-radius: var(--hud-radius);
+    padding: 0.7rem 0.9rem;
     z-index: 200;
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    min-width: 260px;
+    min-width: 280px;
+    box-shadow: var(--hud-shadow-lg);
 }
 .pending-purchases-title {
-    color: gold;
+    color: var(--hud-ink);
     font-weight: bold;
-    font-size: 0.85rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     margin-bottom: 0.2rem;
     text-align: center;
 }
@@ -467,46 +388,31 @@ margin-left: 0rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: white;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid var(--hud-line);
+    color: var(--hud-ink);
     font-size: 0.85rem;
 }
-.pending-purchase-player { font-weight: bold; color: #7ecfff; flex: 1; }
+.pending-purchase-player { font-weight: bold; color: var(--hud-blue-deep); flex: 1; }
 .pending-purchase-item-name { flex: 1.5; }
-.pending-purchase-price { color: #f0d080; width: 2rem; text-align: right; }
+.pending-purchase-price { color: var(--hud-ink); font-weight: bold; width: 2.6rem; text-align: right; }
 .pending-approve {
-    background: #2ecc71; border: none; border-radius: 5px;
-    color: white; font-weight: bold; cursor: pointer; padding: 0.2rem 0.5rem;
-    &:hover { background: #27ae60; }
+    background: #2f8f4e; border: none; border-radius: 6px;
+    color: white; font-weight: bold; cursor: pointer; padding: 0.2rem 0.55rem;
+    &:hover { background: #26743f; }
 }
 .pending-deny {
-    background: #e74c3c; border: none; border-radius: 5px;
-    color: white; font-weight: bold; cursor: pointer; padding: 0.2rem 0.5rem;
-    &:hover { background: #c0392b; }
+    background: var(--hud-red); border: none; border-radius: 6px;
+    color: white; font-weight: bold; cursor: pointer; padding: 0.2rem 0.55rem;
+    &:hover { background: #b03a2f; }
 }
 
 $ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
 $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
 
 @media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
-    .Points_CurrentPlayer{
-        font-size: 1.5rem;
-        top: 8%;
-        left: 2%;
-        font-weight: bold;
-    }
-    .Position_CurrentPlayer{
-        font-size: 2.5rem; 
-    }
-    .Name_CurrentPlayer{
-        font-size: 2.5rem;
-      font-weight: bold;
-    }
-    .Money_CurrentPlayer{
-        font-size: 3rem;
-        color: rgb(199, 146, 2);
-        width:2%;
-        font-weight: bold;
-    }
     .prevPlayerView,.nextPlayerView{
         width: 3.5vw;
         height: 4vh;
@@ -516,21 +422,4 @@ $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
             margin: auto;
             width: 90vw;
         }
-        .players_turns{
-            display: flex;
-            width: 80vw;
-            margin-left: 10vw;
-            justify-content: space-evenly;
-            align-items: center;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-        }
-        .player_turn_box{
-            border-color: palevioletred;
-            border-style: solid;
-            background-color:rgba(0, 0, 0, 0.9);
-            color: aliceblue;
-            padding: .5rem; 
-        }
-
 }

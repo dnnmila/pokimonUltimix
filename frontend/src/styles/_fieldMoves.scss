@@ -1,49 +1,18 @@
-// ── Botón de cartas de campo en la barra inferior del master ────────────────
-.Button-field {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3vw;
-    height: 3vw;
-    border-radius: 50%;
-    background-color: rgba(120, 180, 240, 0.18);
-    border: solid 1px #78b4f0;
-    font-size: 1.3rem;
-    cursor: pointer;
-
-    &:hover { background-color: rgba(120, 180, 240, 0.35); }
-}
-.Button-field--active {
-    border-color: #f0d080;
-    background-color: rgba(240, 208, 128, 0.25);
-}
-.Button-field-count {
-    position: absolute;
-    top: -0.3rem;
-    right: -0.3rem;
-    min-width: 1.1rem;
-    height: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: #f0d080;
-    color: rgb(20, 20, 35);
-    font-size: 0.7rem;
-    font-weight: bold;
-}
+// El botón de la barra inferior del master vive ahora en _playerHud.scss
+// (.pv-action con .pv-action--on cuando hay cartas puestas).
 
 // ── Modal del master ────────────────────────────────────────────────────────
 .field-picker {
-    background-color: rgb(28, 28, 40);
-    color: beige;
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-blue);
+    box-shadow: var(--hud-shadow-lg);
     width: 62vw;
     min-width: 620px;
     max-height: 90vh;
     overflow-y: auto;
     padding: 1.25rem 1.5rem 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--hud-radius);
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -61,20 +30,20 @@
     right: 0;
     background: transparent;
     border: none;
-    color: rgba(237, 227, 241, 0.6);
+    color: var(--hud-dim);
     font-size: 1.1rem;
     cursor: pointer;
 
-    &:hover { color: coral; }
+    &:hover { color: var(--hud-red); }
 }
 
 // Aviso cuando los 2 espacios ya están ocupados
 .field-warning {
     padding: 0.5rem 1rem;
-    border: 1px solid rgba(231, 76, 60, 0.6);
+    border: 2px solid rgba(212, 72, 59, 0.5);
     border-radius: 8px;
-    background: rgba(231, 76, 60, 0.15);
-    color: #f0a0a0;
+    background: rgba(212, 72, 59, 0.12);
+    color: var(--hud-red);
     font-size: 0.85rem;
     text-align: center;
 }
@@ -93,21 +62,21 @@
     text-align: center;
     line-height: 1.2;
 }
-.field-option-side--global { color: #78b4f0; }
-.field-option-side--player { color: #7ed67e; }
-.field-option-side--rival  { color: #e88; }
+.field-option-side--global { color: var(--hud-blue-deep); }
+.field-option-side--player { color: #2f8f4e; }
+.field-option-side--rival  { color: var(--hud-red); }
 
 .field-option-remove {
     width: 100%;
     padding: 0.1rem;
     border: none;
     border-radius: 4px;
-    background: rgba(231, 76, 60, 0.75);
+    background: var(--hud-red);
     color: white;
     font-size: 0.6rem;
     cursor: pointer;
 
-    &:hover { background: rgba(231, 76, 60, 1); }
+    &:hover { background: #b03a2f; }
 }
 
 // Paso intermedio: la carta ya está elegida y falta decir a quién afecta
@@ -117,9 +86,9 @@
     align-items: center;
     gap: 1rem;
     padding: 1.5rem 1rem;
-    border: 2px solid #e8a87e;
+    border: 2px solid var(--hud-orange);
     border-radius: 12px;
-    background: rgba(232, 168, 126, 0.08);
+    background: rgba(224, 122, 32, 0.08);
 }
 .field-side-step-card {
     display: flex;
@@ -141,11 +110,11 @@
     max-width: 26rem;
     text-align: center;
     font-size: 0.8rem;
-    color: rgba(237, 227, 241, 0.65);
+    color: var(--hud-dim);
 }
 .field-side-step-ask {
     font-size: 1.1rem;
-    color: #e8a87e;
+    color: var(--hud-orange);
     font-weight: bold;
 }
 .field-side-step-btns {
@@ -157,31 +126,31 @@
     font-size: 1rem;
     font-weight: bold;
     border: 2px solid;
-    border-radius: 8px;
-    background: transparent;
+    border-radius: 10px;
+    background: #fff;
     cursor: pointer;
     transition: background 0.15s;
 }
 .field-side-btn--player {
-    border-color: #7ed67e;
-    color: #7ed67e;
+    border-color: #2f8f4e;
+    color: #2f8f4e;
 
-    &:hover { background: rgba(126, 214, 126, 0.18); }
+    &:hover { background: rgba(47, 143, 78, 0.14); }
 }
 .field-side-btn--rival {
-    border-color: #e88;
-    color: #e88;
+    border-color: var(--hud-red);
+    color: var(--hud-red);
 
-    &:hover { background: rgba(238, 136, 136, 0.18); }
+    &:hover { background: rgba(212, 72, 59, 0.14); }
 }
 .field-side-cancel {
     background: transparent;
     border: none;
-    color: rgba(237, 227, 241, 0.55);
+    color: var(--hud-dim);
     font-size: 0.85rem;
     cursor: pointer;
 
-    &:hover { color: beige; }
+    &:hover { color: var(--hud-ink); }
 }
 
 // Catálogo, partido por alcance
@@ -191,7 +160,8 @@
     gap: 0.5rem;
     padding: 0.75rem;
     border-radius: 10px;
-    background: rgba(245, 247, 249, 0.04);
+    border: 1px solid var(--hud-line);
+    background: rgba(26, 110, 192, 0.05);
 }
 .field-group-title {
     display: flex;
@@ -202,10 +172,10 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding-bottom: 0.35rem;
-    border-bottom: 1px solid rgba(224, 226, 247, 0.15);
+    border-bottom: 1px solid var(--hud-line);
 }
-.field-group-title--global { color: #78b4f0; }
-.field-group-title--team   { color: #e8a87e; }
+.field-group-title--global { color: var(--hud-blue-deep); }
+.field-group-title--team   { color: var(--hud-orange); }
 .field-group-count {
     display: flex;
     align-items: center;
@@ -213,8 +183,8 @@
     min-width: 1.2rem;
     height: 1.2rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    color: beige;
+    background: var(--hud-blue);
+    color: #fff;
     font-size: 0.65rem;
 }
 
@@ -231,19 +201,21 @@
     gap: 0.2rem;
     width: 6.5rem;
     padding: 0.35rem;
-    border: 1px solid rgba(224, 226, 247, 0.2);
-    border-radius: 8px;
+    border: 2px solid var(--hud-line);
+    border-radius: 10px;
+    background: #fff;
     cursor: pointer;
-    transition: border-color 0.15s, transform 0.15s;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 
     &:hover {
-        border-color: #78b4f0;
+        border-color: var(--hud-blue);
         transform: translateY(-2px);
+        box-shadow: var(--hud-shadow);
     }
 }
 .field-option--in-use {
-    border-color: #f0d080;
-    background: rgba(240, 208, 128, 0.12);
+    border-color: var(--hud-gold);
+    background: rgba(232, 163, 23, 0.14);
 }
 .field-option-img {
     width: 100%;
@@ -256,13 +228,13 @@
     text-align: center;
 }
 .field-option-tag { font-size: 0.55rem; }
-.field-tag-auto   { color: #7ed67e; }
-.field-tag-manual { color: #e8c07e; }
+.field-tag-auto   { color: #2f8f4e; font-weight: bold; }
+.field-tag-manual { color: var(--hud-orange); font-weight: bold; }
 
 .field-picker-note {
     font-size: 0.78rem;
     line-height: 1.5;
-    color: rgba(237, 227, 241, 0.5);
+    color: var(--hud-dim);
     text-align: center;
 }
 

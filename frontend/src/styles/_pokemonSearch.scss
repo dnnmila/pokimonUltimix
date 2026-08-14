@@ -1,0 +1,105 @@
+// Buscador de Pokémon por nombre (componente PokemonNameSearch).
+// Solo pone lo imprescindible: la caja que ancla el desplegable y la lista.
+// El aspecto del input y del botón lo sigue mandando quien lo usa (.pv-wild en
+// la barra inferior, .pv-slot en el hueco de agregar).
+.pkm-search {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    &--column {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: clamp(0.25rem, 0.7vh, 0.6rem);
+    }
+}
+
+// El desplegable se ancla aquí y no al contenedor, para que caiga justo bajo el
+// campo aunque al lado haya un botón
+.pkm-search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+// POKEDEX del Pokémon elegido, junto al nombre escrito en el campo
+.pkm-search-tag {
+    flex-shrink: 0;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: var(--hud-blue, #1a6ec0);
+    color: #fff;
+    font-size: clamp(0.5rem, 1.1vh, 0.7rem);
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
+.pkm-suggestions {
+    position: absolute;
+    top: calc(100% + 0.3rem);
+    left: 0;
+    right: 0;
+    z-index: 120;
+    min-width: 13rem;
+    margin: 0;
+    padding: 0.25rem;
+    list-style: none;
+    max-height: 15rem;
+    overflow-y: auto;
+    background: #fff;
+    border: 2px solid var(--hud-line, rgba(0, 0, 0, 0.15));
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+
+    // En la barra inferior no hay sitio debajo: la lista sube
+    &--up {
+        top: auto;
+        bottom: calc(100% + 0.3rem);
+    }
+}
+
+.pkm-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: clamp(0.62rem, 1.4vh, 0.9rem);
+    line-height: 1.2;
+    color: var(--hud-ink, #222);
+
+    &.is-active {
+        background: rgba(26, 110, 192, 0.16);
+        color: var(--hud-blue-deep, #10457a);
+    }
+}
+
+.pkm-suggestion-img {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.pkm-suggestion-name {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pkm-suggestion-id {
+    flex-shrink: 0;
+    font-size: 0.72em;
+    color: var(--hud-dim, rgba(0, 0, 0, 0.45));
+    font-variant-numeric: tabular-nums;
+}

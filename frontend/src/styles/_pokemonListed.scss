@@ -14,6 +14,151 @@
     filter: brightness(20%);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// TARJETA DEL MARCADOR (.apl-pkm) — hermana de .sim-pkm-card del HUD: fondo
+// crema, borde del color del tipo y pie con nombre + nivel. --pkm-type lo
+// inyecta PokemonListed con el color del type1.
+// Las reglas de más abajo (.img_pokemon_listed, .status, .attached-*) siguen
+// vivas porque PokemonBattleListed las usa.
+// ═══════════════════════════════════════════════════════════════════════════
+.apl-pkm {
+    --pkm-type: #7a7a8c;
+    // La tarjeta se declara contenedor para que el nivel y el item se midan
+    // contra SU alto (cqh) y no contra el viewport: así se ven enormes con
+    // pocos jugadores y se encogen solos cuando la fila se estrecha.
+    // Cada declaración cqh va precedida de un respaldo en vh por si el
+    // navegador no soporta container queries.
+    container-type: size;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 10px;
+    // Respaldo primero: Safari < 16.2 ignora color-mix()
+    border: 2px solid rgba(27, 36, 51, 0.18);
+    border: 2px solid color-mix(in srgb, var(--pkm-type) 60%, transparent);
+    background: var(--hud-card, #fdfbf4);
+    color: var(--hud-ink, #1b2433);
+    box-shadow: var(--hud-shadow, 0 2px 7px rgba(20, 32, 56, 0.2));
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        transform: translateY(-2px);
+        border-color: var(--pkm-type);
+    }
+
+    &--dead {
+        opacity: 0.4;
+        filter: grayscale(90%);
+    }
+
+    // Con objeto: aro dorado. Sustituye a la leyenda "con objeto" del boceto.
+    &--item {
+        border-color: #e8a317;
+        box-shadow: 0 0 0 1px rgba(232, 163, 23, 0.55),
+                    var(--hud-shadow, 0 2px 7px rgba(20, 32, 56, 0.2));
+    }
+
+    &--empty {
+        border-style: dashed;
+        border-color: rgba(27, 36, 51, 0.2);
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: none;
+        cursor: default;
+        &:hover { transform: none; border-color: rgba(27, 36, 51, 0.2); }
+    }
+}
+
+// El arte se come todo el alto sobrante: así la tarjeta se adapta a filas
+// altas (pocos jugadores) y bajas (muchos) sin tocar nada más
+.apl-pkm-art {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #eeead9;
+}
+
+.apl-pkm-status {
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+    width: clamp(0.9rem, 2.4vh, 1.7rem);
+    width: clamp(0.9rem, 14cqh, 2.1rem);
+    aspect-ratio: 1;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 1px 2px rgba(20, 32, 56, 0.4));
+}
+
+// Objeto adjunto: pastilla dorada arriba a la derecha, sobre la ilustración
+.apl-pkm-attach {
+    position: absolute;
+    top: 0.15rem;
+    right: 0.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(1.1rem, 3vh, 2.1rem);
+    width: clamp(1.1rem, 17cqh, 2.6rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #fff8e6;
+    box-shadow: 0 0 0 2px #e8a317, 0 1px 3px rgba(20, 32, 56, 0.35);
+
+    i {
+        display: block;
+        width: 72%;
+        height: 72%;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+}
+
+.apl-pkm-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    padding: 0.2rem 0.35rem;
+    background: var(--pkm-type);
+    background: color-mix(in srgb, var(--pkm-type) 72%, #fff);
+}
+
+.apl-pkm-name {
+    font-size: clamp(0.5rem, 1.5vh, 0.95rem);
+    font-size: clamp(0.5rem, 9cqh, 1.15rem);
+    font-weight: bold;
+    line-height: 1.15;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// El nivel es el dato que más se consulta del marcador: manda en el pie
+.apl-pkm-lvl {
+    flex-shrink: 0;
+    min-width: 1.25em;
+    padding: 0 0.16em;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 1px 2px rgba(20, 32, 56, 0.18);
+    text-align: center;
+    font-size: clamp(0.75rem, 2.4vh, 1.5rem);
+    font-size: clamp(0.75rem, 19cqh, 2.6rem);
+    font-weight: bold;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+}
+
 .PokemonListed{
     display: flex;
     flex-direction: column;
@@ -54,27 +199,8 @@
     background-repeat: no-repeat;
 }
 
-.attached-MT{
-    background-image: url('../images/tm.png');
-
-}
-.attached-Protein{
-    background-image: url('../images/protein.webp');
-    
-}
-.attached-Potion{
-    background-image: url('../images/potion.webp');
-    
-}
-.attached-Claw{
-    background-image: url('../images/claw.png');
-    
-}
-
-.attached-Mega{
-    background-image: url('../images/Megaevo.webp');
-    
-}
+/* Los .attached-<Item> por nombre desaparecieron: la imagen sale del catálogo
+   de src/attachItems.js y se aplica inline sobre .apl-pkm-attach i */
 
 .Asleep{
  background-image: url("../images/status/sleep.png");

@@ -35,6 +35,10 @@ class Game {
         this.rivalBonusAtk3 = 0;
         this.battlePhase = 'PokemonSelection';
         this.battlePublic = false;
+        // Qué grupo del equipo está mirando el jugador en la selección: equipo
+        // normal o megas / G-Max. Solo lo consume el espejo del marcador, para
+        // enseñar lo mismo que la tablet.
+        this.simFormsView = false;
         this.generation = 1;
         this.pendingPurchases = [];
         this.purchaseHistory = [];
@@ -105,7 +109,14 @@ class Game {
                 || (currentPlayer.gmaxes || []).find(p => p.id === pokemon);
             this.addMyPlayerPkm(found);
         } else if (player === 'Rival') {
-            this.addMyRivalPkm(this.CurrentRival?.pokemons?.find(p => p.id === pokemon));
+            // Igual que el jugador: el rival también puede sacar mega o G-Max
+            // (duelo contra otro entrenador). Buscando solo en `pokemons` se
+            // metía `undefined` y el espejo se quedaba sin rival.
+            const r = this.CurrentRival;
+            const found = r?.pokemons?.find(p => p.id === pokemon)
+                || r?.megas?.find(p => p.id === pokemon)
+                || r?.gmaxes?.find(p => p.id === pokemon);
+            this.addMyRivalPkm(found);
         }
     }
 
@@ -184,6 +195,7 @@ class Game {
         this.CurrentRival = player.simRival;
         this.battlePublic = true;
         this.battlePhase = 'PokemonSelection';
+        this.simFormsView = false;
         this.myPlayerPkm = [];
         this.myRivalPkm = [];
         this.myPlayerPkmAtk = [];

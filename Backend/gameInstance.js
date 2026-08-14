@@ -96,6 +96,40 @@ export const saveGame = () => {
     }
 };
 
+// Lee el auto-guardado sin cargarlo en memoria: sirve para pintar la tarjeta
+// de "Cargar partida" con datos reales antes de decidir entrar.
+export const getSaveInfo = () => {
+    if (!fs.existsSync(SAVE_PATH)) return { exists: false };
+
+    const stats = fs.statSync(SAVE_PATH);
+    const saved = JSON.parse(fs.readFileSync(SAVE_PATH, 'utf8'));
+    const players = saved.players || [];
+
+    const countBadges = (p) => {
+        let total = 0;
+        for (let i = 1; i <= 10; i++) if (p[`badge${i}`]) total++;
+        return total;
+    };
+
+    return {
+        exists: true,
+        round: saved.round || 0,
+        generation: saved.generation || 1,
+        paused: !!saved.paused,
+        ended: !!saved.ended,
+        // El tiempo de partida es la suma de lo que ha consumido cada turno
+        timePlayed: players.reduce((acc, p) => acc + (p.timeSpent || 0), 0),
+        savedAt: stats.mtime,
+        players: players.map(p => ({
+            id: p.id,
+            name: p.name,
+            turn: p.turn,
+            badges: countBadges(p),
+            totalPokemons: (p.pokemons || []).length,
+        })),
+    };
+};
+
 export const loadGame = () => {
     const saved = JSON.parse(fs.readFileSync(SAVE_PATH, 'utf8'));
 

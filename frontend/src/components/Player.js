@@ -2,11 +2,22 @@ import React, {useState,useEffect,useCallback} from 'react';
 import dinamaxImg from '../images/dinamax.png';
 import Pokemon from './Pokemon';
 import AddPokemon from './AddPokemon';
+import PokemonNameSearch from './PokemonNameSearch';
 import ModalMonedas from './modals/ModalMonedas.js';
 import ModalTienda from './modals/ModalTienda.js';
 import ModalBattle from './modals/ModalBattle.js';
 import ModalSpecialAttacks from './modals/ModalSpecialAttacks.js';
 import { FIELD_MOVES } from '../battleRules';
+import { getTrainerImage } from '../data/trainers';
+// Iconos de la barra de acciones: dado para el sorteo de tipos/metrónomo,
+// icono de clima para las cartas de campo, y el de intercambio de siempre
+import diceIcon  from '../images/dices/dice6.png';
+import fieldIcon from '../images/Effects/Field/Cloudy.png';
+import tradeIcon from '../images/changePoke.png';
+// pokecoins.png y no PokéCoin.png: el nombre acentuado está en disco como NFD
+// y el import quedaría en NFC, que solo resuelve por suerte en macOS
+import coinImg from '../images/pokecoins.png';
+
 
 const getFieldCardImg = (id) => {
     try { return require(`../images/Field Moves/${id}.png`); } catch { return null; }
@@ -31,6 +42,11 @@ const getPokedexImg = (pokedex) => {
 const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon,onPauseGame,onSetFieldMove}) => {
 
     const handleKeyDown = useCallback((event) => {
+        // Si el foco está en un campo de texto, las flechas mueven el cursor;
+        // sin esto, escribir en el buscador de salvajes cambiaba de jugador
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+
         switch(event.key) {
             case 'ArrowRight':
                 onNextView();
@@ -53,14 +69,12 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
   
 
-    const [inputWildPokemon, setInputWildPokemon] = useState('');
-    const handleInputChange = (e) => {
-        setInputWildPokemon(e.target.value);
-      };
-      const handleButtonWildPokemon = () => {
-        wildBattle(inputWildPokemon);
-      };
-      
+    // El buscador ya devuelve el POKEDEX resuelto (se escriba el nombre o el número)
+    const handleButtonWildPokemon = (pokedex) => {
+        wildBattle(pokedex);
+    };
+
+
     const [showModalCoins, setShowModalCoins] = useState(false);
     const [showModalStore, setShowModalStore] = useState(false);
     const [showModalBattle, setShowModalBattle] = useState(false);
@@ -207,33 +221,49 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
     if (!currentPlayerView) return null;
 
+    const trainerImg = getTrainerImage(currentPlayerView.name);
+
     return (
         <div className="CurrentPlayerView">
-            <div className="Title_pokeApp">
+            <header className="pv-topbar">
 
-            <div className='Position_CurrentPlayer'> #{currentPlayerView.position} </div>
-            <div className='Name_CurrentPlayer'> {currentPlayerView.name}</div>
-            <div className='Points_CurrentPlayer'> {currentPlayerView.points}pts</div>
-           
-                
-           
-            <div className='allBadges'>
-                {[1,2,3,4,5,6,7,8].map(num => {
-                    const img = getBadgeImg(game.generation, num);
-                    return (
-                        <div
-                            key={num}
-                            className={currentPlayerView[`badge${num}`] ? 'Bagde_win' : 'Badge'}
-                            style={img ? { backgroundImage: `url(${img})` } : {}}
-                            onClick={() => handleBadge(num)}
-                        />
-                    );
-                })}
-                <div className={`${currentPlayerView.badge9 ? 'Bagde_win' : 'Badge'}`} id='Elite' onClick={()=> handleBadge(9)}> </div>
-                <div className={`${currentPlayerView.badge10 ? 'Bagde_win' : 'Badge'}`} id='BadgeChampion' onClick={()=> handleBadge(10)}> </div>
-            </div>
-            <div className='Money_CurrentPlayer' onClick={handleOpenModalCoins}> ${currentPlayerView.coins}</div>
-            </div>
+                <div className='pv-trainer'>
+                    <div className='pv-trainer-avatar'
+                         style={trainerImg ? { backgroundImage: `url(${trainerImg})` } : {}}>
+                        {!trainerImg && currentPlayerView.name?.charAt(0)}
+                    </div>
+                    <div className='pv-trainer-meta'>
+                        <div className='pv-trainer-name'>
+                            {currentPlayerView.name}
+                            <span className='pv-trainer-rank'>#{currentPlayerView.position}</span>
+                        </div>
+                        <div className='pv-trainer-points'>{currentPlayerView.points} pts</div>
+                    </div>
+                </div>
+
+                <div className='pv-badges'>
+                    {[1,2,3,4,5,6,7,8].map(num => {
+                        const img = getBadgeImg(game.generation, num);
+                        return (
+                            <div
+                                key={num}
+                                className={`pv-badge ${currentPlayerView[`badge${num}`] ? 'Bagde_win' : 'Badge'}`}
+                                style={img ? { backgroundImage: `url(${img})` } : {}}
+                                onClick={() => handleBadge(num)}
+                            />
+                        );
+                    })}
+                    <div className={`pv-badge pv-badge--elite ${currentPlayerView.badge9 ? 'Bagde_win' : 'Badge'}`}
+                         id='Elite' title='Alto Mando' onClick={()=> handleBadge(9)} />
+                    <div className={`pv-badge pv-badge--champion ${currentPlayerView.badge10 ? 'Bagde_win' : 'Badge'}`}
+                         id='BadgeChampion' title='Campeón' onClick={()=> handleBadge(10)} />
+                </div>
+
+                <div className='pv-coins' title='Monedas' onClick={handleOpenModalCoins}>
+                    <div className='pv-coins-icon' style={{ backgroundImage: `url(${coinImg})` }} />
+                    <span className='pv-coins-value'>{currentPlayerView.coins}</span>
+                </div>
+            </header>
 
           
           <div className='MainPokemons_Player'>   
@@ -517,53 +547,109 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
           
                         
 
-        <div className='players_turns'>
-        <div className='PrevTurnButton' onClick={onPrevTurn} > <div className='prevTurnImage'> </div>Prev Turn</div>
-            {AllPlayers.map((player) => (
-             <div 
-             className={currentPlayerTurn.id === player.id ? 'player_ON_turn' : 'player_turn_box'}
-             key={player.id}
-         >
-             <p>{player.name}</p>
-         </div>
-            ))}
+        <div className='pv-turns'>
+            <div className='pv-turn-nav pv-turn-nav--prev' title='Turno anterior' onClick={onPrevTurn}>‹</div>
 
-            <div className='NextTurnButton' onClick={onNextTurn} > <div className='nextTurnImage'> </div>Next Turn</div>
+            <div className='pv-turn-track'>
+                {AllPlayers.map((player, i) => {
+                    const isTurn = currentPlayerTurn.id === player.id;
+                    return (
+                        <React.Fragment key={player.id}>
+                            {i > 0 && <div className='pv-turn-link' />}
+                            <div className={`pv-turn-chip${isTurn ? ' pv-turn-chip--active' : ''}`}>
+                                <span className='pv-turn-number'>{i + 1}</span>
+                                <span className='pv-turn-name'>{player.name}</span>
+                                {isTurn && <span className='pv-turn-flag'>Turno</span>}
+                            </div>
+                        </React.Fragment>
+                    );
+                })}
             </div>
 
-            <div className='Botom_PlayerView'>
+            <div className='pv-turn-nav pv-turn-nav--next' title='Siguiente turno' onClick={onNextTurn}>›</div>
+        </div>
 
-            <div
-                className={`dynamax-btn ${currentPlayerView.dynamax ? 'dynamax-on' : 'dynamax-off'}`}
-                onClick={() => toggleDynamax(currentPlayerView.id)}
-            >
-                <img src={dinamaxImg} alt="Dynamax" />
-            </div>
+            {/* Barra inferior: los mismos botones de siempre, pero agrupados por
+                para qué sirven en vez de en el orden en que se fueron creando */}
+            <div className='Botom_PlayerView pv-bottombar'>
 
-            <div className='WildPokemon_imput'>
-             <input type="text" value={inputWildPokemon} onChange={handleInputChange} />
-             <button onClick={handleButtonWildPokemon}>Wild Pokemon</button>
-            </div>
+                {/* Encuentros: dynamax + búsqueda de salvajes */}
+                <div className='pv-bar-group'>
+                    <span className='pv-bar-label'>Encuentro</span>
+                    <div className='pv-bar-row'>
+                        <div
+                            className={`pv-dynamax dynamax-btn ${currentPlayerView.dynamax ? 'dynamax-on' : 'dynamax-off'}`}
+                            title={currentPlayerView.dynamax ? 'Dynamax activo' : 'Dynamax gastado'}
+                            onClick={() => toggleDynamax(currentPlayerView.id)}
+                        >
+                            <img src={dinamaxImg} alt="Dynamax" />
+                        </div>
 
-            <button  className='BattleMenu_Button' onClick={handleOpenModalBattle} > Battle </button>
-            <div className='Button-special-attacks' title='Ataques especiales' onClick={() => setShowSpecialAttacks(true)}>✦</div>
-            <div className={`Button-field ${activeFieldCount > 0 ? 'Button-field--active' : ''}`}
-                 title='Cartas de campo'
-                 onClick={() => setShowFieldPicker(true)}>
-                <span className='Button-field-icon'>🌐</span>
-                {activeFieldCount > 0 && <span className='Button-field-count'>{activeFieldCount}</span>}
-            </div>
-            <div onClick={handleOpenModalStore} className='Button-store'></div>
-            <div className='Button-purchase-history' onClick={() => setShowPurchaseHistory(v => !v)}></div>
-            <div className='Button-trade' onClick={() => setShowTradeModal(true)}></div>
-                <div className='Time_CurrentPlayer'>
-                    <h4>R{game.round}</h4>
-                    <h4> {currentPlayerView.hours}hrs</h4>
-                    <h4> {currentPlayerView.minutes}min</h4>
-                    <h4> {currentPlayerView.seconds}sec</h4>
+                        <PokemonNameSearch
+                            className='pv-wild WildPokemon_imput'
+                            placeholder='Salvaje: nombre o Pokédex'
+                            buttonLabel='Buscar'
+                            dropUp
+                            onSubmit={handleButtonWildPokemon}
+                        />
+                    </div>
                 </div>
-                <div className={`PauseGameButton ${game?.paused ? 'PauseGameButton--paused' : ''}`} onClick={onPauseGame}>
-                    {game?.paused ? '▶' : '⏸'}
+
+                {/* Acciones de partida */}
+                <div className='pv-bar-group'>
+                    <span className='pv-bar-label'>Acciones</span>
+                    <div className='pv-bar-row'>
+                        <div className='pv-action pv-action--battle BattleMenu_Button' onClick={handleOpenModalBattle}>
+                            Batalla
+                        </div>
+                        <div className='pv-action' title='Ataques especiales' onClick={() => setShowSpecialAttacks(true)}>
+                            <span className='pv-action-icon' style={{ backgroundImage: `url(${diceIcon})` }} />
+                            Especiales
+                        </div>
+                        <div className={`pv-action ${activeFieldCount > 0 ? 'pv-action--on' : ''}`}
+                             title='Cartas de campo (clima, terrenos, trampas)'
+                             onClick={() => setShowFieldPicker(true)}>
+                            <span className='pv-action-icon' style={{ backgroundImage: `url(${fieldIcon})` }} />
+                            Campo
+                            {activeFieldCount > 0 && <span className='pv-action-count'>{activeFieldCount}</span>}
+                        </div>
+                        <div className='pv-action' title='Intercambiar Pokémon' onClick={() => setShowTradeModal(true)}>
+                            <span className='pv-action-icon' style={{ backgroundImage: `url(${tradeIcon})` }} />
+                            Intercambio
+                        </div>
+                    </div>
+                </div>
+
+                {/* Registro: lo que se consulta, no lo que se juega */}
+                <div className='pv-bar-group pv-bar-group--right'>
+                    <span className='pv-bar-label'>Registro</span>
+                    <div className='pv-bar-row'>
+                        <div className='pv-util' title='Tienda' onClick={handleOpenModalStore}>
+                            <div className='pv-util-icon Button-store' />
+                            <span className='pv-util-label'>Tienda</span>
+                        </div>
+                        <div className='pv-util' title='Historial' onClick={() => setShowPurchaseHistory(v => !v)}>
+                            <div className='pv-util-icon Button-purchase-history' />
+                            <span className='pv-util-label'>Historial</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Estado de la partida */}
+                <div className='pv-bar-status'>
+                    <div className='pv-round'>
+                        <span className='pv-round-label'>Ronda</span>
+                        <span className='pv-round-value'>{game.round}</span>
+                    </div>
+                    <div className='pv-clock' title={`${currentPlayerView.hours}h ${currentPlayerView.minutes}m ${currentPlayerView.seconds}s`}>
+                        {currentPlayerView.hours}h {currentPlayerView.minutes}m
+                        <span className='pv-clock-sec'>{currentPlayerView.seconds}s</span>
+                    </div>
+                    <div className={`pv-pause PauseGameButton ${game?.paused ? 'PauseGameButton--paused' : ''}`}
+                         title={game?.paused ? 'Reanudar' : 'Pausar'}
+                         onClick={onPauseGame}>
+                        {game?.paused ? '▶' : '⏸'}
+                    </div>
                 </div>
             </div>
         </div>

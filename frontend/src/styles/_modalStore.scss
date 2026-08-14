@@ -1,10 +1,13 @@
 .modal-store {
-    background-color: rgb(59, 56, 67);
-    color: rgb(208, 214, 238);
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-blue);
+    box-shadow: var(--hud-shadow-lg);
     width: 35vw;
+    min-width: 420px;
     height: 95vh;
     padding: 1.5rem;
-    border-radius: 5px;
+    border-radius: var(--hud-radius);
     z-index: 2; /* Asegúrate de que sea más alto que el resto del contenido */
     display: flex;
     flex-direction: column;
@@ -45,59 +48,101 @@ transform: scale(1.5);
     background-position: center center;
     background-repeat: no-repeat;
 }
+/* Iconos recortados de "Item Cost Chart.png" (carpeta store/chart), para que
+   tienda, tienda del Sim e historial de compras usen el mismo arte que la
+   tabla física. Los X-items y Guard Spec. no tienen equivalente en la tabla
+   (allí son un solo "Boost Item"), así que conservan sus sprites propios. */
 .img-pokeball{
-    background-image: url("../images/store/pokeball.png");
+    background-image: url("../images/store/chart/Pokeball.png");
 }
 .img-greatBall{
-    background-image: url("../images/store/greatBall.png");
+    background-image: url("../images/store/chart/GreatBall.png");
 }
 .img-ultraBall{
-    background-image: url("../images/store/UltraBall.png");
+    background-image: url("../images/store/chart/UltraBall.png");
 }
 .img-XAttk{
     background-image: url("../images/store/XAttack.png");
 }
 .img-potion{
-    background-image: url("../images/store/Potion.png");
+    background-image: url("../images/store/chart/Potion.png");
 }
 .img-XDef{
     background-image: url("../images/store/XDef.png");
 }
 .img-Revive{
-    background-image: url("../images/store/Revive.png");
+    background-image: url("../images/store/chart/Revive.png");
 }
 .img-XAcc{
     background-image: url("../images/store/XAcc.png");
 }
 .img-MaxRevive{
-    background-image: url("../images/store/maxRevive.png");
+    background-image: url("../images/store/chart/MaxRevive.png");
 }
 .img-GuardSpec{
     background-image: url("../images/store/guardEsp.png");
 }
 .img-FullHeal{
-    background-image: url("../images/store/fullHeal.png");
+    background-image: url("../images/store/chart/FullHeal.png");
 }
 .img-TM{
-    background-image: url("../images/tm.png");
+    background-image: url("../images/store/chart/TMCase.png");
 }
 .img-EscapeRope{
-    background-image: url("../images/store/escapeRope.png");
+    background-image: url("../images/store/chart/EscapeRope.png");
 }
 .img-MegaBracelet{
-    background-image: url("../images/store/dinamax.png");
+    background-image: url("../images/store/chart/MegaBracelet.png");
 }
 .img-Bicycle{
-    background-image: url("../images/store/bike.png");
+    background-image: url("../images/store/chart/Bicycle.png");
 }
 .img-MegaStone{
-    background-image: url("../images/Megaevo.webp");
+    background-image: url("../images/store/chart/MegaStone.png");
 }
 .img-PokeDoll{
-    background-image: url("../images/store/pokeDoll.png");
+    background-image: url("../images/store/chart/PokeDoll.png");
 }
 .img-Dynamax{
-    background-image: url("../images/store/dinamax.png");
+    background-image: url("../images/store/chart/DynamaxBand.png");
+}
+
+/* Ítems que solo existen en la tabla nueva (tienda del SimPlayer) */
+.img-apricorn{
+    background-image: url("../images/store/chart/Apricorn.png");
+}
+.img-maxPotion{
+    background-image: url("../images/store/chart/MaxPotion.png");
+}
+.img-berry{
+    background-image: url("../images/store/chart/Berry.png");
+}
+.img-boostItem{
+    background-image: url("../images/store/chart/BoostItem.png");
+}
+.img-vitamin{
+    background-image: url("../images/store/chart/Vitamin.png");
+}
+.img-legendaryEvo{
+    background-image: url("../images/store/chart/LegendaryEvo.png");
+}
+.img-typeEnhancer{
+    background-image: url("../images/store/chart/TypeEnhancer.png");
+}
+.img-zRing{
+    background-image: url("../images/store/chart/ZRing.png");
+}
+.img-teraOrb{
+    background-image: url("../images/store/chart/TeraOrb.png");
+}
+.img-runningShoes{
+    background-image: url("../images/store/chart/RunningShoes.png");
+}
+.img-repel{
+    background-image: url("../images/store/chart/Repel.png");
+}
+.img-blackFlute{
+    background-image: url("../images/store/chart/BlackFlute.png");
 }
 .store-option-cost{
 position: absolute;
@@ -121,8 +166,6 @@ $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
 
 @media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
     .modal-store {
-        background-color: rgb(59, 56, 67);
-        color: rgb(208, 214, 238);
         width: 65vw;
         height: 90vh;
         padding: 1.5rem;

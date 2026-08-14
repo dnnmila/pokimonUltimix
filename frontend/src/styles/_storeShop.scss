@@ -1,0 +1,277 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// TIENDA — piel de Poké Mart, compartida por máster y jugador
+// La usan ModalTienda (Player) y ModalTiendaSim (SimPlayer) vía la clase
+// .modal-store--shop. Se importa al final de app.scss a propósito: la cáscara
+// común de los modales del SimPlayer deja todo en papel casi blanco, y la
+// tienda pide identidad propia; misma especificidad, gana por orden y no hace
+// falta !important. Por eso el selector raíz va doble (.modal-store.modal-store--shop).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Sin monedas la ficha se ve apagada pero sigue clicable: solo abre la carta
+// del ítem, y el botón Comprar es el que se bloquea.
+.store-option--disabled {
+    opacity: 0.5;
+}
+
+// 26 ítems. Dos columnas con scroll propio, igual que la tabla física: el
+// catálogo viene intercalado (izquierda, derecha), así que una rejilla de 2
+// columnas reproduce el chart fila por fila.
+.modal-store.modal-store--shop {
+    width: min(46rem, 90vw);
+    height: auto;
+    max-height: 80vh;
+    padding: 1.2rem;
+    gap: 0.9rem;
+    justify-content: flex-start;
+    overflow: hidden;
+
+    background: linear-gradient(180deg, #fff7e2 0%, #ffefc7 55%, #f6e2ae 100%);
+    border: 2px solid #d99a1f;
+    box-shadow: 0 14px 44px rgba(60, 38, 4, 0.45);
+
+    // Cartel del mostrador
+    .Title-modal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.45rem 0.8rem;
+        border-radius: 11px;
+        border: 1px solid #c8880f;
+        background: linear-gradient(180deg, #f7c04a, #e8a317);
+        color: #4a2f05;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+        &::before {
+            content: '';
+            width: 1.5rem;
+            height: 1.5rem;
+            flex: 0 0 auto;
+            background: url("../images/mart.png") center / contain no-repeat;
+        }
+    }
+
+    // La rejilla se queda el alto sobrante y scrollea ella
+    .store_all_options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        align-content: start;
+        padding-right: 0.3rem;
+    }
+
+    // En fila (icono · nombre · precio), como cada renglón del chart
+    .store-option {
+        width: 100%;
+        height: auto;
+        min-height: 3rem;
+        margin: 0;
+        padding: 0.4rem 0.8rem;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.7rem;
+        border-radius: 8px;
+        background: #fffdf5;
+        border: 1px solid rgba(160, 112, 16, 0.35);
+        box-shadow: 0 1px 3px rgba(120, 80, 10, 0.18);
+
+        // El scale(1.5) de base pisaba las celdas vecinas
+        &:hover {
+            transform: scale(1.03);
+            background: #fff6df;
+            border-color: #e8a317;
+            box-shadow: 0 3px 8px rgba(120, 80, 10, 0.28);
+        }
+    }
+
+    // Caja más ancha que alta: los iconos de la tabla que son tiras
+    // horizontales (Berry, Apricorn, Type Enhancer) quedaban minúsculos
+    // dentro de un cuadrado
+    .store-option-img {
+        width: 3.8rem;
+        height: 2.4rem;
+    }
+
+    .store-option-name {
+        flex: 1;
+        font-size: 0.85rem;
+        text-align: left;
+        line-height: 1.15;
+        color: #4a2f05;
+    }
+
+    // La moneda del chart en vez de un número suelto
+    .store-option-cost {
+        position: static;
+        flex: 0 0 auto;
+        width: 2.4rem;
+        height: 2.4rem;
+        font-size: 1.05rem;
+        font-weight: bold;
+        color: #5a3c04;
+        background-image: url("../images/store/coinstore.png");
+    }
+
+    > button {
+        flex-shrink: 0;
+        padding: 0.45rem 1.5rem;
+        border-radius: 9px;
+        border: 1px solid #c8880f;
+        background: linear-gradient(180deg, #f7c04a, #e8a317);
+        color: #4a2f05;
+        font-weight: bold;
+        font-size: 0.85rem;
+        cursor: pointer;
+        box-shadow: var(--hud-shadow);
+        transition: background 0.15s, transform 0.15s;
+
+        &:hover { background: linear-gradient(180deg, #f9cb67, #f0ae23); transform: translateY(-1px); }
+    }
+}
+
+// ── Vista de detalle: la carta del ítem antes de comprarlo ──────────────────
+.modal-store.modal-store--shop.modal-store--detail {
+    justify-content: center;
+    gap: 0.8rem;
+}
+
+.store-detail-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: center;
+    // flex + min-height:0 o el bloque se pasa del alto del modal, que está
+    // en overflow:hidden, y la última fila se corta sin poder scrollear
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.store-detail-card {
+    max-height: 54vh;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(60, 38, 4, 0.35);
+}
+
+// Boost Item trae cinco cartas: se achican para que entren en una fila
+.store-detail-cards--multi .store-detail-card {
+    max-height: 22vh;
+}
+
+// Ítems sin carta todavía: se muestra el icono de la tabla de precios
+.store-detail-card-fallback {
+    width: 40vw;
+    max-width: 12rem;
+    height: 30vh;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.store-detail-note {
+    font-size: 0.8rem;
+    color: #7a5205;
+    text-align: center;
+}
+
+.store-detail-price {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+
+    .store-option-cost {
+        position: static;
+        width: 2.2rem;
+        height: 2.2rem;
+        font-size: 1.1rem;
+        color: #5a3c04;
+        background-image: url("../images/store/coinstore.png");
+    }
+}
+
+.store-detail-coins {
+    font-size: 0.9rem;
+    color: #7a5205;
+}
+
+.store-detail-warn {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #b23b1e;
+}
+
+.store-detail-actions {
+    display: flex;
+    gap: 0.8rem;
+
+    button {
+        padding: 0.5rem 1.6rem;
+        border-radius: 9px;
+        border: none;
+        font-weight: bold;
+        font-size: 0.9rem;
+        cursor: pointer;
+        box-shadow: var(--hud-shadow);
+        transition: background 0.15s, transform 0.15s;
+
+        &:hover { transform: translateY(-1px); }
+    }
+
+    .store-detail-back {
+        background: #d9cdb2;
+        color: #4a2f05;
+
+        &:hover { background: #cabc9b; }
+    }
+
+    .store-detail-buy {
+        background: linear-gradient(180deg, #f7c04a, #e8a317);
+        color: #4a2f05;
+        border: 1px solid #c8880f;
+
+        &:hover { background: linear-gradient(180deg, #f9cb67, #f0ae23); }
+
+        &:disabled {
+            background: #cfc4ae;
+            border-color: #b8ab92;
+            color: #8a8272;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+    }
+}
+
+// ── Pantallas chicas ────────────────────────────────────────────────────────
+@media (max-width: 900px) {
+    .modal-store.modal-store--shop {
+        width: 95vw;
+        min-width: 0;
+        max-height: 88vh;
+        padding: 0.8rem;
+
+        // En teléfono dos columnas en fila dejan el nombre en "Legendary…";
+        // mejor una sola columna y que scrollee
+        .store_all_options { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
+        .store-option { min-height: 2.6rem; padding: 0.35rem 0.6rem; }
+        .store-option-img { width: 1.7rem; height: 1.7rem; }
+        .store-option-name { font-size: 0.75rem; }
+
+        // La moneda de arriba se come el renglón
+        .store-option-cost {
+            width: 1.7rem;
+            height: 1.7rem;
+            font-size: 0.8rem;
+        }
+    }
+}

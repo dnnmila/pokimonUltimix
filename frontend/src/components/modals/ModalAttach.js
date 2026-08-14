@@ -1,6 +1,8 @@
 
 import React ,{ useState }from 'react';
 import POKEMON_TYPES from '../../pokemonTypes';
+import { ATTACH_ITEMS } from '../../attachItems';
+import imgRemove from '../../images/delete.png';
 
 const TM_POWERS = [1,2,3,4,5];
 
@@ -58,18 +60,34 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
 
     const tmReady = tmType !== undefined && tmLevel > 0;
 
+    // Cada tarjeta despacha según el tipo de item: el TM abre su sub-panel y la
+    // mega tiene su propio endpoint; el resto se adjunta por id.
+    const handlePick = (item) => {
+        if (item.kind === 'tm')   return handleOpenTM();
+        if (item.kind === 'mega') return attachMegaHandle(currentPlayer, pokemonId);
+        attachItemHandle(currentPlayer, pokemonId, item.id);
+    };
+
     return (
         <div className="modal-backdrop">
             <div className="modal-attach">
                <div className='Title-modal'>Items to Attach</div>
                {openTM === 'false' && (<div className="Attach_all_options" >
-               
-               <div onClick={() => handleOpenTM()} className='Attach-item-option attach-MT'></div>
-               <div onClick={() => attachItemHandle(currentPlayer,pokemonId,"Protein")} className='Attach-item-option attach-Protein'></div>
-               <div onClick={() => attachItemHandle(currentPlayer,pokemonId,"Potion")} className='Attach-item-option attach-Potion'></div>
-               <div onClick={() => attachItemHandle(currentPlayer,pokemonId,"Claw")} className='Attach-item-option attach-Claw'></div>
-               <div onClick={() => attachMegaHandle(currentPlayer,pokemonId)} className='Attach-item-option attach-Mega'></div>
-               <div onClick={() => attachItemHandle(currentPlayer,pokemonId,"None")} className='Attach-item-option attach-Remove'></div>
+               {ATTACH_ITEMS.map(item => (
+                   <div key={item.id}
+                        className={`Attach-item-card Attach-item-card--${item.kind}`}
+                        title={item.es}
+                        onClick={() => handlePick(item)}>
+                       <div className='Attach-item-icon' style={{ backgroundImage: `url(${item.img})` }}></div>
+                       <span className='Attach-item-name'>{item.label}</span>
+                   </div>
+               ))}
+               <div className='Attach-item-card Attach-item-card--remove'
+                    title='Quitar el item adjunto'
+                    onClick={() => attachItemHandle(currentPlayer,pokemonId,"None")}>
+                   <div className='Attach-item-icon' style={{ backgroundImage: `url(${imgRemove})` }}></div>
+                   <span className='Attach-item-name'>Quitar</span>
+               </div>
                </div> )}
                {openTM === 'true' && ( <div className='Attach-TM-options'>
                     <div className='TM-preview'>

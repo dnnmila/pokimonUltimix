@@ -1,0 +1,355 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// TEMAS DE SIMPLAYER
+//
+// Cada tema es una única clase sobre .sim-player que reescribe los tokens de
+// MARCA declarados en _tokens.scss. El diseño no se toca: aquí solo hay
+// variables, ninguna regla de layout. Todo lo que cuelga del contenedor —
+// incluidos los modales, que no redeclaran la paleta — hereda el tema.
+//
+// El tema por defecto (Ultimix) no tiene bloque a propósito: sin clase que
+// sobrescriba nada, los valores de :root son ya la paleta original, así que
+// "Ultimix" es literalmente el diseño tal y como estaba.
+//
+// Lo que NO se toca en ningún tema: el verde de la barra de vida, el rojo de
+// KO y el naranja de evolución/siguiente líder. Son lectura de partida, no
+// decoración.
+//
+// Para añadir un tema: copia un bloque, cambia los valores y da de alta el
+// tema en data/simThemes.js (de ahí sale la lista del modal de ajustes).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Gengar — morado fantasma, acento rosa ───────────────────────────────────
+.sim-player--gengar {
+    --hud-blue:          #6b3fa0;
+    --hud-blue-deep:     #452a6b;
+    --hud-blue-rgb:      107, 63, 160;
+
+    --hud-card:          #f8f3fd;
+    --hud-paper:         #f0e8f8;
+    --hud-paper-2:       #e9dff3;
+    --hud-paper-3:       #e3d8ef;
+    --hud-paper-hover:   #d9cae9;
+    --hud-paper-deep:    #c9b6dd;
+    --hud-tint:          #f1e7fb;
+
+    --hud-field-1:       #7b56ad;
+    --hud-field-2:       #9a79c4;
+    --hud-field-3:       #c3addd;
+    --hud-field-4:       #d9c9ea;
+    --hud-field-5:       #cfbce4;
+
+    --hud-bg-blend:      #2a1745;
+    --hud-bg-blend-mode: multiply;
+
+    // Gengar en el extremo derecho de la banda de cabecera. Se probó primero
+    // como marca de agua en el fondo del setup, pero ahí quedaba medio tapado
+    // por el panel de salvajes y casi no se leía; la banda es el único sitio
+    // de esta pantalla con hueco de sobra. En soft-light se integra con el
+    // morado en vez de parecer una pegatina: `overlay` lo marca más y
+    // `luminosity` menos, esa es la palanca para ajustarlo.
+    --hud-band-mascot:       url("../images/POKEMON/0094.png") no-repeat right 1.5rem center / auto 7.5rem;
+    --hud-band-blend:        soft-light, normal;
+    --hud-band-mascot-space: 9rem;
+
+    --hud-ink:           #241634;
+    --hud-ink-rgb:       36, 22, 52;
+    --hud-dim:           #6b5a7d;
+    --hud-dim-2:         #9084a0;
+
+    --hud-accent:        #ef9ad6;
+    --hud-accent-rgb:    239, 154, 214;
+    --hud-accent-soft:   #f8c4e6;
+    --hud-accent-warm:   #ffb0dd;
+    --hud-gold:          #d94ba8;
+    --hud-gold-ink:      #a32a78;
+    --hud-gold-ink-deep: #7a1a58;
+    --hud-link:          #a06fd6;
+    --hud-link-rgb:      160, 111, 214;
+
+    --hud-purple:        #3d2a63;
+    --hud-purple-rgb:    61, 42, 99;
+    --hud-panel:         #4d2f8a;
+    --hud-panel-deep:    #1e1233;
+    --hud-panel-deep-2:  #24163d;
+    --hud-lilac:         #c48ae8;
+    --hud-pink:          #f4aadf;
+
+    --hud-dark:          #1b1026;
+    --hud-dark-2:        #251438;
+    --hud-band-dark:     #3a2258;
+    --hud-modal-bg:      rgba(18, 8, 30, 0.97);
+    --hud-veil:          rgba(24, 8, 40, 0.6);
+    --hud-highlight:     rgba(160, 60, 220, 0.5);
+
+    --hud-shadow-rgb:    40, 16, 62;
+}
+
+// ── Rapidash — fuego y crema ────────────────────────────────────────────────
+.sim-player--rapidash {
+    // Oscurecido respecto al naranja de la crin (#e2701c): la banda lleva texto
+    // blanco encima y a ese naranja se quedaba en 3.2:1
+    --hud-blue:          #b75b17;
+    --hud-blue-deep:     #974b13;
+    --hud-blue-rgb:      183, 91, 23;
+
+    --hud-card:          #fffaf1;
+    --hud-paper:         #fdf2df;
+    --hud-paper-2:       #f9ebd2;
+    --hud-paper-3:       #f5e5c9;
+    --hud-paper-hover:   #eed9b4;
+    --hud-paper-deep:    #e3c898;
+    --hud-tint:          #fdeacd;
+
+    --hud-field-1:       #f2a03c;
+    --hud-field-2:       #f6bb63;
+    --hud-field-3:       #f7d9a0;
+    --hud-field-4:       #fbe8bf;
+    --hud-field-5:       #f6dcab;
+
+    --hud-bg-blend:      #93400c;
+    --hud-bg-blend-mode: multiply;
+
+    // Rapidash en el extremo derecho de la banda, igual que Gengar. Mismo
+    // soft-light para que se funda con el naranja en vez de parecer pegado.
+    --hud-band-mascot:       url("../images/POKEMON/0078.png") no-repeat right 1.5rem center / auto 7.5rem;
+    --hud-band-blend:        soft-light, normal;
+    --hud-band-mascot-space: 9rem;
+
+    --hud-ink:           #3a1f0a;
+    --hud-ink-rgb:       58, 31, 10;
+    --hud-dim:           #7d5a38;
+    --hud-dim-2:         #a98a63;
+
+    --hud-accent:        #ffd257;
+    --hud-accent-rgb:    255, 210, 87;
+    --hud-accent-soft:   #ffe9a4;
+    --hud-accent-warm:   #ffc93c;
+    --hud-gold:          #e08a12;
+    --hud-gold-ink:      #a85c07;
+    --hud-gold-ink-deep: #7d4204;
+    --hud-link:          #d2691e;
+    --hud-link-rgb:      210, 105, 30;
+
+    --hud-purple:        #8a3a10;
+    --hud-purple-rgb:    138, 58, 16;
+    --hud-panel:         #c2531a;
+    --hud-panel-deep:    #7a2f08;
+    --hud-panel-deep-2:  #86350c;
+    --hud-lilac:         #e09a4a;
+    --hud-pink:          #ffbb8a;
+
+    --hud-dark:          #2a1508;
+    --hud-dark-2:        #3d1e09;
+    --hud-band-dark:     #6b3410;
+    --hud-modal-bg:      rgba(30, 14, 4, 0.97);
+    --hud-veil:          rgba(40, 18, 5, 0.58);
+    --hud-highlight:     rgba(226, 112, 28, 0.5);
+
+    --hud-shadow-rgb:    62, 30, 8;
+}
+
+// ── Slowpoke — rosa apagado y crema ─────────────────────────────────────────
+.sim-player--slowpoke {
+    // El rosa del cuerpo (#e88ba0) es demasiado claro para llevar texto blanco.
+    // Oscurecerlo sin más lo volvía chillón, así que se bajó también la
+    // saturación: sale un rosa polvoriento que sí llega a 4.6:1.
+    --hud-blue:          #b5566e;
+    --hud-blue-deep:     #8f4257;
+    --hud-blue-rgb:      181, 86, 110;
+
+    --hud-card:          #fff8f7;
+    --hud-paper:         #fdeff0;
+    --hud-paper-2:       #fae5e8;
+    --hud-paper-3:       #f7dee2;
+    --hud-paper-hover:   #f1ccd3;
+    --hud-paper-deep:    #e3b4bf;
+    --hud-tint:          #ffeef1;
+
+    --hud-field-1:       #e79fb0;
+    --hud-field-2:       #f0b8c4;
+    --hud-field-3:       #f6d2d4;
+    --hud-field-4:       #fbe5db;
+    --hud-field-5:       #f8ddcd;
+
+    --hud-bg-blend:      #6b2a3d;
+    --hud-bg-blend-mode: multiply;
+
+    --hud-band-mascot:       url("../images/POKEMON/0079.png") no-repeat right 1.5rem center / auto 7.5rem;
+    --hud-band-blend:        soft-light, normal;
+    --hud-band-mascot-space: 9rem;
+
+    --hud-ink:           #3d1f28;
+    --hud-ink-rgb:       61, 31, 40;
+    --hud-dim:           #7d5a63;
+    --hud-dim-2:         #a98a92;
+
+    // El acento sale del hocico y la barriga, no del cuerpo: un rosa sobre otro
+    // rosa no se distinguiría, y el melocotón además destaca sobre los modales
+    // oscuros, que es donde más se usa
+    --hud-accent:        #ffc09a;
+    --hud-accent-rgb:    255, 192, 154;
+    --hud-accent-soft:   #ffd9c0;
+    --hud-accent-warm:   #ffb07f;
+    --hud-gold:          #cf7d46;
+    --hud-gold-ink:      #9c5526;
+    --hud-gold-ink-deep: #78401c;
+    --hud-link:          #b5566e;
+    --hud-link-rgb:      181, 86, 110;
+
+    --hud-purple:        #7d3a4e;
+    --hud-purple-rgb:    125, 58, 78;
+    --hud-panel:         #a04a63;
+    --hud-panel-deep:    #4d1c2b;
+    --hud-panel-deep-2:  #5c2334;
+    --hud-lilac:         #d98aa0;
+    --hud-pink:          #ffb3c4;
+
+    --hud-dark:          #2a1119;
+    --hud-dark-2:        #3d1a26;
+    --hud-band-dark:     #6b2a3d;
+    --hud-modal-bg:      rgba(30, 10, 16, 0.97);
+    --hud-veil:          rgba(40, 14, 22, 0.58);
+    --hud-highlight:     rgba(200, 80, 115, 0.5);
+
+    --hud-shadow-rgb:    62, 24, 34;
+}
+
+// ── Psyduck — amarillo despistado ───────────────────────────────────────────
+.sim-player--psyduck {
+    // El amarillo del cuerpo no puede llevar texto blanco por mucho que se
+    // oscurezca sin volverse mostaza, así que la banda asume el tono terroso.
+    // Quien distingue este tema de Rapidash es el campo, de un limón claro
+    // frente al naranja de fuego del otro.
+    --hud-blue:          #8f7022;
+    --hud-blue-deep:     #765c1c;
+    --hud-blue-rgb:      143, 112, 34;
+
+    --hud-card:          #fffdf3;
+    --hud-paper:         #fdf6dd;
+    --hud-paper-2:       #faf0cd;
+    --hud-paper-3:       #f7ebc2;
+    --hud-paper-hover:   #f0dfa8;
+    --hud-paper-deep:    #e2cd8a;
+    --hud-tint:          #fdf3c8;
+
+    // El campo va mas hondo de lo que pide el Pokemon a proposito: con el tono
+    // claro original las tarjetas blancas se difuminaban contra el fondo
+    // (1.22:1, por debajo del 1.41 del diseno original). Asi se despegan.
+    --hud-field-1:       #dbae19;
+    --hud-field-2:       #ebc52f;
+    --hud-field-3:       #f0d35d;
+    --hud-field-4:       #f6e17e;
+    --hud-field-5:       #f1da6c;
+
+    --hud-bg-blend:      #6b5510;
+    --hud-bg-blend-mode: multiply;
+
+    --hud-band-mascot:       url("../images/POKEMON/0054.png") no-repeat right 1.5rem center / auto 7.5rem;
+    --hud-band-blend:        soft-light, normal;
+    --hud-band-mascot-space: 9rem;
+
+    --hud-ink:           #33280a;
+    --hud-ink-rgb:       51, 40, 10;
+    --hud-dim:           #6f5f34;
+    --hud-dim-2:         #9c8d63;
+
+    // El acento sale del pico: naranja sobre amarillo, que es el contraste que
+    // el propio Psyduck ya tiene encima
+    --hud-accent:        #ff9e4a;
+    --hud-accent-rgb:    255, 158, 74;
+    --hud-accent-soft:   #ffc48c;
+    --hud-accent-warm:   #ff8c2a;
+    --hud-gold:          #c98a10;
+    --hud-gold-ink:      #96650a;
+    --hud-gold-ink-deep: #6f4b06;
+    --hud-link:          #b07a15;
+    --hud-link-rgb:      176, 122, 21;
+
+    --hud-purple:        #6b5510;
+    --hud-purple-rgb:    107, 85, 16;
+    --hud-panel:         #997515;
+    --hud-panel-deep:    #40300a;
+    --hud-panel-deep-2:  #4d3a0c;
+    --hud-lilac:         #d4a83c;
+    --hud-pink:          #ffb87a;
+
+    --hud-dark:          #221a06;
+    --hud-dark-2:        #33280a;
+    --hud-band-dark:     #5c470f;
+    --hud-modal-bg:      rgba(26, 20, 6, 0.97);
+    --hud-veil:          rgba(34, 26, 8, 0.58);
+    --hud-highlight:     rgba(200, 150, 20, 0.5);
+
+    --hud-shadow-rgb:    50, 38, 10;
+}
+
+// ── Togekiss — cielo y nube ─────────────────────────────────────────────────
+.sim-player--togekiss {
+    --hud-blue:          #586fca;
+    --hud-blue-deep:     #3d57c1;
+    --hud-blue-rgb:      88, 111, 202;
+
+    --hud-card:          #fdfeff;
+    --hud-paper:         #f2f6fd;
+    --hud-paper-2:       #eaf1fb;
+    --hud-paper-3:       #e4ecf9;
+    --hud-paper-hover:   #d5e2f5;
+    --hud-paper-deep:    #bccdec;
+    --hud-tint:          #eef4ff;
+
+    // El campo casi blanco es lo que separa este tema de Ultimix y de Lapras:
+    // los demás tienen el fondo de color, este es de nube. El azul se queda en
+    // la banda y en los bordes.
+    // El campo va mas hondo de lo que pide el Pokemon a proposito: con el tono
+    // claro original las tarjetas blancas se difuminaban contra el fondo
+    // (1.22:1, por debajo del 1.41 del diseno original). Asi se despegan.
+    --hud-field-1:       #8db2e6;
+    --hud-field-2:       #a7c6ef;
+    --hud-field-3:       #c1d7f4;
+    --hud-field-4:       #d0e1fa;
+    --hud-field-5:       #c9dbf6;
+
+    --hud-bg-blend:      #35509e;
+    --hud-bg-blend-mode: multiply;
+
+    --hud-band-mascot:       url("../images/POKEMON/0468.png") no-repeat right 1.5rem center / auto 7.5rem;
+    --hud-band-blend:        soft-light, normal;
+    --hud-band-mascot-space: 9rem;
+
+    --hud-ink:           #1e2b4d;
+    --hud-ink-rgb:       30, 43, 77;
+    --hud-dim:           #5a6787;
+    --hud-dim-2:         #8b96af;
+
+    // Los triángulos rojos de su cuerpo, suavizados a rosa: es el único color
+    // cálido que tiene y evita que el tema entero sea azul sobre azul. Se
+    // queda lejos del rojo de KO a propósito, que es más saturado y anaranjado.
+    --hud-accent:        #f59aab;
+    --hud-accent-rgb:    245, 154, 171;
+    --hud-accent-soft:   #fbc3ce;
+    --hud-accent-warm:   #ff8fa6;
+    --hud-gold:          #d99a3c;
+    --hud-gold-ink:      #9c6a12;
+    --hud-gold-ink-deep: #744e0c;
+    --hud-link:          #4a6ec0;
+    --hud-link-rgb:      74, 110, 192;
+
+    --hud-purple:        #3a4a8a;
+    --hud-purple-rgb:    58, 74, 138;
+    --hud-panel:         #4a5eb0;
+    --hud-panel-deep:    #1e2a5c;
+    --hud-panel-deep-2:  #26336b;
+    --hud-lilac:         #8fa8e8;
+    --hud-pink:          #f7aabc;
+
+    --hud-dark:          #141c33;
+    --hud-dark-2:        #1e2a4a;
+    --hud-band-dark:     #2e3d70;
+    --hud-modal-bg:      rgba(12, 18, 38, 0.97);
+    --hud-veil:          rgba(16, 24, 48, 0.58);
+    --hud-highlight:     rgba(88, 111, 202, 0.5);
+
+    --hud-shadow-rgb:    22, 34, 70;
+}
+
+
