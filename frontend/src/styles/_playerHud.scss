@@ -1,0 +1,975 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// PLAYER (vista del master) — nuevo diseño, mismo sistema que SimPlayer / Table.
+//
+// Medido para pantalla de Mac / monitor: el ancho de referencia es 1440-2560px,
+// por eso casi todo va en clamp() con vw en medio, para que la banda superior y
+// el roadmap no se desarmen entre un portátil y un monitor grande.
+//
+// Prefijo `pv-` (player view) para no chocar con las clases viejas de
+// _currentPlayer.scss, que se van retirando por zonas.
+// ═══════════════════════════════════════════════════════════════════════════
+
+.CurrentPlayerView {
+    display: flex;
+    flex-direction: column;
+    // El fondo del boceto: verde arriba, arena abajo, igual que el setup de
+    // SimPlayer pero en vertical completo. Tapa el Bg_Control.jpg viejo.
+    background:
+        linear-gradient(180deg,
+            #2c4b8d 0%,
+            #4d6cae 6%,
+            #93b4dc 22%,
+            #cdd9c6 58%,
+            #e6dcb4 100%);
+}
+
+// ── Banda 1: entrenador + medallas + monedas ────────────────────────────────
+.pv-topbar {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 2vw, 2.4rem);
+    flex-shrink: 0;
+    padding: clamp(0.4rem, 0.8vh, 0.8rem) clamp(0.8rem, 1.6vw, 1.8rem);
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    border-bottom: 3px solid var(--hud-gold);
+    box-shadow: var(--hud-shadow-lg);
+    color: #fff;
+}
+
+.pv-trainer {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 0.8vw, 0.9rem);
+    flex-shrink: 0;
+    position: relative;
+    padding-right: clamp(1rem, 2vw, 2.2rem);
+    border-right: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.pv-trainer-avatar {
+    width: clamp(2.8rem, 5.4vh, 4rem);
+    height: clamp(2.8rem, 5.4vh, 4rem);
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 3px solid var(--hud-gold);
+    background-color: #12295a;
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    // Cuando el entrenador no tiene sprite queda la inicial centrada
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 2vh, 1.5rem);
+    font-weight: bold;
+    color: #fff;
+}
+
+.pv-trainer-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.pv-trainer-name {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    font-size: clamp(1rem, 2.4vh, 1.6rem);
+    font-weight: bold;
+    line-height: 1.05;
+    white-space: nowrap;
+}
+
+// El #posición ya no ocupa una columna propia: es un chip pegado al nombre
+.pv-trainer-rank {
+    font-size: clamp(0.6rem, 1.3vh, 0.85rem);
+    font-weight: bold;
+    color: #ffd97a;
+    letter-spacing: 0.04em;
+}
+
+.pv-trainer-points {
+    font-size: clamp(0.62rem, 1.4vh, 0.9rem);
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+// ── Medallas ────────────────────────────────────────────────────────────────
+// Gana a .Badge / .Bagde_win de _badge.scss, que vienen en vw/vh y aquí
+// desbordarían la banda.
+// Se reparten todo el hueco entre el entrenador y las monedas
+.pv-badges {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: clamp(0.3rem, 0.6vw, 0.8rem);
+    flex: 1;
+    min-width: 0;
+}
+
+.pv-badge {
+    width: clamp(2.6rem, 5.6vh, 4rem) !important;
+    height: clamp(2.6rem, 5.6vh, 4rem) !important;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-size: 76% !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+
+    // Sin ganar: hueco apagado, se lee como ranura vacía
+    &.Badge {
+        background-color: rgba(255, 255, 255, 0.13);
+        border: 2px solid rgba(255, 255, 255, 0.28);
+        filter: grayscale(1) brightness(0.6) !important;
+    }
+
+    // Ganada: moneda dorada
+    &.Bagde_win {
+        background-color: #f0b32c;
+        border: 2px solid #fff0c2;
+        filter: none !important;
+        box-shadow: 0 0 0 2px rgba(232, 163, 23, 0.45), var(--hud-shadow);
+    }
+
+    &:hover { transform: scale(1.12); }
+}
+
+// Elite y Campeón se separan del bloque de 8 y llevan su propio color
+.pv-badge--elite {
+    margin-left: clamp(0.3rem, 0.8vw, 1rem);
+    &.Bagde_win {
+        background-color: var(--hud-purple);
+        border-color: #b9a6ef;
+        box-shadow: 0 0 0 2px rgba(75, 47, 146, 0.5), var(--hud-shadow);
+    }
+}
+
+.pv-badge--champion {
+    border-radius: 8px;
+    &.Bagde_win {
+        background-color: #f0b32c;
+        border-color: #fff0c2;
+    }
+}
+
+// ── Monedas ─────────────────────────────────────────────────────────────────
+.pv-coins {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 0.25rem 1.1rem 0.25rem 0.35rem;
+    border-radius: 999px;
+    border: 2px solid var(--hud-gold);
+    background: rgba(10, 28, 62, 0.55);
+    cursor: pointer;
+    transition: transform 0.12s, background 0.15s;
+
+    &:hover {
+        transform: scale(1.05);
+        background: rgba(10, 28, 62, 0.8);
+    }
+}
+
+.pv-coins-icon {
+    width: clamp(1.6rem, 3vh, 2.2rem);
+    height: clamp(1.6rem, 3vh, 2.2rem);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.pv-coins-value {
+    font-size: clamp(0.95rem, 2.2vh, 1.5rem);
+    font-weight: bold;
+    color: #ffd97a;
+}
+
+// ── Banda 2: el equipo ──────────────────────────────────────────────────────
+// La fila se come toda la altura sobrante entre la cabecera y el roadmap, y las
+// tarjetas se reparten el ancho por igual (antes eran 15vw fijos y con 6 + la
+// de agregar se salían de la pantalla).
+.MainPokemons_Player {
+    flex: 1;
+    min-height: 0;
+    // 100vw dentro de un contenedor con padding se desbordaba por los lados
+    width: 100%;
+    gap: clamp(0.3rem, 0.7vw, 0.9rem);
+    padding: clamp(0.4rem, 1vh, 1rem) clamp(0.5rem, 1vw, 1.2rem);
+}
+
+.All_Pokemons {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: clamp(0.3rem, 0.7vw, 0.9rem);
+}
+
+// Flechas de cambio de jugador: ya no son imágenes sueltas, son botones
+.prevPlayerView,
+.nextPlayerView {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: clamp(1.6rem, 2.4vw, 2.6rem);
+    height: clamp(3rem, 8vh, 5rem);
+    background-image: none;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.28);
+    color: var(--hud-blue-deep);
+    font-size: clamp(1rem, 2.4vh, 1.5rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s;
+
+    &:hover { transform: none; background: rgba(255, 255, 255, 0.55); }
+}
+
+.prevPlayerView::before { content: '‹'; }
+.nextPlayerView::before { content: '›'; }
+
+// ── Tarjeta de Pokémon ──────────────────────────────────────────────────────
+// Colores de tipo: los mismos de _types.scss, aquí como acento de la tarjeta.
+$pv-type-colors: (
+    NORMAL: #9099A1, GRASS: #63BB5B, FIRE:   #FF9C54, WATER:  #4D90D5,
+    FIGHTING: #CE4069, FLYING: #8FA8DD, POISON: #AB6AC8, GROUND: #D97746,
+    ROCK:   #C7B78B, GHOST:  #5269AC, ELECTRIC: #F3D23B, PSYCHIC: #F97176,
+    DRAGON: #0A6DC4, DARK:   #5A5366, STEEL:  #5A8EA1, FAIRY:   #EC8FE6,
+    ICE:    #74CEC0, BUG:    #90C12C,
+);
+
+.pv-card {
+    // Gana a .pokemon de _pokemon.scss, que trae 15vw / 60vh / fondo negro
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    // Imprescindible: .pokemon trae align-items:center, que dejaba la zona de
+    // arte encogida a ancho de contenido y el sprite no se veía
+    align-items: stretch;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    margin-top: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--hud-radius);
+    border: 3px solid var(--pv-accent, var(--hud-blue));
+    border-color: var(--pv-accent, var(--hud-blue));
+    border-style: solid;
+    background-color: var(--hud-card);
+    justify-content: flex-start;
+    box-shadow: var(--hud-shadow);
+    transition: transform 0.12s, box-shadow 0.12s;
+
+    &:hover { box-shadow: var(--hud-shadow-lg); }
+
+    @each $type, $color in $pv-type-colors {
+        &--#{$type} { --pv-accent: #{$color}; }
+    }
+
+    // Debilitado: la tarjeta entera se apaga, no solo el sprite
+    &--fainted {
+        filter: saturate(0.45);
+        border-color: var(--hud-dim);
+        .pv-card-art { opacity: 0.75; }
+    }
+}
+
+// El "arte de fondo": trama diagonal teñida con el color del tipo
+.pv-card-art {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #efeade;   // por si el navegador no soporta color-mix
+    background-color: color-mix(in srgb, var(--pv-accent, #7a7a8c) 14%, #efeade);
+    background-image: repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.55) 0 10px,
+        rgba(255, 255, 255, 0) 10px 20px);
+}
+
+.pv-card-sprite {
+    // Gana a .img_pokemon / .img_pokemon_dead, que vienen en 10vw × 25vh
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+// Estado alterado, arriba a la izquierda
+.pv-card-status {
+    position: absolute;
+    top: 0.4rem;
+    left: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    // Gana a .status_pokemon (5vw × 4vh)
+    .status_pokemon {
+        width: clamp(2.4rem, 5.2vh, 3.8rem) !important;
+        height: clamp(2.4rem, 5.2vh, 3.8rem) !important;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--hud-shadow);
+        &:hover { transform: scale(1.15); }
+    }
+
+    // Redondo y rojo a propósito: el extra del nivel es un chip verde
+    // rectangular, así que a un vistazo no se confunden
+    .status_counter {
+        width: clamp(1.9rem, 4vh, 2.9rem);
+        height: clamp(1.9rem, 4vh, 2.9rem);
+        border: 2px solid #fff;
+        background-color: var(--hud-red);
+        font-size: clamp(1rem, 2.3vh, 1.6rem);
+        box-shadow: var(--hud-shadow);
+
+        &:hover { background-color: #b03a2f; transform: scale(1.12); }
+    }
+}
+
+// Vivo / debilitado, arriba a la derecha
+.pv-card-state {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    // Sube con el resto para no quedar como un punto perdido al lado de un
+    // icono de estado que ahora es tres veces mayor
+    width: clamp(1.3rem, 2.8vh, 2rem);
+    height: clamp(1.3rem, 2.8vh, 2rem);
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: var(--hud-shadow);
+    cursor: pointer;
+    transition: transform 0.12s;
+
+    &.is-alive   { background: #46b968; }
+    &.is-fainted { background: var(--hud-red); }
+    &:hover { transform: scale(1.2); }
+}
+
+// Botón de evolución: flotando abajo a la derecha del arte
+.pv-card-evolve {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: clamp(2.8rem, 6vh, 4.2rem) !important;
+    height: clamp(2.8rem, 6vh, 4.2rem) !important;
+    border-radius: 50%;
+    // Gana al `contain` de .button_evolve: sin esto el icono toca el borde del
+    // círculo blanco al crecer
+    background-size: 68% !important;
+    background-color: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--hud-shadow-lg);
+    animation: pvEvolvePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pvEvolvePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232, 163, 23, 0.7), var(--hud-shadow); }
+    50%      { box-shadow: 0 0 0 7px rgba(232, 163, 23, 0), var(--hud-shadow); }
+}
+
+// ── Panel de datos ──────────────────────────────────────────────────────────
+// El panel se lleva un tercio largo de la tarjeta: el arte se queda con el
+// resto. Antes el sprite se comía casi todo y los datos quedaban diminutos.
+.pv-card-info {
+    flex-shrink: 0;
+    min-height: 38%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    gap: clamp(0.3rem, 0.8vh, 0.7rem);
+    padding: clamp(0.5rem, 1.1vh, 0.9rem) clamp(0.5rem, 0.8vw, 0.9rem);
+    background: var(--hud-card);
+    border-top: 2px solid var(--hud-line);
+}
+
+.pv-card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.pv-card-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: clamp(0.95rem, 2.5vh, 1.6rem);
+    font-weight: bold;
+    color: var(--hud-ink);
+}
+
+// Gana a .level_total, que trae color morado y Times New Roman
+.pv-card-level {
+    display: flex;
+    align-items: baseline;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0 0.25rem;
+    border-radius: 6px;
+    font-family: inherit;
+    color: var(--hud-ink);
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: rgba(232, 163, 23, 0.28); }
+}
+
+.pv-card-level-value {
+    font-size: clamp(1.4rem, 3.8vh, 2.5rem);
+    font-weight: bold;
+    line-height: 1;
+}
+
+// El extra es lo que más se consulta en mesa: va como chip verde y grande
+.pv-card-level-extra {
+    padding: 0.05rem 0.4rem;
+    border-radius: 8px;
+    background: rgba(74, 157, 95, 0.16);
+    font-size: clamp(1rem, 2.7vh, 1.75rem);
+    font-weight: bold;
+    line-height: 1;
+    color: var(--hud-green);
+}
+
+// Cuánto extra le falta para evolucionar
+.pv-card-level-next {
+    font-size: clamp(0.7rem, 1.8vh, 1.15rem);
+    font-weight: bold;
+    color: var(--hud-dim);
+}
+
+// Gana a .types_div (width 60%, space-around)
+.pv-card-types {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.25rem;
+    width: 100%;
+
+    .Types { min-width: 0; }
+
+    // Las píldoras de _types.scss vienen con padding de 1.2rem, que no deja
+    // caber dos; el tamaño de letra sí sube para que se lean de lejos
+    .Type_class {
+        padding: 0.22rem 0.7rem;
+        border-width: 2px;
+        border-radius: 999px;
+        font-size: clamp(0.72rem, 1.9vh, 1.15rem);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+}
+
+.pv-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+// Gana a .attath_button (margin-top 3rem, borde palevioletred)
+.pv-card-attach {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: clamp(0.35rem, 1vh, 0.75rem) 0.3rem;
+    border: 2px dashed var(--hud-line);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--hud-dim);
+    text-align: center;
+    font-size: clamp(0.75rem, 1.9vh, 1.15rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+
+    &:hover {
+        border-color: var(--hud-blue);
+        color: var(--hud-blue-deep);
+        background: rgba(26, 110, 192, 0.08);
+    }
+}
+
+// Item puesto: ocupa el mismo hueco que el botón de adjuntar
+.pv-card-attached {
+    flex: 1;
+    min-width: 0;
+    // Gana a .attached-item (3vw × 6vh + margin-top 2rem)
+    margin: 0 !important;
+    width: auto !important;
+    height: clamp(2.4rem, 5.5vh, 3.6rem) !important;
+    border-radius: 10px;
+    border: 2px solid var(--hud-gold);
+    background-color: rgba(232, 163, 23, 0.14);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    transition: background-color 0.15s;
+
+    &:hover { background-color: rgba(232, 163, 23, 0.3); }
+}
+
+// Gana a .delete_pokemon, que estaba en position:absolute abajo del todo
+.pv-card-delete {
+    position: static;
+    flex-shrink: 0;
+    width: clamp(2rem, 4.4vh, 3rem) !important;
+    height: clamp(2rem, 4.4vh, 3rem) !important;
+    margin: 0;
+    border-radius: 10px;
+    border: 2px solid var(--hud-line);
+    background-size: 62%;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.55;
+    transition: opacity 0.15s, border-color 0.15s, background-color 0.15s;
+
+    &:hover {
+        transform: none;
+        opacity: 1;
+        border-color: var(--hud-red);
+        background-color: rgba(212, 72, 59, 0.14);
+    }
+}
+
+// ── Hueco de "agregar Pokémon" ──────────────────────────────────────────────
+.pv-slot {
+    // Gana a .add_pokemon (15vw, 60vh, fondo negro, borde palevioletred)
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.3rem, 0.8vh, 0.7rem);
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    margin-top: 0;
+    padding: clamp(0.5rem, 1.2vh, 1rem);
+    border-radius: var(--hud-radius);
+    border: 3px dashed rgba(26, 110, 192, 0.55);
+    border-style: dashed;
+    border-color: rgba(26, 110, 192, 0.55);
+    background-color: rgba(255, 255, 255, 0.34);
+}
+
+.pv-slot-ball {
+    // Gana a .Pokeball_image (10vw + margin-top 50%)
+    width: clamp(2.5rem, 7vh, 4.5rem) !important;
+    margin: 0 !important;
+    opacity: 0.5;
+}
+
+.pv-slot-title {
+    font-size: clamp(0.65rem, 1.6vh, 1rem);
+    font-weight: bold;
+    color: var(--hud-blue-deep);
+    text-align: center;
+}
+
+.pv-slot-input {
+    width: 100%;
+    height: auto !important;
+    padding: clamp(0.2rem, 0.6vh, 0.45rem) 0.4rem;
+    border: 2px solid var(--hud-line);
+    border-radius: 8px;
+    background-color: #fff !important;
+    color: var(--hud-ink) !important;
+    text-align: center;
+    font-size: clamp(0.55rem, 1.3vh, 0.85rem) !important;
+
+    &:focus { outline: none; border-color: var(--hud-blue); }
+    &::placeholder { color: var(--hud-dim); }
+}
+
+.pv-slot-button {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: clamp(0.25rem, 0.7vh, 0.5rem) 0.4rem;
+    border: none;
+    border-radius: 8px !important;
+    background-color: var(--hud-blue) !important;
+    color: #fff;
+    font-size: clamp(0.6rem, 1.4vh, 0.9rem);
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--hud-shadow);
+    transition: background 0.15s, transform 0.12s;
+
+    &:hover {
+        transform: translateY(-2px) !important;
+        background-color: var(--hud-blue-deep) !important;
+    }
+}
+
+// ── Banda 3: roadmap de turnos ──────────────────────────────────────────────
+.pv-turns {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.4rem, 0.8vw, 1rem);
+    flex-shrink: 0;
+    padding: clamp(0.3rem, 0.7vh, 0.7rem) clamp(0.8rem, 1.6vw, 1.8rem);
+}
+
+// Prev y Next: los dos extremos de la banda, verde atrás / naranja adelante
+.pv-turn-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: clamp(2.6rem, 4vw, 4.4rem);
+    height: clamp(2rem, 4.4vh, 3rem);
+    border-radius: var(--hud-radius);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    font-size: clamp(1.1rem, 2.6vh, 1.7rem);
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: var(--hud-shadow);
+    transition: transform 0.12s, filter 0.12s;
+    user-select: none;
+
+    &:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    &:active { transform: translateY(0); }
+
+    &--prev { background: linear-gradient(180deg, #6fc07f, var(--hud-green)); }
+    &--next { background: linear-gradient(180deg, #f0902f, var(--hud-orange)); }
+}
+
+// Los chips van unidos por una línea, como un roadmap
+.pv-turn-track {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    gap: 0;
+}
+
+.pv-turn-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    min-width: 0;
+    padding: clamp(0.3rem, 0.7vh, 0.6rem) clamp(0.5rem, 1vw, 1rem);
+    border-radius: var(--hud-radius);
+    border: 2px solid var(--hud-line);
+    background: var(--hud-card);
+    color: var(--hud-ink);
+    box-shadow: var(--hud-shadow);
+    // Sin esto los chips se comerían la línea que los une
+    position: relative;
+    z-index: 1;
+
+    &--active {
+        border-color: var(--hud-gold);
+        background: linear-gradient(180deg, #f7d78a, #f0c463);
+        box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.35), var(--hud-shadow-lg);
+    }
+}
+
+.pv-turn-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: clamp(1.3rem, 2.8vh, 1.9rem);
+    height: clamp(1.3rem, 2.8vh, 1.9rem);
+    border-radius: 50%;
+    background: var(--hud-blue);
+    color: #fff;
+    font-size: clamp(0.65rem, 1.5vh, 0.95rem);
+    font-weight: bold;
+}
+
+.pv-turn-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: clamp(0.75rem, 1.8vh, 1.15rem);
+    font-weight: bold;
+}
+
+.pv-turn-flag {
+    flex-shrink: 0;
+    font-size: clamp(0.55rem, 1.2vh, 0.75rem);
+    font-weight: bold;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7a5504;
+}
+
+// Tramo de línea entre chip y chip
+.pv-turn-link {
+    flex-shrink: 0;
+    width: clamp(0.6rem, 1.6vw, 2rem);
+    height: 2px;
+    background: rgba(27, 36, 51, 0.35);
+}
+
+// ── Banda 4: barra inferior ─────────────────────────────────────────────────
+// Cuatro bloques con su rótulo, en vez de diez botones sueltos repartidos con
+// space-around.
+.pv-bottombar {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    gap: clamp(0.5rem, 1.2vw, 1.6rem);
+    padding: clamp(0.4rem, 0.9vh, 0.8rem) clamp(0.8rem, 1.6vw, 1.8rem);
+    background: rgba(253, 251, 244, 0.72);
+    border-top: 2px solid var(--hud-line);
+    backdrop-filter: blur(3px);
+}
+
+.pv-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding-right: clamp(0.5rem, 1.2vw, 1.6rem);
+    border-right: 2px solid var(--hud-line);
+
+    &:last-of-type { border-right: none; }
+
+    // Registro se va contra la derecha, junto al panel de estado
+    &--right { margin-left: auto; }
+}
+
+.pv-bar-label {
+    font-size: clamp(0.5rem, 1.1vh, 0.68rem);
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--hud-dim);
+}
+
+.pv-bar-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.3rem, 0.6vw, 0.7rem);
+}
+
+// ── Encuentro ───────────────────────────────────────────────────────────────
+.pv-dynamax {
+    // Gana a .dynamax-btn (4rem fijos)
+    width: clamp(2rem, 4.5vh, 3rem);
+    height: clamp(2rem, 4.5vh, 3rem);
+    border-radius: 10px;
+    background: rgba(75, 47, 146, 0.12);
+    border: 2px solid var(--hud-purple);
+    padding: 0.15rem;
+
+    &:hover { transform: scale(1.08); }
+}
+
+.pv-wild {
+    // Gana a .WildPokemon_imput (fondo negro, borde azul chillón)
+    padding: 0.15rem 0.15rem 0.15rem 0.7rem;
+    border: 2px solid var(--hud-line);
+    border-radius: 999px;
+    background: #fff;
+    gap: 0.3rem;
+
+    input {
+        width: clamp(6rem, 11vw, 12rem);
+        color: var(--hud-ink);
+        font-size: clamp(0.6rem, 1.4vh, 0.9rem);
+
+        &::placeholder { color: var(--hud-dim); }
+    }
+
+    button {
+        padding: clamp(0.2rem, 0.6vh, 0.45rem) clamp(0.5rem, 1vw, 1rem);
+        border-radius: 999px;
+        background: var(--hud-blue);
+        font-size: clamp(0.6rem, 1.4vh, 0.85rem);
+
+        &:hover { background: var(--hud-blue-deep); transform: none; }
+    }
+}
+
+// ── Acciones ────────────────────────────────────────────────────────────────
+.pv-action {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: clamp(0.3rem, 0.8vh, 0.55rem) clamp(0.5rem, 1vw, 1rem);
+    border-radius: 10px;
+    border: 2px solid var(--hud-line);
+    background: #fff;
+    color: var(--hud-ink);
+    font-size: clamp(0.6rem, 1.5vh, 0.95rem);
+    font-weight: bold;
+    letter-spacing: 0;
+    cursor: pointer;
+    box-shadow: var(--hud-shadow);
+    transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
+    white-space: nowrap;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--hud-shadow-lg);
+        background: #eef4fb;
+    }
+    &:active { transform: translateY(0); }
+
+    // Batalla es la acción principal: gana a .BattleMenu_Button
+    &--battle {
+        border-color: transparent;
+        background: linear-gradient(180deg, #e0574a, var(--hud-red));
+        color: #fff;
+
+        &:hover {
+            background: linear-gradient(180deg, #ea6357, #dd5247);
+            box-shadow: var(--hud-shadow-lg);
+        }
+    }
+
+    // Hay cartas de campo puestas
+    &--on {
+        border-color: var(--hud-gold);
+        background: rgba(232, 163, 23, 0.16);
+    }
+}
+
+.pv-action-icon {
+    width: clamp(1.1rem, 2.6vh, 1.7rem);
+    height: clamp(1.1rem, 2.6vh, 1.7rem);
+    flex-shrink: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.pv-action-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: var(--hud-gold);
+    color: #fff;
+    font-size: 0.72rem;
+}
+
+// ── Registro ────────────────────────────────────────────────────────────────
+.pv-util {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: rgba(26, 110, 192, 0.1); }
+}
+
+// Gana a .Button-store / .Button-purchase-history, que venían en 5vw × 8vh
+.pv-util-icon {
+    width: clamp(1.6rem, 3.6vh, 2.4rem) !important;
+    height: clamp(1.6rem, 3.6vh, 2.4rem) !important;
+    margin: 0 !important;
+
+    .pv-util:hover & { transform: none; }
+}
+
+.pv-util-label {
+    font-size: clamp(0.45rem, 1.1vh, 0.68rem);
+    font-weight: bold;
+    color: var(--hud-dim);
+}
+
+// ── Estado de la partida ────────────────────────────────────────────────────
+.pv-bar-status {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.4rem, 0.9vw, 1rem);
+    // El margin-left:auto lo pone ya .pv-bar-group--right; con dos autos el
+    // hueco se repartía entre ambos y el bloque de registro quedaba flotando
+    padding: clamp(0.25rem, 0.7vh, 0.5rem) clamp(0.5rem, 1vw, 1rem);
+    border-radius: var(--hud-radius);
+    background: linear-gradient(180deg, #1e3560, #14294c);
+    box-shadow: var(--hud-shadow);
+    color: #fff;
+}
+
+.pv-round {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.pv-round-label {
+    font-size: clamp(0.45rem, 1vh, 0.62rem);
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.pv-round-value {
+    font-size: clamp(0.9rem, 2.2vh, 1.4rem);
+    font-weight: bold;
+    color: var(--hud-gold);
+}
+
+.pv-clock {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    padding: 0 clamp(0.4rem, 0.9vw, 1rem);
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    font-size: clamp(0.8rem, 2vh, 1.25rem);
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
+.pv-clock-sec {
+    font-size: 0.62em;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+// Gana a .PauseGameButton, que ya venía en claro sobre fondo oscuro
+.pv-pause {
+    width: clamp(1.7rem, 3.8vh, 2.5rem);
+    height: clamp(1.7rem, 3.8vh, 2.5rem);
+    padding: 0;
+    border-radius: 50%;
+    border-color: var(--hud-gold);
+    background: rgba(232, 163, 23, 0.9);
+    color: #1b2433;
+    font-size: clamp(0.7rem, 1.7vh, 1.05rem);
+
+    &:hover { background: var(--hud-gold); transform: scale(1.08); }
+}

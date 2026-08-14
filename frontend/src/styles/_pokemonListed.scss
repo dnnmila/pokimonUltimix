@@ -199,27 +199,8 @@
     background-repeat: no-repeat;
 }
 
-.attached-MT{
-    background-image: url('../images/tm.png');
-
-}
-.attached-Protein{
-    background-image: url('../images/protein.webp');
-    
-}
-.attached-Potion{
-    background-image: url('../images/potion.webp');
-    
-}
-.attached-Claw{
-    background-image: url('../images/claw.png');
-    
-}
-
-.attached-Mega{
-    background-image: url('../images/Megaevo.webp');
-    
-}
+/* Los .attached-<Item> por nombre desaparecieron: la imagen sale del catálogo
+   de src/attachItems.js y se aplica inline sobre .apl-pkm-attach i */
 
 .Asleep{
  background-image: url("../images/status/sleep.png");

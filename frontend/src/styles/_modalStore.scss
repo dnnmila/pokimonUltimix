@@ -1,10 +1,13 @@
 .modal-store {
-    background-color: rgb(59, 56, 67);
-    color: rgb(208, 214, 238);
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-blue);
+    box-shadow: var(--hud-shadow-lg);
     width: 35vw;
+    min-width: 420px;
     height: 95vh;
     padding: 1.5rem;
-    border-radius: 5px;
+    border-radius: var(--hud-radius);
     z-index: 2; /* Asegúrate de que sea más alto que el resto del contenido */
     display: flex;
     flex-direction: column;
@@ -163,8 +166,6 @@ $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
 
 @media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
     .modal-store {
-        background-color: rgb(59, 56, 67);
-        color: rgb(208, 214, 238);
         width: 65vw;
         height: 90vh;
         padding: 1.5rem;

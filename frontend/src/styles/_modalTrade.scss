@@ -1,18 +1,10 @@
-.Button-trade {
-    background-image: url("../images/changePoke.png");
-    background-size: contain;
-    background-position: center center;
-    background-repeat: no-repeat;
-    width: 5vw;
-    height: 8vh;
-    cursor: pointer;
-    &:hover { transform: scale(1.5); }
-}
+// El botón de la barra inferior del master vive ahora en _playerHud.scss
+// como .pv-action
 
 .trade-modal {
-    background: linear-gradient(160deg, #1a1a2e, #16213e);
-    border: 2px solid #f0d080;
-    border-radius: 16px;
+    background: var(--hud-card);
+    border: 3px solid var(--hud-blue);
+    border-radius: var(--hud-radius);
     padding: 2rem 2.5rem;
     display: flex;
     flex-direction: column;
@@ -23,7 +15,7 @@
     max-width: 1100px;
     max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 0 30px rgba(240, 208, 128, 0.25);
+    box-shadow: var(--hud-shadow-lg);
     animation: popIn 0.25s ease both;
 }
 
@@ -31,27 +23,27 @@
     position: absolute;
     top: 0.7rem;
     right: 0.9rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid #aaa;
-    border-radius: 6px;
+    background: var(--hud-blue);
+    border: 2px solid var(--hud-blue-deep);
+    border-radius: 8px;
     color: white;
     font-size: 1.2rem;
     padding: 0.1rem 0.5rem;
     cursor: pointer;
-    &:hover { background: rgba(255, 80, 80, 0.5); border-color: white; }
+    &:hover { background: var(--hud-red); border-color: var(--hud-red); }
 }
 
 .trade-modal-title {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    color: #f0d080;
+    color: var(--hud-ink);
     font-weight: bold;
     letter-spacing: 0.05em;
     text-align: center;
 }
 
 .trade-modal-subtitle {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--hud-dim);
     font-size: 1.1rem;
     text-align: center;
     margin-top: -0.6rem;
@@ -67,9 +59,10 @@
 }
 
 .trade-player-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 2px solid rgba(162, 112, 216, 0.4);
+    background: #fff;
+    border: 2px solid var(--hud-line);
     border-radius: 10px;
+    box-shadow: var(--hud-shadow);
     padding: 1rem 2rem;
     cursor: pointer;
     text-align: center;
@@ -77,8 +70,8 @@
     min-width: 130px;
 
     &:hover {
-        border-color: rgb(162, 112, 216);
-        background: rgba(162, 112, 216, 0.15);
+        border-color: var(--hud-blue);
+        background: #eef4fb;
         transform: scale(1.05);
     }
 }
@@ -86,13 +79,13 @@
 .trade-player-name {
     font-size: 1.4rem;
     font-weight: bold;
-    color: rgb(100, 150, 255);
+    color: var(--hud-blue-deep);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 .trade-player-count {
     font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--hud-dim);
     margin-top: 0.25rem;
 }
 
@@ -107,7 +100,7 @@
 
 .trade-divider {
     font-size: 2.5rem;
-    color: #f0d080;
+    color: var(--hud-blue);
     align-self: center;
     flex-shrink: 0;
     padding: 0 0.5rem;
@@ -125,7 +118,7 @@
 .trade-team-label {
     font-size: 1.2rem;
     font-weight: bold;
-    color: rgb(100, 150, 255);
+    color: var(--hud-blue-deep);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     margin-bottom: 0.2rem;
 }
@@ -136,22 +129,22 @@
     gap: 0.8rem;
     width: 100%;
     padding: 0.5rem 0.8rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid transparent;
-    border-radius: 8px;
+    background: #fff;
+    border: 2px solid var(--hud-line);
+    border-radius: 10px;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s, transform 0.12s;
 
     &:hover {
-        border-color: rgba(162, 112, 216, 0.6);
-        background: rgba(162, 112, 216, 0.1);
+        border-color: var(--hud-blue);
+        background: #eef4fb;
         transform: scale(1.02);
     }
 
     &.trade-pkm-selected {
-        border-color: #f0d080;
-        background: rgba(240, 208, 128, 0.12);
-        box-shadow: 0 0 10px rgba(240, 208, 128, 0.3);
+        border-color: var(--hud-gold);
+        background: rgba(232, 163, 23, 0.16);
+        box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.35);
     }
 }
 
@@ -167,14 +160,14 @@
 .trade-pkm-name {
     font-size: 1rem;
     font-weight: bold;
-    color: white;
+    color: var(--hud-ink);
     text-transform: capitalize;
     flex: 1;
 }
 
 .trade-pkm-level {
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--hud-dim);
     flex-shrink: 0;
 }
 
@@ -184,47 +177,47 @@
     gap: 1.2rem;
     width: 100%;
     padding-top: 0.5rem;
-    border-top: 1px solid rgba(240, 208, 128, 0.2);
+    border-top: 2px solid var(--hud-line);
 }
 
 .trade-back-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: #fff;
+    color: var(--hud-ink);
+    border: 2px solid var(--hud-line);
     border-radius: 24px;
     padding: 0.5rem 1.6rem;
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
     transition: background 0.15s, transform 0.12s;
-    &:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.04); }
+    &:hover { background: #eef4fb; transform: scale(1.04); }
     &:active { transform: scale(0.97); }
 }
 
 .trade-confirm-btn {
-    background: linear-gradient(135deg, rgb(62, 88, 218), rgb(100, 130, 255));
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
     color: white;
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    border: 2px solid transparent;
     border-radius: 24px;
     padding: 0.5rem 2rem;
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(62, 88, 218, 0.5);
+    box-shadow: var(--hud-shadow);
     transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
 
     &:hover:not(:disabled) {
         transform: scale(1.06);
-        box-shadow: 0 6px 18px rgba(62, 88, 218, 0.7);
+        box-shadow: var(--hud-shadow-lg);
     }
 
     &:active:not(:disabled) { transform: scale(0.97); }
 
     &:disabled {
-        background: rgba(255, 255, 255, 0.1);
+        background: #e6e6e6;
         box-shadow: none;
-        color: rgba(255, 255, 255, 0.35);
+        color: var(--hud-dim);
         cursor: not-allowed;
-        border-color: rgba(255, 255, 255, 0.1);
+        border-color: var(--hud-line);
     }
 }

@@ -832,6 +832,20 @@ const onHandleBonuses = async (player, b1, b2, b3) => {
     }
 };
 
+// Qué pestaña del equipo mira el jugador en la selección de combatientes.
+// Solo la usa el espejo del marcador, para enseñar lo mismo que su tablet.
+const onSetFormsView = async (showForms) => {
+    try {
+        await fetch(`${SERVER_IP}/set-forms-view`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ showForms }),
+        });
+    } catch (error) {
+        console.error('Error al cambiar la vista de formas:', error);
+    }
+};
+
 const onChangeBattlePhase = async (newPhase) => {
     try {
         console.log("onChangeBattlePhase request");
@@ -882,7 +896,7 @@ return (
         <Routes>
             <Route path="/" element={<Game onStartGame={startGame} isGameStarted={isGameStarted} onContinueGame={continueGame} onLoadGame={loadGame}/>} />
             <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
-            <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} />} />
+            <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} generation={game.generation} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
             onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
             <Route path="/home" element={<HomeMenu />} />
@@ -891,7 +905,7 @@ return (
                 no distingue mayúsculas, así que /Score entra por aquí igual. */}
             <Route path="/Table" element={<Score />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
-            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega}/>} />
             <Route path="/progress" element={<ProgressChart />} />
 
         </Routes>

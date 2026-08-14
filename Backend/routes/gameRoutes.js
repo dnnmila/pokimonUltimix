@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame} from '../controllers/gameController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame} from '../controllers/gameController.js';
 import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,attachMega,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
@@ -10,6 +10,7 @@ router.post('/set-my-battle-total', setMyBattleTotal);
 router.post('/set-my-battle-pokemon', setMyBattlePokemon);
 router.post('/set-my-battle-attack', setMyBattleAttack);
 router.post('/set-battle-phase', setBattlePhase);
+router.post('/set-forms-view', setFormsView);
 router.post('/next-turn', nextTurn);
 router.post('/prev-turn', prevTurn);
 router.post('/next-view', nextPlayerView);
@@ -49,6 +50,7 @@ router.post('/get-evolution-chain', getEvolutionChain);
 router.post('/get-possible-evolutions', getPossibleEvolutions);
 router.post('/toggle-dynamax', toggleDynamax);
 router.post('/load-game', loadGameController);
+router.get('/save-info', saveInfoController);
 router.post('/set-generation', setGeneration);
 router.get('/get-leaders', getLeadersByGeneration);
 router.get('/pokemon-list', getPokemonList);

@@ -1,11 +1,13 @@
 
+// Fondo compartido por todos los modales del juego
 .modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(12, 22, 42, 0.55);
+    backdrop-filter: blur(3px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -13,12 +15,15 @@
 }
 
 .modal-coins {
-    background-color: rgb(44, 32, 91);
-    color: rgb(208, 214, 238);
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-gold);
     width: 30vw;
+    min-width: 320px;
     height: 50vh;
     padding: 1.5rem;
-    border-radius: 5px;
+    border-radius: var(--hud-radius);
+    box-shadow: var(--hud-shadow-lg);
     z-index: 2; /* Asegúrate de que sea más alto que el resto del contenido */
     display: flex;
     flex-direction: column;
@@ -42,18 +47,30 @@
 }
 
 .add_coins_options{
-    
+
     display: flex;
     width: 100%;
     justify-content: space-around;
-    color: rgb(33, 145, 70);
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 10px;
+    border: 2px solid rgba(47, 143, 78, 0.4);
+    background: rgba(47, 143, 78, 0.1);
+    color: #2f8f4e;
+    font-weight: bold;
 }
 
 .remove_coins_options{
-    color: rgb(227, 73, 73);
+    color: var(--hud-red);
     display: flex;
     width: 100%;
     justify-content: space-around;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 10px;
+    border: 2px solid rgba(212, 72, 59, 0.4);
+    background: rgba(212, 72, 59, 0.1);
+    font-weight: bold;
 }
 
 .coins-option{

@@ -1,61 +1,82 @@
 .modal-attach{
-    background-color: rgb(28, 28, 40);
-    color: beige;
-    width: 23vw;
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-gold);
+    box-shadow: var(--hud-shadow-lg);
+    /* Son 14 items + Quitar: la rejilla de 4 pide más ancho que el modal
+       original de 6 iconos sueltos */
+    width: 36vw;
+    min-width: 460px;
+    max-width: 720px;
     height: auto;
     min-height: 50vh;
     max-height: 85vh;
     padding: 1.5rem;
-    border-radius: 5px;
+    border-radius: var(--hud-radius);
     z-index: 2; /* Asegúrate de que sea más alto que el resto del contenido */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content:space-around;
-    
+
 }
 
 .Attach_all_options{
-    display: flex;
-    gap: 2rem;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .6rem;
+    width: 100%;
+    margin: 1rem 0;
+    /* Si algún día se pasa de 16 items, la lista scrollea en vez de reventar el modal */
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
-.Attach-item-option{
-    margin-top: 1rem;
-    width: 5vw;
-    height: 7vh;
+/* Con esta cantidad el icono solo no alcanza para distinguir Wide Lens de Zoom
+   Lens, así que cada uno lleva su nombre debajo */
+.Attach-item-card{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    padding: .5rem .25rem;
+    border: solid 2px var(--hud-line);
+    border-radius: 10px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.Attach-item-card:hover{
+    transform: translateY(-2px);
+    border-color: var(--hud-orange);
+    box-shadow: var(--hud-shadow);
+}
+
+.Attach-item-icon{
+    width: 100%;
+    height: 4.6rem;
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
 }
 
-.Title-modal{
-font-size: 1.5rem;
+.Attach-item-name{
+    font-size: .72rem;
+    font-weight: bold;
+    line-height: 1.1;
+    text-align: center;
+    color: var(--hud-ink);
 }
 
-.Attach-item-option:hover{
-cursor: pointer;
-transform: scale(1.5);
+/* TM y Mega no adjuntan directo: el primero abre el sub-panel de tipo/power y
+   el segundo crea la forma mega, así que se marcan aparte */
+.Attach-item-card--tm,
+.Attach-item-card--mega{
+    border-color: var(--hud-blue);
 }
-.attach-MT{
-    background-image: url("../images/tm.png");
-}
-.attach-Protein{
-    background-image: url("../images/protein.webp");
-}
-.attach-Potion{
-    background-image: url("../images/potion.webp");
-}
-.attach-Claw{
-    background-image: url("../images/claw.png");
-}
-.attach-Mega{
-    background-image: url("../images/Megaevo.webp");
-}
-.attach-Remove{
-    background-image: url("../images/delete.png");
+.Attach-item-card--remove{
+    border-style: dashed;
+    .Attach-item-name{ color: var(--hud-dim); }
 }
 
 .close-modal{
@@ -80,7 +101,7 @@ transform: scale(1.5);
 .TM-attack--selected,
 .TM-attack--selected:hover{
     transform: scale(1.35);
-    filter: drop-shadow(0 0 4px coral);
+    filter: drop-shadow(0 0 4px var(--hud-orange));
 }
 .Type-TM{
     display: flex;
@@ -107,9 +128,9 @@ transform: scale(1.5);
     box-sizing: border-box;
     padding: .5rem .75rem;
     margin-bottom: .75rem;
-    border: solid 1px rgba(224, 226, 247, .35);
-    border-radius: 8px;
-    background-color: rgba(245, 247, 249, .08);
+    border: solid 2px var(--hud-line);
+    border-radius: 10px;
+    background-color: #fff;
 }
 .TM-preview-icon{
     width: 3vw;
@@ -124,8 +145,8 @@ transform: scale(1.5);
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: rgba(237, 227, 241, .4);
-    border: dashed 1px rgba(237, 227, 241, .3);
+    color: var(--hud-dim);
+    border: dashed 2px var(--hud-line);
     border-radius: 50%;
 }
 .TM-preview-type{
@@ -134,10 +155,11 @@ transform: scale(1.5);
 }
 .TM-preview-power{
     font-size: .9rem;
-    color: coral;
+    font-weight: bold;
+    color: var(--hud-orange);
 }
 .TM-preview--placeholder{
-    color: rgba(237, 227, 241, .45);
+    color: var(--hud-dim);
     font-style: italic;
 }
 
@@ -149,20 +171,21 @@ transform: scale(1.5);
     margin-top: 1rem;
 }
 .TM-Level{
-    color: rgb(237, 227, 241);
+    color: var(--hud-ink);
+    font-weight: bold;
     font-size: 1.5rem;
     transition: transform .12s ease, color .12s ease;
 }
 .TM-Level:hover{
     cursor: pointer;
     transform: scale(1.5);
-    color: coral;
+    color: var(--hud-orange);
 }
 .TM-Level--selected,
 .TM-Level--selected:hover{
     transform: scale(1.4);
-    color: coral;
-    text-shadow: 0 0 6px rgba(255, 127, 80, .6);
+    color: var(--hud-orange);
+    text-shadow: 0 0 6px rgba(224, 122, 32, .5);
 }
 
 .TM-actions{
@@ -173,23 +196,26 @@ transform: scale(1.5);
 }
 .TM-add-btn,
 .TM-back-btn{
-    padding: .4rem 1.2rem;
+    padding: .45rem 1.3rem;
     font-size: 1rem;
-    border-radius: 6px;
+    font-weight: bold;
+    border-radius: 10px;
     border: none;
     cursor: pointer;
 }
 .TM-add-btn{
-    background-color: coral;
-    color: rgb(28, 28, 40);
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
+    color: #fff;
+    box-shadow: var(--hud-shadow);
 }
 .TM-add-btn:disabled{
-    background-color: rgba(245, 247, 249, .15);
-    color: rgba(237, 227, 241, .35);
+    background: #e6e6e6;
+    box-shadow: none;
+    color: var(--hud-dim);
     cursor: not-allowed;
 }
 .TM-back-btn{
-    background-color: transparent;
-    color: rgba(237, 227, 241, .7);
-    border: solid 1px rgba(224, 226, 247, .35);
+    background-color: #fff;
+    color: var(--hud-ink);
+    border: solid 2px var(--hud-line);
 }

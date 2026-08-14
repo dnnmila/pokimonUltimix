@@ -5,44 +5,22 @@ import StadiumMirrorModal from './StadiumMirrorModal';
 import ModalVictory from './modals/ModalVictory';
 
 import SERVER_IP from '../config';
+import { STORE_ITEMS } from './modals/storeItems';
 
-// Cubre el catálogo de las dos tiendas: la del master (ModalTienda) y la del
-// SimPlayer (ModalTiendaSim, alineada con la tabla física "Item Costs").
+// El catálogo vivo sale del mismo sitio que las dos tiendas (máster y
+// SimPlayer), así los iconos del aviso de compra no se separan de los precios.
+// Los nombres de abajo ya no se venden: siguen aquí para que el historial de
+// partidas viejas no se quede sin icono.
 const ITEM_IMG_CLASS = {
-    'Pokeball': 'img-pokeball',
-    'Great Ball': 'img-greatBall',
-    'Ultra Ball': 'img-ultraBall',
+    ...Object.fromEntries(STORE_ITEMS.map(({ name, img }) => [name, img])),
     'X Attack(1)': 'img-XAttk',
     'X Attack(2)': 'img-XAttk',
     'X Attack(3)': 'img-XAttk',
-    'Potion': 'img-potion',
     'X Defense': 'img-XDef',
-    'Revive': 'img-Revive',
     'X Accuracy': 'img-XAcc',
-    'Max Revive': 'img-MaxRevive',
     'Guard Spec.': 'img-GuardSpec',
-    'Full Heal': 'img-FullHeal',
     'TM': 'img-TM',
-    'Escape Rope': 'img-EscapeRope',
-    'Mega Bracelet': 'img-MegaBracelet',
-    'Bicycle': 'img-Bicycle',
-    'Mega Stone': 'img-MegaStone',
-    'Poke Doll': 'img-PokeDoll',
     'Dynamax': 'img-Dynamax',
-    'Boost Item': 'img-boostItem',
-    'Vitamin': 'img-vitamin',
-    'Legendary Evo. Item': 'img-legendaryEvo',
-    'Apricorn': 'img-apricorn',
-    'TM Case': 'img-TM',
-    'Type Enhancer': 'img-typeEnhancer',
-    'Max Potion': 'img-maxPotion',
-    'Z-Ring': 'img-zRing',
-    'Dynamax Band': 'img-Dynamax',
-    'Tera Orb': 'img-teraOrb',
-    'Running Shoes': 'img-runningShoes',
-    'Repel': 'img-repel',
-    'Berry': 'img-berry',
-    'Black Flute': 'img-blackFlute',
 };
 
 // showOverlays = false deja la tabla limpia: fuera el espejo de la batalla, el

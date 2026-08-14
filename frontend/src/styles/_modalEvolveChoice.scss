@@ -1,8 +1,10 @@
 .modal-evolve-choice {
-    background-color: rgb(28, 28, 40);
-    color: beige;
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-gold);
+    box-shadow: var(--hud-shadow-lg);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--hud-radius);
     z-index: 4;
     display: flex;
     flex-direction: column;
@@ -12,9 +14,10 @@
     max-width: 80vw;
 
     &__title {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
+        font-weight: bold;
         font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-        color: rgb(162, 112, 216);
+        color: var(--hud-ink);
     }
 
     &__options {
@@ -30,14 +33,16 @@
         align-items: center;
         gap: 0.4rem;
         padding: 0.8rem;
-        border: 2px solid transparent;
-        border-radius: 6px;
+        border: 2px solid var(--hud-line);
+        border-radius: 10px;
+        background: #fff;
         cursor: pointer;
-        transition: border-color 0.15s, transform 0.15s;
+        transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 
         &:hover {
-            border-color: rgb(162, 112, 216);
+            border-color: var(--hud-gold);
             transform: scale(1.05);
+            box-shadow: var(--hud-shadow);
         }
     }
 
@@ -56,8 +61,9 @@
 
     &__name {
         font-size: 1.1rem;
+        font-weight: bold;
         font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-        color: rgb(162, 112, 216);
+        color: var(--hud-ink);
     }
 
     &__types {

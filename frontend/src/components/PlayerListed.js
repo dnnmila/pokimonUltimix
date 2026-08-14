@@ -1,4 +1,5 @@
 import PokemonListed from "./PokemonListed";
+import { getTrainerImage } from "../data/trainers";
 
 const FRONTIERS = [
     { key: 'frontierPink',   color: '#f472b6', label: 'Rosa' },
@@ -8,13 +9,6 @@ const FRONTIERS = [
     { key: 'frontierRed',    color: '#f87171', label: 'Roja' },
     { key: 'frontierGolden', color: '#c084fc', label: 'Legendaria' },
 ];
-
-// Misma tabla que usa SimPlayer para el retrato de la cabecera
-const TRAINER_CLASS = {
-    Mila: 'trainer1', Wuicho: 'trainer2', Kevin: 'trainer3', Kampis: 'trainer4',
-    Mandito: 'trainer5', Doc: 'trainer6', Tacho: 'trainer7', Fede: 'trainer8',
-    Perry: 'trainer9', Richi: 'trainer10', Mono: 'trainer11', Foxi: 'trainer2',
-};
 
 const TEAM_SLOTS = 6;
 
@@ -50,7 +44,7 @@ const PlayerListed = ({player, generation, turnElapsed = 0}) => {
             <div className="apl-trainer">
                 <div className="apl-trainer-top">
                     <div className="apl-rank">{player.position}</div>
-                    <div className={`apl-avatar image-trainer ${TRAINER_CLASS[player.name] || 'trainer1'}`} />
+                    <div className="apl-avatar" style={{ backgroundImage: `url(${getTrainerImage(player.name)})` }} />
                     <div className="apl-name">{player.name}</div>
                 </div>
 

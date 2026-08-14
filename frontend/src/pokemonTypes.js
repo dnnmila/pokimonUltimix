@@ -12,6 +12,19 @@ export const TYPE_COLORS = {
     STEEL: '#b8b8d0', WATER: '#6890f0',
 };
 
-export const typeColor = (t) => TYPE_COLORS[(t || '').toString().toUpperCase()] || '#7a7a8c';
+// Los tipos llegan de la DB en inglés y en mayúsculas; en pantalla van en
+// español, que es el idioma de las cartas físicas.
+export const TYPE_ES = {
+    NORMAL: 'Normal', BUG: 'Bicho', DARK: 'Siniestro', DRAGON: 'Dragón',
+    ELECTRIC: 'Eléctrico', FAIRY: 'Hada', FIGHTING: 'Lucha', FIRE: 'Fuego',
+    FLYING: 'Volador', GHOST: 'Fantasma', GRASS: 'Planta', GROUND: 'Tierra',
+    ICE: 'Hielo', POISON: 'Veneno', PSYCHIC: 'Psíquico', ROCK: 'Roca',
+    STEEL: 'Acero', WATER: 'Agua',
+};
+
+const typeKey = (t) => (t || '').toString().toUpperCase();
+
+export const typeColor = (t) => TYPE_COLORS[typeKey(t)] || '#7a7a8c';
+export const typeLabel = (t) => TYPE_ES[typeKey(t)] || typeKey(t);
 
 export default POKEMON_TYPES;

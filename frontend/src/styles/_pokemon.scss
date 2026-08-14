@@ -104,6 +104,8 @@ transform: scale(1.5);
     cursor: pointer;
 }
 
+/* La imagen del item la pone el componente con background-image inline, desde
+   el catálogo de src/attachItems.js. Aquí solo va el encuadre. */
 .attached-item{
     margin-top: 2rem;
     width: 3vw;
@@ -111,27 +113,6 @@ transform: scale(1.5);
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center center;
-}
-.attached-mt{
-    background-image: url('../images/tm.png');
-
-}
-.attached-protein{
-    background-image: url('../images/protein.webp');
-    
-}
-.attached-potion{
-    background-image: url('../images/potion.webp');
-    
-}
-.attached-claw{
-    background-image: url('../images/claw.png');
-    
-}
-
-.attached-mega{
-    background-image: url('../images/Megaevo.webp');
-    
 }
 
 .status_wrapper {
@@ -199,43 +180,9 @@ transform: scale(1.5);
 $ipad-10th-gen-portrait: 820px; // 820px para el modo vertical
 $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
 
-@media only screen and (min-width: $ipad-10th-gen-portrait) and (max-width: $ipad-10th-gen-landscape) {
-    .pokemon{
-        margin-top: 1rem;
-        height: 60vh;
-        width: 15vw;
-        border-color: palevioletred;
-        border-style: solid;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items:center;
-        background-color:rgba(0, 0, 0, 0.9);
-        position: relative;
-    }
-
-    .level_total{
-        display: flex;
-        color: rgb(134, 36, 167);
-        font-size: .8rem;
-        font-weight: bold;
-        font-family: 'Times New Roman';
-        margin-top: 0rem;
-        margin-bottom: .5rem;
-    }
-
-
-.name_pokemon{
-    color: rgb(162, 112, 216);
-    font-size: 1.5rem;
-    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-
-
-
-}
+// Los overrides de .pokemon / .level_total / .name_pokemon para iPad se
+// retiraron: la tarjeta del master la dimensiona ahora .pv-card con clamp(),
+// que ya se adapta sola. Las clases base de arriba siguen porque las comparten
+// PokemonBattleListed, SimPlayer, Stadium y los modales de batalla.
 
 

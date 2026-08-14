@@ -93,7 +93,7 @@
     box-shadow: var(--hud-shadow);
 }
 
-// .image-trainer llega con 10vw/15vh desde _menuPlayers: aquí se acota a la fila
+// El retrato se pone inline desde getTrainerImage(); aquí solo el tamaño
 .apl-avatar {
     flex-shrink: 0;
     width: clamp(2.2rem, 6.5vh, 4.4rem) !important;

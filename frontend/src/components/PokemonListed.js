@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { typeColor } from '../pokemonTypes';
+import { attachIconStyle, attachLabel } from '../attachItems';
 
 const PokemonListed = ({pokemon}) => {
     const [showToken, setShowToken] = useState(false);
@@ -36,8 +37,8 @@ const PokemonListed = ({pokemon}) => {
             <div className="apl-pkm-art" style={{ backgroundImage: `url(${imageUrl})` }}>
                 {hasStatus && <div className={`apl-pkm-status ${pokemon.status}`} />}
                 {hasItem && (
-                    <div className="apl-pkm-attach" title={pokemon.attach}>
-                        <i className={`attached-${pokemon.attach}`} />
+                    <div className="apl-pkm-attach" title={attachLabel(pokemon.attach)}>
+                        <i style={attachIconStyle(pokemon.attach)} />
                     </div>
                 )}
             </div>

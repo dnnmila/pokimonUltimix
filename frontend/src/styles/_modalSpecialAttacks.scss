@@ -1,12 +1,14 @@
 .special-attacks-modal{
-    background-color: rgb(28, 28, 40);
-    color: beige;
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-blue);
+    box-shadow: var(--hud-shadow-lg);
     width: 46vw;
     min-width: 560px;
     max-height: 92vh;
     overflow-y: auto;
     padding: 1.25rem 1.75rem 1.75rem;
-    border-radius: 8px;
+    border-radius: var(--hud-radius);
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -26,11 +28,11 @@
     right: 0;
     background: transparent;
     border: none;
-    color: rgba(237, 227, 241, .6);
+    color: var(--hud-dim);
     font-size: 1.1rem;
     cursor: pointer;
 }
-.sa-close:hover{ color: coral; }
+.sa-close:hover{ color: var(--hud-red); }
 
 .sa-tabs{
     display: flex;
@@ -42,16 +44,17 @@
     flex: 1;
     padding: .45rem .5rem;
     font-size: .95rem;
-    border: solid 1px rgba(224, 226, 247, .25);
-    border-radius: 6px;
-    background-color: transparent;
-    color: rgba(237, 227, 241, .65);
+    border: solid 2px var(--hud-line);
+    border-radius: 10px;
+    background-color: #fff;
+    color: var(--hud-dim);
+    font-weight: bold;
     cursor: pointer;
 }
 .sa-tab-active{
-    background-color: rgba(255, 127, 80, .18);
-    border-color: coral;
-    color: beige;
+    background-color: var(--hud-blue);
+    border-color: var(--hud-blue);
+    color: #fff;
 }
 
 .sa-panel{
@@ -71,9 +74,9 @@
     min-height: 18vh;
     box-sizing: border-box;
     padding: 1rem;
-    border: solid 1px rgba(224, 226, 247, .25);
-    border-radius: 8px;
-    background-color: rgba(245, 247, 249, .06);
+    border: solid 2px var(--hud-line);
+    border-radius: 10px;
+    background-color: rgba(26, 110, 192, 0.05);
 }
 .sa-result-box--metro{
     gap: .9rem;
@@ -81,13 +84,13 @@
     padding: 1.25rem;
 }
 .sa-placeholder{
-    color: rgba(237, 227, 241, .4);
+    color: var(--hud-dim);
     font-style: italic;
     font-size: .9rem;
     text-align: center;
 }
 .sa-error{
-    color: #e74c3c;
+    color: var(--hud-red);
     font-size: .9rem;
     text-align: center;
 }
@@ -105,7 +108,8 @@
 .sa-type-name{
     font-size: 2.2rem;
     letter-spacing: .14em;
-    color: coral;
+    font-weight: bold;
+    color: var(--hud-orange);
 }
 .sa-spinning{
     opacity: .55;
@@ -115,7 +119,7 @@
 .sa-color-label{
     align-self: flex-start;
     font-size: .85rem;
-    color: rgba(237, 227, 241, .6);
+    color: var(--hud-dim);
     margin-bottom: .4rem;
 }
 .sa-colors{
@@ -134,15 +138,16 @@
 }
 .sa-color:hover{ transform: scale(1.12); }
 .sa-color-selected{
-    border-color: beige;
+    border-color: var(--hud-ink);
     transform: scale(1.12);
 }
 .sa-color-any{
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(245, 247, 249, .12);
-    color: rgba(237, 227, 241, .75);
+    background-color: #fff;
+    border-color: var(--hud-line);
+    color: var(--hud-dim);
     font-size: 1rem;
 }
 
@@ -155,9 +160,9 @@
     min-width: 320px;
     min-height: 320px;
     flex-shrink: 0;
-    border: solid 3px rgba(224, 226, 247, .35);
+    border: solid 3px var(--hud-blue);
     border-radius: 50%;
-    background-color: rgba(245, 247, 249, .08);
+    background-color: #fff;
     overflow: hidden;
     cursor: zoom-in;
 }
@@ -170,7 +175,7 @@
 }
 .sa-token-missing{
     font-size: 1.1rem;
-    color: rgba(237, 227, 241, .5);
+    color: var(--hud-dim);
 }
 .sa-pkm-info{
     display: flex;
@@ -194,7 +199,7 @@
 }
 .sa-pkm-meta{
     font-size: .9rem;
-    color: rgba(237, 227, 241, .5);
+    color: var(--hud-dim);
 }
 
 /* Zoom a pantalla completa para leer los ataques del token */
@@ -227,31 +232,19 @@
     padding: .5rem 1.5rem;
     font-size: 1rem;
     border: none;
-    border-radius: 6px;
-    background-color: coral;
-    color: rgb(28, 28, 40);
+    border-radius: 10px;
+    background: linear-gradient(180deg, #f0902f, var(--hud-orange));
+    color: #fff;
+    font-weight: bold;
+    box-shadow: var(--hud-shadow);
     cursor: pointer;
 }
 .sa-roll-btn:disabled{
-    background-color: rgba(245, 247, 249, .15);
-    color: rgba(237, 227, 241, .35);
+    background: #e6e6e6;
+    box-shadow: none;
+    color: var(--hud-dim);
     cursor: not-allowed;
 }
 
-/* Boton en la barra inferior del master */
-.Button-special-attacks{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3vw;
-    height: 3vw;
-    border-radius: 50%;
-    background-color: rgba(255, 127, 80, .18);
-    border: solid 1px coral;
-    color: beige;
-    font-size: 1.3rem;
-    cursor: pointer;
-}
-.Button-special-attacks:hover{
-    background-color: rgba(255, 127, 80, .35);
-}
+/* El botón de la barra inferior del master vive ahora en _playerHud.scss
+   como .pv-action */
