@@ -485,14 +485,26 @@ const attachMega = async (playerId ,pokemonId) => {
 };
 
 
-const attachTM = async (playerId ,pokemonId,tmType,tmLevel) => {
+// Adjunta un ataque al hueco de attack3. Lo usan tanto las MTs como los
+// cristales Z, porque el mecanismo es el mismo y por diseño son excluyentes.
+//
+// `extra` es opcional y depende de la vía:
+//   tmName, tmBase, tmBono → MT elegida del catálogo. `tmLevel` ya trae el bono
+//     de tipo aplicado; `tmBase` es el poder impreso en la carta, que el
+//     backend necesita para recalcular ese bono si el Pokémon evoluciona.
+//   zData                  → cristal Z. Lleva el genérico y los especiales del
+//     cristal, para poder re-resolver el movimiento tras evolucionar.
+//   attachAs               → 'MT' (por defecto) o 'Z'; es lo que se guarda en
+//     pokemon.attach.
+// Sin nada de eso, el selector manual de tipo+poder se comporta como siempre.
+const attachTM = async (playerId ,pokemonId,tmType,tmLevel, extra = {}) => {
     try {
         const response = await fetch(`${SERVER_IP}/attach-TM`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ playerId, pokemonId,tmType,tmLevel}),
+            body: JSON.stringify({ playerId, pokemonId,tmType,tmLevel, ...extra}),
         });
 
         if (response.ok) {

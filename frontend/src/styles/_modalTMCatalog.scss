@@ -1,0 +1,410 @@
+// Catálogo de MTs (ModalTMCatalog).
+//
+// Sigue el patrón visual de .rules-guide-*: mismo fondo de modal, mismo acento
+// y mismo botón de cierre, para que abrirlo desde el HUD no se sienta ajeno.
+//
+// Las cartas son 762x1068 (ratio 0.713); el grid fija ese aspect-ratio para
+// que no salte el layout mientras el lazy-load va trayendo las imágenes.
+
+.tm-catalog-backdrop {
+    z-index: 500;
+}
+
+.tm-catalog-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-link);
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 94vw;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.tm-catalog-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.tm-catalog-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+}
+
+.tm-catalog-title {
+    color: var(--hud-accent);
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.tm-catalog-count {
+    color: #9a9a9a;
+    font-size: 0.8rem;
+}
+
+.tm-catalog-search {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #eee;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.7rem;
+    outline: none;
+
+    &::placeholder { color: #888; }
+    &:focus { border-color: var(--hud-accent); }
+}
+
+// ── Filtros por tipo ────────────────────────────────────────────────────────
+.tm-catalog-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.tm-catalog-type {
+    --tm-type-color: #7a7a8c;
+
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--tm-type-color);
+    border-radius: 999px;
+    color: #ddd;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.2rem 0.65rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.16); }
+
+    &--on {
+        background: var(--tm-type-color);
+        color: #111;
+    }
+}
+
+// ── Grid de cartas ──────────────────────────────────────────────────────────
+.tm-catalog-grid {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.6rem;
+    padding: 0.2rem;
+    align-content: start;
+}
+
+.tm-catalog-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: transform 0.12s;
+
+    &:hover { transform: translateY(-3px); }
+}
+
+.tm-catalog-card-img,
+.tm-catalog-card-missing {
+    width: 100%;
+    aspect-ratio: 762 / 1068;
+    border-radius: 8px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.tm-catalog-card-missing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #888;
+    color: #888;
+    font-size: 0.7rem;
+    text-align: center;
+}
+
+.tm-catalog-card-name {
+    color: #ddd;
+    font-size: 0.68rem;
+    line-height: 1.1;
+    text-align: center;
+}
+
+// Marca de bono de tipo en el grid: solo aparece cuando el catálogo se abre
+// para un Pokémon concreto y esa MT le sube el poder.
+.tm-catalog-card-stab {
+    align-self: flex-end;
+    margin: -1.4rem 0.2rem 0 0;
+    background: #4caf50;
+    border-radius: 999px;
+    color: #0d2410;
+    font-size: 0.62rem;
+    font-weight: bold;
+    padding: 0.05rem 0.35rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.tm-catalog-stab-tag {
+    display: inline-block;
+    margin-left: 0.4rem;
+    background: #4caf50;
+    border-radius: 999px;
+    color: #0d2410;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 0.05rem 0.4rem;
+}
+
+.tm-catalog-empty {
+    grid-column: 1 / -1;
+    color: #888;
+    font-size: 0.9rem;
+    padding: 1.5rem 0;
+    text-align: center;
+}
+
+// ── Ficha de detalle ────────────────────────────────────────────────────────
+.tm-catalog-detail {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 3;
+}
+
+.tm-catalog-detail-box {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-accent);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    max-width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.tm-catalog-detail-img {
+    width: 220px;
+    max-width: 45vw;
+    aspect-ratio: 762 / 1068;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.tm-catalog-detail-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+    min-width: 150px;
+}
+
+.tm-catalog-detail-name {
+    color: var(--hud-accent);
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.tm-catalog-detail-tm {
+    color: #9a9a9a;
+    font-size: 0.85rem;
+}
+
+.tm-catalog-detail-type {
+    border-radius: 999px;
+    color: #111;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.15rem 0.7rem;
+}
+
+.tm-catalog-detail-row {
+    color: #ddd;
+    font-size: 0.85rem;
+
+    b { color: #fff; }
+}
+
+.tm-catalog-detail-note {
+    color: #d9a441;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    max-width: 200px;
+}
+
+.tm-catalog-pick-btn {
+    background: var(--hud-accent);
+    border: none;
+    border-radius: 8px;
+    color: #111;
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 0.4rem 1rem;
+    margin-top: 0.3rem;
+    cursor: pointer;
+
+    &:disabled {
+        background: #555;
+        color: #999;
+        cursor: not-allowed;
+    }
+}
+
+.tm-catalog-detail-back {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: #ccc;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.9rem;
+    margin-top: auto;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, 0.16); }
+}
+
+// En vertical (iPad en retrato) la ficha apila imagen y datos.
+@media (max-width: 620px) {
+    .tm-catalog-detail-box { flex-direction: column; align-items: center; }
+    .tm-catalog-detail-img { width: 200px; }
+    .tm-catalog-detail-info { align-items: center; text-align: center; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MT en batalla: insignia junto al Pokémon + visor de la carta
+// ═══════════════════════════════════════════════════════════════════════════
+
+// La insignia va dentro de .MyPokemon_name / .RivalPokemon_name, que son texto
+// suelto: el inline-flex la alinea con el nombre sin romper ese layout.
+.sim-tm-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+    // .Pokemon-stadium2 va posicionada y pinta por encima del nombre. Posicionar
+    // la insignia la sube a ese mismo nivel para que no quede tapada en la fase
+    // de dados (el paso de clics lo arregla el pointer-events de esa capa).
+    position: relative;
+    z-index: 30;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.12s;
+
+    &:hover { transform: scale(1.12); }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.tm-card-backdrop {
+    z-index: 600;   // por encima del catálogo, que ya está en 500
+}
+
+.tm-card-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-accent);
+    border-radius: 14px;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    max-width: 92vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.tm-card-close {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.6rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    padding: 0.05rem 0.45rem;
+    cursor: pointer;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.tm-card-owner {
+    color: #9a9a9a;
+    font-size: 0.8rem;
+    padding-right: 2rem;
+}
+
+.tm-card-img {
+    width: 300px;
+    max-width: 78vw;
+    aspect-ratio: 762 / 1068;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.tm-card-noimg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem 1rem;
+    color: #999;
+    font-size: 0.8rem;
+    text-align: center;
+
+    img { width: 56px; height: 56px; object-fit: contain; }
+}
+
+// Solo se usan en el caso sin carta: la carta real ya lleva estos datos
+// impresos, así que al ampliarla no se repite nada debajo.
+.tm-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.2rem;
+}
+
+.tm-card-type,
+.tm-card-power {
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.18rem 0.7rem;
+}
+
+.tm-card-type  { color: #111; }
+.tm-card-power { background: rgba(255, 255, 255, 0.12); color: #eee; }

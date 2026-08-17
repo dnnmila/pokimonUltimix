@@ -14,6 +14,52 @@ async function openDb() {
 }
 
 
+// ── Bono de tipo (STAB) de las MTs ──────────────────────────────────────────
+//
+// Misma regla que `tmPowerFor` en el frontend (frontend/src/data/tms.js): la
+// MT suma +1 de poder si su carta admite el bono Y comparte tipo con quien la
+// lleva. Aquí hace falta porque al evolucionar cambian los tipos —hay
+// evoluciones que añaden un segundo tipo— y el +1 puede aparecer o
+// desaparecer, así que se recalcula sobre el poder impreso en la carta.
+
+const sameType = (a, b) =>
+    typeof a === 'string' && typeof b === 'string' &&
+    a.trim().toUpperCase() === b.trim().toUpperCase();
+
+// Normaliza nombres de Pokémon para comparar. Hace falta quitar el HTML porque
+// la tabla `pokemons` guarda cosas como "<i>Ultra</i> Necrozma".
+const normName = (s) =>
+    (s || '')
+        .replace(/<[^>]+>/g, '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[-_'’]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+// Qué movimiento Z da el cristal a un Pokémon. El ataque adjuntado guarda en
+// `z` la tabla del cristal (genérico + especiales), así que esto se resuelve
+// sin necesitar el catálogo completo en el backend.
+function zMoveForName(zData, pokemonName) {
+    const nombre = normName(pokemonName);
+    const hit = (zData.especiales || []).find(e => normName(e.pokemon) === nombre);
+    return hit
+        ? { nombre: hit.nombre, poder: hit.poder }
+        : { nombre: zData.generico, poder: zData.poderGenerico };
+}
+
+function tmStrengthFor(tmAttack, type1, type2) {
+    // Sin metadatos de carta (MTs puestas a mano, o adjuntadas antes de que
+    // existiera el catálogo) no se puede saber qué parte del poder era bono:
+    // se respeta el valor que ya tenía.
+    if (!tmAttack?.tm) return tmAttack.strength;
+
+    const { base, bono } = tmAttack.tm;
+    const aplica = bono && (sameType(type1, tmAttack.type) || sameType(type2, tmAttack.type));
+    return base + (aplica ? 1 : 0);
+}
+
 async function  getAttack(idAttack,db){
     try {
         const AttackData = await db.get("SELECT * FROM attacks WHERE IDATK = ?", [idAttack]);
@@ -294,6 +340,45 @@ export const evolvePokemon = async (req, res) => {
         if (oldPkm.attach && !megaStoneConsumed) {
             newPokemon.attach = oldPkm.attach;
         }
+
+        // La MT o el cristal Z sobreviven a la evolución. Viven en attack3, así
+        // que sin esto se perdían: el nuevo Pokémon estrenaba el ATK3 de su
+        // ficha pero seguía marcado con attach='MT'/'Z', y quedaban
+        // descuadrados. En ambos casos hay que recalcular, por motivos
+        // distintos:
+        //
+        //   MT → el bono de tipo. Hay evoluciones que añaden un segundo tipo:
+        //        una MT de Volador en un Togepi (Hada) va sin +1, y lo gana al
+        //        llegar a Togekiss (Hada/Volador).
+        //   Z  → el movimiento en sí. Un Dartrix con Ghostium Z lleva el
+        //        genérico, pero al evolucionar a Decidueye le toca su especial
+        //        Sinister Arrow Raid. Y al revés: un Pikachu con Catastropika
+        //        que evoluciona a Raichu vuelve al genérico.
+        if ((oldPkm.attach === 'MT' || oldPkm.attach === 'Z') && oldPkm.attack3) {
+            const oldAtk = oldPkm.attack3;
+            let nombre = oldAtk.name;
+            let poder  = oldAtk.strength;
+
+            if (oldPkm.attach === 'Z' && oldAtk.z) {
+                const mov = zMoveForName(oldAtk.z, newPokemon.name);
+                nombre = mov.nombre;
+                poder  = mov.poder;
+            } else if (oldPkm.attach === 'MT') {
+                poder = tmStrengthFor(oldAtk, newPokemon.type1, newPokemon.type2);
+            }
+
+            const nuevoAtk = new Attacks(
+                oldAtk.id,
+                nombre,
+                oldAtk.type,
+                poder,
+                oldAtk.effect,
+                oldAtk.dice,
+                oldAtk.tm
+            );
+            if (oldAtk.z) nuevoAtk.z = oldAtk.z;
+            newPokemon.attack3 = nuevoAtk;
+        }
         console.log(newPokemon);
 
         // Aquí, necesitarás obtener el jugador (Player) por su ID y agregar el Pokémon
@@ -546,23 +631,39 @@ export const attachItem  = async (req, res) => {
 export const attachTM  = async (req, res) => {
     console.log('attach item  ');
     try {
-        const { playerId, pokemonId,tmType,tmLevel} = req.body;
+        const { playerId, pokemonId,tmType,tmLevel,tmName,tmBase,tmBono,zData,attachAs} = req.body;
         const player = getPlayerById(playerId);
         if (!player) {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
-        const IdAtk = "TM-"+pokemonId +player.totalPokemons ;
+        // Solo hay dos marcadores válidos; cualquier otra cosa cae a MT para no
+        // ensuciar `attach` con valores que las vistas no sepan dibujar.
+        const slot = attachAs === 'Z' ? 'Z' : 'MT';
+        const IdAtk = slot + "-"+pokemonId +player.totalPokemons ;
+        // Solo las MTs del catálogo traen el poder impreso en la carta; hace
+        // falta guardarlo para recalcular el bono de tipo si el Pokémon
+        // evoluciona. El selector manual no lo manda y se queda en null.
+        const tmMeta = Number.isFinite(tmBase)
+            ? { base: tmBase, bono: Boolean(tmBono) }
+            : null;
         const newAttack = new Attacks(
             IdAtk,
-            "TM",
+            // Si la MT vino del catálogo de cartas lleva su nombre real; el
+            // selector manual de tipo+poder sigue mandando el genérico "TM".
+            tmName || "TM",
             tmType,
             tmLevel,
             "NONE",
-            "D6"
+            "D6",
+            tmMeta
 
         )
-        
-        player.attachTM(pokemonId,newAttack);
+        // El cristal Z guarda su tabla (genérico + especiales) en el ataque:
+        // así, al evolucionar, se puede volver a resolver el movimiento con el
+        // nombre nuevo sin tener el catálogo completo en el backend.
+        if (slot === 'Z' && zData) newAttack.z = zData;
+
+        player.attachTM(pokemonId,newAttack,slot);
         console.log('Pokemon actualizado');
         updateGameAndNotify();
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
@@ -619,6 +720,10 @@ export const attachMega  = async (req, res) => {
             );
             mega.extra = pokemon.extra;
             mega.totalLevel = mega.level + mega.extra;
+            // Varias formas base pueden compartir la misma mega (las dos Meowstic
+            // apuntan a M0678), así que la mega recuerda de cuál salió: por pokedex
+            // sola no se puede distinguir al revertir ni al subir de nivel.
+            mega.basePokemonId = pokemon.id;
             player.addMega(mega);
 
             // Megas alternativas (via PREEVOLUCION), excluyendo la principal ya agregada
@@ -645,6 +750,7 @@ export const attachMega  = async (req, res) => {
                 );
                 altMega.extra = pokemon.extra;
                 altMega.totalLevel = altMega.level + altMega.extra;
+                altMega.basePokemonId = pokemon.id;
                 player.addMega(altMega);
             }
 

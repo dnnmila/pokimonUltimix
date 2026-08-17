@@ -35,10 +35,13 @@ class Pokemons {
         this.attach = itemAttached;
     }
 
-    addTM(TM) {
+    // Las MTs y los cristales Z comparten mecanismo: un ataque que ocupa el
+    // hueco de attack3 más un marcador en `attach`. Por eso son excluyentes —
+    // adjuntar uno reemplaza al otro. `attachAs` distingue cuál es: "MT" o "Z".
+    addTM(TM, attachAs = "MT") {
         this.attack3 = TM;
-        this.attach = "MT"
-        console.log("TM attached");
+        this.attach = attachAs
+        console.log(attachAs + " attached");
     }
     addExtra(){
         if(this.extra > 5){

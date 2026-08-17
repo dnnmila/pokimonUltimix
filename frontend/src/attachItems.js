@@ -16,6 +16,7 @@
 // la carta entera: así se ven igual que los cinco originales a los tamaños a
 // los que se dibujan (70px en el modal, menos en la carta del Pokémon).
 import imgTM         from './images/tm.png';
+import imgZ          from './images/Cristal_Z.png';
 import imgProtein    from './images/protein.webp';
 import imgPotion     from './images/potion.webp';
 import imgClaw       from './images/claw.png';
@@ -35,10 +36,13 @@ import imgExpShare   from './images/expShare.webp';
 // `kind`:
 //   'item'   → se adjunta directo, manda el id al backend
 //   'tm'     → abre el sub-panel de tipo + power
+//   'z'      → abre el selector de cristales Z
 //   'mega'   → llama a attachMega, que además crea la forma mega
 //   'remove' → limpia el item (se guarda como 'None')
 export const ATTACH_ITEMS = [
     { id: 'MT',         label: 'TM',          es: 'MT',              kind: 'tm',     img: imgTM },
+    // Ocupa el mismo hueco que la MT (attach + attack3): son excluyentes.
+    { id: 'Z',          label: 'Z Crystal',   es: 'Cristal Z',       kind: 'z',      img: imgZ },
     { id: 'Mega',       label: 'Mega Stone',  es: 'Piedra Mega',     kind: 'mega',   img: imgMega },
     { id: 'Protein',    label: 'Protein',     es: 'Proteína',        kind: 'item',   img: imgProtein },
     { id: 'Potion',     label: 'Potion',      es: 'Poción',          kind: 'item',   img: imgPotion },

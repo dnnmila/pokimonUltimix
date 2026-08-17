@@ -129,8 +129,15 @@ class Player {
         if (direct) return direct;
         if (pkm.pokedex && pkm.pokedex.startsWith('GM'))
             return this.pokemons.find(p => p.gmaxPokedex === pkm.pokedex) || null;
-        if (pkm.pokedex && pkm.pokedex.startsWith('M'))
+        if (pkm.pokedex && pkm.pokedex.startsWith('M')) {
+            // basePokemonId lo estampa attachMega: es la única forma de saber cuál
+            // de dos bases con la misma mega (las Meowstic) hay que devolver.
+            if (pkm.basePokemonId) {
+                const base = this.pokemons.find(p => p.id === pkm.basePokemonId);
+                if (base) return base;
+            }
             return this.pokemons.find(p => p.evolution === pkm.pokedex) || null;
+        }
         return null;
     }
 
@@ -143,10 +150,13 @@ class Player {
         pokemon.addExtra();
         // Sincronizar megas y gmaxes vinculados a este pokemon
         if (pokemon.attach === 'Mega') {
-            this.megas.forEach(mega => {
-                mega.extra = pokemon.extra;
-                mega.totalLevel = mega.level + mega.extra;
-            });
+            this.megas
+                // Sin basePokemonId (megas creadas antes) se mantiene el comportamiento previo
+                .filter(mega => !mega.basePokemonId || mega.basePokemonId === pokemon.id)
+                .forEach(mega => {
+                    mega.extra = pokemon.extra;
+                    mega.totalLevel = mega.level + mega.extra;
+                });
         }
         if (pokemon.gmaxPokedex) {
             this.gmaxes.forEach(gmax => {
@@ -166,13 +176,14 @@ class Player {
         console.log(pokemon);
     }
 
-    attachTM(idPokemon, Attack){
+    // `attachAs` es "MT" o "Z": ambos ocupan el mismo hueco (ver Pokemons.addTM).
+    attachTM(idPokemon, Attack, attachAs = "MT"){
         const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
         if (!pokemon) {
             console.log('Pokémon no encontrado');
             return;
         }
-        pokemon.addTM(Attack);
+        pokemon.addTM(Attack, attachAs);
         console.log(pokemon);
     }
 
