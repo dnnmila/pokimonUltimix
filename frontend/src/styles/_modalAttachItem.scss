@@ -219,3 +219,18 @@
     color: var(--hud-ink);
     border: solid 2px var(--hud-line);
 }
+// Atajo al catálogo de cartas desde el panel manual de TM: elegir una carta
+// rellena tipo y poder de una vez, en lugar de picarlos a mano.
+.TM-catalog-btn{
+    align-self: center;
+    padding: .35rem 1.1rem;
+    font-size: .9rem;
+    font-weight: bold;
+    border-radius: 10px;
+    border: solid 2px var(--hud-line);
+    background-color: #fff;
+    color: var(--hud-ink);
+    cursor: pointer;
+
+    &:hover{ background-color: var(--hud-paper-hover); }
+}

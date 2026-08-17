@@ -3,6 +3,9 @@ import React ,{ useState }from 'react';
 import POKEMON_TYPES from '../../pokemonTypes';
 import { ATTACH_ITEMS } from '../../attachItems';
 import imgRemove from '../../images/delete.png';
+import ModalTMCatalog from './ModalTMCatalog';
+import ModalZCatalog from './ModalZCatalog';
+import { tmPowerFor } from '../../data/tms';
 
 const TM_POWERS = [1,2,3,4,5];
 
@@ -10,6 +13,8 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
     const [openTM, setOpenTM] = useState('false');
     const [tmType, setTmType] = useState();
     const [tmLevel, setTmLevel] = useState(0);
+    const [showCatalog, setShowCatalog] = useState(false);
+    const [showZ, setShowZ] = useState(false);
   
 
     
@@ -26,13 +31,54 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
         setOpenTM('false');
     }
 
-    const attachTMHandle = (currentPlayer,pokemonId) => {
+    // El tipo y el poder van explícitos porque los catálogos adjuntan en el
+    // mismo clic con el que eligen la carta: si leyeran el estado, aún tendrían
+    // los valores previos al setState.
+    const doAttachTM = (type, level, extra) => {
         console.log('Atttch TM');
-        attachTM(currentPlayer.id, pokemonId,tmType,tmLevel);
+        attachTM(currentPlayer.id, pokemonId, type, level, extra);
+        setShowCatalog(false);
+        setShowZ(false);
         setOpenTM('false');
         onClose();
-        
     }
+
+    // Selección a mano: el ataque queda con el nombre genérico "TM", como antes,
+    // y sin metadatos de carta (el poder lo fija el jugador, no una carta).
+    const attachTMHandle = () => doAttachTM(tmType, tmLevel, {});
+
+    // El Pokémon destino hace falta para resolver ambos catálogos: el bono de
+    // tipo de las MTs y el movimiento especial de los cristales Z.
+    const targetPokemon = currentPlayer?.pokemons?.find(p => p.id === pokemonId);
+
+    // Selección desde el catálogo: viajan el nombre real del movimiento, el
+    // poder ya resuelto (carta +1 si le toca el bono) y además el poder impreso
+    // y la elegibilidad, que el backend guarda para recalcular el bono cuando
+    // el Pokémon evolucione.
+    const attachTMFromCatalog = (tm) =>
+        doAttachTM(tm.tipo.toUpperCase(), tmPowerFor(tm, targetPokemon), {
+            tmName: tm.nombre,
+            tmBase: tm.poder,
+            tmBono: tm.stab,
+        });
+
+    // Cristal Z: se adjunta el movimiento ya resuelto para este Pokémon, y
+    // viaja también la tabla del cristal (genérico + especiales) para que la
+    // evolución pueda volver a resolverlo — un Dartrix con Ghostium Z lleva el
+    // genérico, pero al evolucionar a Decidueye le toca Sinister Arrow Raid.
+    const attachZFromCatalog = (crystal, mov) =>
+        doAttachTM(crystal.tipo.toUpperCase(), mov.poder, {
+            tmName: mov.nombre,
+            attachAs: 'Z',
+            zData: {
+                cristal: crystal.cristal,
+                generico: crystal.generico,
+                poderGenerico: crystal.poder,
+                especiales: crystal.especiales
+                    .filter(e => e.activo !== false)
+                    .map(({ pokemon, nombre, poder }) => ({ pokemon, nombre, poder })),
+            },
+        });
 
     const attachMegaHandle = (currentPlayer,pokemonId) => {
         console.log('Atttch Mega');
@@ -60,10 +106,12 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
 
     const tmReady = tmType !== undefined && tmLevel > 0;
 
-    // Cada tarjeta despacha según el tipo de item: el TM abre su sub-panel y la
-    // mega tiene su propio endpoint; el resto se adjunta por id.
+    // Cada tarjeta despacha según el tipo de item: el TM abre su sub-panel, el
+    // cristal Z su selector, y la mega tiene su propio endpoint; el resto se
+    // adjunta por id.
     const handlePick = (item) => {
         if (item.kind === 'tm')   return handleOpenTM();
+        if (item.kind === 'z')    return setShowZ(true);
         if (item.kind === 'mega') return attachMegaHandle(currentPlayer, pokemonId);
         attachItemHandle(currentPlayer, pokemonId, item.id);
     };
@@ -90,6 +138,9 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
                </div>
                </div> )}
                {openTM === 'true' && ( <div className='Attach-TM-options'>
+                    <button onClick={() => setShowCatalog(true)} className='TM-catalog-btn'>
+                        Elegir del catálogo
+                    </button>
                     <div className='TM-preview'>
                         {tmType
                             ? <div className={`TM-preview-icon Attack_${tmType}`}></div>
@@ -119,13 +170,27 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
                     </div>
                     <div className='TM-actions'>
                         <button onClick={handleCloseTM} className='TM-back-btn'>Volver</button>
-                        <button onClick={() => attachTMHandle(currentPlayer,pokemonId)}
+                        <button onClick={attachTMHandle}
                                 className='TM-add-btn'
                                 disabled={!tmReady}>Add TM</button>
                     </div>
                </div>)}
                 <button onClick={onClose} className='close-modal'>close</button>
             </div>
+
+            <ModalTMCatalog
+                show={showCatalog}
+                onClose={() => setShowCatalog(false)}
+                onPick={attachTMFromCatalog}
+                pokemon={targetPokemon}
+            />
+
+            <ModalZCatalog
+                show={showZ}
+                onClose={() => setShowZ(false)}
+                onPick={attachZFromCatalog}
+                pokemon={targetPokemon}
+            />
         </div>
     );
 };

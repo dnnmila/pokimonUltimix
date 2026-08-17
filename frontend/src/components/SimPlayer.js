@@ -20,6 +20,11 @@ import { themeClass, readTheme, writeTheme, getThemeMascot } from "../data/simTh
 import { getLeaderPortrait, RIVAL_COLORS, getRivalColor } from "../data/leaders";
 import { typeColor, typeLabel } from "../pokemonTypes";
 import ModalTypeChart from "./modals/ModalTypeChart";
+import ModalTMCatalog from "./modals/ModalTMCatalog";
+import ModalTMCard from "./modals/ModalTMCard";
+import { findTMByAttack } from "../data/tms";
+import { Z_CRYSTALS } from "../data/zmoves";
+import imgTMIcon from "../images/tm.png";
 import SERVER_IP from "../config.js";
 import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove } from "../battleRules";
 import { attachIconStyle, attachLabel } from "../attachItems";
@@ -54,6 +59,38 @@ const getFieldCardImg = (id) => {
 
 const getTypeIcon = (type) => {
     try { return require(`../images/Types/${type}.png`); } catch { return null; }
+};
+
+// Insignia de la carta adjuntada (MT o cristal Z), junto al Pokémon en la
+// pantalla de ataques.
+//
+// El backend marca el hueco con attach === 'MT' o 'Z' y guarda el ataque en
+// attack3. Se pinta la miniatura de la carta cuando se puede identificar; si
+// no, el icono genérico. En ambos casos al tocarla se abre la carta a tamaño
+// grande para cotejarla con la física.
+const TMBadge = ({ pokemon, onOpen }) => {
+    if (!pokemon || (pokemon.attach !== 'MT' && pokemon.attach !== 'Z')) return null;
+
+    const esZ = pokemon.attach === 'Z';
+    // El cristal se identifica por el nombre que guardó el ataque; el genérico
+    // "Z" de un adjuntado a mano no casa con ninguno y cae al icono.
+    const carta = esZ
+        ? Z_CRYSTALS.find(z => z.cristal === pokemon.attack3?.z?.cristal) || null
+        : findTMByAttack(pokemon.attack3);
+
+    const titulo = esZ
+        ? (carta ? `${carta.cristal} — ${pokemon.attack3.name}` : 'Cristal Z adjuntado')
+        : (carta ? `${carta.tm} — ${carta.nombre}` : 'MT adjuntada');
+
+    return (
+        <div
+            className="sim-tm-badge"
+            title={titulo}
+            onClick={() => onOpen({ attack: pokemon.attack3, pokemonName: pokemon.name, esZ })}
+        >
+            <img src={carta?.thumb || imgTMIcon} alt={titulo} />
+        </div>
+    );
 };
 
 const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega }) => {
@@ -115,6 +152,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // Carta de campo abierta a tamaño completo para leer su efecto
     const [expandedField, setExpandedField] = useState(null);
     const [showTypeChart, setShowTypeChart] = useState(false);
+    const [showTMCatalog, setShowTMCatalog] = useState(false);
+    // MT abierta a tamaño carta durante la batalla: {attack, pokemonName}
+    const [tmCardOpen, setTmCardOpen] = useState(null);
     const [showTurnModal, setShowTurnModal] = useState(false);
     const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
     const [gymLeaderBadgeNum, setGymLeaderBadgeNum] = useState(null);
@@ -806,6 +846,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             return base?.id ?? pkm.id;
         }
         if (pkm.pokedex.startsWith('M')) {
+            // Dos bases pueden compartir mega (las Meowstic): basePokemonId manda
+            // sobre la búsqueda por pokedex, que devolvería siempre la primera.
+            if (pkm.basePokemonId && (player.pokemons || []).some(p => p.id === pkm.basePokemonId))
+                return pkm.basePokemonId;
             const base = (player.pokemons || []).find(p => p.evolution === pkm.pokedex);
             return base?.id ?? pkm.id;
         }
@@ -1247,6 +1291,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
             <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} />
             <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
+            <ModalTMCatalog show={showTMCatalog} onClose={() => setShowTMCatalog(false)} />
+            <ModalTMCard
+                show={tmCardOpen !== null}
+                onClose={() => setTmCardOpen(null)}
+                attack={tmCardOpen?.attack}
+                pokemonName={tmCardOpen?.pokemonName}
+                esZ={tmCardOpen?.esZ}
+            />
             <ModalAttach
                 show={attachPkmId !== null}
                 onClose={() => setAttachPkmId(null)}
@@ -1577,6 +1629,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 <div className="sim-setup-btn-icon sim-topbar-effects"></div>
                                 <span>Efectos</span>
                             </div>
+                            <div className="sim-setup-btn" onClick={() => setShowTMCatalog(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-tms"></div>
+                                <span>MTs</span>
+                            </div>
                             <div className={`sim-setup-btn ${pendingRequest ? 'sim-store-button--pending' : ''}`} onClick={() => setShowStore(true)}>
                                 <div className="sim-setup-btn-icon sim-topbar-store"></div>
                                 <span>Tienda</span>
@@ -1638,7 +1694,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 <div className="attack-select-sim">
                     <div className='MyPokemon-main'>
                         <div className={`MyPokemon_img ${myLocked && rivalLocked ? (myTotal >= rivalTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${myPokemonImg})` }}></div>
-                        <div className='MyPokemon_name'>{myPokemon.name}</div>
+                        <div className='MyPokemon_name'>
+                            {myPokemon.name}
+                            <TMBadge pokemon={myPokemon} onOpen={setTmCardOpen} />
+                        </div>
                         <div className='MyPokemon_level'>Lv: {myPokemon.totalLevel}</div>
                         <div className="types_div">
                             <Types Type={myPokemon.type1} Clase={MyPokemonType1_class} type_id={MyPkm_type_id1} />
@@ -1666,7 +1725,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
                     <div className='RivalPokemon-main'>
                         <div className={`RivalPokemon_img ${myLocked && rivalLocked ? (rivalTotal >= myTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${rivalPokemonImg})` }}></div>
-                        <div className='RivalPokemon_name'>{rivalPokemon.name}</div>
+                        <div className='RivalPokemon_name'>
+                            {rivalPokemon.name}
+                            <TMBadge pokemon={rivalPokemon} onOpen={setTmCardOpen} />
+                        </div>
                         <div className='RivalPokemon_level'>Lv: {rivalPokemon.totalLevel}</div>
                         <div className="types_div">
                             <Types Type={rivalPokemon.type1} Clase={RivalPokemonType1_class} type_id={RivalPkm_type_id1} />

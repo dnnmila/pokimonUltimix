@@ -1,0 +1,286 @@
+// Selector de cristales Z (ModalZCatalog).
+//
+// Mismo lenguaje visual que el catálogo de MTs, pero sin buscador ni filtros:
+// son 18 cartas y caben todas. A cambio, cada celda lleva debajo el movimiento
+// que le tocaría a ESTE Pokémon, y las que dan un especial van resaltadas.
+
+.z-catalog-backdrop {
+    z-index: 500;
+}
+
+.z-catalog-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-link);
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 94vw;
+    max-width: 860px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.z-catalog-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.z-catalog-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+}
+
+.z-catalog-title {
+    color: var(--hud-accent);
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.z-catalog-owner {
+    color: #9a9a9a;
+    font-size: 0.82rem;
+}
+
+// ── Rejilla de cristales ────────────────────────────────────────────────────
+.z-catalog-grid {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.7rem;
+    padding: 0.2rem;
+    align-content: start;
+}
+
+.z-catalog-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.35rem 0.25rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.12s, background 0.15s;
+
+    &:hover {
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    // Este cristal le da a este Pokémon su movimiento Z especial.
+    &--special {
+        border-color: #d9a441;
+        background: rgba(217, 164, 65, 0.12);
+    }
+}
+
+.z-catalog-card-img,
+.z-catalog-card-missing {
+    width: 100%;
+    aspect-ratio: 762 / 1068;
+    border-radius: 8px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.z-catalog-card-missing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #888;
+    color: #888;
+    font-size: 0.7rem;
+    text-align: center;
+}
+
+.z-catalog-card-tag {
+    align-self: flex-end;
+    margin: -1.5rem 0.15rem 0 0;
+    background: #d9a441;
+    border-radius: 999px;
+    color: #2a1c00;
+    font-size: 0.55rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    padding: 0.05rem 0.35rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.z-catalog-card-move {
+    color: #ddd;
+    font-size: 0.68rem;
+    line-height: 1.15;
+    text-align: center;
+    margin-top: 0.15rem;
+}
+
+.z-catalog-card-power {
+    color: #9a9a9a;
+    font-size: 0.62rem;
+}
+
+// ── Ficha de detalle ────────────────────────────────────────────────────────
+.z-catalog-detail {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 3;
+}
+
+.z-catalog-detail-box {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-accent);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    max-width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.z-catalog-detail-img {
+    width: 220px;
+    max-width: 45vw;
+    aspect-ratio: 762 / 1068;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.z-catalog-detail-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+    min-width: 170px;
+    max-width: 260px;
+}
+
+.z-catalog-detail-name {
+    color: var(--hud-accent);
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.z-catalog-detail-type {
+    border-radius: 999px;
+    color: #111;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.15rem 0.7rem;
+}
+
+.z-catalog-detail-move {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 0.5rem;
+    margin-top: 0.2rem;
+    width: 100%;
+}
+
+.z-catalog-detail-movename {
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.z-catalog-detail-row {
+    color: #ddd;
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+
+    b { color: #fff; }
+}
+
+.z-catalog-detail-special {
+    color: #d9a441;
+    font-size: 0.72rem;
+    font-weight: bold;
+    line-height: 1.3;
+    margin-top: 0.3rem;
+}
+
+.z-catalog-detail-generic {
+    color: #999;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    margin-top: 0.3rem;
+}
+
+.z-catalog-pick-btn {
+    background: var(--hud-accent);
+    border: none;
+    border-radius: 8px;
+    color: #111;
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 0.4rem 1rem;
+    margin-top: 0.4rem;
+    cursor: pointer;
+}
+
+.z-catalog-detail-back {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: #ccc;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.9rem;
+    margin-top: auto;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, 0.16); }
+}
+
+// ── Movimiento Z en el visor de batalla (ModalTMCard) ───────────────────────
+.tm-card-zmove {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.tm-card-zmove-name {
+    color: var(--hud-accent);
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.tm-card-zspecial {
+    background: #d9a441;
+    border-radius: 999px;
+    color: #2a1c00;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    padding: 0.18rem 0.7rem;
+}
+
+// En vertical la ficha apila carta y datos.
+@media (max-width: 620px) {
+    .z-catalog-detail-box { flex-direction: column; align-items: center; }
+    .z-catalog-detail-img { width: 200px; }
+    .z-catalog-detail-info { align-items: center; text-align: center; max-width: none; }
+}

@@ -455,6 +455,17 @@ top: 15%;
     position:absolute;
     width: 100vw;
     height: 100vh;
+
+    // La capa de dados tapa 100vw x 100vh por encima de los dos Pokémon, así
+    // que sin esto se traga los clics de lo que hay debajo (p. ej. la insignia
+    // de la MT junto al nombre). Solo los hijos —totales, estados, dados—
+    // reciben el clic; los huecos entre ellos dejan pasar.
+    //
+    // Esta regla ya existía duplicada en _simPlayer.scss, pero dentro de
+    // `@media (max-width: 900px) and (orientation: landscape)`: el iPad en
+    // horizontal son 1180 px, no entraba, y ahí se perdía el clic.
+    pointer-events: none;
+    > * { pointer-events: all; }
 }
 
 .Attack-selected-mypoke,.Attack-selected-rival{
