@@ -59,9 +59,37 @@ class Game {
         // el SimPlayer para que el espejo del marcador la vea y para que
         // sobreviva a un refresco de la tablet. Ver los raid* de gameController.
         this.raid = null;
+        // Horda en curso, o null. Mismo trato que la incursión: la lleva un solo
+        // jugador y guarda el orden de combate y las victorias. Ver los horde*
+        // de gameController.
+        this.horde = null;
+        // Combate de entrenador (1 o 2 rivales seguidos), o null. Ver los
+        // trainerBattle* de gameController.
+        this.trainerBattle = null;
+        // Descuento de la tienda que activa el máster, o null:
+        //   { percent, turnsLeft, startedRound }
+        // Dura UNA RONDA contada desde que se activa, no hasta el final de la
+        // ronda en curso: se le dan tantos turnos como jugadores hay, de forma
+        // que todos pasen una vez por la tienda barata. `nextTurn` los descuenta
+        // y al llegar a cero el descuento se apaga solo.
+        this.storeDiscount = null;
 
 
 
+    }
+
+    // percent: 25 | 50 para activarlo, 0 (o nada) para volver a precios normales
+    setStoreDiscount(percent) {
+        const pct = Number(percent) || 0;
+        if (!pct) {
+            this.storeDiscount = null;
+            return;
+        }
+        this.storeDiscount = {
+            percent: pct,
+            turnsLeft: Math.max(1, this.players.length),
+            startedRound: this.round,
+        };
     }
 
     changeWeather(weather) {
@@ -288,6 +316,13 @@ class Game {
             }
         }
 
+        // El descuento de la tienda se gasta por turnos, no por ronda cerrada:
+        // así dura una vuelta entera desde donde se activó.
+        if (this.storeDiscount) {
+            this.storeDiscount.turnsLeft -= 1;
+            if (this.storeDiscount.turnsLeft <= 0) this.storeDiscount = null;
+        }
+
         this.battlePublic = false;
         this.battlePhase = 'PokemonSelection';
         // Las cartas de campo se descartan al terminar la batalla
@@ -362,6 +397,14 @@ class Game {
         this.rivalBonusAtk1 = 0;
         this.rivalBonusAtk2 = 0;
         this.rivalBonusAtk3 = 0;
+
+        // Simétrico a nextTurn: si se retrocede, el descuento recupera el turno
+        if (this.storeDiscount) {
+            this.storeDiscount.turnsLeft = Math.min(
+                Math.max(1, this.players.length),
+                this.storeDiscount.turnsLeft + 1
+            );
+        }
 
         if (this.currentTurn + 1 === this.players.length) {
             // Todos los jugadores han completado su turno, se terminó la ronda

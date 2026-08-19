@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame,raidStart,raidTeam,raidRound,raidFinish,raidClear,getMegaForms,getRandomMega,simMegaBattle} from '../controllers/gameController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,getPokemonCard,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame,raidStart,raidTeam,raidRound,raidFinish,raidClear,hordeStart,hordeTeam,hordeRound,hordeFinish,hordeClear,trainerBattleStart,trainerBattleRound,trainerBattleClear,pokeStarStart,pokeStarLevel,pokeStarClear,setStoreDiscount,getMegaForms,getRandomMega,simMegaBattle} from '../controllers/gameController.js';
 import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,setMote,attachMega,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier,attachTera,bagAdd,bagRemove,markEventUsed} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
@@ -60,11 +60,24 @@ router.post('/set-generation', setGeneration);
 router.get('/get-leaders', getLeadersByGeneration);
 router.get('/pokemon-list', getPokemonList);
 router.get('/random-pokemon', getRandomPokemon);
+router.get('/pokemon-card', getPokemonCard);
 router.post('/raid-start', raidStart);
 router.post('/raid-team', raidTeam);
 router.post('/raid-round', raidRound);
 router.post('/raid-finish', raidFinish);
 router.post('/raid-clear', raidClear);
+router.post('/horde-start', hordeStart);
+router.post('/horde-team', hordeTeam);
+router.post('/horde-round', hordeRound);
+router.post('/horde-finish', hordeFinish);
+router.post('/horde-clear', hordeClear);
+router.post('/trainer-battle-start', trainerBattleStart);
+router.post('/trainer-battle-round', trainerBattleRound);
+router.post('/trainer-battle-clear', trainerBattleClear);
+router.post('/poke-star-start', pokeStarStart);
+router.post('/poke-star-level', pokeStarLevel);
+router.post('/poke-star-clear', pokeStarClear);
+router.post('/set-store-discount', setStoreDiscount);
 router.get('/mega-forms', getMegaForms);
 router.get('/random-mega', getRandomMega);
 router.post('/sim-mega-battle', simMegaBattle);

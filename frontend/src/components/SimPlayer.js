@@ -30,12 +30,17 @@ import ModalItemCard from "./modals/ModalItemCard";
 import ModalEvents from "./modals/ModalEvents";
 import ModalEventPick from "./modals/ModalEventPick";
 import ModalRaidSetup from "./modals/ModalRaidSetup";
+import ModalHordeSetup from "./modals/ModalHordeSetup";
+import ModalTrainerBattle from "./modals/ModalTrainerBattle";
+import ModalContest from "./modals/ModalContest";
+import ModalPokeStar from "./modals/ModalPokeStar";
 import ModalRulesCard from "./modals/ModalRulesCard";
 import ModalHelp from "./modals/ModalHelp";
 import ModalMegaBattle from "./modals/ModalMegaBattle";
 import { rollTMs, tmPowerFor, TMS_BY_ID } from "../data/tms";
 import { rollZCrystals, zMoveFor, Z_BY_ID } from "../data/zmoves";
 import { getTeraBonus, rollTeraOrbs, TERA_BY_ID } from "../data/teraTypes";
+import { pokeStarEnding, ENDINGS as POKESTAR_ENDINGS } from "../data/pokeStar";
 import { applyDynamax } from "../data/maxMoves";
 import SERVER_IP from "../config.js";
 import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove } from "../battleRules";
@@ -93,7 +98,7 @@ const battleForm = (pkm) => {
     };
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onMegaForms, onRandomMega, onSimMegaBattle, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -103,6 +108,23 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // de incursión— necesita saber si la batalla que acaba de cerrarse es una
     // ronda de incursión.
     const raid = game.raid && game.raid.hostId === playerId ? game.raid : null;
+    // Horda en curso de ESTE jugador, por lo mismo: sus combates SÍ pasan por el
+    // flujo de batalla salvaje (nivel y debilitado), y el efecto de fin de
+    // batalla necesita saberlo para no ofrecer la captura en cada uno — la horda
+    // se captura una sola vez, al final.
+    const horde = game.horde && game.horde.hostId === playerId ? game.horde : null;
+    const hordeActive = Boolean(horde && !horde.result);
+    // Combate de entrenador (1 o 2 rivales seguidos). Mismo motivo de estar aquí
+    // arriba: sus combates son salvajes de pleno derecho salvo por la captura,
+    // que no va — el Pokémon es de un entrenador.
+    const trainerBattle = game.trainerBattle && game.trainerBattle.hostId === playerId ? game.trainerBattle : null;
+    const trainerActive = Boolean(trainerBattle && !trainerBattle.result);
+    // Poké Star Studios no guarda nada en la partida: se reconoce por el id del
+    // rival, así que aguanta un refresco sin ayuda de nadie.
+    const pokeStarActive = Boolean(rival?.id?.startsWith('SimPokeStar-'));
+    // Ningún evento encadenado ofrece capturar combate a combate. En el rodaje
+    // tampoco: el Prop es un actor del estudio, no un salvaje.
+    const noCaptureEvent = hordeActive || trainerActive || pokeStarActive;
     const fieldMoves = (game?.fieldMoves || []).filter(Boolean);
     // Clave estable para detectar cuándo el master cambió las cartas de campo
     const fieldKey = JSON.stringify(game?.fieldMoves || []);
@@ -197,6 +219,27 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [raidDiePick, setRaidDiePick] = useState(false);
     const [raidError, setRaidError] = useState(null);
     const [raidRulesOpen, setRaidRulesOpen] = useState(null);
+    // Horda. Mismo reparto que la incursión: el marcador vive en `game.horde` y
+    // aquí solo queda lo de la tablet.
+    const [hordeSetupOpen, setHordeSetupOpen] = useState(false);
+    const [hordeLoading, setHordeLoading] = useState(false);
+    const [hordeError, setHordeError] = useState(null);
+    const [hordeRoundHidden, setHordeRoundHidden] = useState(false);
+    const [hordeResultOpen, setHordeResultOpen] = useState(false);
+    // Combate de entrenador
+    const [trainerSetupOpen, setTrainerSetupOpen] = useState(false);
+    const [trainerLoading, setTrainerLoading] = useState(false);
+    const [trainerError, setTrainerError] = useState(null);
+    const [trainerRoundHidden, setTrainerRoundHidden] = useState(false);
+    const [trainerResultOpen, setTrainerResultOpen] = useState(false);
+    // Concurso Pokémon. No toca el motor de batalla ni deja rastro en la
+    // partida: empieza y acaba dentro de su modal, así que basta con abrirlo.
+    const [contestOpen, setContestOpen] = useState(false);
+    // Poké Star Studios: montaje abierto, llamada en vuelo y el final del rodaje
+    const [pokeStarOpen, setPokeStarOpen] = useState(false);
+    const [pokeStarLoading, setPokeStarLoading] = useState(false);
+    const [pokeStarError, setPokeStarError] = useState(null);
+    const [pokeStarDone, setPokeStarDone] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [megaBattleOpen, setMegaBattleOpen] = useState(false);
     const [megaLoading, setMegaLoading] = useState(false);
@@ -414,13 +457,20 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (raid && !raid.result) return;
 
         // Batalla contra pokemon salvaje: levelup → captura (secuencial)
+        //
+        // En la horda el salvaje es el mismo para todo el equipo, así que la
+        // captura NO se ofrece combate a combate: se intenta una sola vez al
+        // final, con el bono de las victorias. El nivel y el debilitado sí van,
+        // que la horda se pelea con las reglas de siempre.
         if (rival?.name === 'Wild Pokemon') {
             if (myTotal > rivalTotal) {
                 const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel;
                 if (canLevelUp) setShowLevelUpPrompt(true);
-                else setShowCapturePrompt(true);
+                else if (!noCaptureEvent) setShowCapturePrompt(true);
             }
-            if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
+            // En el rodaje nadie se queda debilitado: la carta reanima al final,
+            // así que lo más simple es no tumbarlo.
+            if (myTotal < rivalTotal && myPokemon.state === 'Alive' && !pokeStarActive) {
                 new Audio(lifepointsSound).play().catch(() => {});
                 onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
             }
@@ -448,7 +498,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // el jugador salió a corregir uno, el resumen tiene que volver solo con el
     // total actualizado en cuanto ambos vuelvan a estar bloqueados.
     useEffect(() => {
-        if (!myLocked || !rivalLocked) setRaidRoundHidden(false);
+        if (!myLocked || !rivalLocked) {
+            setRaidRoundHidden(false);
+            setHordeRoundHidden(false);
+            setTrainerRoundHidden(false);
+            setPokeStarDone(false);
+        }
     }, [myLocked, rivalLocked]);
 
     // Si el master pone o quita una carta de campo a media batalla, hay que rehacer
@@ -983,6 +1038,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyPokemonSelected('true');
         if (isMyTurn) onHandleBattlePokemon('MyPlayer', pokemon.id, battleForm(pokemon));
         if (rival?.name === 'Wild Pokemon') {
+            // En Poké Star el Prop pelea al nivel del Pokémon que acaba de
+            // salir, así que primero se le iguala en el servidor —el espejo lee
+            // el rival de ahí— y se pelea contra la ficha ya nivelada.
+            if (pokeStarActive) {
+                const res = await onPokeStarLevel(player.id, pokemon.totalLevel ?? pokemon.level);
+                if (res?.pokemon) return handleSelectRivalPokemon(res.pokemon, pokemon);
+            }
             const wildPkm = rival.pokemons?.[0];
             if (wildPkm) await handleSelectRivalPokemon(wildPkm, pokemon);
         }
@@ -1287,6 +1349,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowHelp(false);
         setShowSpecialFns(false);
         setMegaBattleOpen(false);
+        setHordeSetupOpen(false);
+        setTrainerSetupOpen(false);
+        setContestOpen(false);
+        setPokeStarOpen(false);
         setShowEvents(false);
         setPickEvent(null);
         setShowWildModal(false);
@@ -1338,7 +1404,38 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 // abra siempre limpia en el paso del color en vez de saltar al
                 // equipo con el jefe viejo.
                 if (raid) await onRaidClear(player.id);
+                // Los eventos de combate se pelean el mismo hueco de rival, así
+                // que montar uno cierra el que hubiera.
+                if (horde) await onHordeClear(player.id);
+                if (trainerBattle) await onTrainerClear(player.id);
                 setRaidSetupOpen(true);
+                break;
+            case 'horde':
+                // Mismo criterio que la incursión: no se consume, y la anterior
+                // se borra para que el montaje abra limpio en el color.
+                if (horde) await onHordeClear(player.id);
+                if (raid) await onRaidClear(player.id);
+                if (trainerBattle) await onTrainerClear(player.id);
+                setHordeSetupOpen(true);
+                break;
+            case 'pokeStar':
+                // Como el resto de eventos de combate: si había otro rival
+                // montado se libera antes de armar el set.
+                if (raid) await onRaidClear(player.id);
+                if (horde) await onHordeClear(player.id);
+                if (trainerBattle) await onTrainerClear(player.id);
+                setPokeStarDone(false);
+                setPokeStarOpen(true);
+                break;
+            case 'contest':
+                // Ni monta rival ni encadena nada: se resuelve en su modal.
+                setContestOpen(true);
+                break;
+            case 'trainerBattle':
+                if (trainerBattle) await onTrainerClear(player.id);
+                if (raid) await onRaidClear(player.id);
+                if (horde) await onHordeClear(player.id);
+                setTrainerSetupOpen(true);
                 break;
             case 'megaBattle':
                 // No se consume por turno, igual que la incursión: es un combate
@@ -1508,6 +1605,186 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRaidDiePick(false);
         setRaidRoundHidden(false);
         await onRaidClear(player.id);
+        resetBattleState();
+        setShowSetup(true);
+    };
+
+    // ── Horda ───────────────────────────────────────────────────────────────
+    //
+    // Se monta igual que la incursión —combates encadenados contra el mismo
+    // rival, montados aquí para no pasar por la pantalla de selección— pero por
+    // dentro cada uno es una batalla salvaje corriente: sube de nivel, se
+    // debilita y suena todo lo de siempre. Lo único que cambia es la cuenta
+    // (victorias, no totales) y que la captura va una vez al final.
+    const hordeRoundsDone = horde?.rounds?.length || 0;
+    const hordeTotalRounds = horde?.team?.length || 0;
+    // El empate cuenta como victoria del jugador, como en la incursión
+    const hordeWins = horde?.rounds?.filter(r => r.win).length || 0;
+    const hordeRoundWon = (mine, theirs) => mine >= theirs;
+    const hordeOver = Boolean(horde && horde.result);
+
+    const startHordeRound = async (index, from = horde) => {
+        const slot = from?.team?.[index];
+        const wild = from?.wild;
+        if (!slot || !wild) return;
+        resetBattleState();
+        setShowSetup(false);
+        await handleSelectMyPokemon(slot.pokemon);
+        await handleSelectRivalPokemon(wild, slot.pokemon);
+    };
+
+    const handleHordeWild = async (pokedex) => {
+        setHordeLoading(true);
+        setHordeError(null);
+        const res = await onHordeStart(player.id, pokedex);
+        setHordeLoading(false);
+        if (!res?.ok) setHordeError(res?.message || 'No se pudo montar el salvaje');
+    };
+
+    const handleHordeOrder = async (slots) => {
+        setHordeLoading(true);
+        setHordeError(null);
+        const res = await onHordeTeam(player.id, slots);
+        setHordeLoading(false);
+        if (!res?.horde) {
+            setHordeError(res?.message || 'No se pudo montar el orden de combate');
+            return;
+        }
+        setHordeSetupOpen(false);
+        // Igual que en la incursión: el `horde` de esta pasada todavía no trae el
+        // equipo (llega por socket), así que el primer combate se monta con lo
+        // que acaba de responder el servidor.
+        await startHordeRound(0, res.horde);
+    };
+
+    // Cierra el combate en curso: anota quién ganó y encadena el siguiente.
+    const handleHordeNext = async () => {
+        setHordeRoundHidden(true);
+        const res = await onHordeRound(player.id, myTotal, rivalTotal);
+        const done = res?.horde?.rounds?.length || 0;
+        if (done >= (res?.horde?.team?.length || 0)) {
+            // Peleó el equipo entero: toca la tirada de captura, que se hace en
+            // la mesa. La batalla se recoge para pedirla sobre pantalla limpia.
+            resetBattleState();
+            setShowSetup(true);
+            setHordeResultOpen(true);
+            return;
+        }
+        await startHordeRound(done, res.horde);
+    };
+
+    // La tirada se hace con dados físicos: la tablet solo registra si cayó.
+    const handleHordeCatch = async (caught) => {
+        await onHordeFinish(player.id, caught);
+        if (caught) await handleAddToTeam(horde?.wild?.pokedex);
+        setHordeResultOpen(false);
+        await handleHordeClose();
+    };
+
+    const handleHordeClose = async () => {
+        setHordeResultOpen(false);
+        setHordeRoundHidden(false);
+        await onHordeClear(player.id);
+        resetBattleState();
+        setShowSetup(true);
+    };
+
+    // ── Combate de entrenador ───────────────────────────────────────────────
+    //
+    // El más ligero de los tres eventos encadenados: no hay equipo que montar ni
+    // orden que decidir. Se monta el rival y se pasa por la pantalla de
+    // selección de siempre; al cerrar el combate, el backend pone al segundo
+    // rival en el sitio del primero (si lo hay) y se vuelve a elegir.
+    const trainerRoundsDone = trainerBattle?.rounds?.length || 0;
+    const trainerCount = trainerBattle?.count || 0;
+    const trainerWins = trainerBattle?.rounds?.filter(r => r.win).length || 0;
+
+    const handleTrainerStart = async (pokedexes) => {
+        setTrainerLoading(true);
+        setTrainerError(null);
+        const res = await onTrainerStart(player.id, pokedexes);
+        setTrainerLoading(false);
+        if (!res?.ok) {
+            setTrainerError(res?.message || 'No se pudieron montar los rivales');
+            return;
+        }
+        setTrainerSetupOpen(false);
+        resetBattleState();
+        setShowSetup(false);
+        if (isMyTurn) onStartSimMirror(playerId);
+    };
+
+    const handleTrainerNext = async () => {
+        setTrainerRoundHidden(true);
+        const res = await onTrainerRound(player.id, myTotal, rivalTotal);
+        const tb = res?.trainerBattle;
+        if (!tb || tb.result) {
+            // Se acabó: la pantalla se recoge para enseñar el premio limpio
+            resetBattleState();
+            setShowSetup(true);
+            setTrainerResultOpen(true);
+            return;
+        }
+        // Queda otro rival, y el backend ya lo puso en el hueco: se vuelve a la
+        // pantalla de selección para elegir con quién se le planta cara.
+        resetBattleState();
+        setShowSetup(false);
+        if (isMyTurn) onStartSimMirror(playerId);
+    };
+
+    const handleTrainerClose = async () => {
+        setTrainerResultOpen(false);
+        setTrainerRoundHidden(false);
+        await onTrainerClear(player.id);
+        resetBattleState();
+        setShowSetup(true);
+    };
+
+    // ── Poké Star Studios ───────────────────────────────────────────────────
+    //
+    // El más ligero de todos: monta al Prop y suelta al jugador en la pantalla
+    // de selección de siempre. El nivel del Prop se iguala ahí, al elegir
+    // combatiente (ver handleSelectMyPokemon), que es cuando se sabe con quién
+    // se rueda de verdad. A partir de ahí, batalla salvaje normal. El final se calcula al cerrar
+    // los dados —ganar y con qué— y las PokéMonedas se cobran o se pagan aquí,
+    // que es lo único del premio que no es una carta física.
+    const handlePokeStarStart = async (pokedex) => {
+        setPokeStarLoading(true);
+        setPokeStarError(null);
+        const res = await onPokeStarStart(player.id, pokedex);
+        setPokeStarLoading(false);
+        if (!res?.ok) {
+            setPokeStarError(res?.message || 'No se pudo montar el rodaje');
+            return;
+        }
+        setPokeStarOpen(false);
+        setPokeStarDone(false);
+        resetBattleState();
+        setShowSetup(false);
+        if (isMyTurn) onStartSimMirror(playerId);
+    };
+
+    // El bono del ataque que se usó es justo lo que dice si fue supereficaz: el
+    // motor suma +1 por cada ventaja de tipo.
+    const pokeStarOutcome = pokeStarEnding(myTotal, rivalTotal, myBonus);
+
+    const addCoins = async (delta) => {
+        if (!delta) return;
+        try {
+            await fetch(`${SERVER_IP}/update-coins`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId, coins: Math.max(0, (player.coins || 0) + delta) }),
+            });
+        } catch (e) {
+            console.error('Error al ajustar las monedas:', e);
+        }
+    };
+
+    const handlePokeStarClose = async (coins = 0) => {
+        await addCoins(coins);
+        setPokeStarDone(false);
+        await onPokeStarClear(player.id);
         resetBattleState();
         setShowSetup(true);
     };
@@ -1688,7 +1965,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
             <ModalPokedex show={showPokedex} onClose={() => setShowPokedex(false)} player={player} />
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
-            <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} />
+            <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} discount={game.storeDiscount || null} />
             <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
             <ModalTMCatalog show={showTMCatalog} onClose={() => setShowTMCatalog(false)} />
             <ModalEvents
@@ -1714,6 +1991,359 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onConfirmTeam={handleRaidTeam}
                 loading={raidLoading}
             />
+
+            <ModalHordeSetup
+                show={hordeSetupOpen}
+                onClose={async () => { setHordeSetupOpen(false); setHordeError(null); if (horde) await onHordeClear(player.id); }}
+                player={player}
+                horde={horde}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onPickWild={handleHordeWild}
+                onConfirmOrder={handleHordeOrder}
+                error={hordeError}
+                onOpenRules={() => setRaidRulesOpen('horde')}
+                loading={hordeLoading}
+            />
+
+            <ModalPokeStar
+                show={pokeStarOpen}
+                onClose={() => { setPokeStarOpen(false); setPokeStarError(null); }}
+                tokenImg={(pokedex) => getSafePkmImg(pokedex, generation)}
+                onStart={handlePokeStarStart}
+                error={pokeStarError}
+                onOpenRules={() => setRaidRulesOpen('pokeStar')}
+                loading={pokeStarLoading}
+            />
+
+            {/* Fin del rodaje. Sale cuando se cierran los dos dados, detrás de
+                los avisos de nivel: en Poké Star sí se sube. */}
+            {pokeStarActive && myLocked && rivalLocked && !pokeStarDone
+                && myPokemon && rivalPokemon
+                && !showLevelUpPrompt && !showEvolveModal && (() => {
+                const ending = POKESTAR_ENDINGS[pokeStarOutcome];
+                return (
+                    <div className="modal-backdrop raid-round-backdrop">
+                        <div className={`raid-result-modal pokestar-result pokestar-result--${ending.id}`}>
+                            <div className="raid-result-title">{ending.title}</div>
+
+                            <div className="raid-round-score">
+                                <div className="raid-round-side">
+                                    <span className="raid-round-label">{displayName(myPokemon)}</span>
+                                    <span className="raid-round-num">{myTotal}</span>
+                                </div>
+                                <i>vs</i>
+                                <div className="raid-round-side">
+                                    <span className="raid-round-label">{rivalPokemon?.name}</span>
+                                    <span className="raid-round-num">{rivalTotal}</span>
+                                </div>
+                            </div>
+
+                            <div className="pokestar-result-summary">
+                                {ending.summary}
+                                {pokeStarOutcome === 'good' && myAttack && (
+                                    <em> Con {myAttack.name}.</em>
+                                )}
+                            </div>
+
+                            <div className="pokestar-result-reward">{ending.reward}</div>
+
+                            <div className="raid-round-note">
+                                Los Pokémon que cayeron se reaniman: de este rodaje no se sale
+                                debilitado.
+                            </div>
+
+                            <div className="raid-result-actions">
+                                {ending.coins > 0 && (
+                                    <button className="raid-setup-btn raid-setup-btn--main"
+                                            onClick={() => handlePokeStarClose(ending.coins)}>
+                                        Cobrar {ending.coins} PokéMonedas
+                                    </button>
+                                )}
+                                {ending.coins < 0 && (
+                                    <>
+                                        <button className="raid-setup-btn raid-setup-btn--main"
+                                                onClick={() => handlePokeStarClose(ending.coins)}>
+                                            Pagar {Math.abs(ending.coins)} PokéMonedas
+                                        </button>
+                                        <button className="raid-setup-btn raid-setup-btn--ghost"
+                                                onClick={() => handlePokeStarClose(0)}>
+                                            Descarté un objeto
+                                        </button>
+                                    </>
+                                )}
+                                {ending.coins === 0 && (
+                                    <button className="raid-setup-btn raid-setup-btn--main"
+                                            onClick={() => handlePokeStarClose(0)}>
+                                        Cerrar el rodaje
+                                    </button>
+                                )}
+                                <button className="raid-setup-btn raid-setup-btn--ghost"
+                                        onClick={() => setPokeStarDone(true)}>
+                                    ← Volver al combate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            <ModalContest
+                show={contestOpen}
+                onClose={() => setContestOpen(false)}
+                player={player}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onCatch={handleAddToTeam}
+                onOpenRules={() => setRaidRulesOpen('contest')}
+            />
+
+            <ModalTrainerBattle
+                show={trainerSetupOpen}
+                onClose={async () => { setTrainerSetupOpen(false); setTrainerError(null); if (trainerBattle) await onTrainerClear(player.id); }}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onStart={handleTrainerStart}
+                error={trainerError}
+                onOpenRules={(cardId) => setRaidRulesOpen(cardId)}
+                loading={trainerLoading}
+            />
+
+            {/* Franja del combate de entrenador. Solo tiene sentido con dos
+                rivales: con uno no hay nada que llevar la cuenta. */}
+            {trainerBattle && !showSetup && !trainerBattle.result && trainerCount > 1 && (
+                <div className="raid-strip horde-strip">
+                    <div className="raid-strip-round">
+                        Rival {Math.min(trainerRoundsDone + 1, trainerCount)} de {trainerCount}
+                    </div>
+                    <div className="raid-strip-dots">
+                        {(trainerBattle.wilds || []).map((w, i) => {
+                            const r = trainerBattle.rounds?.[i];
+                            const mark = r ? (r.win ? 'is-win' : r.tie ? 'is-tie' : 'is-lose') : '';
+                            return (
+                                <span key={i}
+                                      className={`raid-strip-dot ${i === trainerRoundsDone ? 'is-now' : ''} ${mark}`}
+                                      title={w.name} />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Cierre de combate del evento de entrenador */}
+            {trainerBattle && !trainerBattle.result && myLocked && rivalLocked && !trainerRoundHidden
+                && myPokemon && rivalPokemon
+                && !showLevelUpPrompt && !showEvolveModal && !showReplaceModal && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className="raid-round-modal horde-round-modal">
+                        <div className="raid-round-title">
+                            {trainerCount > 1
+                                ? `Rival ${trainerRoundsDone + 1} de ${trainerCount}`
+                                : 'Combate terminado'}
+                        </div>
+                        <div className="raid-round-score">
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{displayName(myPokemon)}</span>
+                                <span className="raid-round-num">{myTotal}</span>
+                            </div>
+                            <i>vs</i>
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{rivalPokemon?.name}</span>
+                                <span className="raid-round-num">{rivalTotal}</span>
+                            </div>
+                        </div>
+                        <div className={`horde-round-verdict ${myTotal > rivalTotal ? 'is-win' : myTotal === rivalTotal ? 'is-tie' : 'is-lose'}`}>
+                            {myTotal > rivalTotal
+                                ? '¡Ganaste el combate!'
+                                : myTotal === rivalTotal
+                                    ? 'Empate: no cuenta como victoria'
+                                    : 'Perdiste el combate'}
+                        </div>
+                        <div className="raid-round-note">
+                            {trainerCount > 1
+                                ? 'Hay que ganar los dos combates para llevarse las 2 cartas de objeto.'
+                                : 'Ganando el combate te llevas 1 carta de objeto.'}
+                        </div>
+                        <div className="raid-round-actions">
+                            <button className="raid-setup-btn raid-setup-btn--ghost"
+                                    onClick={() => setTrainerRoundHidden(true)}>
+                                ← Volver al combate
+                            </button>
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleTrainerNext}>
+                                {trainerRoundsDone + 1 >= trainerCount
+                                    ? 'Ver el resultado'
+                                    : 'Siguiente rival →'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Resultado del combate de entrenador: el premio son cartas del
+                mazo físico, así que aquí solo se dice cuántas tocan. */}
+            {trainerResultOpen && trainerBattle && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className={`raid-result-modal horde-result-modal raid-result-modal--${trainerBattle.result}`}>
+                        <div className="raid-result-title">
+                            {trainerBattle.result === 'win'
+                                ? (trainerCount > 1 ? '¡Ganaste los dos combates!' : '¡Ganaste el combate!')
+                                : 'Sin premio'}
+                        </div>
+
+                        <div className="raid-result-rows">
+                            {trainerBattle.rounds.map((r, i) => (
+                                <div className={`raid-result-row horde-result-row--${r.win ? 'win' : r.tie ? 'tie' : 'lose'}`} key={i}>
+                                    <span className="raid-result-who">{r.rival}</span>
+                                    <span className="raid-result-nums">
+                                        {r.hostTotal} — {r.rivalTotal}
+                                        <em>{r.win ? '✓' : r.tie ? '=' : '✗'}</em>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {trainerBattle.result === 'win' ? (
+                            <div className="horde-bonus trainer-prize">
+                                <span className="horde-bonus-num">{trainerBattle.prize}</span>
+                                <span className="horde-bonus-label">
+                                    {trainerBattle.prize === 1 ? 'carta de objeto' : 'cartas de objeto'}<br />
+                                    <em>sácalas del mazo</em>
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="raid-round-note">
+                                {trainerCount > 1
+                                    ? `Ganaste ${trainerWins} de ${trainerCount}: las cartas de objeto solo caen ganando los dos.`
+                                    : 'Las cartas de objeto solo caen ganando el combate.'}
+                            </div>
+                        )}
+
+                        <div className="raid-result-actions">
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleTrainerClose}>
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Marcador de la horda: las victorias son el bono de captura del
+                final, así que conviene tenerlas a la vista todo el rato */}
+            {horde && !showSetup && !hordeOver && hordeTotalRounds > 0 && (
+                <div className="raid-strip horde-strip">
+                    <div className="raid-strip-round">
+                        Combate {Math.min(hordeRoundsDone + 1, hordeTotalRounds)} de {hordeTotalRounds}
+                    </div>
+                    <div className="raid-strip-score">
+                        <span className="raid-strip-host">{hordeWins}</span>
+                        <i>victorias</i>
+                    </div>
+                    <div className="raid-strip-dots">
+                        {(horde.team || []).map((slot, i) => {
+                            const r = horde.rounds?.[i];
+                            const mark = r ? (r.win ? 'is-win' : 'is-lose') : '';
+                            return (
+                                <span key={i}
+                                      className={`raid-strip-dot ${i < hordeRoundsDone ? 'is-done' : ''} ${i === hordeRoundsDone ? 'is-now' : ''} ${mark}`}
+                                      title={slot.pokemon?.name} />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Cierre de combate de la horda. Espera a que no haya ningún otro
+                aviso encima: en la horda sí se sube de nivel y sí se evoluciona,
+                y esos prompts van antes que encadenar el siguiente combate. */}
+            {horde && !horde.result && myLocked && rivalLocked && !hordeRoundHidden
+                && myPokemon && rivalPokemon
+                && !showLevelUpPrompt && !showEvolveModal && !showReplaceModal && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className="raid-round-modal horde-round-modal">
+                        <div className="raid-round-title">
+                            Combate {hordeRoundsDone + 1} de {hordeTotalRounds}
+                        </div>
+                        <div className="raid-round-score">
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{displayName(myPokemon)}</span>
+                                <span className="raid-round-num">{myTotal}</span>
+                            </div>
+                            <i>vs</i>
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{horde?.wild?.name}</span>
+                                <span className="raid-round-num">{rivalTotal}</span>
+                            </div>
+                        </div>
+                        <div className={`horde-round-verdict ${hordeRoundWon(myTotal, rivalTotal) ? 'is-win' : 'is-lose'}`}>
+                            {myTotal > rivalTotal
+                                ? '¡Victoria! +1 al bono de captura'
+                                : myTotal === rivalTotal
+                                    ? 'Empate: cuenta como victoria, +1 al bono'
+                                    : 'Derrota: no suma victoria'}
+                        </div>
+                        <div className="raid-round-note">
+                            Llevas {hordeWins + (hordeRoundWon(myTotal, rivalTotal) ? 1 : 0)} de {hordeTotalRounds} victorias.
+                        </div>
+                        <div className="raid-round-actions">
+                            <button className="raid-setup-btn raid-setup-btn--ghost"
+                                    onClick={() => setHordeRoundHidden(true)}>
+                                ← Volver al combate
+                            </button>
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleHordeNext}>
+                                {hordeRoundsDone + 1 >= hordeTotalRounds
+                                    ? 'Tirar la captura'
+                                    : 'Siguiente combate →'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Final de la horda: el detalle de los combates y la tirada de
+                captura, que se hace en la mesa con +1 por victoria. */}
+            {hordeResultOpen && horde && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className="raid-result-modal horde-result-modal">
+                        <div className="raid-result-title">
+                            La horda de {horde.wild?.name}
+                        </div>
+
+                        <div className="raid-result-rows">
+                            {horde.rounds.map((r, i) => (
+                                <div className={`raid-result-row horde-result-row--${r.win ? 'win' : 'lose'}`} key={i}>
+                                    <span className="raid-result-who">{r.attacker}</span>
+                                    <span className="raid-result-nums">
+                                        {r.hostTotal} — {r.wildTotal}
+                                        <em title={r.tie ? 'Empate: cuenta como victoria' : undefined}>
+                                            {r.win ? (r.tie ? '=✓' : '✓') : '✗'}
+                                        </em>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="horde-bonus">
+                            <span className="horde-bonus-num">+{hordeWins}</span>
+                            <span className="horde-bonus-label">
+                                bono de captura<br />
+                                <em>{hordeWins} {hordeWins === 1 ? 'victoria' : 'victorias'} de {hordeTotalRounds}</em>
+                            </span>
+                        </div>
+
+                        <div className="raid-round-note">
+                            Tira la captura con ese bono y marca cómo te fue.
+                        </div>
+
+                        <div className="raid-result-actions">
+                            <button className="raid-setup-btn raid-setup-btn--main"
+                                    onClick={() => handleHordeCatch(true)}>
+                                ¡Capturado! ({horde.wild?.name})
+                            </button>
+                            <button className="raid-setup-btn raid-setup-btn--ghost"
+                                    onClick={() => handleHordeCatch(false)}>
+                                Se escapó
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Marcador de la incursión: acompaña a los cuatro combates para que
                 nunca haya que recordar de memoria cómo va la suma */}
@@ -2626,7 +3256,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                         </div>
                         <div className="levelup-prompt-buttons">
                             <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, resolveBasePokemonId(myPokemon), { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); if (pendingBadge) { setPendingBadge(false); setShowBadgePrompt(true); } }}>Sí</button>
-                            <button className="levelup-btn-no" onClick={() => { setShowLevelUpPrompt(false); if (rival?.name === 'Wild Pokemon') setShowCapturePrompt(true); }}>No</button>
+                            <button className="levelup-btn-no" onClick={() => { setShowLevelUpPrompt(false); if (rival?.name === 'Wild Pokemon' && !noCaptureEvent) setShowCapturePrompt(true); }}>No</button>
                         </div>
                     </div>
                 </div>

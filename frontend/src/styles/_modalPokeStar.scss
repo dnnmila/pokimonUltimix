@@ -1,0 +1,176 @@
+// Poké Star Studios: el set de rodaje.
+//
+// Morado de estudio, y la tabla del D6 como protagonista — es lo que se mira en
+// la carta física. Del resto de eventos hereda los botones (.raid-setup-btn), el
+// separador (.raid-setup-alt) y las cajas de resultado (.raid-result-modal); las
+// caras del dado son las de siempre (.mydiceN, en _stadium.scss).
+
+$pokestar: #b06ef2;
+
+.pokestar-backdrop { z-index: 520; }
+
+.pokestar-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid $pokestar;
+    border-radius: 14px;
+    padding: 1.4rem 1.4rem 1.2rem;
+    width: 96vw;
+    max-width: 1040px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    position: relative;
+    overflow-y: auto;
+}
+
+.pokestar-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.pokestar-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+    flex-wrap: wrap;
+}
+
+.pokestar-title {
+    color: $pokestar;
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.pokestar-sub { color: #9a9a9a; font-size: 0.82rem; }
+
+.pokestar-roll-btn {
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    background: rgba(176, 110, 242, 0.18);
+    border: 2px solid $pokestar;
+    color: #d3aefb;
+    font-size: 1.05rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+    &:hover:not(:disabled) {
+        background: rgba(176, 110, 242, 0.32);
+        transform: translateY(-2px);
+        box-shadow: 0 0 14px rgba(176, 110, 242, 0.5);
+    }
+    &:disabled { opacity: 0.5; cursor: default; }
+}
+
+// ── La tabla del D6 ─────────────────────────────────────────────────────────
+
+.pokestar-chart {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+}
+
+.pokestar-prop {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.7rem 0.5rem 0.6rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+
+    &:hover { transform: translateY(-2px); border-color: rgba(176, 110, 242, 0.6); }
+
+    // El que ha salido: se enciende como el foco del plató
+    &.is-on {
+        border-color: $pokestar;
+        background: rgba(176, 110, 242, 0.14);
+        box-shadow: 0 0 18px rgba(176, 110, 242, 0.5);
+    }
+
+    // Mientras la tablet tira el dado no se puede elegir a dedo
+    &.is-rolling { cursor: default; &:hover { transform: none; } }
+}
+
+.pokestar-prop-die {
+    width: 2.2rem;
+    height: 2.2rem;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.pokestar-prop-art {
+    width: 6rem;
+    height: 6rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.pokestar-prop-name {
+    color: white;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.pokestar-prop-moves {
+    color: #9a9a9a;
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1.25;
+}
+
+// ── Final del rodaje ────────────────────────────────────────────────────────
+
+.pokestar-result {
+    border-color: $pokestar;
+    .raid-result-title { color: $pokestar; }
+
+    &--good   { border-color: #4ee0a0; .raid-result-title { color: #4ee0a0; } }
+    &--strange{ border-color: var(--hud-accent); .raid-result-title { color: var(--hud-accent); } }
+    &--bad    { border-color: #f2506e; .raid-result-title { color: #f2506e; } }
+}
+
+.pokestar-result-summary {
+    color: #ddd;
+    font-size: 0.88rem;
+    line-height: 1.4;
+
+    em { color: #9a9a9a; font-style: italic; }
+}
+
+// El premio o el castigo, que es lo que hay que hacer en la mesa
+.pokestar-result-reward {
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 0.92rem;
+    font-weight: bold;
+    line-height: 1.4;
+}
+
+@media (max-width: 700px) {
+    .pokestar-chart { grid-template-columns: repeat(2, 1fr); }
+}

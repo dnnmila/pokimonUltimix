@@ -2,30 +2,42 @@ import React, { useState } from 'react';
 import { typeColor, typeLabel } from '../../pokemonTypes';
 import PokemonName from '../PokemonName';
 import PokemonNameSearch from '../PokemonNameSearch';
+import SERVER_IP from '../../config.js';
+import TOKEN_COLORS, { tokenColorHex, tokenColorLabel } from '../../data/tokenColors.js';
 import { applyDynamax, canDynamax } from '../../data/maxMoves';
 import { applyTera, hasTeraOrb } from '../../data/teraTypes';
 
 // Montaje de la Incursión Max, en dos pasos.
 //
-//   1. jefe   → se busca por nombre o número, igual que un salvaje. La app le
-//      asigna la forma sola: Gigamax si la especie tiene token propio —solo 46
-//      lo tienen— o Dinamax en cualquier otro caso.
+//   1. jefe   → de dos maneras, como en el Combate Mega: se elige el color del
+//      token que salió y se sortea uno de ese color, o se busca por nombre o
+//      número cuando el token ya está sobre la mesa. La forma se la asigna la
+//      app sola: Gigamax si la especie tiene token propio —solo 46 lo tienen—
+//      o Dinamax en cualquier otro caso.
 //   2. equipo → cuatro huecos. El primero es obligatoriamente un Pokémon del
-//      host; los otros tres se llenan con uno de cada jugador o con un salvaje
-//      buscado también por nombre.
+//      host; los otros tres se llenan con uno de cada jugador o con un salvaje,
+//      buscado por nombre o sorteado igual que el jefe.
+//
+// El sorteo de los salvajes NO deja elegir color: sale del mismo que el jefe,
+// que es el color del token con el que se abrió la incursión.
 //
 // Los Pokémon DEL HOST pueden subir en otra forma —Mega, Gigamax, Dinamax o
 // teracristalizados—, y se elige en la propia tarjeta del hueco. Los de otros
 // jugadores y los salvajes suben siempre en su forma normal: el host no maneja
 // los items ajenos, y los salvajes no tienen.
 //
-// Nada se sortea aquí: los tokens se sacan en físico sobre la mesa y la tablet
-// solo registra cuáles salieron.
-//
 // Los cuatro combates los juega el host en su tablet, así que aquí se elige
 // todo de una vez y luego ya no se vuelve a preguntar.
 
 const SLOTS = 4;
+
+// Un Pokémon al azar de la DB, opcionalmente del color de token que se pida.
+// Es el mismo sorteo que usa el metrónomo de las funciones especiales.
+const rollPokemon = async (color) => {
+    const res = await fetch(`${SERVER_IP}/random-pokemon${color ? `?color=${color}` : ''}`);
+    if (!res.ok) throw new Error('No salió ningún Pokémon de ese color');
+    return res.json();
+};
 
 const ModalRaidSetup = ({
     show,
@@ -45,17 +57,66 @@ const ModalRaidSetup = ({
     // Qué hueco se está llenando; null = ninguno
     const [openSlot, setOpenSlot] = useState(null);
 
+    // Sorteo del jefe: color del token elegido (null = cualquiera) y el Pokémon
+    // que salió, que todavía no es el jefe hasta que se confirme.
+    const [color, setColor] = useState(null);
+    const [rolled, setRolled] = useState(null);
+    const [rolling, setRolling] = useState(false);
+    const [rollError, setRollError] = useState(null);
+    // Sorteo del salvaje de un hueco
+    const [wildRolling, setWildRolling] = useState(false);
+    const [wildError, setWildError] = useState(null);
+
     if (!show) return null;
 
     const boss = raid?.boss || null;
     const others = allPlayers.filter(p => p.id !== player.id);
 
+    // El color de la incursión es el del token del jefe, que el backend sella al
+    // montarlo. Mientras el jefe no está (o si la partida viene de antes de que
+    // se guardara) vale el que se haya elegido aquí para sortear.
+    const raidColor = raid?.bossColor || color || null;
+    const raidColorHex = tokenColorHex(raidColor);
+    const raidColorLabel = tokenColorLabel(raidColor);
+
     const reset = () => {
         setSlots(Array(SLOTS).fill(null));
         setOpenSlot(null);
+        setColor(null);
+        setRolled(null);
+        setRollError(null);
+        setWildError(null);
     };
 
     const handleClose = () => { reset(); onClose(); };
+
+    const handleRollBoss = async () => {
+        setRolling(true);
+        setRollError(null);
+        setRolled(null);
+        try {
+            setRolled(await rollPokemon(color));
+        } catch (e) {
+            setRollError(e.message);
+        } finally {
+            setRolling(false);
+        }
+    };
+
+    // El salvaje sale del color del jefe, sin poder elegirlo: es el token que ya
+    // se sacó al abrir la incursión.
+    const handleRollWild = async (index) => {
+        setWildRolling(true);
+        setWildError(null);
+        try {
+            const pkm = await rollPokemon(raidColor);
+            setSlot(index, { pokedex: pkm.pokedex, name: pkm.name });
+        } catch (e) {
+            setWildError(e.message);
+        } finally {
+            setWildRolling(false);
+        }
+    };
 
     // Un mismo Pokémon no puede ocupar dos huecos: si no, el host metería cuatro
     // veces a su mejor bicho y la incursión dejaría de tener gracia.
@@ -136,7 +197,7 @@ const ModalRaidSetup = ({
                          onClick={onOpenRules}>?</div>
                     <div className="raid-setup-sub">
                         {!boss
-                            ? 'Busca el Pokémon que saliste como jefe de incursión'
+                            ? 'Sortea el jefe por el color del token, o búscalo por nombre'
                             : 'Arma el equipo de 4 que va a enfrentarlo'}
                     </div>
                 </div>
@@ -144,6 +205,62 @@ const ModalRaidSetup = ({
                 {/* ── Paso 1: el jefe ────────────────────────────────────── */}
                 {!boss && (
                     <div className="raid-boss-search">
+                        <div className="raid-color-label">Color del token</div>
+                        <div className="raid-colors">
+                            <div className={`raid-color raid-color--any ${color === null ? 'is-on' : ''}`}
+                                 onClick={() => setColor(null)}
+                                 title="Cualquier color">★</div>
+                            {TOKEN_COLORS.map(c => (
+                                <div key={c.id}
+                                     className={`raid-color ${color === c.id ? 'is-on' : ''}`}
+                                     style={{ backgroundColor: c.hex }}
+                                     onClick={() => setColor(c.id)}
+                                     title={c.label} />
+                            ))}
+                        </div>
+
+                        <button className="raid-roll-btn"
+                                disabled={loading || rolling}
+                                onClick={handleRollBoss}>
+                            {rolling
+                                ? 'Sorteando…'
+                                : rolled
+                                    ? 'Sortear otro'
+                                    : `Sortear jefe${color ? ` (${tokenColorLabel(color)})` : ''}`}
+                        </button>
+
+                        {rolled && (
+                            <div className="raid-roll-card"
+                                 style={{ '--token-color': tokenColorHex(rolled.tokenColor) || '#f2506e' }}>
+                                <div className="raid-roll-art"
+                                     style={pokemonImg(rolled) ? { backgroundImage: `url(${pokemonImg(rolled)})` } : {}} />
+                                <div className="raid-roll-meta">
+                                    <div className="raid-roll-name">{rolled.name}</div>
+                                    <div className="raid-roll-types">
+                                        <span style={{ background: typeColor(rolled.type1) }}>{typeLabel(rolled.type1)}</span>
+                                        {rolled.type2 && rolled.type2 !== 'NONE' && (
+                                            <span style={{ background: typeColor(rolled.type2) }}>{typeLabel(rolled.type2)}</span>
+                                        )}
+                                        <span className="raid-roll-lvl">Nv {rolled.level}</span>
+                                    </div>
+                                    <div className="raid-roll-token">
+                                        Token {tokenColorLabel(rolled.tokenColor) || 'sin color'} · #{rolled.pokedex}
+                                    </div>
+                                </div>
+                                <button className="raid-setup-btn raid-setup-btn--main"
+                                        disabled={loading}
+                                        onClick={() => onPickBoss(rolled.pokedex)}>
+                                    {loading ? 'Montando…' : 'Poner de jefe'}
+                                </button>
+                            </div>
+                        )}
+
+                        {rollError && <div className="raid-error">{rollError}</div>}
+
+                        <div className="raid-setup-alt">
+                            <i /><span>o búscalo</span><i />
+                        </div>
+
                         <PokemonNameSearch
                             className="raid-search"
                             placeholder="Jefe: nombre o # Pokédex"
@@ -154,6 +271,7 @@ const ModalRaidSetup = ({
                         <div className="raid-search-note">
                             Si la especie tiene forma Gigamax se le asigna sola; si no,
                             pelea Dinamax con sus ataques convertidos en Movimientos Max.
+                            Los salvajes que se metan al equipo saldrán del color del jefe.
                         </div>
                         {loading && <div className="raid-loading">Montando al jefe…</div>}
                         {error && <div className="raid-error">{error}</div>}
@@ -287,7 +405,24 @@ const ModalRaidSetup = ({
 
                                 {openSlot > 0 && (
                                     <div className="raid-picker-group">
-                                        <div className="raid-picker-group-name">Salvaje</div>
+                                        <div className="raid-picker-group-name">
+                                            Salvaje
+                                            {raidColorHex && (
+                                                <span className="raid-color-chip"
+                                                      style={{ background: raidColorHex }}
+                                                      title={`Token ${raidColorLabel}`} />
+                                            )}
+                                        </div>
+                                        {/* Se sortea del color del jefe, sin elegirlo: es el
+                                            token con el que se abrió la incursión. */}
+                                        <button className="raid-picker-wild"
+                                                disabled={wildRolling}
+                                                onClick={() => handleRollWild(openSlot)}>
+                                            {wildRolling
+                                                ? 'Sorteando…'
+                                                : `Sortear salvaje${raidColorLabel ? ` (${raidColorLabel})` : ''}`}
+                                        </button>
+                                        {wildError && <div className="raid-error">{wildError}</div>}
                                         <PokemonNameSearch
                                             className="raid-search raid-search--slot"
                                             placeholder="Nombre o # Pokédex"

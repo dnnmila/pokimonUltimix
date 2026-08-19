@@ -1,16 +1,33 @@
 import { useState } from 'react';
 
-import { STORE_ITEMS as ITEMS } from './storeItems';
+import { STORE_ITEMS as ITEMS, discountedPrice } from './storeItems';
 
 // Tienda del máster: mismo catálogo y misma piel que la del jugador
 // (ModalTiendaSim), pero aquí la compra se cierra en el acto — no hay
 // solicitud que aprobar, el máster ya es quien aprueba.
-const ModalTienda = ({ show, onClose, currentPlayer, onMasterPurchase }) => {
+const ModalTienda = ({ show, onClose, currentPlayer, onMasterPurchase, discount = null }) => {
     // Ítem abierto en la vista de detalle. Elegir uno no compra: solo abre la
     // carta, y la compra sale al confirmar.
     const [selected, setSelected] = useState(null);
 
     if (!show) return null;
+
+    // El mismo descuento que ve el jugador (`game.storeDiscount`), para que el
+    // máster cobre lo que la tablet le está enseñando al otro lado de la mesa.
+    const pct = discount?.percent || 0;
+    const priceOf = (item) => discountedPrice(item.price, pct);
+
+    const discountBanner = pct > 0 && (
+        <div className="store-discount-banner">
+            <span className="store-discount-tag">-{pct}%</span>
+            <span>
+                Rebaja activa
+                {discount?.turnsLeft > 0 && (
+                    <em> · {discount.turnsLeft} {discount.turnsLeft === 1 ? 'turno' : 'turnos'}</em>
+                )}
+            </span>
+        </div>
+    );
 
     const handleClose = () => {
         setSelected(null);
@@ -19,18 +36,20 @@ const ModalTienda = ({ show, onClose, currentPlayer, onMasterPurchase }) => {
 
     const confirmPurchase = () => {
         if (!selected) return;
-        if (currentPlayer.coins < selected.price) return;
-        onMasterPurchase(currentPlayer.id, selected.name, selected.price);
+        if (currentPlayer.coins < priceOf(selected)) return;
+        onMasterPurchase(currentPlayer.id, selected.name, priceOf(selected));
         setSelected(null);
         onClose();
     };
 
     if (selected) {
-        const canAfford = currentPlayer.coins >= selected.price;
+        const price = priceOf(selected);
+        const canAfford = currentPlayer.coins >= price;
         return (
             <div className="modal-backdrop">
                 <div className="modal-store modal-store--shop modal-store--detail">
                     <div className='Title-modal'>{selected.name}</div>
+                    {discountBanner}
 
                     <div className={`store-detail-cards ${selected.cards.length > 1 ? 'store-detail-cards--multi' : ''}`}>
                         {selected.cards.length > 0
@@ -48,7 +67,8 @@ const ModalTienda = ({ show, onClose, currentPlayer, onMasterPurchase }) => {
                     )}
 
                     <div className="store-detail-price">
-                        <span className='store-option-cost'>{selected.price}</span>
+                        {pct > 0 && <span className='store-option-cost store-option-cost--old'>{selected.price}</span>}
+                        <span className={`store-option-cost ${pct > 0 ? 'store-option-cost--off' : ''}`}>{price}</span>
                         <span className="store-detail-coins">
                             {currentPlayer.name} tiene {currentPlayer.coins}
                         </span>
@@ -79,9 +99,11 @@ const ModalTienda = ({ show, onClose, currentPlayer, onMasterPurchase }) => {
         <div className="modal-backdrop">
             <div className="modal-store modal-store--shop">
                 <div className='Title-modal'>Store</div>
+                {discountBanner}
                 <div className="store_all_options">
                     {ITEMS.map((item) => {
-                        const canAfford = currentPlayer.coins >= item.price;
+                        const price = priceOf(item);
+                        const canAfford = currentPlayer.coins >= price;
                         return (
                             <div
                                 key={item.name}
@@ -90,7 +112,10 @@ const ModalTienda = ({ show, onClose, currentPlayer, onMasterPurchase }) => {
                             >
                                 <div className={`store-option-img ${item.img}`}></div>
                                 <div className='store-option-name'>{item.name}</div>
-                                <div className='store-option-cost'>{item.price}</div>
+                                <div className={`store-option-cost ${pct > 0 ? 'store-option-cost--off' : ''}`}>
+                                    {price}
+                                    {pct > 0 && <em className='store-option-cost-old'>{item.price}</em>}
+                                </div>
                             </div>
                         );
                     })}

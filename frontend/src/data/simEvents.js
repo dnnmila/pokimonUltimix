@@ -14,6 +14,14 @@ import imgTM   from '../images/tm.png';
 import imgZ    from '../images/Cristal_Z.png';
 import imgMax  from '../images/dinamax.png';
 import imgMega from '../images/Megaevo.webp';
+// La horda no tiene icono propio: usa el token de Zubat, que es el de la carta.
+import imgHorde from '../images/tokens_ultimix/0041.png';
+// El combate de entrenador usa un retrato de entrenador de los que ya hay.
+import imgTrainer from '../images/trainers/Trainer1.webp';
+// El concurso se premia con una carta Ribbon: su arte hace de icono.
+import imgRibbon from '../images/Nuevos items/Map Specific Items/Ribbon.png';
+// El rodaje usa el token de Brycen-Man, el primero de la tabla del D6.
+import imgPokeStar from '../images/tokens_ultimix/PS1.png';
 
 // El directorio de tipos Tera tiene un espacio al final del nombre. El require
 // va en template literal a propósito: webpack arma un contexto y, si el archivo
@@ -58,6 +66,42 @@ export const SIM_EVENTS = [
         rules: 'maxRaid',
         img: imgMax,
         accent: '#f2506e',
+    },
+    {
+        id: 'trainerBattle',
+        title: 'Trainer Battle',
+        es: 'Combate de Entrenador',
+        desc: '1 o 2 salvajes del color de tu casilla; ganándolos todos, cartas de objeto.',
+        rules: 'trainerBattle',
+        img: imgTrainer,
+        accent: '#3fbf6a',
+    },
+    {
+        id: 'horde',
+        title: 'Horde Encounter',
+        es: 'Horda',
+        desc: 'Un salvaje contra todo tu equipo, uno por uno; las victorias son bono de captura.',
+        rules: 'horde',
+        img: imgHorde,
+        accent: '#3fbf6a',
+    },
+    {
+        id: 'pokeStar',
+        title: 'Poké Star Studios',
+        es: 'Rodaje en Poké Star',
+        desc: 'Un D6 saca al Prop Pokémon; pelea a tu nivel y nadie se queda debilitado.',
+        rules: 'pokeStar',
+        img: imgPokeStar,
+        accent: '#b06ef2',
+    },
+    {
+        id: 'contest',
+        title: 'Pokémon Contest',
+        es: 'Concurso Pokémon',
+        desc: 'Sin ataques ni niveles: poder de los movimientos más dados, y gana el más alto.',
+        rules: 'contest',
+        img: imgRibbon,
+        accent: '#5ec8f2',
     },
     {
         id: 'megaBattle',

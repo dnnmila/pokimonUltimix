@@ -397,6 +397,11 @@ margin-left: 0rem;
     color: var(--hud-ink);
     font-size: 0.85rem;
 }
+// La que aprueba Enter: el borde verde dice cuál cae con la tecla
+.pending-purchase-item--next {
+    border-color: #2f8f4e;
+    box-shadow: 0 0 0 2px rgba(47, 143, 78, 0.25);
+}
 .pending-purchase-player { font-weight: bold; color: var(--hud-blue-deep); flex: 1; }
 .pending-purchase-item-name { flex: 1.5; }
 .pending-purchase-price { color: var(--hud-ink); font-weight: bold; width: 3.2rem; text-align: right; }
@@ -405,6 +410,13 @@ margin-left: 0rem;
     background: #2f8f4e; border: none; border-radius: 6px;
     color: white; font-weight: bold; cursor: pointer; padding: 0.2rem 0.55rem;
     &:hover { background: #26743f; }
+}
+.pending-approve-key {
+    margin-left: 0.3rem;
+    padding: 0 0.25rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    font-size: 0.75em;
 }
 .pending-deny {
     background: var(--hud-red); border: none; border-radius: 6px;

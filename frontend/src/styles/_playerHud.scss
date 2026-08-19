@@ -909,6 +909,127 @@ $pv-type-colors: (
     color: var(--hud-dim);
 }
 
+// ── Descuentos de la tienda ────────────────────────────────────────────────
+//
+// El botón vive con la tienda (es su precio lo que cambia) y mientras hay
+// rebaja se queda encendido con el porcentaje y los turnos que le faltan: es
+// un estado que caduca solo, así que tiene que verse sin abrir nada.
+
+.pv-util--on {
+    background: rgba(232, 163, 23, 0.16);
+    box-shadow: inset 0 0 0 1px var(--hud-gold);
+
+    .pv-util-label { color: var(--hud-gold); }
+}
+
+.pv-util-icon--discount { filter: hue-rotate(-35deg) saturate(1.3); }
+
+.pv-util-count {
+    position: absolute;
+    transform: translate(1.1rem, -2.4rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.2rem;
+    border-radius: 999px;
+    background: var(--hud-gold);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: bold;
+}
+
+.discount-modal {
+    background: #fff;
+    border: 2px solid var(--hud-gold);
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem 1rem;
+    width: 92vw;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    box-shadow: var(--hud-shadow);
+}
+
+.discount-title {
+    color: var(--hud-ink);
+    font-size: 1.15rem;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+}
+
+.discount-sub { color: var(--hud-dim); font-size: 0.8rem; line-height: 1.35; }
+
+.discount-options { display: flex; gap: 0.6rem; }
+
+.discount-opt {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.8rem 0.5rem;
+    border-radius: 12px;
+    background: rgba(232, 163, 23, 0.1);
+    border: 2px solid var(--hud-line);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+
+    &:hover { transform: translateY(-2px); border-color: var(--hud-gold); }
+
+    // El que está puesto ahora mismo
+    &.is-on {
+        border-color: var(--hud-gold);
+        background: rgba(232, 163, 23, 0.28);
+    }
+}
+
+.discount-opt-pct {
+    color: var(--hud-ink);
+    font-size: 1.5rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.discount-opt-note { color: var(--hud-dim); font-size: 0.7rem; text-align: center; }
+
+.discount-active {
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    background: rgba(232, 163, 23, 0.14);
+    border: 1px solid rgba(232, 163, 23, 0.5);
+    color: var(--hud-ink);
+    font-size: 0.82rem;
+    line-height: 1.4;
+
+    &--off {
+        background: var(--hud-soft, rgba(0, 0, 0, 0.05));
+        border-color: var(--hud-line);
+        color: var(--hud-dim);
+    }
+}
+
+.discount-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+.discount-off,
+.discount-close {
+    border-radius: 9px;
+    border: 1px solid var(--hud-line);
+    background: #fff;
+    color: var(--hud-ink);
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 0.55rem 1rem;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); }
+    &:disabled { opacity: 0.4; cursor: default; }
+}
+
+.discount-off { border-color: #c0392b; color: #c0392b; }
+
 // ── Estado de la partida ────────────────────────────────────────────────────
 .pv-bar-status {
     display: flex;

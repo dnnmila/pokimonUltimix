@@ -1,0 +1,411 @@
+// Concurso Pokémon.
+//
+// No es una batalla y no lo parece: sin barra de estados, sin tipos enfrentados
+// y sin totales de seis columnas. Dos fichas con su cuenta a la vista, los dados
+// en medio y el veredicto debajo.
+//
+// Reaprovecha de la incursión el sorteo por color (.raid-color*), el buscador
+// (.raid-search) y los botones (.raid-setup-btn), que son los mismos gestos que
+// en el resto de eventos. Las caras de los dados son las de siempre (.mydiceN,
+// declaradas en _stadium.scss) con su propio tamaño.
+
+$contest: #5ec8f2;
+
+.contest-backdrop { z-index: 520; }
+
+.contest-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid $contest;
+    border-radius: 14px;
+    padding: 1.4rem 1.4rem 1.2rem;
+    width: 96vw;
+    max-width: 980px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    position: relative;
+    overflow-y: auto;
+
+    // Mientras se elige rival hay un buscador con desplegable: sin recorte
+    &--setup { max-height: none; overflow: visible; }
+}
+
+.contest-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.contest-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+    flex-wrap: wrap;
+}
+
+.contest-title {
+    color: $contest;
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.contest-sub { color: #9a9a9a; font-size: 0.82rem; }
+
+// ── Paso 1: elegir Pokémon ──────────────────────────────────────────────────
+
+.contest-team {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: 0.6rem;
+}
+
+.contest-team-pkm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.5rem 0.3rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--pkm-type, transparent);
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+
+    &:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.14); }
+}
+
+.contest-team-art {
+    width: 4.6rem;
+    height: 4.6rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.contest-team-name {
+    color: white;
+    font-size: 0.85rem;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// El poder ya calculado en la propia tarjeta: elegir con qué concursar es
+// exactamente esa comparación
+.contest-team-power {
+    color: $contest;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+// ── Paso 2: el rival ────────────────────────────────────────────────────────
+
+.contest-mine-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    background: rgba(94, 200, 242, 0.12);
+    border: 1px solid rgba(94, 200, 242, 0.5);
+}
+
+.contest-mine-art {
+    width: 3rem;
+    height: 3rem;
+    flex: 0 0 auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.contest-mine-name { color: white; font-size: 0.95rem; font-weight: bold; }
+.contest-mine-note { color: #9a9a9a; font-size: 0.72rem; }
+
+.contest-change {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    &:hover { background: rgba(255, 255, 255, 0.18); }
+}
+
+.contest-roll-btn {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    background: rgba(94, 200, 242, 0.18);
+    border: 2px solid $contest;
+    color: $contest;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+    &:hover:not(:disabled) {
+        background: rgba(94, 200, 242, 0.32);
+        transform: translateY(-2px);
+        box-shadow: 0 0 14px rgba(94, 200, 242, 0.5);
+    }
+    &:disabled { opacity: 0.45; cursor: default; }
+}
+
+// ── Paso 3: el concurso ─────────────────────────────────────────────────────
+
+.contest-arena {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: start;
+    gap: 0.6rem;
+}
+
+.contest-vs {
+    align-self: center;
+    color: #6d6d6d;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+}
+
+.contest-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.6rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+
+    &--mine  { border-color: rgba(94, 200, 242, 0.6); }
+    &--rival { border-color: var(--token-color, rgba(255, 255, 255, 0.3)); }
+}
+
+.contest-side-head { display: flex; align-items: center; gap: 0.5rem; }
+
+.contest-side-art {
+    width: 4rem;
+    height: 4rem;
+    flex: 0 0 auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.contest-side-id { min-width: 0; }
+
+.contest-side-name {
+    color: white;
+    font-size: 0.95rem;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contest-side-types {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    margin-top: 0.15rem;
+
+    span {
+        font-size: 0.55rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: white;
+        border-radius: 4px;
+        padding: 0.05rem 0.3rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+}
+
+// El desglose: un renglón por movimiento y el subtotal abajo. Es la parte que
+// más se mira, porque es la cuenta que en la mesa se hace de cabeza.
+.contest-moves {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.contest-move {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.75rem;
+
+    // No suma: hueco vacío u objeto adjunto
+    &.is-off {
+        opacity: 0.45;
+        .contest-move-name { font-style: italic; }
+    }
+
+    &--sum {
+        margin-top: 0.15rem;
+        background: rgba(94, 200, 242, 0.16);
+        font-weight: bold;
+        .contest-move-val { color: $contest; font-size: 1rem; }
+    }
+}
+
+.contest-move-name {
+    color: #ddd;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contest-move-val {
+    color: white;
+    font-weight: bold;
+    white-space: nowrap;
+
+    // "de 0": de dónde salió el 2, para que no parezca un error
+    em {
+        font-style: normal;
+        font-weight: normal;
+        font-size: 0.6rem;
+        color: #8a8a8a;
+        margin-left: 0.25rem;
+    }
+}
+
+// ── Dados ───────────────────────────────────────────────────────────────────
+
+.contest-dice { display: flex; flex-direction: column; gap: 0.3rem; align-items: center; }
+
+.contest-dice-chosen { display: flex; gap: 0.25rem; }
+
+.contest-die-face {
+    width: 2rem;
+    height: 2rem;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+// Las seis caras para marcar lo que salió en la mesa
+.contest-dice-row {
+    display: flex;
+    gap: 0.15rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.contest-die {
+    width: 2.4rem;
+    height: 2.4rem;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: brightness(80%);
+    cursor: pointer;
+    transition: transform 0.12s, filter 0.12s;
+
+    &:hover { transform: scale(1.2); filter: brightness(115%); }
+}
+
+.contest-dice-actions {
+    display: flex;
+    gap: 0.3rem;
+
+    button {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 8px;
+        color: white;
+        font-size: 0.85rem;
+        padding: 0.45rem 0.9rem;
+        cursor: pointer;
+        &:hover { background: rgba(94, 200, 242, 0.25); }
+    }
+}
+
+.contest-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.3rem;
+    color: #9a9a9a;
+    font-size: 0.85rem;
+
+    i { font-style: normal; color: #6d6d6d; }
+    strong { color: white; font-size: 1.6rem; line-height: 1; margin-left: 0.2rem; }
+}
+
+.contest-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+// ── Veredicto ───────────────────────────────────────────────────────────────
+
+.contest-result {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 12px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+
+    &--win  { border-color: #4ee0a0; background: rgba(78, 224, 160, 0.12); }
+    &--lose { border-color: #f2506e; background: rgba(242, 80, 110, 0.12); }
+}
+
+.contest-result-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    color: white;
+
+    .contest-result--win  & { color: #4ee0a0; }
+    .contest-result--lose & { color: #f2506e; }
+}
+
+.contest-result-text {
+    color: #ddd;
+    font-size: 0.82rem;
+    line-height: 1.45;
+
+    strong { color: white; }
+}
+
+.contest-result-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+// En pantallas estrechas las dos fichas se apilan y el VS queda en medio
+@media (max-width: 640px) {
+    .contest-arena { grid-template-columns: 1fr; }
+    .contest-vs { justify-self: center; }
+}

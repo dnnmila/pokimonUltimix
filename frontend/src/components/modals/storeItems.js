@@ -71,4 +71,18 @@ export const STORE_ITEMS = [
     { name: 'Black Flute',         price: 8,  img: 'img-blackFlute',   cards: [cardBlackFlute]   },
 ];
 
+// ── Descuentos del máster ───────────────────────────────────────────────────
+//
+// El descuento vive en la partida (`game.storeDiscount`) y lo aplican las dos
+// tiendas al pintar el precio; lo que viaja en la solicitud de compra es ya el
+// precio rebajado, igual que antes viajaba el normal.
+//
+// Se redondea HACIA ABAJO y nunca baja de 1: un descuento tiene que notarse, y
+// nada de la tienda puede acabar saliendo gratis.
+export const discountedPrice = (price, percent) => {
+    const pct = Number(percent) || 0;
+    if (!pct) return price;
+    return Math.max(1, Math.floor(price * (1 - pct / 100)));
+};
+
 export default STORE_ITEMS;
