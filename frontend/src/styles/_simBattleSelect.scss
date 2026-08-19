@@ -556,6 +556,23 @@
         transform: translateY(-3px);
     }
 
+    // Ancla de la marca del Orbe Tera
+    position: relative;
+}
+
+// Marca de Orbe Tera en la tarjeta del equipo: un punto del color del tipo del
+// orbe, en la esquina. No es un botón — teracristalizar se decide abajo, en la
+// barra, y solo para el Pokémon ya elegido; esto solo avisa de que puede.
+.sbs-card-tera {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.3rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 3px;
+    transform: rotate(45deg);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 6px currentColor;
 }
 
 .sbs-card-top {
@@ -653,6 +670,7 @@
 }
 
 .sbs-pick {
+    position: relative; // ancla del globo de Movimientos Max
     display: flex;
     align-items: center;
     gap: 0.55rem;
@@ -681,6 +699,185 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+}
+
+// Botón de teracristalización, en la barra inferior y solo cuando el Pokémon
+// elegido lleva orbe. Es un interruptor de un solo estado visible, así que los
+// dos extremos tienen que separarse mucho: apagado el orbe va en gris, a media
+// luz y con el borde punteado —lee como "hueco por rellenar"—; encendido se
+// enciende en DORADO CLARO y late.
+//
+// El encendido NO usa el color del tipo a propósito. Se probó y no funciona: con
+// los tipos oscuros (Siniestro #705848, Lucha, Veneno) el botón "encendido" se
+// veía tan apagado como el apagado. El dorado claro es el mismo que ya marca la
+// carta elegida en esta pantalla, así que además dice lo mismo que el resto de
+// la interfaz: esto está seleccionado. El tipo se lee en el texto de al lado.
+.sbs-tera {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.3rem;
+}
+
+.sbs-tera-orb {
+    width: 3rem;
+    height: 3rem;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.2s, transform 0.15s;
+
+    img {
+        width: 76%;
+        height: 76%;
+        object-fit: contain;
+        // Apagado: el orbe se reconoce, pero está claramente inerte
+        filter: grayscale(1) brightness(0.6);
+        opacity: 0.6;
+        transition: filter 0.2s, opacity 0.2s;
+    }
+
+    &:hover { transform: scale(1.06); }
+
+    &.is-on {
+        border: 2px solid var(--hud-accent-soft);
+        background: rgba(var(--hud-accent-rgb), 0.35);
+        animation: sbs-tera-pulse 1.6s ease-in-out infinite;
+
+        img {
+            filter: brightness(1.15) drop-shadow(0 0 4px #fff);
+            opacity: 1;
+        }
+    }
+}
+
+// El latido remata la diferencia: encendido el orbe está vivo, apagado quieto.
+@keyframes sbs-tera-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(var(--hud-accent-rgb), 0.85),
+                           inset 0 0 8px rgba(255, 255, 255, 0.35); }
+    50%      { box-shadow: 0 0 22px var(--hud-accent-soft),
+                           inset 0 0 15px rgba(255, 255, 255, 0.55); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sbs-tera-orb.is-on {
+        animation: none;
+        box-shadow: 0 0 16px var(--hud-accent-soft), inset 0 0 12px rgba(255, 255, 255, 0.45);
+    }
+}
+
+.sbs-tera-label {
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.55);
+    transition: color 0.15s;
+
+    // Encendido va en el mismo dorado claro que el botón, no en el color del
+    // tipo, por lo mismo: tiene que leerse igual de bien con los 19
+    &.is-on {
+        color: var(--hud-accent-soft);
+        text-shadow: 0 0 8px rgba(var(--hud-accent-rgb), 0.6);
+    }
+}
+
+// ── Transformaciones al subir (orbe Tera / Dynamax) ─────────────────────────
+// Los dos interruptores comparten fila y estilo: son la misma decisión —con qué
+// forma sube este Pokémon— y son excluyentes, así que tienen que leerse como dos
+// caras de lo mismo y no como dos ajustes sueltos.
+.sbs-forms {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    // El lado del rival va alineado a la derecha como el resto de su bloque
+    &--rival { justify-content: flex-end; }
+}
+
+// El botón Dynamax reusa .sbs-tera-orb entero (mismo tamaño, mismo apagado en
+// gris punteado, mismo encendido dorado que late). Lo único suyo es que la
+// imagen no es redonda, así que no se le puede recortar tan justo.
+.sbs-dyna .sbs-tera-orb img {
+    width: 84%;
+    height: 84%;
+}
+
+// Los tres Movimientos Max resultantes. Va como globo POR ENCIMA de la barra
+// —no dentro— porque la barra inferior tiene la altura contada para el iPad y
+// tres renglones más la desbordarían empujando la fila del equipo.
+.sbs-dyna-moves {
+    position: absolute;
+    bottom: calc(100% + 0.45rem);
+    left: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    min-width: 21rem;
+    max-width: 30rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.82);
+    border: 1px solid var(--hud-accent-soft);
+    box-shadow: var(--hud-shadow-lg);
+
+    // El globo del rival crece hacia la izquierda: anclado a la izquierda se
+    // saldría de la pantalla, porque su bloque está pegado al borde derecho.
+    &--rival {
+        left: auto;
+        right: 0;
+        text-align: left;
+    }
+}
+
+.sbs-dyna-move {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    font-size: 0.68rem;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sbs-dyna-move-type {
+    flex: 0 0 auto;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.sbs-dyna-move-name {
+    flex: 0 0 auto;
+    color: var(--hud-accent-soft);
+    white-space: nowrap;
+}
+
+.sbs-dyna-move-str {
+    flex: 0 0 auto;
+    min-width: 1.1rem;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+// El efecto es el renglón largo: es el único que puede recortarse
+.sbs-dyna-move-eff {
+    min-width: 0;
+    flex: 1 1 auto;
+    color: rgba(255, 255, 255, 0.72);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sbs-pick-label {

@@ -13,6 +13,9 @@ import ModalRulesGuide from "./modals/ModalRulesGuide";
 import ModalEvolveChoice from "./modals/ModalEvolveChoice";
 import ModalFrontier from "./modals/ModalFrontier";
 import ModalAttach from "./modals/ModalAttach";
+import ModalMote from "./modals/ModalMote";
+import PokemonName from "./PokemonName";
+import { displayName, nameTitle } from "../moteName";
 import ModalSettings from "./modals/ModalSettings";
 import { getTrainerImage } from "../data/trainers";
 import SimThemeCurtain, { useSimCurtain } from "./SimThemeCurtain";
@@ -20,14 +23,25 @@ import { themeClass, readTheme, writeTheme, getThemeMascot } from "../data/simTh
 import { getLeaderPortrait, RIVAL_COLORS, getRivalColor } from "../data/leaders";
 import { typeColor, typeLabel } from "../pokemonTypes";
 import ModalTypeChart from "./modals/ModalTypeChart";
+import ModalSpecialAttacks from "./modals/ModalSpecialAttacks";
 import ModalTMCatalog from "./modals/ModalTMCatalog";
 import ModalTMCard from "./modals/ModalTMCard";
-import { findTMByAttack } from "../data/tms";
-import { Z_CRYSTALS } from "../data/zmoves";
-import imgTMIcon from "../images/tm.png";
+import ModalItemCard from "./modals/ModalItemCard";
+import ModalEvents from "./modals/ModalEvents";
+import ModalEventPick from "./modals/ModalEventPick";
+import ModalRaidSetup from "./modals/ModalRaidSetup";
+import ModalRulesCard from "./modals/ModalRulesCard";
+import ModalHelp from "./modals/ModalHelp";
+import ModalMegaBattle from "./modals/ModalMegaBattle";
+import { rollTMs, tmPowerFor, TMS_BY_ID } from "../data/tms";
+import { rollZCrystals, zMoveFor, Z_BY_ID } from "../data/zmoves";
+import { getTeraBonus, rollTeraOrbs, TERA_BY_ID } from "../data/teraTypes";
+import { applyDynamax } from "../data/maxMoves";
 import SERVER_IP from "../config.js";
 import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove } from "../battleRules";
 import { attachIconStyle, attachLabel } from "../attachItems";
+import { TMBadge, ItemBadge } from "./PokemonBattleBadges";
+import { arenaStyle } from "../data/arenas";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
 
@@ -61,54 +75,50 @@ const getTypeIcon = (type) => {
     try { return require(`../images/Types/${type}.png`); } catch { return null; }
 };
 
-// Insignia de la carta adjuntada (MT o cristal Z), junto al Pokémon en la
-// pantalla de ataques.
-//
-// El backend marca el hueco con attach === 'MT' o 'Z' y guarda el ataque en
-// attack3. Se pinta la miniatura de la carta cuando se puede identificar; si
-// no, el icono genérico. En ambos casos al tocarla se abre la carta a tamaño
-// grande para cotejarla con la física.
-const TMBadge = ({ pokemon, onOpen }) => {
-    if (!pokemon || (pokemon.attach !== 'MT' && pokemon.attach !== 'Z')) return null;
-
-    const esZ = pokemon.attach === 'Z';
-    // El cristal se identifica por el nombre que guardó el ataque; el genérico
-    // "Z" de un adjuntado a mano no casa con ninguno y cae al icono.
-    const carta = esZ
-        ? Z_CRYSTALS.find(z => z.cristal === pokemon.attack3?.z?.cristal) || null
-        : findTMByAttack(pokemon.attack3);
-
-    const titulo = esZ
-        ? (carta ? `${carta.cristal} — ${pokemon.attack3.name}` : 'Cristal Z adjuntado')
-        : (carta ? `${carta.tm} — ${carta.nombre}` : 'MT adjuntada');
-
-    return (
-        <div
-            className="sim-tm-badge"
-            title={titulo}
-            onClick={() => onOpen({ attack: pokemon.attack3, pokemonName: pokemon.name, esZ })}
-        >
-            <img src={carta?.thumb || imgTMIcon} alt={titulo} />
-        </div>
-    );
+// Lo que cambia al subir teracristalizado o dinamaxizado y NO está en la ficha
+// del equipo: applyTera / applyDynamax devuelven una copia con el mismo id, así
+// que al backend —que busca por id— hay que decírselo aparte. Es lo que hace que
+// el espejo del marcador pinte el mismo Pokémon que la tablet: aura, tipo del
+// orbe y ataques Max incluidos.
+const battleForm = (pkm) => {
+    if (!pkm || (!pkm.teraActive && !pkm.dynamaxActive)) return null;
+    return {
+        teraActive: Boolean(pkm.teraActive),
+        dynamaxActive: Boolean(pkm.dynamaxActive),
+        type1: pkm.type1,
+        type2: pkm.type2,
+        attack1: pkm.attack1,
+        attack2: pkm.attack2,
+        attack3: pkm.attack3,
+    };
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onMegaForms, onRandomMega, onSimMegaBattle, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
     const generation = game?.generation || 1;
+    // Incursión Max en curso de ESTE jugador. Se deriva aquí arriba porque el
+    // efecto de fin de batalla —que está bastante antes que el resto del bloque
+    // de incursión— necesita saber si la batalla que acaba de cerrarse es una
+    // ronda de incursión.
+    const raid = game.raid && game.raid.hostId === playerId ? game.raid : null;
     const fieldMoves = (game?.fieldMoves || []).filter(Boolean);
     // Clave estable para detectar cuándo el master cambió las cartas de campo
     const fieldKey = JSON.stringify(game?.fieldMoves || []);
 
-    // Item + cartas de campo. Con Dormido/Paralizado/Congelado el ataque queda
-    // anulado, así que las cartas que dependen del ataque tampoco cuentan; el item
-    // y las que pegan al valor final siguen aplicando.
+    // Item + cartas de campo + teracristalización. Con Dormido/Paralizado/Congelado
+    // el ataque queda anulado, así que las cartas que dependen del ataque tampoco
+    // cuentan; el item y las que pegan al valor final siguen aplicando.
+    //
+    // El +1 del Orbe Tera va con las que dependen del ataque —solo lo ganan los
+    // ataques del tipo del orbe—, así que también se cae si el ataque está
+    // anulado: sin ataque no hay ataque que reforzar.
     const computeExtra = (pkm, attack, status, side) => {
         const always = getItemBonus(pkm) + getFieldFinalBonus(pkm, fieldMoves, side);
         const nullified = status === 'Asleep' || status === 'Paralized' || status === 'Frozen';
-        return always + (nullified ? 0 : getFieldAttackBonus(attack, fieldMoves, side));
+        if (nullified) return always;
+        return always + getFieldAttackBonus(attack, fieldMoves, side) + getTeraBonus(pkm, attack);
     };
 
     const [leaders, setLeaders] = useState([]);
@@ -136,7 +146,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // pantalla entraba directa a la batalla. El home es el punto de partida; a la
     // batalla se llega eligiendo rival, no recargando.
     const [showSetup, setShowSetup] = useState(true);
+    // `wildPokemonId` es solo el texto del buscador; el salvaje encontrado vive
+    // aparte en `wildFoundId`. Así el hallazgo se queda en pantalla aunque el
+    // jugador escriba otra cosa, pelee o capture: solo desaparece cuando otra
+    // búsqueda lo reemplaza o cuando termina su turno.
     const [wildPokemonId, setWildPokemonId] = useState('');
+    const [wildFoundId, setWildFoundId] = useState('');
     const [wildSuggestions, setWildSuggestions] = useState([]);
     const [wildHighlight, setWildHighlight] = useState(-1);
     const [wildPreviewImg, setWildPreviewImg] = useState(null);
@@ -149,12 +164,48 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [pendingRequest, setPendingRequest] = useState(null);
     const [showOtherRivals, setShowOtherRivals] = useState(false);
     const [attachPkmId, setAttachPkmId] = useState(null);
+    // Pokémon al que se le está poniendo mote (se guarda el id, no el objeto:
+    // el equipo se repinta con cada gameUpdated y el objeto quedaría viejo)
+    const [motePkmId, setMotePkmId] = useState(null);
     // Carta de campo abierta a tamaño completo para leer su efecto
     const [expandedField, setExpandedField] = useState(null);
     const [showTypeChart, setShowTypeChart] = useState(false);
+    // Menú de funciones especiales de batalla: dado de tipos, metrónomo y clima
+    const [showSpecialFns, setShowSpecialFns] = useState(false);
     const [showTMCatalog, setShowTMCatalog] = useState(false);
+    const [showEvents, setShowEvents] = useState(false);
+    // Eventos de «toma una carta» (Take TM / Take Z Crystal). `kind` dice qué
+    // baraja es; `mode` distingue la tirada de 3 (roll) de usar una carta que ya
+    // estaba en la bolsa (use), y `bagUid` solo viaja en ese segundo caso, para
+    // poder sacarla de la bolsa al adjuntarla.
+    const [pickEvent, setPickEvent] = useState(null);
+    // Incursión Max. El marcador vive en `game.raid` (backend); aquí solo queda
+    // lo de la tablet: si la pantalla de montaje está abierta, si hay una
+    // llamada en vuelo, y el resumen del combate recién cerrado que espera
+    // confirmación antes de encadenar el siguiente.
+    const [raidSetupOpen, setRaidSetupOpen] = useState(false);
+    const [raidLoading, setRaidLoading] = useState(false);
+    // El cierre de combate NO se guarda como foto: se deriva de que los dos
+    // dados estén bloqueados. Así, si el jugador vuelve al combate a corregir un
+    // dado, al volver a bloquearlo el cierre reaparece con el total nuevo. Esta
+    // bandera solo dice "lo he escondido a propósito", y se limpia sola en
+    // cuanto un dado se desbloquea.
+    const [raidRoundHidden, setRaidRoundHidden] = useState(false);
+    const [raidResultOpen, setRaidResultOpen] = useState(false);
+    // Tras el cuarto combate hay que meter el D4 del jefe: lo tira el host con
+    // su dado físico, así que la app lo pregunta en vez de sortearlo.
+    const [raidDiePick, setRaidDiePick] = useState(false);
+    const [raidError, setRaidError] = useState(null);
+    const [raidRulesOpen, setRaidRulesOpen] = useState(null);
+    const [showHelp, setShowHelp] = useState(false);
+    const [megaBattleOpen, setMegaBattleOpen] = useState(false);
+    const [megaLoading, setMegaLoading] = useState(false);
+    // ¿Hay alguna guía abierta encima del concentrador de Ayuda?
+    const guideOpen = showLeaderViewer || showRulesGuide || showTMCatalog || Boolean(raidRulesOpen);
     // MT abierta a tamaño carta durante la batalla: {attack, pokemonName}
     const [tmCardOpen, setTmCardOpen] = useState(null);
+    // Item adjunto abierto a tamaño carta: {itemId, pokemon, pokemonName}
+    const [itemCardOpen, setItemCardOpen] = useState(null);
     const [showTurnModal, setShowTurnModal] = useState(false);
     const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
     const [gymLeaderBadgeNum, setGymLeaderBadgeNum] = useState(null);
@@ -261,6 +312,26 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         return () => clearTimeout(turnAlertTimer.current);
     }, [game.currentTurn]);
 
+    // Único punto que borra el salvaje encontrado. Se declara aquí arriba —antes
+    // del `return` de "jugador no encontrado"— porque lo usa el efecto de turno.
+    const clearWildFound = () => {
+        setWildFoundId('');
+        setWildPokemonId('');
+        setWildSuggestions([]);
+        setWildHighlight(-1);
+        setWildPreviewImg(null);
+        setWildChain(null);
+        setShowWildModal(false);
+    };
+
+    // El salvaje encontrado dura todo el turno del jugador: se borra cuando su
+    // turno acaba (paso de mio -> de otro), no cuando pelea o captura.
+    const prevIsMyTurn = useRef(isMyTurn);
+    useEffect(() => {
+        if (prevIsMyTurn.current && !isMyTurn) clearWildFound();
+        prevIsMyTurn.current = isMyTurn;
+    }, [isMyTurn]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Fases de batalla (mismo patron que Stadium)
     const [myPokemon, setMyPokemon] = useState();
     const [myPokemonSelected, setMyPokemonSelected] = useState('false');
@@ -326,8 +397,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (!isMyTurn) return;
         if (myAttackSelected === 'true' && rivalAttackSelected === 'true') {
             onChangeBattlePhase('RollDice');
-            onHandleTotales('MyPlayer', myTotal);
-            onHandleTotales('Rival', rivalTotal);
+            onHandleTotales('MyPlayer', myTotal, myExtra);
+            onHandleTotales('Rival', rivalTotal, rivalExtra);
         }
     }, [myAttackSelected, rivalAttackSelected]);
 
@@ -335,6 +406,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     useEffect(() => {
         if (!myLocked || !rivalLocked) return;
         if (!myPokemon || !rivalPokemon) return;
+
+        // Incursión: aquí no se gana nivel, no se captura y nadie se debilita
+        // (las tres reglas de la carta). Solo se anota el combate y se ofrece
+        // encadenar el siguiente, así que este efecto se corta antes de todos
+        // los prompts de una batalla normal.
+        if (raid && !raid.result) return;
 
         // Batalla contra pokemon salvaje: levelup → captura (secuencial)
         if (rival?.name === 'Wild Pokemon') {
@@ -367,6 +444,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
     }, [myLocked, rivalLocked]);
 
+    // Volver a tocar los dados reabre el cierre de combate de la incursión: si
+    // el jugador salió a corregir uno, el resumen tiene que volver solo con el
+    // total actualizado en cuanto ambos vuelvan a estar bloqueados.
+    useEffect(() => {
+        if (!myLocked || !rivalLocked) setRaidRoundHidden(false);
+    }, [myLocked, rivalLocked]);
+
     // Si el master pone o quita una carta de campo a media batalla, hay que rehacer
     // el total: el extra se guarda en estado al elegir el ataque y se quedaría viejo.
     useEffect(() => {
@@ -376,7 +460,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 const newTotal = sumTotal(myPokemon.totalLevel, myAttackPower, myBonusFinal, myDice, newExtra);
                 setMyExtra(newExtra);
                 setMyTotal(newTotal);
-                if (isMyTurn) onHandleTotales('MyPlayer', newTotal);
+                if (isMyTurn) onHandleTotales('MyPlayer', newTotal, newExtra);
             }
         }
         if (rivalPokemon && rivalAttackSelected === 'true') {
@@ -385,7 +469,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 const newTotal = sumTotal(rivalPokemon.totalLevel, rivalAttackPower, rivalBonusFinal, rivalDice, newExtra);
                 setRivalExtra(newExtra);
                 setRivalTotal(newTotal);
-                if (isMyTurn) onHandleTotales('Rival', newTotal);
+                if (isMyTurn) onHandleTotales('Rival', newTotal, newExtra);
             }
         }
     }, [fieldKey]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -407,6 +491,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         const pokedex = scannedPokemon.pokedex;
         const img = getSafePkmImg(pokedex, generation);
         setWildPokemonId(pokedex);
+        setWildFoundId(pokedex);
         setWildSuggestions([]);
         setWildPreviewImg(img);
         setShowSetup(true);
@@ -444,9 +529,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             .slice(0, 12);
     };
 
+    // Escribir NO borra lo ya encontrado: la ficha del salvaje sigue en pantalla
+    // hasta que una búsqueda nueva la reemplace.
     const handleWildInputChange = (value) => {
         setWildPokemonId(value);
-        setWildPreviewImg(null);
         setWildSuggestions(buildWildSuggestions(value));
         setWildHighlight(-1);
     };
@@ -505,6 +591,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             const img = getPkmImg(id, generation);
             setWildPreviewImg(img);
             setWildPokemonId(id);
+            setWildFoundId(id);
             const res = await fetch(`${SERVER_IP}/get-evolution-chain`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -513,6 +600,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             const data = await res.json();
             setWildChain(data);
         } catch (e) {
+            // Búsqueda fallida: se cae también el salvaje anterior, para no
+            // dejar en pantalla una ficha que ya no corresponde a lo buscado.
+            setWildFoundId('');
             setWildPreviewImg(null);
             setWildChain(null);
         }
@@ -529,17 +619,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     };
 
     const handleConfirmWildPokemon = async () => {
-        if (!wildPokemonId) return;
+        if (!wildFoundId) return;
         prevSimRivalId.current = `SimRival-${playerId}`;
         // Todo el cuerpo va dentro de la cortina: el cambio de pantalla tiene
         // que ocurrir con las hojas cerradas, no antes ni después
         await runCurtain(async () => {
-            await onSimWildBattle(playerId, wildPokemonId);
+            await onSimWildBattle(playerId, wildFoundId);
             if (isMyTurn) onStartSimMirror(playerId);
-            setWildPokemonId('');
+            // El salvaje NO se limpia aquí: al volver al setup sigue encontrado
             setWildSuggestions([]);
-            setWildPreviewImg(null);
-            setWildChain(null);
             setShowWildModal(false);
             setShowSetup(false);
         });
@@ -608,7 +696,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                  style={{ '--pkm-type': typeColor(pkm.type1) }}>
 
                 <div className="sim-pkm-card-head">
-                    <span className="sim-pkm-card-name">{pkm.name}</span>
+                    {/* El nombre es el botón del mote: es el sitio donde el
+                        jugador ya está mirando cuando piensa en renombrarlo */}
+                    <PokemonName pkm={pkm}
+                                 className="sim-pkm-card-name sim-pkm-card-name--editable"
+                                 title={`${nameTitle(pkm)} — toca para poner un mote`}
+                                 onClick={() => setMotePkmId(pkm.id)} />
                     <span className="sim-pkm-card-lvl">
                         Nv {pkm.level}{pkm.extra > 0 && <em>+{pkm.extra}</em>}
                     </span>
@@ -640,10 +733,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     grande y los botones chicos se confundían con ella */}
                 <div className="sim-pkm-card-foot">
                     <div className={`sim-mini-attach-bar ${pkm.attach !== 'None' ? 'sim-mini-attach-bar--filled' : ''}`}
-                         title={pkm.attach !== 'None' ? `${attachLabel(pkm.attach)} — cambiar item` : 'Adjuntar item'}
+                         title={pkm.attach !== 'None' ? `${attachLabel(pkm.attach, pkm)} — cambiar item` : 'Adjuntar item'}
                          onClick={() => setAttachPkmId(pkm.id)}>
                         {pkm.attach !== 'None'
-                            ? <div className="sim-mini-attach attached-item" style={attachIconStyle(pkm.attach)} />
+                            ? <div className="sim-mini-attach attached-item" style={attachIconStyle(pkm.attach, pkm)} />
                             : '+ Attach'}
                     </div>
                     <div className={`sim-pkm-card-ko ${isDead ? 'sim-pkm-card-ko--on' : ''}`}
@@ -712,15 +805,31 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         );
     };
 
-    const handleRequestPurchase = async (item, price) => {
+    // El mote no pasa por App.js como el resto de acciones: no lo necesita nadie
+    // más que esta pantalla, y el socket ya devuelve el equipo actualizado.
+    const handleSetMote = async (pokemonId, mote) => {
+        try {
+            await fetch(`${SERVER_IP}/set-mote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId, pokemonId, mote })
+            });
+        } catch (err) {
+            console.error('Error al poner el mote:', err);
+        }
+    };
+
+    // `kind` es 'buy' salvo que sea una venta de carta, que en vez de cobrar
+    // paga. La resta o la suma la hace el backend al aprobar, no esto.
+    const handleRequestPurchase = async (item, price, kind = 'buy') => {
         try {
             const res = await fetch(`${SERVER_IP}/request-purchase`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ playerId, item, price })
+                body: JSON.stringify({ playerId, item, price, kind })
             });
             const data = await res.json();
-            if (res.ok) setPendingRequest({ id: data.purchaseId, item, price });
+            if (res.ok) setPendingRequest({ id: data.purchaseId, item, price, kind });
         } catch (err) {
             console.error('Error al solicitar compra:', err);
         }
@@ -872,7 +981,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyPkm_type_id1(`types_${pokemon.id}_1`);
         setMyPkm_type_id2(`types_${pokemon.id}_2`);
         setMyPokemonSelected('true');
-        if (isMyTurn) onHandleBattlePokemon('MyPlayer', pokemon.id);
+        if (isMyTurn) onHandleBattlePokemon('MyPlayer', pokemon.id, battleForm(pokemon));
         if (rival?.name === 'Wild Pokemon') {
             const wildPkm = rival.pokemons?.[0];
             if (wildPkm) await handleSelectRivalPokemon(wildPkm, pokemon);
@@ -889,7 +998,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         const bonuses = await calculateBonus(myPkm, pokemon);
         setRivalPokemonSelected('true');
         if (isMyTurn) {
-            onHandleBattlePokemon('Rival', pokemon.id);
+            onHandleBattlePokemon('Rival', pokemon.id, battleForm(pokemon));
             onChangeBattlePhase('AttackSelection');
             onHandleBonuses('MyPlayer', bonuses.myB1, bonuses.myB2, bonuses.myB3);
             onHandleBonuses('Rival', bonuses.rivalB1, bonuses.rivalB2, bonuses.rivalB3);
@@ -965,7 +1074,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
         if (isMyTurn) {
             onHandleBonusFinal('MyPlayer', newBonusFinal);
-            onHandleTotales('MyPlayer', newTotal);
+            onHandleTotales('MyPlayer', newTotal, newExtra);
         }
     };
 
@@ -995,7 +1104,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
         if (isMyTurn) {
             onHandleBonusFinal('Rival', newBonusFinal);
-            onHandleTotales('Rival', newTotal);
+            onHandleTotales('Rival', newTotal, newExtra);
         }
     };
 
@@ -1014,7 +1123,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (rowIndex === newRows.length - 1) setMyLocked(true);
         if (isMyTurn) {
             onHandleDice('MyPlayer', newDice, newRows.filter(v => v !== null));
-            onHandleTotales('MyPlayer', newTotal);
+            onHandleTotales('MyPlayer', newTotal, myExtra);
         }
     };
 
@@ -1035,7 +1144,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyTotal(newTotal);
         if (isMyTurn) {
             onHandleDice('MyPlayer', newDice, newRows.filter(v => v !== null));
-            onHandleTotales('MyPlayer', newTotal);
+            onHandleTotales('MyPlayer', newTotal, myExtra);
         }
     };
 
@@ -1052,7 +1161,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (rowIndex === newRows.length - 1) setRivalLocked(true);
         if (isMyTurn) {
             onHandleDice('Rival', newDice, newRows.filter(v => v !== null));
-            onHandleTotales('Rival', newTotal);
+            onHandleTotales('Rival', newTotal, rivalExtra);
         }
     };
 
@@ -1073,7 +1182,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setRivalTotal(newTotal);
         if (isMyTurn) {
             onHandleDice('Rival', newDice, newRows.filter(v => v !== null));
-            onHandleTotales('Rival', newTotal);
+            onHandleTotales('Rival', newTotal, rivalExtra);
         }
     };
 
@@ -1126,16 +1235,31 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     };
 
     const handleCaptureDirect = async () => {
-        await handleAddToTeam(wildPokemonId);
+        await handleAddToTeam(wildFoundId);
+        // Solo se cierra el modal: la ficha del salvaje se queda en el setup
         setShowWildModal(false);
-        setWildPokemonId('');
-        setWildSuggestions([]);
-        setWildPreviewImg(null);
-        setWildChain(null);
     };
 
     const handleNextTurn = () => {
         onNextTurn();
+    };
+
+    // Huir del salvaje: se cobra 1 moneda y se cierra el turno. Solo sale en el
+    // turno propio —si no, cualquiera podría ir sumando monedas fuera de turno—
+    // y el salvaje lo limpia solo el efecto de fin de turno.
+    const handleWildFlee = async () => {
+        if (!isMyTurn) return;
+        try {
+            await fetch(`${SERVER_IP}/update-coins`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId, coins: (player.coins || 0) + 1 }),
+            });
+        } catch (e) {
+            console.error('Error al dar la moneda de huida:', e);
+        }
+        setShowWildModal(false);
+        handleNextTurn();
     };
 
     // ── Progreso de gimnasios ────────────────────────────────────────────────
@@ -1160,6 +1284,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowLeaderViewer(false);
         setShowStore(false);
         setShowRulesGuide(false);
+        setShowHelp(false);
+        setShowSpecialFns(false);
+        setMegaBattleOpen(false);
+        setShowEvents(false);
+        setPickEvent(null);
         setShowWildModal(false);
         setShowOtherRivals(false);
         setShowLevelUpPrompt(false);
@@ -1170,6 +1299,250 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowReplaceModal(false);
         setPendingCapturePokedex(null);
         if (isMyTurn && game.battlePublic) onToggleBattlePublic();
+    };
+
+    // ── Eventos ─────────────────────────────────────────────────────────────
+    // Los eventos que aún no tienen lógica se listan aquí: el menú los pinta en
+    // gris y no deja pulsarlos, en vez de abrir algo que no hace nada.
+    const EVENTS_TODO = [];
+
+    // Los que ya se lanzaron en este turno. El backend limpia la marca al
+    // empezar el turno del jugador, así que basta con leerla. Sin useMemo: por
+    // aquí ya se pasó un early return, y son dos listas de nada.
+    const eventsUsed = Object.keys(player?.eventsUsed || {}).filter(k => player.eventsUsed[k]);
+    const bag = player?.bag || [];
+
+    // Punto único de entrada de los eventos. Cada rama se va llenando conforme
+    // se define qué hace el evento; el menú se cierra siempre al elegir.
+    const handleEventPick = async (eventId) => {
+        setShowEvents(false);
+        switch (eventId) {
+            case 'takeTM':
+                // El evento se consume al abrirlo: salir sin elegir cuesta lo
+                // mismo que elegir, así que la marca se pone ya.
+                onMarkEventUsed(player.id, 'takeTM');
+                setPickEvent({ kind: 'tm', mode: 'roll', options: rollTMs(3) });
+                break;
+            case 'takeZ':
+                onMarkEventUsed(player.id, 'takeZ');
+                setPickEvent({ kind: 'z', mode: 'roll', options: rollZCrystals(3) });
+                break;
+            case 'takeTera':
+                onMarkEventUsed(player.id, 'takeTera');
+                setPickEvent({ kind: 'tera', mode: 'roll', options: rollTeraOrbs(3) });
+                break;
+            case 'raidMax':
+                // A diferencia de los eventos de tomar carta, la incursión NO se
+                // consume: se puede montar las veces que haga falta. Lo que sí
+                // se hace es borrar la anterior, para que la pantalla de montaje
+                // abra siempre limpia en el paso del color en vez de saltar al
+                // equipo con el jefe viejo.
+                if (raid) await onRaidClear(player.id);
+                setRaidSetupOpen(true);
+                break;
+            case 'megaBattle':
+                // No se consume por turno, igual que la incursión: es un combate
+                // suelto que se puede montar las veces que haga falta.
+                setMegaBattleOpen(true);
+                break;
+            default:
+                break;
+        }
+    };
+
+    // ── Eventos Take TM / Take Z Crystal ────────────────────────────────────
+
+    // Adjunta la carta elegida, con las mismas llamadas que hace el catálogo
+    // desde ModalAttach. Las tres barajas compiten por el mismo hueco (`attach`),
+    // así que adjuntar una quita la anterior: un Pokémon lleva MT, cristal u
+    // orbe, nunca dos.
+    //
+    // La MT viaja con el poder ya sumado el bono de tipo para ESTE Pokémon, más
+    // el poder impreso aparte para que el backend recalcule el bono si el
+    // Pokémon evoluciona. El cristal viaja con el movimiento ya resuelto y con
+    // su tabla entera (genérico + especiales) por el mismo motivo: un Dartrix
+    // con Ghostium Z lleva el genérico, pero al evolucionar a Decidueye le toca
+    // Sinister Arrow Raid.
+    const handleEventPickAttach = (card, pokemonId) => {
+        const target = (player.pokemons || []).find(p => p.id === pokemonId);
+
+        // El orbe no crea ataque ni resuelve movimiento: solo marca el Pokémon
+        // con el tipo, y ya en la selección de combatientes se decide si sube
+        // teracristalizado.
+        if (pickEvent?.kind === 'tera') {
+            attachTera(player.id, pokemonId, card.id);
+        } else if (pickEvent?.kind === 'z') {
+            const mov = zMoveFor(card, target);
+            attachTM(player.id, pokemonId, card.tipo.toUpperCase(), mov.poder, {
+                tmName: mov.nombre,
+                attachAs: 'Z',
+                zData: {
+                    cristal: card.cristal,
+                    generico: card.generico,
+                    poderGenerico: card.poder,
+                    especiales: card.especiales
+                        .filter(e => e.activo !== false)
+                        .map(({ pokemon, nombre, poder }) => ({ pokemon, nombre, poder })),
+                },
+            });
+        } else {
+            attachTM(player.id, pokemonId, card.tipo.toUpperCase(), tmPowerFor(card, target), {
+                tmName: card.nombre,
+                tmBase: card.poder,
+                tmBono: card.stab,
+            });
+        }
+
+        // Venía de la bolsa: al equiparla deja de estar guardada.
+        if (pickEvent?.bagUid) onBagRemove(player.id, pickEvent.bagUid);
+        setPickEvent(null);
+    };
+
+    // A la bolsa. Solo se guarda el id de la carta: la ficha entera se resuelve
+    // al pintarla, así una carta guardada no se queda con datos viejos si el
+    // catálogo cambia.
+    const handleEventPickSave = (card) => {
+        const kind = pickEvent?.kind || 'tm';
+        onBagAdd(player.id, {
+            uid: `${kind}-${card.id}-${Date.now()}`,
+            kind,
+            cardId: card.id,
+        });
+        setPickEvent(null);
+    };
+
+    // Usar una carta que ya estaba guardada: se salta la tirada y va directo a
+    // elegir Pokémon. Cerrar aquí no cuesta nada, sigue en la bolsa.
+    const BAG_CATALOGS = { tm: TMS_BY_ID, z: Z_BY_ID, tera: TERA_BY_ID };
+
+    const handleUseBagItem = (entry) => {
+        const card = BAG_CATALOGS[entry.kind]?.[entry.cardId];
+        if (!card) return;
+        setShowEvents(false);
+        setPickEvent({ kind: entry.kind, mode: 'use', item: card, bagUid: entry.uid });
+    };
+
+    // ── Incursión Max ───────────────────────────────────────────────────────
+    //
+    // La incursión NO trae motor propio: los cuatro combates son batallas
+    // normales contra el mismo rival, encadenadas. Lo único que aporta este
+    // bloque es (a) meter al atacante que toca sin pasar por la pantalla de
+    // selección —el atacante puede no ser del host, así que no lo elige él— y
+    // (b) anotar el total de cada combate en el marcador del backend.
+    const raidRoundsDone = raid?.rounds?.length || 0;
+    const raidOver = Boolean(raid && raid.result);
+
+    // El jefe entra transformado. Con forma G-Max propia ya viene con su token y
+    // sus ataques desde la DB; sin ella se dinamaxiza aquí, que es lo que
+    // convierte sus ataques en Movimientos Max sin tocarle el nivel.
+    const raidBossForBattle = () => {
+        if (!raid?.boss) return null;
+        return raid.bossMode === 'gmax' ? raid.boss : applyDynamax(raid.boss);
+    };
+
+    // Monta el combate número `index` (0-based) sin pasar por SimBattleSelect.
+    const startRaidRound = async (index) => {
+        const slot = raid?.team?.[index];
+        const boss = raidBossForBattle();
+        if (!slot || !boss) return;
+        resetBattleState();
+        setShowSetup(false);
+        await handleSelectMyPokemon(slot.pokemon);
+        await handleSelectRivalPokemon(boss, slot.pokemon);
+    };
+
+    const handleRaidBoss = async (pokedex) => {
+        setRaidLoading(true);
+        setRaidError(null);
+        const res = await onRaidStart(player.id, pokedex);
+        setRaidLoading(false);
+        if (!res?.ok) setRaidError(res?.message || 'No se pudo montar al jefe');
+    };
+
+    const handleRaidTeam = async (slots) => {
+        setRaidLoading(true);
+        setRaidError(null);
+        const res = await onRaidTeam(player.id, slots);
+        setRaidLoading(false);
+        if (!res?.raid) {
+            setRaidError(res?.message || 'No se pudo montar el equipo');
+            return;
+        }
+        setRaidSetupOpen(false);
+        // El estado de `raid` que hay en esta pasada todavía no trae el equipo
+        // (llega por socket), así que el primer combate se monta con lo que
+        // acaba de responder el servidor.
+        const slot = res.raid.team[0];
+        const boss = res.raid.bossMode === 'gmax' ? res.raid.boss : applyDynamax(res.raid.boss);
+        resetBattleState();
+        setShowSetup(false);
+        await handleSelectMyPokemon(slot.pokemon);
+        await handleSelectRivalPokemon(boss, slot.pokemon);
+    };
+
+    // Cierra el combate en curso: anota los dos totales y encadena.
+    const handleRaidNext = async () => {
+        setRaidRoundHidden(true);
+        const res = await onRaidRound(player.id, myTotal, rivalTotal);
+        const done = res?.raid?.rounds?.length || 0;
+        if (done >= (res?.raid?.team?.length || 4)) {
+            // Cerrados los cuatro, falta el D4 del jefe. La batalla se recoge ya
+            // para que el dado se pida sobre la pantalla limpia.
+            resetBattleState();
+            setShowSetup(true);
+            setRaidDiePick(true);
+            return;
+        }
+        await startRaidRound(done);
+    };
+
+    // Cerrar la incursión libera el rival y borra el marcador.
+    const handleRaidDie = async (value) => {
+        setRaidDiePick(false);
+        await onRaidFinish(player.id, value);
+        setRaidResultOpen(true);
+    };
+
+    const handleRaidClose = async () => {
+        setRaidResultOpen(false);
+        setRaidDiePick(false);
+        setRaidRoundHidden(false);
+        await onRaidClear(player.id);
+        resetBattleState();
+        setShowSetup(true);
+    };
+
+    // Qué especie se mete al equipo al capturar. Contra un salvaje normal es él
+    // mismo; contra una mega (evento Combate Mega) es su forma BASE, que el
+    // backend deja sellada en `basePokedex`: una mega suelta en el equipo no
+    // tendría de dónde revertir ni a qué subir de nivel.
+    const capturablePokedex = (pkm) => pkm?.basePokedex || pkm?.pokedex;
+
+    // ── Combate Mega ────────────────────────────────────────────────────────
+    // Solo monta el rival; a partir de ahí es una batalla salvaje corriente y el
+    // flujo de siempre se encarga del resto.
+    const handleMegaRoll = async () => {
+        setMegaLoading(true);
+        const res = await onRandomMega();
+        setMegaLoading(false);
+        return res;
+    };
+
+    const handleMegaSearch = async (pokedex) => {
+        setMegaLoading(true);
+        const res = await onMegaForms(pokedex);
+        setMegaLoading(false);
+        return res;
+    };
+
+    const handleMegaStart = async (megaPokedex) => {
+        setMegaLoading(true);
+        const res = await onSimMegaBattle(player.id, megaPokedex);
+        setMegaLoading(false);
+        if (!res?.ok) return;
+        setMegaBattleOpen(false);
+        setShowSetup(false);
+        if (isMyTurn) onStartSimMirror(playerId);
     };
 
     // Botón "Nueva Simulacion" durante la batalla: mantiene el rival, vuelve a selección de pokemon
@@ -1240,6 +1613,32 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 <div className="rules-guide-float-btn" onClick={() => setShowRulesGuide(true)}>?</div>
             )}
 
+            {/* Funciones especiales de batalla (dado de tipos, metrónomo, clima).
+                Abajo a la izquierda, junto a la guía de efectos: en el centro
+                chocaba con Re-Match y Change Pokemon. */}
+            {rival && !showSetup && !inSelection && (
+                <div className="sim-special-fns-btn"
+                     title="Funciones especiales"
+                     onClick={() => setShowSpecialFns(true)}>
+                    {/* Destello, no un dado: el dado solo representaría una de
+                        las tres funciones del menú. Va en SVG por lo mismo que
+                        las espadas de pelear — el emoji ✨ lo pinta cada
+                        sistema a su manera y no sigue el color del botón. */}
+                    <svg className="sim-special-fns-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M13.2 2.4 15 8.1a1.4 1.4 0 0 0 .9.9l5.7 1.8-5.7 1.8a1.4 1.4 0 0 0-.9.9l-1.8 5.7-1.8-5.7a1.4 1.4 0 0 0-.9-.9L4.8 10.8 10.5 9a1.4 1.4 0 0 0 .9-.9l1.8-5.7Z" />
+                        <path d="M5.6 14.6 6.4 17l2.4.8-2.4.8-.8 2.4-.8-2.4L2.4 17.8l2.4-.8.8-2.4Z" />
+                    </svg>
+                    Especiales
+                </div>
+            )}
+
+            <ModalSpecialAttacks show={showSpecialFns}
+                                 onClose={() => setShowSpecialFns(false)}
+                                 title="Funciones especiales"
+                                 fieldMoves={game.fieldMoves || [null, null]}
+                                 onSetFieldMove={onSetFieldMove} />
+
+
             {/* Cartas de campo activas. Solo durante la selección de ataque y los
                 dados — misma condición que la pantalla de batalla — para no
                 estorbar en el home ni al elegir Pokémon. */}
@@ -1292,12 +1691,253 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} />
             <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
             <ModalTMCatalog show={showTMCatalog} onClose={() => setShowTMCatalog(false)} />
+            <ModalEvents
+                show={showEvents}
+                onClose={() => setShowEvents(false)}
+                onPick={handleEventPick}
+                disabled={EVENTS_TODO}
+                usedEvents={eventsUsed}
+                onOpenRules={(cardId) => setRaidRulesOpen(cardId)}
+                bag={bag}
+                onUseBagItem={handleUseBagItem}
+            />
+            <ModalRaidSetup
+                show={raidSetupOpen}
+                onClose={async () => { setRaidSetupOpen(false); setRaidError(null); if (raid) await onRaidClear(player.id); }}
+                player={player}
+                allPlayers={game.players || []}
+                raid={raid}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onPickBoss={handleRaidBoss}
+                error={raidError}
+                onOpenRules={() => setRaidRulesOpen('maxRaid')}
+                onConfirmTeam={handleRaidTeam}
+                loading={raidLoading}
+            />
+
+            {/* Marcador de la incursión: acompaña a los cuatro combates para que
+                nunca haya que recordar de memoria cómo va la suma */}
+            {raid && !showSetup && !raidOver && (
+                <div className="raid-strip">
+                    <div className="raid-strip-round">
+                        Combate {Math.min(raidRoundsDone + 1, raid.team?.length || 4)} de {raid.team?.length || 4}
+                    </div>
+                    <div className="raid-strip-score">
+                        <span className="raid-strip-host">{raid.rounds.reduce((a, r) => a + r.hostTotal, 0)}</span>
+                        <i>·</i>
+                        <span className="raid-strip-boss">{raid.rounds.reduce((a, r) => a + r.bossTotal, 0)}</span>
+                    </div>
+                    <div className="raid-strip-dots">
+                        {(raid.team || []).map((slot, i) => (
+                            <span key={i}
+                                  className={`raid-strip-dot ${i < raidRoundsDone ? 'is-done' : ''} ${i === raidRoundsDone ? 'is-now' : ''}`}
+                                  title={slot.pokemon?.name} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Combate cerrado. No se anota hasta confirmar: se puede volver al
+                combate a corregir un dado, y al volver a bloquearlo este resumen
+                reaparece solo con el total nuevo. */}
+            {raid && !raid.result && myLocked && rivalLocked && !raidRoundHidden && myPokemon && rivalPokemon && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className="raid-round-modal">
+                        <div className="raid-round-title">
+                            Combate {raidRoundsDone + 1} terminado
+                        </div>
+                        <div className="raid-round-score">
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{myPokemon.name}</span>
+                                <span className="raid-round-num">{myTotal}</span>
+                            </div>
+                            <i>vs</i>
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{raid?.boss?.name}</span>
+                                <span className="raid-round-num">{rivalTotal}</span>
+                            </div>
+                        </div>
+                        <div className="raid-round-note">
+                            En la incursión no se sube de nivel ni se debilita nadie:
+                            los totales se suman al marcador.
+                        </div>
+                        <div className="raid-round-actions">
+                            <button className="raid-setup-btn raid-setup-btn--ghost"
+                                    onClick={() => setRaidRoundHidden(true)}>
+                                ← Volver al combate
+                            </button>
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleRaidNext}>
+                                {raidRoundsDone + 1 >= (raid?.team?.length || 4)
+                                    ? 'Tirar el D4 del jefe'
+                                    : 'Siguiente combate →'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* El D4 del jefe lo tira el host en la mesa: aquí solo se registra.
+                Se enseña cómo va la suma y qué hace falta, que es lo que se está
+                mirando con el dado ya en la mano. */}
+            {raidDiePick && raid && (() => {
+                const hostSum = raid.rounds.reduce((a, r) => a + r.hostTotal, 0);
+                const bossBase = raid.rounds.reduce((a, r) => a + r.bossTotal, 0);
+                // El host gana los empates, así que aguanta hasta que el dado
+                // IGUALE la diferencia: con margen 3 gana con 1, 2 o 3.
+                const margin = hostSum - bossBase;
+                return (
+                    <div className="modal-backdrop raid-round-backdrop">
+                        <div className="raid-round-modal">
+                            <div className="raid-round-title">Dado del jefe</div>
+
+                            <div className="raid-round-score">
+                                <div className="raid-round-side">
+                                    <span className="raid-round-label">Incursión</span>
+                                    <span className="raid-round-num raid-round-num--host">{hostSum}</span>
+                                </div>
+                                <i>vs</i>
+                                <div className="raid-round-side">
+                                    <span className="raid-round-label">{raid.boss?.name}</span>
+                                    <span className="raid-round-num">{bossBase}<em>+D4</em></span>
+                                </div>
+                            </div>
+
+                            <div className={`raid-die-hint ${margin >= 4 ? 'is-win' : ''} ${margin <= 0 ? 'is-lose' : ''}`}>
+                                {margin >= 4
+                                    ? 'Ganas salga lo que salga.'
+                                    : margin <= 0
+                                        ? 'El jefe gana salga lo que salga.'
+                                        : `Ganas si sale ${margin} o menos.`}
+                            </div>
+
+                            <div className="raid-round-note">
+                                Tira tu D4 y marca lo que salió.
+                            </div>
+
+                            <div className="raid-die-row">
+                                {[1, 2, 3, 4].map(n => (
+                                    <button key={n}
+                                            className={`raid-die ${n <= margin ? 'is-win' : 'is-lose'}`}
+                                            title={n <= margin ? 'Con este resultado ganáis' : 'Con este resultado gana el jefe'}
+                                            onClick={() => handleRaidDie(n)}>
+                                        {n}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {/* Resultado: las cuatro rondas, el D4 y el veredicto */}
+            {raidResultOpen && raid?.result && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className={`raid-result-modal raid-result-modal--${raid.result}`}>
+                        <div className="raid-result-title">
+                            {raid.result === 'win' ? '¡Incursión superada!' : 'La incursión os venció'}
+                        </div>
+
+                        <div className="raid-result-rows">
+                            {raid.rounds.map((r, i) => (
+                                <div className="raid-result-row" key={i}>
+                                    <span className="raid-result-who">
+                                        {r.attacker}{r.ownerName ? ` · ${r.ownerName}` : ''}
+                                    </span>
+                                    <span className="raid-result-nums">{r.hostTotal} — {r.bossTotal}</span>
+                                </div>
+                            ))}
+                            <div className="raid-result-row raid-result-row--die">
+                                <span className="raid-result-who">D4 del jefe</span>
+                                <span className="raid-result-nums">+{raid.die}</span>
+                            </div>
+                        </div>
+
+                        <div className="raid-result-total">
+                            <span className={raid.result === 'win' ? 'is-win' : ''}>{raid.hostSum}</span>
+                            <i>vs</i>
+                            <span className={raid.result === 'lose' ? 'is-win' : ''}>{raid.bossSum}</span>
+                        </div>
+
+                        <div className="raid-result-actions">
+                            {raid.result === 'win' && (
+                                <button className="raid-setup-btn raid-setup-btn--main"
+                                        onClick={async () => { await handleAddToTeam(raid.basePokedex); await handleRaidClose(); }}>
+                                    Capturar a {raid.baseName}
+                                </button>
+                            )}
+                            <button className="raid-setup-btn raid-setup-btn--ghost" onClick={handleRaidClose}>
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* La hoja de reglas se consulta desde el home —el menú de eventos y
+                el montaje de la incursión—, nunca a media batalla. `raidRulesOpen`
+                guarda QUÉ carta se abrió, para que sirva igual cuando haya más. */}
+            {/* Una cosa a la vez. Mientras hay una guía abierta el concentrador
+                se RETIRA en vez de quedarse debajo: apilar modales obliga a
+                cuadrar z-index entre una docena de ellos y encima deja la guía
+                asomando por detrás. Como `showHelp` sigue en true, al cerrar la
+                guía el concentrador reaparece solo — su botón de cerrar hace de
+                "volver a Ayuda" sin tener que tocar ninguna de las guías, que
+                además conservan la pantalla entera (el catálogo de MTs son 291
+                cartas con buscador: encajonarlo dentro de otro modal lo
+                empeora). */}
+            <ModalMegaBattle
+                show={megaBattleOpen}
+                onClose={() => setMegaBattleOpen(false)}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onRoll={handleMegaRoll}
+                onSearch={handleMegaSearch}
+                onStart={handleMegaStart}
+                loading={megaLoading}
+            />
+
+            <ModalHelp
+                show={showHelp && !guideOpen}
+                onClose={() => setShowHelp(false)}
+                onOpen={(section) => {
+                    if (section === 'leaders') return setShowLeaderViewer(true);
+                    if (section === 'effects') return setShowRulesGuide(true);
+                    if (section === 'tms')     return setShowTMCatalog(true);
+                    setRaidRulesOpen(section);   // el resto son ids de hoja de reglas
+                }}
+            />
+
+            <ModalRulesCard
+                show={Boolean(raidRulesOpen)}
+                onClose={() => setRaidRulesOpen(null)}
+                cardId={raidRulesOpen === true ? 'maxRaid' : raidRulesOpen}
+            />
+
+            <ModalEventPick
+                show={pickEvent !== null}
+                onClose={() => setPickEvent(null)}
+                kind={pickEvent?.kind}
+                mode={pickEvent?.mode}
+                options={pickEvent?.options || []}
+                item={pickEvent?.item || null}
+                pokemons={player?.pokemons || []}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onAttach={handleEventPickAttach}
+                onSave={handleEventPickSave}
+                onDiscard={() => setPickEvent(null)}
+            />
             <ModalTMCard
                 show={tmCardOpen !== null}
                 onClose={() => setTmCardOpen(null)}
                 attack={tmCardOpen?.attack}
                 pokemonName={tmCardOpen?.pokemonName}
                 esZ={tmCardOpen?.esZ}
+            />
+            <ModalItemCard
+                show={itemCardOpen !== null}
+                onClose={() => setItemCardOpen(null)}
+                itemId={itemCardOpen?.itemId}
+                pokemon={itemCardOpen?.pokemon}
+                pokemonName={itemCardOpen?.pokemonName}
             />
             <ModalAttach
                 show={attachPkmId !== null}
@@ -1307,6 +1947,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onAttach={onAttach}
                 attachTM={attachTM}
                 attachMega={attachMega}
+                attachTera={attachTera}
+            />
+            <ModalMote
+                show={motePkmId !== null}
+                onClose={() => setMotePkmId(null)}
+                pokemon={player?.pokemons?.find(p => p.id === motePkmId)}
+                onSave={(mote) => handleSetMote(motePkmId, mote)}
             />
 
             {/* Modal info pokemon salvaje */}
@@ -1396,11 +2043,31 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             })}
                         </div>
                         <div className="sim-wild-modal-actions">
-                            <button className="sim-wild-modal-fight" onClick={handleConfirmWildPokemon}>⚔</button>
-                            <div className="sim-wild-modal-capture-wrapper">
-                                <button className="sim-wild-modal-capture" onClick={handleCaptureDirect} />
-                                <span className="sim-wild-modal-capture-label">Capturar</span>
+                            {/* El icono va en SVG y no como carácter ⚔: el emoji lo
+                                pinta cada sistema a su manera (y en iPad sale plano
+                                y descentrado), el trazo se ve igual en todas. */}
+                            <div className="sim-wild-modal-action">
+                                <button className="sim-wild-modal-fight" onClick={handleConfirmWildPokemon} title="Pelear">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                        <path d="M4 3h3l9.5 11.2-2.8 2.4L4 6.2V3Z" />
+                                        <path d="M20 3h-3L7.5 14.2l2.8 2.4L20 6.2V3Z" />
+                                        <path d="m14.6 16.4 2.2-1.9 3.3 3.9a1.6 1.6 0 0 1-2.4 2.1l-3.1-4.1Z" />
+                                        <path d="m9.4 16.4-2.2-1.9-3.3 3.9a1.6 1.6 0 0 0 2.4 2.1l3.1-4.1Z" />
+                                    </svg>
+                                </button>
+                                <span className="sim-wild-modal-action-label">Pelear</span>
                             </div>
+                            <div className="sim-wild-modal-action">
+                                <button className="sim-wild-modal-capture" onClick={handleCaptureDirect} title="Capturar" />
+                                <span className="sim-wild-modal-action-label">Capturar</span>
+                            </div>
+                            {/* Huir por 1 moneda: fuera de turno ni se pinta */}
+                            {isMyTurn && (
+                                <div className="sim-wild-modal-action">
+                                    <button className="sim-wild-modal-flee" onClick={handleWildFlee} title="Huir y cobrar $1">$1</button>
+                                    <span className="sim-wild-modal-action-label">Huir · fin de turno</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1593,7 +2260,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 ? (
                                     <div className="sim-wild-preview" title="Ver al salvaje"
                                          onClick={() => setShowWildModal(true)}>
-                                        <img src={wildPreviewImg} alt={wildPokemonId} className="sim-wild-preview-img" />
+                                        <img src={wildPreviewImg} alt={wildFoundId} className="sim-wild-preview-img" />
                                         <span className="sim-wild-preview-hint">Toca para pelear o capturar</span>
                                     </div>
                                 )
@@ -1621,17 +2288,17 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 <div className="sim-setup-btn-icon sim-topbar-pokedex"></div>
                                 <span>Pokedex</span>
                             </div>
-                            <div className="sim-setup-btn" onClick={() => setShowLeaderViewer(true)}>
-                                <div className="sim-setup-btn-icon sim-topbar-book"></div>
-                                <span>Guia</span>
+                            {/* Guía de líderes, efectos, MTs y reglas de eventos
+                                viven todas dentro de Ayuda: la barra se estaba
+                                llenando de botones de consulta y quitaba sitio a
+                                los que de verdad se usan. */}
+                            <div className="sim-setup-btn" onClick={() => setShowHelp(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-help">?</div>
+                                <span>Ayuda</span>
                             </div>
-                            <div className="sim-setup-btn" onClick={() => setShowRulesGuide(true)}>
-                                <div className="sim-setup-btn-icon sim-topbar-effects"></div>
-                                <span>Efectos</span>
-                            </div>
-                            <div className="sim-setup-btn" onClick={() => setShowTMCatalog(true)}>
-                                <div className="sim-setup-btn-icon sim-topbar-tms"></div>
-                                <span>MTs</span>
+                            <div className="sim-setup-btn" onClick={() => setShowEvents(true)}>
+                                <div className="sim-setup-btn-icon sim-topbar-events">✦</div>
+                                <span>Eventos</span>
                             </div>
                             <div className={`sim-setup-btn ${pendingRequest ? 'sim-store-button--pending' : ''}`} onClick={() => setShowStore(true)}>
                                 <div className="sim-setup-btn-icon sim-topbar-store"></div>
@@ -1691,12 +2358,32 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
             {/* Seleccion de ataques */}
             {!showSetup && rivalPokemonSelected === 'true' && myPokemonSelected === 'true' && (
-                <div className="attack-select-sim">
+                <div className="attack-select-sim" style={arenaStyle(rivalPokemon.pokedex, generation)}>
                     <div className='MyPokemon-main'>
-                        <div className={`MyPokemon_img ${myLocked && rivalLocked ? (myTotal >= rivalTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${myPokemonImg})` }}></div>
+                        {/* Teracristalizado o dinamaxizado: el token va envuelto
+                            en un aura. En la mesa el sprite es el mismo que el
+                            de siempre, así que el aura es lo único que avisa de
+                            que ese Pokémon no sube en su forma normal. Las dos
+                            son excluyentes, así que nunca coinciden. */}
+                        <div className={`MyPokemon_img ${myPokemon.teraActive ? 'tera-img' : ''} ${myPokemon.dynamaxActive ? 'dyna-img' : ''} ${myLocked && rivalLocked ? (myTotal >= rivalTotal ? 'winner-img' : 'loser-img') : ''}`}
+                             style={{
+                                 backgroundImage: `url(${myPokemonImg})`,
+                                 // El sprite viaja al CSS para poder recortar
+                                 // las capas de luz a la SILUETA (mask-image) y
+                                 // no a la caja del token.
+                                 ...(myPokemon.teraActive ? {
+                                     '--tera-type': typeColor(myPokemon.teraType),
+                                     '--tera-sprite': `url(${myPokemonImg})`,
+                                 } : {}),
+                                 ...(myPokemon.dynamaxActive ? {
+                                     '--dyna-sprite': `url(${myPokemonImg})`,
+                                 } : {}),
+                             }}></div>
                         <div className='MyPokemon_name'>
-                            {myPokemon.name}
+                            <PokemonName pkm={myPokemon} />
+                            {myPokemon.dynamaxActive && <span className="dyna-chip">Dynamax</span>}
                             <TMBadge pokemon={myPokemon} onOpen={setTmCardOpen} />
+                            <ItemBadge pokemon={myPokemon} onOpen={setItemCardOpen} />
                         </div>
                         <div className='MyPokemon_level'>Lv: {myPokemon.totalLevel}</div>
                         <div className="types_div">
@@ -1724,10 +2411,22 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     </div>
 
                     <div className='RivalPokemon-main'>
-                        <div className={`RivalPokemon_img ${myLocked && rivalLocked ? (rivalTotal >= myTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${rivalPokemonImg})` }}></div>
+                        <div className={`RivalPokemon_img ${rivalPokemon.teraActive ? 'tera-img' : ''} ${rivalPokemon.dynamaxActive ? 'dyna-img' : ''} ${myLocked && rivalLocked ? (rivalTotal >= myTotal ? 'winner-img' : 'loser-img') : ''}`}
+                             style={{
+                                 backgroundImage: `url(${rivalPokemonImg})`,
+                                 ...(rivalPokemon.teraActive ? {
+                                     '--tera-type': typeColor(rivalPokemon.teraType),
+                                     '--tera-sprite': `url(${rivalPokemonImg})`,
+                                 } : {}),
+                                 ...(rivalPokemon.dynamaxActive ? {
+                                     '--dyna-sprite': `url(${rivalPokemonImg})`,
+                                 } : {}),
+                             }}></div>
                         <div className='RivalPokemon_name'>
-                            {rivalPokemon.name}
+                            <PokemonName pkm={rivalPokemon} />
+                            {rivalPokemon.dynamaxActive && <span className="dyna-chip">Dynamax</span>}
                             <TMBadge pokemon={rivalPokemon} onOpen={setTmCardOpen} />
+                            <ItemBadge pokemon={rivalPokemon} onOpen={setItemCardOpen} />
                         </div>
                         <div className='RivalPokemon_level'>Lv: {rivalPokemon.totalLevel}</div>
                         <div className="types_div">
@@ -1782,6 +2481,19 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <div>{calcDiceSum(myDiceRows)}</div>=
                                     <div>{myTotal}</div>
                                 </div>
+                                {/* Los dados ya elegidos, en tira de solo lectura:
+                                    el selector oculta su fila al elegir, así que
+                                    sin esto el dado que salió no se ve en ningún
+                                    sitio. Va fuera de .MyDices —que vive arriba,
+                                    pegada al borde— para caer en el hueco entre
+                                    el Pokémon y la tabla de totales. */}
+                                {calcDiceSum(myDiceRows) > 0 && (
+                                    <div className='dice-chosen dice-chosen--mine' title='Dados elegidos'>
+                                        {myDiceRows.map((val, i) => val === null ? null : (
+                                            <div key={i} className={`dice-chosen-die mydice${val}`} />
+                                        ))}
+                                    </div>
+                                )}
                                 <div className='MyDices'>
                                     {myLocked ? (
                                         <>
@@ -1819,6 +2531,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <div>{calcDiceSum(rivalDiceRows)}</div>=
                                     <div>{rivalTotal}</div>
                                 </div>
+                                {calcDiceSum(rivalDiceRows) > 0 && (
+                                    <div className='dice-chosen dice-chosen--rival' title='Dados elegidos'>
+                                        {rivalDiceRows.map((val, i) => val === null ? null : (
+                                            <div key={i} className={`dice-chosen-die mydice${val}`} />
+                                        ))}
+                                    </div>
+                                )}
                                 <div className='RivalDices'>
                                     {rivalLocked ? (
                                         <>
@@ -1868,7 +2587,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             ¿Agregar <strong>{rivalPokemon?.name}</strong> al equipo?
                         </div>
                         <div className="levelup-prompt-buttons">
-                            <button className="levelup-btn-yes" onClick={() => { setShowCapturePrompt(false); handleAddToTeam(rivalPokemon?.pokedex); }}>Sí</button>
+                            <button className="levelup-btn-yes" onClick={() => { setShowCapturePrompt(false); handleAddToTeam(capturablePokedex(rivalPokemon)); }}>Sí</button>
                             <button className="levelup-btn-no" onClick={() => setShowCapturePrompt(false)}>No</button>
                         </div>
                     </div>
@@ -1887,7 +2606,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 return (
                                     <div key={pkm.id} className="sim-replace-pkm-card" onClick={() => handleReplaceConfirm(pkm.id)}>
                                         <div className="sim-replace-pkm-img" style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}} />
-                                        <div className="sim-replace-pkm-name">{pkm.name}</div>
+                                        <PokemonName pkm={pkm} as="div" className="sim-replace-pkm-name" />
                                         <div className="sim-replace-pkm-level">Lv {pkm.level}{pkm.extra > 0 && <span>+{pkm.extra}</span>}</div>
                                     </div>
                                 );
@@ -1902,7 +2621,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
                         <div className="levelup-prompt-title">¡Victoria!</div>
                         <div className="levelup-prompt-msg">
-                            {myPokemon?.name} derrotó a {rivalPokemon?.name} (Lv. {rivalPokemon?.totalLevel}).
+                            {displayName(myPokemon)} derrotó a {displayName(rivalPokemon)} (Lv. {rivalPokemon?.totalLevel}).
                             <br />¿Subir de nivel?
                         </div>
                         <div className="levelup-prompt-buttons">

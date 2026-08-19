@@ -5,7 +5,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 200;
+    // 500 como el resto de modales del SimPlayer: en 200 quedaba por debajo del
+    // concentrador de Ayuda, que es desde donde se abre.
+    z-index: 500;
 }
 
 .leader-viewer-modal {

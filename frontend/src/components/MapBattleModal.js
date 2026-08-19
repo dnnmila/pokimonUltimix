@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import PokemonBattleListed from './PokemonBattleListed';
 import Attack from './Attacks';
 import Types from './Types';
+import PokemonName from './PokemonName';
+import { displayName } from '../moteName';
 import SERVER_IP from '../config.js';
 
 // ─── Efectividad de tipo ──────────────────────────────────────────────────────
@@ -367,7 +369,7 @@ const MapBattleModal = ({ open, onClose, player, generation, nodeId, onResolved,
                     {/* Mi Pokémon (izquierda) */}
                     <div className="MyPokemon-main">
                         <div className="MyPokemon_img" style={{ backgroundImage: `url(${myPkmImg})` }} />
-                        <div className="MyPokemon_name">{myPkm.name}</div>
+                        <PokemonName pkm={myPkm} as="div" className="MyPokemon_name" />
                         <div className="MyPokemon_level">Lv: {myPkm.totalLevel}</div>
                         <div className="types_div">
                             <Types Type={myPkm.type1} Clase={`type_${myPkm.type1}`} type_id={`types_my_1`} />
@@ -396,7 +398,7 @@ const MapBattleModal = ({ open, onClose, player, generation, nodeId, onResolved,
                     {/* Rival (derecha) */}
                     <div className="RivalPokemon-main">
                         <div className="RivalPokemon_img" style={{ backgroundImage: `url(${rivPkmImg})` }} />
-                        <div className="RivalPokemon_name">{rivPkm.name}</div>
+                        <PokemonName pkm={rivPkm} as="div" className="RivalPokemon_name" />
                         <div className="RivalPokemon_level">Lv: {rivPkm.totalLevel}</div>
                         <div className="types_div">
                             <Types Type={rivPkm.type1} Clase={`type_${rivPkm.type1}`} type_id={`types_riv_1`} />
@@ -507,7 +509,7 @@ const MapBattleModal = ({ open, onClose, player, generation, nodeId, onResolved,
                 <div className="modal-backdrop" style={{ zIndex: 300 }} onClick={e => e.stopPropagation()}>
                     <div className="levelup-prompt">
                         <div className="levelup-prompt-title">¡Victoria!</div>
-                        <div className="levelup-prompt-msg">{myPkm?.name} derrotó a {rivPkm?.name} (Lv. {rivPkm?.totalLevel}).<br />¿Subir de nivel?</div>
+                        <div className="levelup-prompt-msg">{displayName(myPkm)} derrotó a {displayName(rivPkm)} (Lv. {rivPkm?.totalLevel}).<br />¿Subir de nivel?</div>
                         <div className="levelup-prompt-buttons">
                             <button className="levelup-btn-yes" onClick={() => handleLevelUp(true)}>Sí</button>
                             <button className="levelup-btn-no"  onClick={() => handleLevelUp(false)}>No</button>
@@ -556,7 +558,7 @@ const MapBattleModal = ({ open, onClose, player, generation, nodeId, onResolved,
                                 return (
                                     <div key={pkm.id} className="sim-replace-pkm-card" onClick={() => handleReplace(pkm.id)}>
                                         <div className="sim-replace-pkm-img" style={img ? { backgroundImage: `url(${img})` } : {}} />
-                                        <div className="sim-replace-pkm-name">{pkm.name}</div>
+                                        <PokemonName pkm={pkm} as="div" className="sim-replace-pkm-name" />
                                         <div className="sim-replace-pkm-level">Lv {pkm.level}</div>
                                     </div>
                                 );

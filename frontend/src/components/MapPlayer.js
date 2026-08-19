@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import SERVER_IP from '../config.js';
 import MapBattleModal from './MapBattleModal';
 import VisualDiceHUD from './VisualDiceHUD';
+import PokemonName from './PokemonName';
 import '../styles/_mapPlayer.scss';
 
 import mapGen1 from '../images/maps/gen1.jpg';
@@ -658,7 +659,7 @@ const MapPlayer = ({ game }) => {
                                 return (
                                     <div key={pkm.id} className="sim-replace-pkm-card" onClick={() => handleReplaceConfirm(pkm.id)}>
                                         <div className="sim-replace-pkm-img" style={pkmImg ? { backgroundImage: `url(${pkmImg})` } : {}} />
-                                        <div className="sim-replace-pkm-name">{pkm.name}</div>
+                                        <PokemonName pkm={pkm} as="div" className="sim-replace-pkm-name" />
                                         <div className="sim-replace-pkm-level">Lv {pkm.level}</div>
                                     </div>
                                 );

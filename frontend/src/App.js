@@ -519,6 +519,126 @@ const attachTM = async (playerId ,pokemonId,tmType,tmLevel, extra = {}) => {
     }
 };
 
+// ── Incursión Max ───────────────────────────────────────────────────────────
+// El marcador acumulado de los cuatro combates vive en la partida (game.raid),
+// no en la tablet: así lo ve el espejo del máster y sobrevive a un refresco.
+// Aquí solo van los cinco avisos al servidor.
+// Devuelve siempre el cuerpo parseado con un `ok` delante, también cuando el
+// servidor rechaza: los errores de la incursión (Pokémon inexistente, dado
+// fuera de rango) hay que poder enseñarlos en pantalla y no solo en la consola.
+const raidPost = async (path, body) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) console.error(`Error en ${path}:`, response.status, data?.message);
+        return { ok: response.ok, ...data };
+    } catch (error) {
+        console.error(`Error en ${path}:`, error);
+        return { ok: false, message: 'No se pudo contactar con el servidor' };
+    }
+};
+
+const raidStart  = (playerId, pokedex) => raidPost('raid-start',  { playerId, pokedex });
+const raidTeam   = (playerId, slots) => raidPost('raid-team',   { playerId, slots });
+const raidRound  = (playerId, hostTotal, bossTotal) => raidPost('raid-round', { playerId, hostTotal, bossTotal });
+const raidFinish = (playerId, die) => raidPost('raid-finish', { playerId, die });
+const raidClear  = (playerId) => raidPost('raid-clear',  { playerId });
+
+// Combate Mega: primero se consultan las megas de la especie (pueden ser dos) y
+// después se monta la elegida como Pokémon salvaje del jugador.
+const megaForms = async (pokedex) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/mega-forms?pokedex=${encodeURIComponent(pokedex)}`);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) console.error('Error en mega-forms:', response.status, data?.message);
+        return { ok: response.ok, ...data };
+    } catch (error) {
+        console.error('Error en mega-forms:', error);
+        return { ok: false, message: 'No se pudo contactar con el servidor' };
+    }
+};
+
+const simMegaBattle = (playerId, megaPokedex) => raidPost('sim-mega-battle', { playerId, megaPokedex });
+
+// Una mega al azar de entre las 94 del juego: es la vía principal del evento.
+const randomMega = async () => {
+    try {
+        const response = await fetch(`${SERVER_IP}/random-mega`);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) console.error('Error en random-mega:', response.status, data?.message);
+        return { ok: response.ok, ...data };
+    } catch (error) {
+        console.error('Error en random-mega:', error);
+        return { ok: false, message: 'No se pudo contactar con el servidor' };
+    }
+};
+
+// Orbe Tera. No crea ataque como la MT ni forma nueva como la mega: solo marca
+// el Pokémon con el tipo del orbe. Quien decide si sube teracristalizado es la
+// pantalla de selección de combatientes, ya en la batalla.
+const attachTera = async (playerId, pokemonId, teraType) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/attach-tera`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, pokemonId, teraType }),
+        });
+        if (!response.ok) console.error('Error al adjuntar el Orbe Tera:', response.status);
+    } catch (error) {
+        console.error('Error al adjuntar el Orbe Tera:', error);
+    }
+};
+
+// ── Bolsa y eventos ─────────────────────────────────────────────────────────
+// La bolsa guarda lo que se gana en un evento y no se usa en el momento. La
+// entrada la arma quien la mete (el front es quien conoce el catálogo de
+// cartas); el backend solo la almacena, así que sirve igual para MTs, cristales
+// Z u orbes cuando toque.
+const bagAdd = async (playerId, entry) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/bag-add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, entry }),
+        });
+        if (!response.ok) console.error('Error al guardar en la bolsa:', response.status);
+    } catch (error) {
+        console.error('Error al guardar en la bolsa:', error);
+    }
+};
+
+const bagRemove = async (playerId, uid) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/bag-remove`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, uid }),
+        });
+        if (!response.ok) console.error('Error al sacar de la bolsa:', response.status);
+    } catch (error) {
+        console.error('Error al sacar de la bolsa:', error);
+    }
+};
+
+// Los eventos son una vez por turno. La marca se pone al abrir el evento, no al
+// decidir, y el backend la borra sola cuando vuelve a empezar el turno.
+const markEventUsed = async (playerId, eventId) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/event-used`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, eventId }),
+        });
+        if (!response.ok) console.error('Error al marcar el evento:', response.status);
+    } catch (error) {
+        console.error('Error al marcar el evento:', error);
+    }
+};
+
 const badgeWon = async (playerId ,numBadge) => {
     try {
         const response = await fetch(`${SERVER_IP}/badge-won`, {
@@ -670,7 +790,11 @@ const addPlayer = async (id,name,turn) => {
 
 //new battle feautres
 
-const onHandleBattlePokemon = async (player, idPokemon) => {
+// `form` es opcional: solo lo mandan las pantallas que dejan subir
+// teracristalizado o dinamaxizado, y lleva lo que esa forma cambia respecto a la
+// ficha del equipo (tipos, ataques Max, las banderas del aura). Ver
+// Game.applyBattleForm en el backend.
+const onHandleBattlePokemon = async (player, idPokemon, form = null) => {
     try {
         console.log("onHandleBattlePokemon request");
         console.log("idPokemon: " + idPokemon);
@@ -679,7 +803,7 @@ const onHandleBattlePokemon = async (player, idPokemon) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({player, idPokemon }),
+            body: JSON.stringify({player, idPokemon, form }),
         });
 
         if (response.ok) {
@@ -718,7 +842,10 @@ const onHandleBattleAttack = async (player,idAttack) => {
     }
 };
 
-const onHandleTotales = async (player,NewTotal) => {
+// `extra` (item + cartas de campo + Orbe Tera) acompaña al total porque es una
+// de sus columnas en el desglose: si viajaran por separado el espejo enseñaría
+// una cuenta que no cuadra. La pantalla del máster no lo manda y cuenta 0.
+const onHandleTotales = async (player,NewTotal,extra = 0) => {
     try {
         console.log("onHandleTotalesequest");
         const response = await fetch(`${SERVER_IP}/set-my-battle-total`, {
@@ -726,7 +853,7 @@ const onHandleTotales = async (player,NewTotal) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({player,NewTotal }),
+            body: JSON.stringify({player,NewTotal, extra }),
         });
 
         if (response.ok) {
@@ -910,14 +1037,14 @@ return (
             <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} generation={game.generation} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
-            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
+            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
             <Route path="/home" element={<HomeMenu />} />
             <Route path="/players" element={<AllPlayers />} />
             {/* Marcador limpio para dejar fijo en otra pantalla. React Router
                 no distingue mayúsculas, así que /Score entra por aquí igual. */}
             <Route path="/Table" element={<Score />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
-            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove}/>} />
             <Route path="/progress" element={<ProgressChart />} />
 
         </Routes>

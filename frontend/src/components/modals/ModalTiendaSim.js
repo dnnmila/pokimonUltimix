@@ -2,6 +2,10 @@ import { useState } from 'react';
 
 import { STORE_ITEMS as ITEMS } from './storeItems';
 
+// Lo que paga vender una carta. Va aquí y no en el catálogo de la tienda
+// porque no es un artículo: es la operación inversa, y no se compra.
+const SELL_PRICE = 2;
+
 const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurchase }) => {
     // Ítem abierto en la vista de detalle. Elegir uno ya no compra: solo abre
     // la carta, y la solicitud sale al confirmar.
@@ -21,6 +25,13 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
         setSelected(null);
     };
 
+    // Vender no abre vista de detalle: no hay carta que enseñar, la carta la
+    // pone el jugador sobre la mesa. Sale derecho como solicitud al máster.
+    const confirmSell = () => {
+        if (pendingRequest) return;
+        onRequestPurchase('Venta de carta', SELL_PRICE, 'sell');
+    };
+
     if (pendingRequest) {
         return (
             <div className="modal-backdrop">
@@ -30,8 +41,9 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
                         <div className="sim-store-pending-text">
                             Solicitud enviada
                         </div>
+                        {/* El signo evita la duda de si te van a cobrar o a pagar */}
                         <div className="sim-store-pending-item">
-                            {pendingRequest.item} — ${pendingRequest.price}
+                            {pendingRequest.item} — {pendingRequest.kind === 'sell' ? '+' : '-'}${pendingRequest.price}
                         </div>
                         <div className="sim-store-pending-wait">
                             Esperando aprobación ...
@@ -113,6 +125,16 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
                         );
                     })}
                 </div>
+
+                {/* Vender una carta: la operación inversa de la tienda, así que
+                    va separada de la rejilla de artículos y no dentro de ella. */}
+                <div className="store-sell">
+                   
+                    <button className="store-sell-btn" onClick={confirmSell}>
+                        Vender carta <span className="store-sell-amount">+${SELL_PRICE}</span>
+                    </button>
+                </div>
+
                 <button onClick={handleClose}>Cerrar</button>
             </div>
         </div>

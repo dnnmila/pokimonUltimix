@@ -4,8 +4,9 @@ import ModalAttach from './modals/ModalAttach';
 import ModalEvolveChoice from './modals/ModalEvolveChoice';
 import SERVER_IP from '../config';
 import { attachIconStyle, attachLabel } from '../attachItems';
+import PokemonName from './PokemonName';
 
-const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached,mega, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
+const Pokemon = ({  id,name,mote,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached,teraType,mega, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,attachTera,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
    
     const img_id = `img_${id}`;
     const level_id = `level_${id}`;
@@ -164,7 +165,9 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
             {/* ── Zona de datos ────────────────────────────────────────────── */}
             <div className="pv-card-info">
                 <div className="pv-card-head">
-                    <span className="pv-card-name" id={name_id}>{name}</span>
+                    {/* La carta recibe los campos sueltos, no el objeto, así que
+                        se le rearma lo justo para resolver el mote */}
+                    <PokemonName pkm={{ name, mote }} className="pv-card-name" id={name_id} />
                     <div className="pv-card-level level_total" id={level_id} title='Subir nivel' onClick={handleIncreaseLevel}>
                         <span className="pv-card-level-value">{level}</span>
                         {extra > 0 && <span className="pv-card-level-extra">+{extra}</span>}
@@ -181,14 +184,14 @@ const Pokemon = ({  id,name,level,extra,nextLevel,evolution,type1,type2,pokedex 
                     {attached === "None"
                         ? <div className="pv-card-attach" onClick={handleOpenModalAttach}>Adjuntar</div>
                         : <div className="pv-card-attached attached-item"
-                               style={attachIconStyle(attached)}
-                               title={attachLabel(attached)}
+                               style={attachIconStyle(attached, { teraType })}
+                               title={attachLabel(attached, { teraType })}
                                onClick={handleOpenModalAttach}></div>}
                     <div className="pv-card-delete delete_pokemon" id={delete_id} title='Quitar del equipo' onClick={handleDeletePokemon} > </div>
                 </div>
             </div>
 
-            <ModalAttach show={showModalAttach} onClose={handleCloseModalAttach} currentPlayer={currentPlayer} pokemonId={id} onAttach={onAttach} attachTM={attachTM} attachMega={attachMega}/>
+            <ModalAttach show={showModalAttach} onClose={handleCloseModalAttach} currentPlayer={currentPlayer} pokemonId={id} onAttach={onAttach} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera}/>
             <ModalEvolveChoice show={showEvolveModal} options={evolveOptions} onSelect={handleEvolveSelect} onClose={() => setShowEvolveModal(false)} />
         </div>
     )

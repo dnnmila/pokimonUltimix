@@ -3,6 +3,7 @@ import SERVER_IP from '../../config.js';
 import { getTrainerImage } from '../../data/trainers';
 import { getLeaderArt, rivalColorOf } from '../../data/leaders';
 import { typeColor, typeLabel } from '../../pokemonTypes';
+import PokemonName from '../PokemonName';
 
 // Token de la carta de cada Pokémon del equipo (el mismo arte que la vista
 // previa del SimPlayer): los del líder viven en Leaders<gen>, el resto en
@@ -116,7 +117,7 @@ const ModalBattle = ({ show, onClose, game, playerBattle, LeaderBattle }) => {
                             <div key={pkm.uid} className="mb-preview-pkm">
                                 <div className="mb-preview-img"
                                      style={img ? { backgroundImage: `url(${img})` } : {}} />
-                                <div className="mb-preview-name">{pkm.name}</div>
+                                <PokemonName pkm={pkm} as="div" className="mb-preview-name" />
                                 <div className="mb-preview-level">Lv.{pkm.level}</div>
                                 <div className="mb-preview-types">
                                     <div className={`mb-preview-type Attack_${pkm.type1}`} />

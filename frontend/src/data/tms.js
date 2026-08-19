@@ -402,6 +402,24 @@ export const tmAppliesStab = (tm, pokemon) => {
 export const tmPowerFor = (tm, pokemon) =>
   tm.poder + (tmAppliesStab(tm, pokemon) ? 1 : 0);
 
+/**
+ * Sorteo del evento «Take TM»: n cartas distintas de todo el catálogo.
+ *
+ * Entra el catálogo entero, sin filtrar: también salen las de poder 0 (Taunt,
+ * Hone Claws…), que valen por el efecto y no por el daño.
+ *
+ * Muestreo por descarte sobre una copia: con 291 cartas y n=3 es más barato
+ * que barajar el array completo, y garantiza que no se repita ninguna.
+ */
+export const rollTMs = (n = 3) => {
+  const pool = [...TMS];
+  const out = [];
+  for (let i = 0; i < n && pool.length; i++) {
+    out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  return out;
+};
+
 /** Índice por nombre de movimiento. Los 291 nombres son únicos entre tipos. */
 const TMS_BY_NAME = TMS.reduce((acc, t) => {
   acc[norm(t.nombre)] = t;

@@ -21,6 +21,11 @@ class Game {
         this.myRivalPkmAtk= [];
         this.myPlayerTotal=0;
         this.myRivalTotal=0;
+        // El "Extra" del desglose: item + cartas de campo + Orbe Tera. Lo calcula
+        // la tablet (necesita el estado del Pokémon, que solo vive ahí) y viaja
+        // pegado al total para que el espejo enseñe la misma cuenta.
+        this.myPlayerExtra=0;
+        this.myRivalExtra=0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
         this.myPlayerDiceRows = [];
@@ -49,6 +54,11 @@ class Game {
         this.ended = false;
         this.winner = null;
         this.badgeHistory = [];
+        // Incursión Max en curso, o null. La lleva un solo jugador (el host) y
+        // guarda el marcador acumulado de los cuatro combates. Vive aquí y no en
+        // el SimPlayer para que el espejo del marcador la vea y para que
+        // sobreviva a un refresco de la tablet. Ver los raid* de gameController.
+        this.raid = null;
 
 
 
@@ -99,15 +109,30 @@ class Game {
         this.myRivalTotal = total;
     }
 
-    setBattlePokemon(player, pokemon) {
+    // El Pokémon que sube teracristalizado o dinamaxizado NO es el que está en el
+    // equipo: la tablet le cambia los tipos (orbe) o los tres ataques (Max) al
+    // vuelo, y de eso aquí solo llega el id. `form` trae justo esa diferencia y
+    // se pega encima de la ficha real —id y pokedex mandan los de la ficha, que
+    // es lo que apunta al Pokémon de verdad—. Sin esto el espejo pintaba la
+    // forma base: tipos viejos, ataques viejos y sin aura.
+    applyBattleForm(pkm, form) {
+        if (!pkm || !form) return pkm;
+        return { ...pkm, ...form, id: pkm.id, pokedex: pkm.pokedex };
+    }
+
+    setBattlePokemon(player, pokemon, form) {
         console.log('setting battle pokemon for ' + player);
          console.log('setting battle PokemonId ' + pokemon);
         if (player === 'MyPlayer') {
             const currentPlayer = this.players[this.currentTurn];
             const found = currentPlayer.pokemons.find(p => p.id === pokemon)
                 || currentPlayer.megas.find(p => p.id === pokemon)
-                || (currentPlayer.gmaxes || []).find(p => p.id === pokemon);
-            this.addMyPlayerPkm(found);
+                || (currentPlayer.gmaxes || []).find(p => p.id === pokemon)
+                // En incursión el atacante puede ser de otro jugador o un
+                // salvaje de relleno: no está en el equipo del host, pero sí en
+                // el equipo de la incursión.
+                || (this.raid?.team || []).map(s => s.pokemon).find(p => p?.id === pokemon);
+            this.addMyPlayerPkm(this.applyBattleForm(found, form));
         } else if (player === 'Rival') {
             // Igual que el jugador: el rival también puede sacar mega o G-Max
             // (duelo contra otro entrenador). Buscando solo en `pokemons` se
@@ -116,7 +141,7 @@ class Game {
             const found = r?.pokemons?.find(p => p.id === pokemon)
                 || r?.megas?.find(p => p.id === pokemon)
                 || r?.gmaxes?.find(p => p.id === pokemon);
-            this.addMyRivalPkm(found);
+            this.addMyRivalPkm(this.applyBattleForm(found, form));
         }
     }
 
@@ -133,13 +158,17 @@ class Game {
             this.addMyRivalPkmAtk(found);
         }
     }
-    setBattleTotal(player, total) {
+    // `extra` es opcional: la pantalla de batalla del máster no tiene cartas de
+    // campo ni items, así que ahí el desglose no lleva esa columna y cuenta 0.
+    setBattleTotal(player, total, extra) {
         console.log('setting battle total for ' + player);
          console.log('setting battle Total ' + total);
         if (player === 'MyPlayer') {
             this.addMyPlayerTotal(total);
+            this.myPlayerExtra = extra || 0;
         } else if (player === 'Rival') {
             this.addMyRivalTotal(total);
+            this.myRivalExtra = extra || 0;
         }
     }
 
@@ -184,6 +213,8 @@ class Game {
             this.myRivalDiceRows = [];
             this.myPlayerTotal = 0;
             this.myRivalTotal = 0;
+            this.myPlayerExtra = 0;
+            this.myRivalExtra = 0;
         }
     }
 
@@ -202,6 +233,8 @@ class Game {
         this.myRivalPkmAtk = [];
         this.myPlayerTotal = 0;
         this.myRivalTotal = 0;
+        this.myPlayerExtra = 0;
+        this.myRivalExtra = 0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
         this.myPlayerDiceRows = [];
@@ -216,10 +249,19 @@ class Game {
         this.rivalBonusAtk3 = 0;
     }
 
+    // Reloj de turnos: mientras el juego está pausado el tiempo queda congelado
+    // en el instante de la pausa, así cambiar de jugador con el crono parado no
+    // suma ni resta segundos a nadie.
+    turnClock() {
+        return (this.paused && this.pausedAt) ? this.pausedAt : Date.now();
+    }
+
     nextTurn() {
 
+        const now = this.turnClock();
+
         if (this.players[this.currentTurn]) {
-            this.players[this.currentTurn].endTurn();
+            this.players[this.currentTurn].endTurn(now);
             this.players[this.currentTurn].isMyTurn = false;
             this.players[this.currentTurn].turnTime(this.players[this.currentTurn].timeSpent);
                 }
@@ -230,8 +272,11 @@ class Game {
 
 
         if (this.players[this.currentTurn]) {
-            this.players[this.currentTurn].startTurn();
+            this.players[this.currentTurn].startTurn(now);
             this.players[this.currentTurn].isMyTurn = true;
+            // Los eventos son una vez por turno: al entrar el jugador vuelven
+            // a estar todos disponibles.
+            this.players[this.currentTurn].resetTurnEvents();
         }
 
         if (this.currentTurn === 0) {
@@ -253,6 +298,8 @@ class Game {
         this.myRivalPkmAtk = [];
         this.myPlayerTotal = 0;
         this.myRivalTotal = 0;
+        this.myPlayerExtra = 0;
+        this.myRivalExtra = 0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
         this.myPlayerDiceRows = [];
@@ -269,23 +316,26 @@ class Game {
     }
 
     previousTurn() {
+        const now = this.turnClock();
+
         if (this.currentTurn === 0) {
             this.players[this.currentTurn].coins -=1;
-            this.players[this.currentTurn].endTurn();
+            this.players[this.currentTurn].endTurn(now);
             this.players[this.currentTurn].isMyTurn = false;
             this.currentTurn = this.players.length - 1;
-          
+
         } else {
             // De lo contrario, simplemente retrocede un turno
             this.players[this.currentTurn].coins -=1;
-            this.players[this.currentTurn].endTurn();
+            this.players[this.currentTurn].endTurn(now);
             this.players[this.currentTurn].isMyTurn = false;
             this.currentTurn -= 1;
         }
-        this.players[this.currentTurn].endTurn();
+        this.players[this.currentTurn].endTurn(now);
         if (this.players[this.currentTurn]) {
-            this.players[this.currentTurn].startTurn();
+            this.players[this.currentTurn].startTurn(now);
             this.players[this.currentTurn].isMyTurn = true;
+            this.players[this.currentTurn].resetTurnEvents();
         }
 
         this.battlePublic = false;
@@ -298,6 +348,8 @@ class Game {
         this.myRivalPkmAtk = [];
         this.myPlayerTotal = 0;
         this.myRivalTotal = 0;
+        this.myPlayerExtra = 0;
+        this.myRivalExtra = 0;
         this.myPlayerDice = 0;
         this.myRivalDice = 0;
         this.myPlayerDiceRows = [];

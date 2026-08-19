@@ -1,0 +1,127 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// MOTE — el nombre que le pone el jugador a su Pokémon
+//
+// Una sola clase, `.pkm-mote`, que se cuelga del mismo elemento que ya pintaba
+// el nombre (la pone el componente PokemonName). No cambia tamaños ni layout:
+// solo el color y la cursiva, para que se lea de un vistazo que ese no es el
+// nombre de la especie.
+//
+// El color es un token porque los nombres viven en dos clases de superficie:
+// las claras (tarjetas del equipo, tabla de jugadores, selección de combate) y
+// las oscuras (los modales de batalla y de reemplazo). El violeta profundo del
+// tema por defecto desaparecería sobre el azul noche, así que esos contenedores
+// redeclaran el token con la versión clara. Es la misma familia morada que ya
+// usan --hud-purple y --hud-lilac, así que no mete un color nuevo a la paleta.
+// ═══════════════════════════════════════════════════════════════════════════
+:root {
+    --mote-ink:       #7b2fbe;  // sobre papel y tarjetas claras
+    --mote-ink-light: #d5aaff;  // sobre los paneles oscuros
+}
+
+.pkm-mote {
+    color: var(--mote-ink);
+    font-style: italic;
+}
+
+// Única superficie oscura donde aparece un nombre: el listado para elegir a qué
+// Pokémon se reemplaza al capturar (SimPlayer, MapPlayer y MapBattleModal
+// comparten esta clase). El resto de paneles de batalla son claros.
+.sim-replace-pkm-name.pkm-mote {
+    --mote-ink: var(--mote-ink-light);
+}
+
+// ── Modal para poner el mote ────────────────────────────────────────────────
+.modal-mote {
+    background-color: var(--hud-card);
+    color: var(--hud-ink);
+    border: 3px solid var(--hud-gold);
+    box-shadow: var(--hud-shadow-lg);
+    padding: 1.4rem 1.6rem;
+    border-radius: var(--hud-radius);
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 22rem;
+    max-width: 90vw;
+
+    &__title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    }
+
+    &__pkm {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    &__img {
+        width: 6rem;
+        height: 6rem;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    // El nombre real se queda a la vista mientras se escribe el mote: es el
+    // que sigue mandando en las reglas del juego.
+    &__real {
+        font-size: 0.95rem;
+        font-weight: bold;
+        letter-spacing: 0.04em;
+        color: var(--hud-dim);
+    }
+
+    &__input {
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        font-size: 1.25rem;
+        font-weight: bold;
+        text-align: center;
+        color: var(--mote-ink);
+        font-style: italic;
+        background: #fff;
+        border: 2px solid var(--hud-line);
+        border-radius: 10px;
+        outline: none;
+        transition: border-color 0.15s;
+
+        &:focus { border-color: var(--hud-gold); }
+        &::placeholder { color: var(--hud-dim-2); font-style: normal; }
+    }
+
+    &__hint {
+        font-size: 0.78rem;
+        line-height: 1.3;
+        text-align: center;
+        color: var(--hud-dim);
+    }
+
+    &__actions {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    &__btn {
+        padding: 0.45rem 1rem;
+        font-size: 0.95rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 9px;
+        cursor: pointer;
+        transition: filter 0.15s, transform 0.15s;
+
+        &:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+        &:disabled { opacity: 0.45; cursor: default; }
+
+        &--save   { background: var(--hud-blue); color: #fff; }
+        &--cancel { background: var(--hud-paper-deep); color: var(--hud-ink); }
+        &--clear  { background: var(--hud-red); color: #fff; }
+    }
+}

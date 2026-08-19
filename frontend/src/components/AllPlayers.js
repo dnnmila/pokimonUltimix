@@ -48,11 +48,12 @@ const AllPlayers = ({ showOverlays = true }) => {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            if (game.paused) return;
             const current = players.find(p => p.isMyTurn);
             if (current?.turnStartTime) {
+                // Pausado el reloj se congela en `pausedAt`; si el turno cambió
+                // durante la pausa el contador arranca en 0, nunca en negativo.
                 const ref = game.pausedAt || Date.now();
-                setTurnElapsed(Math.floor((ref - current.turnStartTime) / 1000));
+                setTurnElapsed(Math.max(0, Math.floor((ref - current.turnStartTime) / 1000)));
             } else {
                 setTurnElapsed(0);
             }

@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import Types from "./Types";
 import Attack from "./Attacks";
 import SimBattleSelect from "./SimBattleSelect";
+import PokemonName from "./PokemonName";
+import { TMBadge, ItemBadge } from "./PokemonBattleBadges";
+import { getFieldMove } from "../battleRules";
+import { arenaStyle } from "../data/arenas";
+import { typeColor } from "../pokemonTypes";
 import SERVER_IP from "../config.js";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
@@ -10,6 +15,91 @@ const getPkmImg = (pokedex, generation = 1) => {
     if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
     if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
     return require(`../images/tokens_ultimix/${pokedex}.png`);
+};
+
+// Cabecera del combatiente: entrenador, token, nombre, nivel y tipos. Es lo que
+// comparten las dos fases (elegir ataque y tirar dados), así que vive aquí y
+// cada fase añade debajo lo suyo.
+//
+// El token repite las clases de aura de SimPlayer (`tera-img` / `dyna-img`) y
+// las mismas variables CSS: la luz se recorta a la SILUETA del sprite, así que
+// el sprite tiene que viajar al CSS además de al background. Las dos formas son
+// excluyentes, nunca coinciden.
+const MirrorFighter = ({ pkm, side, trainerName, generation }) => {
+    const mine = side === 'mine';
+    const img = getPkmImg(pkm.pokedex, generation);
+
+    return (
+        <>
+            <div className={mine ? 'mirror-player-name' : 'mirror-rival-name'}>{trainerName}</div>
+
+            <div className={`${mine ? 'mirror-mypkm-img' : 'mirror-rivalpkm-img'}`
+                    + `${pkm.teraActive ? ' tera-img' : ''}`
+                    + `${pkm.dynamaxActive ? ' dyna-img' : ''}`}
+                 style={{
+                     backgroundImage: `url(${img})`,
+                     ...(pkm.teraActive ? {
+                         '--tera-type': typeColor(pkm.teraType),
+                         '--tera-sprite': `url(${img})`,
+                     } : {}),
+                     ...(pkm.dynamaxActive ? {
+                         '--dyna-sprite': `url(${img})`,
+                     } : {}),
+                 }} />
+
+            {/* El nombre pasa de ser el elemento a ser la fila: al lado van el
+                rótulo Dynamax y las insignias del item, que es lo mismo que ve
+                el jugador en su tablet. Sin handler: al espejo nadie lo toca. */}
+            <div className={mine ? 'mirror-mypkm-name' : 'mirror-rivalpkm-name'}>
+                <PokemonName pkm={pkm} />
+                {pkm.dynamaxActive && <span className="dyna-chip">Dynamax</span>}
+                <TMBadge pokemon={pkm} />
+                <ItemBadge pokemon={pkm} />
+            </div>
+
+            <div className={mine ? 'mirror-mypkm-level' : 'mirror-rivalpkm-level'}>Lv: {pkm.totalLevel}</div>
+
+            <div className="types_div">
+                <Types Type={pkm.type1} Clase={`type_${pkm.type1}`} type_id={`types_mirror_${mine ? 'p' : 'r'}1`} />
+                {pkm.type2 !== null && pkm.type2 !== "NONE" &&
+                    <Types Type={pkm.type2} Clase={`type_${pkm.type2}`} type_id={`types_mirror_${mine ? 'p' : 'r'}2`} />}
+            </div>
+        </>
+    );
+};
+
+// Cartas de campo activas (clima, terrenos, trampas), en la misma franja de
+// arriba que en SimPlayer. Aquí el lado no se dice como "tu lado" —quien mira
+// la tabla no es ninguno de los dos—, sino con el nombre del entrenador.
+const MirrorFieldHUD = ({ fieldMoves, playerName, rivalName }) => {
+    const slots = (fieldMoves || []).filter(Boolean);
+    if (slots.length === 0) return null;
+
+    return (
+        <div className="mirror-field-hud">
+            {slots.map((slot, i) => {
+                const card = getFieldMove(slot.id);
+                if (!card) return null;
+                const tone = card.scope === 'global'
+                    ? 'global'
+                    : (slot.owner === 'player' ? 'mine' : 'rival');
+                return (
+                    <div key={i} className={`mirror-field-card mirror-field-card--${tone}`}>
+                        <div className="mirror-field-card-emoji">{card.emoji}</div>
+                        <div className="mirror-field-card-name">{card.es}</div>
+                        <div className="mirror-field-card-side">
+                            {tone === 'global' ? 'los dos lados'
+                                : tone === 'mine' ? `lado de ${playerName || 'jugador'}`
+                                : `lado de ${rivalName || 'rival'}`}
+                        </div>
+                        {card.kind === 'reminder' && (
+                            <div className="mirror-field-card-manual">manual</div>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+    );
 };
 
 const StadiumMirrorModal = ({ game }) => {
@@ -31,6 +121,11 @@ const StadiumMirrorModal = ({ game }) => {
     const rivalPkm = game.myRivalPkm?.length > 0 ? game.myRivalPkm[game.myRivalPkm.length - 1] : null;
     const playerAtk = game.myPlayerPkmAtk?.length > 0 ? game.myPlayerPkmAtk[game.myPlayerPkmAtk.length - 1] : null;
     const rivalAtk = game.myRivalPkmAtk?.length > 0 ? game.myRivalPkmAtk[game.myRivalPkmAtk.length - 1] : null;
+
+    // Las cartas de campo acompañan al combate, no a la selección: mismo criterio
+    // que en la tablet, donde aparecen cuando ya hay dos Pokémon en el terreno.
+    const inBattle = (game.battlePhase === 'AttackSelection' || game.battlePhase === 'RollDice')
+        && playerPkm && rivalPkm;
 
     return (
         <div className="mirror-modal-backdrop">
@@ -54,41 +149,28 @@ const StadiumMirrorModal = ({ game }) => {
 
                 {/* Fase: ataque y dados - tokens grandes a los lados */}
                 {game.battlePhase === 'AttackSelection'  && playerPkm && rivalPkm && (
-                     <div className="mirror-attack-select-main">
+                     <div className="mirror-attack-select-main"
+                          style={arenaStyle(rivalPkm.pokedex, game.generation)}>
                         <div className="mirror-mypkm-main">
-                            <div className="mirror-player-name">{player?.name}</div>
-                            <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex, game.generation)})` }}></div>
-                            <div className="mirror-mypkm-name">{playerPkm.name}</div>
-                            <div className="mirror-mypkm-level">Lv: {playerPkm.totalLevel}</div>
-                            <div className="types_div">
-                                <Types Type={playerPkm.type1} Clase={`type_${playerPkm.type1}`} type_id={`types_mirror_p1`} />
-                                {playerPkm.type2 !== null && playerPkm.type2 !== "NONE" &&
-                                    <Types Type={playerPkm.type2} Clase={`type_${playerPkm.type2}`} type_id={`types_mirror_p2`} />}
-                            </div>
+                            <MirrorFighter pkm={playerPkm} side="mine"
+                                           trainerName={player?.name} generation={game.generation} />
                            <div className='MyPokemon_attacks' >
                             <div className='MyAttack1'  > <Attack attack={playerPkm.attack1} bonus ={game.myBonusAtk1} /> </div>
                             {playerPkm.attack2.name !== 'NONE' && <div className='MyAttack2'  >  <Attack attack={playerPkm.attack2} bonus ={game.myBonusAtk2} /> </div>}
                             {playerPkm.attack3.name !== 'NONE' && <div className='MyAttack3' >  <Attack attack={playerPkm.attack3} bonus ={game.myBonusAtk3} /> </div>}
-                            </div> 
+                            </div>
 
 
                         </div>
 
                         <div className="mirror-rivalpkm-main">
-                            <div className="mirror-rival-name">{rival?.name}</div>
-                            <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex, game.generation)})` }}></div>
-                            <div className="mirror-rivalpkm-name">{rivalPkm.name}</div>
-                            <div className="mirror-rivalpkm-level">Lv: {rivalPkm.totalLevel}</div>
-                            <div className="types_div">
-                                <Types Type={rivalPkm.type1} Clase={`type_${rivalPkm.type1}`} type_id={`types_mirror_r1`} />
-                                {rivalPkm.type2 !== null && rivalPkm.type2 !== "NONE" &&
-                                    <Types Type={rivalPkm.type2} Clase={`type_${rivalPkm.type2}`} type_id={`types_mirror_r2`} />}
-                            </div>
+                            <MirrorFighter pkm={rivalPkm} side="theirs"
+                                           trainerName={rival?.name} generation={game.generation} />
                            <div className='RivalPokemon_attacks' >
                             <div className='RivalAttack1'  ><Attack attack={rivalPkm.attack1} bonus ={game.rivalBonusAtk1} /></div>
                             {rivalPkm.attack2.name !== 'NONE' && <div className='RivalAttack2' ><Attack attack={rivalPkm.attack2} bonus ={game.rivalBonusAtk2} /></div>}
                             {rivalPkm.attack3.name !== 'NONE' && <div className='RivalAttack3'  ><Attack attack={rivalPkm.attack3} bonus ={game.rivalBonusAtk3} /></div>}
-                       
+
                             </div>
                         </div>
                          </div>
@@ -96,19 +178,13 @@ const StadiumMirrorModal = ({ game }) => {
 
                 {/* Fase: totales superpuestos centrados */}
                 {game.battlePhase === 'RollDice' && playerPkm && rivalPkm && (
-                    <div className="mirror-attack-select-main">
+                    <div className="mirror-attack-select-main"
+                         style={arenaStyle(rivalPkm.pokedex, game.generation)}>
 
 
                             <div className="mirror-mypkm-main">
-                            <div className="mirror-player-name">{player?.name}</div>
-                            <div className="mirror-mypkm-img" style={{ backgroundImage: `url(${getPkmImg(playerPkm.pokedex, game.generation)})` }}></div>
-                            <div className="mirror-mypkm-name">{playerPkm.name}</div>
-                            <div className="mirror-mypkm-level">Lv: {playerPkm.totalLevel}</div>
-                            <div className="types_div">
-                                <Types Type={playerPkm.type1} Clase={`type_${playerPkm.type1}`} type_id={`types_mirror_p1`} />
-                                {playerPkm.type2 !== null && playerPkm.type2 !== "NONE" &&
-                                    <Types Type={playerPkm.type2} Clase={`type_${playerPkm.type2}`} type_id={`types_mirror_p2`} />}
-                            </div>
+                            <MirrorFighter pkm={playerPkm} side="mine"
+                                           trainerName={player?.name} generation={game.generation} />
                             {game.myPlayerDiceRows?.length > 0 && (
                                 <div className="mirror-dice-row">
                                     {game.myPlayerDiceRows.map((val, idx) => (
@@ -124,15 +200,8 @@ const StadiumMirrorModal = ({ game }) => {
                         </div>
 
                         <div className="mirror-rivalpkm-main">
-                            <div className="mirror-rival-name">{rival?.name}</div>
-                            <div className="mirror-rivalpkm-img" style={{ backgroundImage: `url(${getPkmImg(rivalPkm.pokedex, game.generation)})` }}></div>
-                            <div className="mirror-rivalpkm-name">{rivalPkm.name}</div>
-                            <div className="mirror-rivalpkm-level">Lv: {rivalPkm.totalLevel}</div>
-                            <div className="types_div">
-                                <Types Type={rivalPkm.type1} Clase={`type_${rivalPkm.type1}`} type_id={`types_mirror_r1`} />
-                                {rivalPkm.type2 !== null && rivalPkm.type2 !== "NONE" &&
-                                    <Types Type={rivalPkm.type2} Clase={`type_${rivalPkm.type2}`} type_id={`types_mirror_r2`} />}
-                            </div>
+                            <MirrorFighter pkm={rivalPkm} side="theirs"
+                                           trainerName={rival?.name} generation={game.generation} />
                             {game.myRivalDiceRows?.length > 0 && (
                                 <div className="mirror-dice-row">
                                     {game.myRivalDiceRows.map((val, idx) => (
@@ -147,22 +216,31 @@ const StadiumMirrorModal = ({ game }) => {
                             )}
                         </div>
 
-                        <div className="mirror-mytotal-final">{game.myPlayerTotal}</div>
-                        <div className="mirror-rivaltotal-final">{game.myRivalTotal}</div>
+                        {/* El `key` es el propio total: al cambiar, React remonta
+                            el nodo y con eso se vuelve a lanzar la animación del
+                            CSS. Sin él la cifra cambiaría sin que nadie lo note. */}
+                        <div className="mirror-mytotal-final" key={`p${game.myPlayerTotal}`}>{game.myPlayerTotal}</div>
+                        <div className="mirror-rivaltotal-final" key={`r${game.myRivalTotal}`}>{game.myRivalTotal}</div>
 
 
+                    {/* Mismo desglose que la tablet, columnas incluidas: Extra
+                        (item + cartas de campo + Orbe Tera) va entre Bonus y
+                        Dice. Se resalta cuando no es 0, que es cuando alguien
+                        querrá saber de dónde salió. */}
                      <div className='MyTotal_label'>
                         <div>Level </div>
                         <div>Attack  </div>
                         <div>Bonus  </div>
+                        <div>Extra  </div>
                         <div>Dice  </div>
-                     
+
                     </div>
 
                     <div className='MyTotal'>
                         <div>{playerPkm.totalLevel}  </div>
                         <div>{playerAtk?.strength ?? '-'}  </div>
                         <div>{game.myBonusFinal}  </div>
+                        <div className={game.myPlayerExtra ? 'total-extra-on' : ''}>{game.myPlayerExtra || 0}  </div>
                         <div>{game.myPlayerDice}  </div>
                     </div>
 
@@ -170,16 +248,26 @@ const StadiumMirrorModal = ({ game }) => {
                         <div>Level </div>
                         <div>Attack  </div>
                         <div>Bonus  </div>
+                        <div>Extra  </div>
                         <div>Dice  </div>
-                  
+
                     </div>
                     <div className='RivalTotal'>
                         <div>{rivalPkm.totalLevel}  </div>
                         <div>{rivalAtk?.strength ?? '-'}  </div>
                         <div>{game.rivalBonusFinal}  </div>
+                        <div className={game.myRivalExtra ? 'total-extra-on' : ''}>{game.myRivalExtra || 0}  </div>
                         <div>{game.myRivalDice}  </div>
                     </div>
                     </div>
+                )}
+
+                {/* Va fuera de las dos fases: se pinta encima de cualquiera de
+                    las dos y así no hay que repetirlo en cada una */}
+                {inBattle && (
+                    <MirrorFieldHUD fieldMoves={game.fieldMoves}
+                                    playerName={player?.name}
+                                    rivalName={rival?.name} />
                 )}
 
             </div>

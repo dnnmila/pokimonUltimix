@@ -320,6 +320,8 @@ margin-left: 0rem;
 .ph-player      { color: var(--hud-blue-deep); font-weight: bold; flex: 1; }
 .ph-item        { flex: 1.5; }
 .ph-price       { color: var(--hud-red); min-width: 4.5rem; text-align: right; font-weight: bold; }
+// Las ventas entran al mismo historial pero suman: en verde, como el saldo
+.ph-price--sell { color: #2f8f4e; }
 .ph-coins-after { color: #2f8f4e; min-width: 5rem; text-align: right; font-weight: bold; }
 .purchase-history-empty {
     color: var(--hud-dim);
@@ -397,7 +399,8 @@ margin-left: 0rem;
 }
 .pending-purchase-player { font-weight: bold; color: var(--hud-blue-deep); flex: 1; }
 .pending-purchase-item-name { flex: 1.5; }
-.pending-purchase-price { color: var(--hud-ink); font-weight: bold; width: 2.6rem; text-align: right; }
+.pending-purchase-price { color: var(--hud-ink); font-weight: bold; width: 3.2rem; text-align: right; }
+.pending-purchase-price--sell { color: #2f8f4e; }
 .pending-approve {
     background: #2f8f4e; border: none; border-radius: 6px;
     color: white; font-weight: bold; cursor: pointer; padding: 0.2rem 0.55rem;

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import POKEMON_TYPES from '../../pokemonTypes';
 import SERVER_IP from '../../config.js';
+import { FieldPicker, FieldPickerNote } from './ModalFieldPicker.js';
 
 // Los mismos 6 colores que usan los nodos de captura del tablero
 const TOKEN_COLORS = [
@@ -20,7 +21,12 @@ const getTokenImg = (pokedex) => {
 
 const randomOf = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-const ModalSpecialAttacks = ({ show, onClose }) => {
+// `title` y la pestaña de campo son opcionales: el máster (Player) lo abre como
+// "Ataques especiales" con dado y metrónomo, y SimPlayer lo abre en batalla como
+// "Funciones especiales" pasando además `onSetFieldMove`, que es lo único que
+// habilita la pestaña de clima. Sin esa prop el modal se comporta como siempre.
+const ModalSpecialAttacks = ({ show, onClose, title = 'Ataques especiales', fieldMoves, onSetFieldMove }) => {
+    const canSetField = typeof onSetFieldMove === 'function';
     const [tab, setTab] = useState('dice');
 
     // Dado de tipos
@@ -87,9 +93,12 @@ const ModalSpecialAttacks = ({ show, onClose }) => {
 
     return (
         <div className="modal-backdrop" onClick={handleClose}>
-            <div className="special-attacks-modal" onClick={e => e.stopPropagation()}>
+            {/* La rejilla de cartas de campo no cabe en el ancho normal, así que
+                esa pestaña ensancha el modal en vez de comprimir la rejilla */}
+            <div className={`special-attacks-modal${tab === 'field' ? ' special-attacks-modal--wide' : ''}`}
+                 onClick={e => e.stopPropagation()}>
                 <div className="sa-title">
-                    Ataques especiales
+                    {title}
                     <button className="sa-close" onClick={handleClose}>✕</button>
                 </div>
 
@@ -98,6 +107,10 @@ const ModalSpecialAttacks = ({ show, onClose }) => {
                             onClick={() => setTab('dice')}>Dado de tipos</button>
                     <button className={`sa-tab${tab === 'metro' ? ' sa-tab-active' : ''}`}
                             onClick={() => setTab('metro')}>Metrónomo</button>
+                    {canSetField && (
+                        <button className={`sa-tab${tab === 'field' ? ' sa-tab-active' : ''}`}
+                                onClick={() => setTab('field')}>Clima</button>
+                    )}
                 </div>
 
                 {tab === 'dice' && (
@@ -169,6 +182,14 @@ const ModalSpecialAttacks = ({ show, onClose }) => {
                         <button className="sa-roll-btn" onClick={handleMetronome} disabled={metroLoading}>
                             {metroLoading ? 'Buscando…' : metroPkm ? 'Otro Pokémon' : 'Usar metrónomo'}
                         </button>
+                    </div>
+                )}
+
+                {/* Mismo selector que usa el máster desde su barra de acciones */}
+                {tab === 'field' && canSetField && (
+                    <div className="sa-panel sa-panel--field">
+                        <FieldPicker fieldMoves={fieldMoves} onSetFieldMove={onSetFieldMove} />
+                        <FieldPickerNote />
                     </div>
                 )}
 

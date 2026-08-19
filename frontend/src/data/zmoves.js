@@ -154,4 +154,19 @@ export const zMoveFor = (crystal, pokemon) => {
     : generico;
 };
 
+/**
+ * Sorteo del evento «Take Z Crystal»: n cristales distintos.
+ *
+ * Solo hay 18, así que con n=3 el descarte sobre una copia es de sobra; se hace
+ * igual que en las MTs para que los dos eventos se comporten idéntico.
+ */
+export const rollZCrystals = (n = 3) => {
+  const pool = [...Z_CRYSTALS];
+  const out = [];
+  for (let i = 0; i < n && pool.length; i++) {
+    out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  return out;
+};
+
 export default Z_CRYSTALS;

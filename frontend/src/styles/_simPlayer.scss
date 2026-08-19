@@ -113,6 +113,51 @@
     font-size: 1.1rem;
     font-weight: bold;
 }
+// Vender una carta. Va bajo la rejilla de artículos, separada por una línea:
+// no es un artículo más, es la operación inversa, y meterlo entre las cartas
+// invitaría a tocarlo por error creyendo que se compra algo.
+.store-sell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(var(--hud-ink-rgb), 0.15);
+    width: 100%;
+}
+
+.store-sell-text {
+    font-size: 0.8rem;
+    color: var(--hud-dim);
+}
+
+.store-sell-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1.1rem;
+    border: none;
+    border-radius: 9px;
+    // Verde, no el azul de los botones de acción: el color dice que suma
+    background: #2f8f4e;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: var(--hud-shadow);
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover { background: #26743f; transform: translateY(-1px); }
+}
+
+.store-sell-amount {
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 6px;
+    padding: 0.05rem 0.4rem;
+    font-variant-numeric: tabular-nums;
+}
+
 .sim-store-pending-wait {
     font-size: 0.9rem;
     color: #888;
@@ -177,14 +222,17 @@
     }
 }
 
-// Botones en el modal del wild pokemon (pelear grande + capturar pequeño)
+// Botones en el modal del wild pokemon (pelear · capturar · huir por $1)
 .sim-wild-modal-actions {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     gap: 2rem;
 }
 
+// Columna botón + rótulo. `-capture-wrapper` es la versión vieja que sigue
+// usando MapPlayer; comparten pinta para que los dos modales se vean igual.
+.sim-wild-modal-action,
 .sim-wild-modal-capture-wrapper {
     display: flex;
     flex-direction: column;
@@ -193,11 +241,17 @@
     cursor: pointer;
 }
 
+// El rótulo no estira la columna: si no, "Huir · fin de turno" separaría
+// los tres botones a lo ancho del modal.
+.sim-wild-modal-action-label,
 .sim-wild-modal-capture-label {
     color: rgba(255, 255, 255, 0.7);
     font-size: 0.72rem;
     font-weight: bold;
     letter-spacing: 0.03em;
+    text-align: center;
+    max-width: 6.5rem;
+    line-height: 1.15;
 }
 
 .sim-wild-modal-capture {
@@ -215,8 +269,45 @@
     &:hover { transform: scale(1.2); }
 }
 
+// Dentro del trío de acciones los tres botones miden lo mismo, para que los
+// rótulos queden a la misma altura. La pokeball se mantiene sin marco.
+.sim-wild-modal-actions .sim-wild-modal-capture {
+    width: 3.4rem;
+    height: 3.4rem;
+}
+
+// Huir cobrando 1 moneda. Solo se pinta en el turno propio.
+.sim-wild-modal-flee {
+    width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: linear-gradient(135deg, #d9a318, #f5cd4a);
+    color: #4a3306;
+    font-size: 1.1rem;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 12px rgba(190, 140, 20, 0.5);
+
+    &:hover {
+        transform: scale(1.12);
+        box-shadow: 0 6px 18px rgba(190, 140, 20, 0.7);
+    }
+}
+
 @media (max-width: 900px) and (orientation: landscape) {
     .sim-wild-modal-capture { width: 2rem; height: 2rem; }
+    .sim-wild-modal-actions {
+        gap: 1.4rem;
+        .sim-wild-modal-capture,
+        .sim-wild-modal-flee { width: 2.8rem; height: 2.8rem; }
+        .sim-wild-modal-flee { font-size: 0.95rem; }
+    }
     .sim-wild-modal-fight { width: 2.8rem; height: 2.8rem; font-size: 1.2rem; }
 }
 
@@ -598,6 +689,22 @@
         transform: scale(1.12);
         box-shadow: 0 6px 18px rgba(200,30,30,0.7);
     }
+
+    // Espadas cruzadas en SVG: `fill: currentColor` para que sigan al color del
+    // botón sin repetir el valor, y `width` en % para que escalen con el círculo
+    // (incluido el tamaño reducido de la variante móvil).
+    svg {
+        width: 55%;
+        height: 55%;
+        fill: currentColor;
+        display: block;
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+    }
+}
+
+.sim-wild-modal-actions .sim-wild-modal-fight {
+    width: 3.4rem;
+    height: 3.4rem;
 }
 
 // Líderes de gimnasio — protagonistas
@@ -722,6 +829,17 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+// Solo en SimPlayer el nombre se toca (abre el modal del mote). El subrayado
+// punteado es la única pista de que ahí hay algo: un botón de verdad no cabe
+// en la cabecera de la tarjeta.
+.sim-pkm-card-name--editable {
+    cursor: pointer;
+    text-decoration: underline dotted rgba(var(--hud-ink-rgb), 0.35);
+    text-underline-offset: 2px;
+
+    &:hover { text-decoration-color: var(--mote-ink); }
 }
 
 .sim-pkm-card-lvl {
@@ -1415,7 +1533,12 @@
     width: 100vw;
     height: 100vh;
     display: flex;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url("../images/pokeStadiumSim.webp");
+    // Ver la nota gemela en _stadium.scss: el fondo lo pone --arena
+    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), var(--arena, url("../images/pokeStadiumSim.webp"));
+    // `cover` y no `contain`: la tablet es casi 4:3 igual que las arenas, así que
+    // llena la pantalla recortando un pelo arriba y abajo. Con `contain` salían
+    // franjas a los lados y todo lo que va pegado al borde —las columnas de
+    // ataques— caía fuera de la ilustración.
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
@@ -1643,6 +1766,10 @@
 
         .MyDice, .RivalDice   { width: 14vw; height: 8vh; }
         .rivalDicePlus, .mydicePlus { width: 9vw; height: 4.5vh; }
+        .dice-chosen-die { width: 9vw; height: 5.5vh; }
+        // Aquí no hay fila de rótulos, así que la tira se apoya directamente
+        // sobre la de números (bottom 7% + 2.5vh de alto)
+        .dice-chosen { width: 46vw; bottom: 11%; }
 
         // Totales inferiores — en portrait ocultamos el header y solo mostramos los números
         .MyTotal_label, .RivalTotal_label { display: none; }
@@ -1687,6 +1814,42 @@
 .sim-player {
     // Por encima de home, Next Turn y la tabla de tipos (todos en 300)
     .modal-backdrop { z-index: 900; }
+
+    // ── Dados ya elegidos ───────────────────────────────────────────────────
+    // El selector esconde su fila en cuanto se elige, así que el dado que salió
+    // no se veía en ningún lado: solo cambiaba el número del total. Esta tira
+    // es de consulta —sin hover ni click— y enseña lo mismo que el mirror.
+    //
+    // Se coloca en el hueco que queda entre los tipos del Pokémon y la tabla de
+    // totales, no junto al selector. Comparte columna con .MyTotal (mismo ancho
+    // y mismo borde) y se apoya justo encima de .MyTotal_label, que está en
+    // bottom 13%. El ancestro posicionado es .Pokemon-stadium2, igual que para
+    // los totales: .MyPokemon / .RivalPokemon no llevan position.
+    .dice-chosen {
+        position: absolute;
+        bottom: 18%;
+        width: 40vw;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        pointer-events: none;   // es de consulta: no roba clics a lo que hay debajo
+    }
+
+    .dice-chosen--mine  { left: 5%; }
+    .dice-chosen--rival { right: 5%; }
+
+    .dice-chosen-die {
+        width: 3.4vw;
+        height: 5vh;
+        background-position: center center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        // Sin el brightness(80%) de .MyDice: el elegido va a plena luz para
+        // que se distinga de los que aún están por tirar.
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+    }
 
     .modal-pokedex {
         width: min(62rem, 84vw);
@@ -2034,6 +2197,121 @@
     border: 1px solid rgba(180,120,255,0.15);
 }
 
+// ── Pestaña Max Moves ───────────────────────────────────────────────────────
+// A dos columnas como la carta física. Son 19 fichas de consulta rápida y se
+// abren a media batalla —con el ataque a medio elegir—, así que lo que manda es
+// encontrar la tuya de un vistazo: cada ficha se marca con el color de su TIPO,
+// que es la clave de toda la tabla (un movimiento se vuelve el Max de su tipo).
+.rules-guide-max-title {
+    color: #ff8fa3;
+}
+
+.rules-guide-max-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 0.6rem;
+    margin-top: 0.6rem;
+}
+
+.rules-guide-max-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    border-left: 3px solid var(--max-type);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+// Max Guard no tiene tipo propio —es el comodín de los movimientos de Fuerza 0—
+// así que se sale del código de color en vez de fingir uno
+.rules-guide-max-card--protection {
+    background: rgba(228, 56, 74, 0.14);
+    border-left-color: #ff8fa3;
+}
+
+.rules-guide-max-orb {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    // Halo del tipo detrás del icono: es lo que convierte el icono suelto en la
+    // esfera que sale en la carta
+    background: radial-gradient(circle at 50% 40%,
+        color-mix(in srgb, var(--max-type) 55%, transparent) 0%,
+        color-mix(in srgb, var(--max-type) 20%, transparent) 60%,
+        transparent 75%);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+.rules-guide-max-orb-fallback {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.rules-guide-max-body {
+    min-width: 0;
+}
+
+// El nombre lleva el color de su tipo, pero un tipo suelto no vale como color de
+// TEXTO: hay dieciocho y la mitad (Acero, Hielo, Hada, Normal) son casi blancos.
+// Se mezcla con la tinta para forzar contraste sin perder de qué tipo es. Este
+// es el fondo OSCURO (el modal del máster en Stadium): la mezcla va hacia el
+// blanco. El fondo claro de SimPlayer lo corrige más abajo, en su bloque.
+.rules-guide-max-name {
+    font-size: 0.74rem;
+    font-weight: bold;
+    line-height: 1.2;
+    color: color-mix(in srgb, var(--max-type) 65%, #ffffff);
+}
+
+// El tipo, en pequeño bajo el nombre: «Max Flare» no canta por sí solo de qué
+// tipo era el movimiento original.
+.rules-guide-max-type {
+    display: block;
+    font-size: 0.58rem;
+    font-style: normal;
+    font-weight: normal;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    filter: none;
+}
+
+.rules-guide-max-desc {
+    margin-top: 0.12rem;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: #ddd;
+}
+
+.rules-guide-max-tag {
+    display: inline-block;
+    margin-top: 0.18rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: rgba(120, 180, 240, 0.2);
+    color: #9ec9f5;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+// En pantallas estrechas una sola columna: dos se quedaban en dos palabras por
+// renglón y la tabla dejaba de leerse de un vistazo, que es para lo único que existe
+@media (max-width: 720px) {
+    .rules-guide-max-grid { grid-template-columns: 1fr; }
+}
+
 .rules-guide-effect-icon-wrap {
     flex-shrink: 0;
     width: 2.4rem;
@@ -2210,8 +2488,60 @@
     }
 }
 
+// Funciones especiales de batalla (dado de tipos, metrónomo, clima).
+// Abajo a la izquierda, pegado a la guía de efectos: el centro lo ocupan
+// Re-Match y Change Pokemon durante la batalla y se solapaban. El `left`
+// se calcula desde el botón "?" (1.1rem de margen + 2.6rem de ancho) para
+// que ambos se muevan juntos si cambia ese rincón.
+.sim-special-fns-btn {
+    position: fixed;
+    bottom: 1.1rem;
+    left: calc(1.1rem + 2.6rem + 0.5rem);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.28rem 0.6rem;
+    background: rgba(var(--hud-link-rgb), 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s, background 0.15s;
+
+    &:hover {
+        transform: scale(1.08);
+        background: rgba(var(--hud-link-rgb), 1);
+    }
+}
+
+// `fill: currentColor` para que el destello siga al color del rótulo y no haya
+// que repetir el valor si el botón cambia de tono.
+.sim-special-fns-icon {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+    fill: currentColor;
+    display: block;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
 // Responsive
 @media (max-width: 768px) {
+    .sim-special-fns-btn {
+        bottom: 0.6rem;
+        // Mismo cálculo que en escritorio con las medidas móviles del "?"
+        left: calc(0.6rem + 2.2rem + 0.4rem);
+        padding: 0.22rem 0.5rem;
+        font-size: 0.58rem;
+    }
+    .sim-special-fns-icon { width: 0.75rem; height: 0.75rem; }
+
     .rules-guide-modal {
         width: 97vw;
         max-height: 92vh;
@@ -2330,6 +2660,9 @@
 
         .MyDice, .RivalDice { width: 9vw; height: 6.5vh; }
         .rivalDicePlus, .mydicePlus { width: 6vw; height: 3.5vh; }
+        .dice-chosen-die { width: 6vw; height: 4.5vh; }
+        // Justo encima de la fila de rótulos (bottom 11.5% + 2.5vh de alto)
+        .dice-chosen { width: 42vw; bottom: 15.5%; }
 
         // Totales
         .MyTotal_label, .RivalTotal_label,
@@ -2721,6 +3054,7 @@
     }
 
     .sim-wild-modal-capture-label,
+    .sim-wild-modal-action-label,
     .type-chart-note,
     .type-chart-empty,
     .rules-guide-field-note,
@@ -2737,8 +3071,39 @@
     .rules-guide-effect-desc,
     .rules-guide-white-title,
     .rules-guide-field-name,
-    .rules-guide-effect-title {
+    .rules-guide-effect-title,
+    .rules-guide-max-desc {
         color: var(--hud-ink);
+    }
+
+    // ── Pestaña Max Moves sobre papel ────────────────────────────────────────
+    // Mismo problema que el resto de la guía, más uno propio: el nombre lleva el
+    // color de su TIPO, y sobre papel los tipos claros (Acero, Hielo, Hada,
+    // Normal, Eléctrico) desaparecían. Aquí la mezcla va hacia la tinta en vez
+    // de hacia el blanco, así que Max Hailstorm se lee azul oscuro pero se sigue
+    // reconociendo como Hielo.
+    .rules-guide-max-name {
+        color: color-mix(in srgb, var(--max-type) 55%, var(--hud-ink));
+    }
+
+    .rules-guide-max-type { color: var(--hud-dim); }
+
+    .rules-guide-max-card {
+        background: var(--hud-paper);
+        border-color: rgba(var(--hud-ink-rgb), 0.14);
+    }
+
+    // Max Guard mantiene su banda roja, solo que en tono de papel
+    .rules-guide-max-card--protection {
+        background: rgba(228, 56, 74, 0.10);
+        border-left-color: #c0392b;
+    }
+
+    .rules-guide-max-title { color: #c0392b; }
+
+    .rules-guide-max-tag {
+        background: rgba(var(--hud-blue-rgb), 0.14);
+        color: var(--hud-blue-deep);
     }
 
     // "Cartas blancas" queda en banda clara con texto oscuro y "Cartas negras"

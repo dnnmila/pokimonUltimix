@@ -1,4 +1,5 @@
 import React  from 'react';
+import PokemonName from '../PokemonName';
 
 
 const SelectPokemonBattle1 = ({ show, onClose, CurrentPlayer,setActiveModal,setMyPokemon}) => {
@@ -27,7 +28,7 @@ const SelectPokemonBattle1 = ({ show, onClose, CurrentPlayer,setActiveModal,setM
                     {CurrentPlayer.pokemons.map((pokemon) => {
                         return (
                             <button key={pokemon.id} onClick={() => handleSelectMyPokemon(pokemon)}>
-                                {pokemon.name}
+                                <PokemonName pkm={pokemon} />
                             </button>
                         );
                     })}

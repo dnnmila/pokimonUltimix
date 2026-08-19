@@ -3,6 +3,8 @@ import Types from "./Types";
 import Attack from "./Attacks";
 import PokemonBattleListed from "./PokemonBattleListed";
 import ModalRulesGuide from "./modals/ModalRulesGuide";
+import PokemonName from "./PokemonName";
+import { displayName } from "../moteName";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
 
@@ -676,7 +678,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
             <div className="attack-select-main">
                     <div className='MyPokemon-main anim-slide-left'>
                         <div className={`MyPokemon_img ${myLocked && rivalLocked ? (myTotal >= rivalTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${myPokemonImg})`}}></div>
-                        <div className='MyPokemon_name'>{myPokemon.name}</div>
+                        <PokemonName pkm={myPokemon} as="div" className='MyPokemon_name' />
                         <div className='MyPokemon_level'>Lv: {myPokemon.totalLevel}</div>
                         <div className="types_div">
                             <Types Type={myPokemon.type1}  Clase={MyPokemonType1_class} type_id={MyPkm_type_id1}/>
@@ -698,7 +700,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
 
                     <div className='RivalPokemon-main anim-slide-right'>
                         <div className={`RivalPokemon_img ${myLocked && rivalLocked ? (rivalTotal >= myTotal ? 'winner-img' : 'loser-img') : ''}`} style={{ backgroundImage: `url(${rivalPokemonImg})`}}></div>
-                        <div className='RivalPokemon_name'>{rivalPokemon.name}</div>
+                        <PokemonName pkm={rivalPokemon} as="div" className='RivalPokemon_name' />
                         <div className='RivalPokemon_level'>Lv: {rivalPokemon.totalLevel}</div>
                         <div className="types_div">
                             <Types Type={rivalPokemon.type1}  Clase={RivalPokemonType1_class} type_id={RivalPkm_type_id1}/>
@@ -853,7 +855,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                 <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
                     <div className="levelup-prompt-title" style={{color: '#e74c3c'}}>¡Derrota!</div>
                     <div className="levelup-prompt-msg">
-                        {myPokemon?.name} fue noqueado por {rivalPokemon?.name}.
+                        {displayName(myPokemon)} fue noqueado por {displayName(rivalPokemon)}.
                         <br />¿Marcar como noqueado?
                     </div>
                     <div className="levelup-prompt-buttons">
@@ -869,7 +871,7 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
                 <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
                     <div className="levelup-prompt-title">¡Victoria!</div>
                     <div className="levelup-prompt-msg">
-                        {myPokemon.name} derrotó a {rivalPokemon.name} (Lv. {rivalPokemon.totalLevel}).
+                        {displayName(myPokemon)} derrotó a {displayName(rivalPokemon)} (Lv. {rivalPokemon.totalLevel}).
                         <br />¿Subir de nivel?
                     </div>
                     <div className="levelup-prompt-buttons">

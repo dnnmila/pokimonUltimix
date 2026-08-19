@@ -328,6 +328,43 @@
     }
 }
 
+// En la tablet la insignia se toca para abrir la carta; en el espejo del
+// marcador no la toca nadie, así que ahí no finge ser pulsable. Va aquí y no en
+// _mirrorModal.scss por el orden de los @import: ese archivo entra ANTES que
+// este, y a igual especificidad ganaría el :hover de arriba.
+.sim-tm-badge--static {
+    cursor: default;
+
+    &:hover { transform: none; }
+}
+
+// Sprite del item cuando no hay carta que enseñar (ver ModalItemCard)
+.item-card-sprite {
+    width: 5rem;
+    height: 5rem;
+    display: block;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+// Hermana de .sim-tm-badge para el resto de items. Comparte encaje y posición
+// —va en el mismo renglón del nombre— pero el contenido es un sprite suelto
+// sobre fondo transparente, no el recorte de una carta: por eso `contain` con
+// aire alrededor en vez del `cover` a sangre de la MT.
+.sim-item-badge {
+    @extend .sim-tm-badge;
+
+    i {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+}
+
 .tm-card-backdrop {
     z-index: 600;   // por encima del catálogo, que ya está en 500
 }

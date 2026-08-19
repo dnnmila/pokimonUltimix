@@ -36,6 +36,13 @@ class Player {
         this.totalPokemons =0;
         this.simRival = null;
         this.dynamax = false;
+        // Bolsa: objetos ganados en eventos que el jugador guardó sin usar.
+        // Cada entrada es { uid, kind, ...datos }; hoy solo hay kind 'tm', con
+        // el id de la carta del catálogo del front (data/tms.js).
+        this.bag = [];
+        // Eventos ya lanzados en el turno en curso: { [eventId]: true }.
+        // Se vacía al empezar el turno del jugador (Game.nextTurn).
+        this.eventsUsed = {};
 
 
     }
@@ -176,6 +183,15 @@ class Player {
         console.log(pokemon);
     }
 
+    attachTeraToPokemon(idPokemon, teraType){
+        const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
+        if (!pokemon) {
+            console.log('Pokémon no encontrado');
+            return;
+        }
+        pokemon.addTera(teraType);
+    }
+
     // `attachAs` es "MT" o "Z": ambos ocupan el mismo hueco (ver Pokemons.addTM).
     attachTM(idPokemon, Attack, attachAs = "MT"){
         const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
@@ -201,6 +217,33 @@ class Player {
         this.simRival = rival;
     }
 
+    // ── Bolsa y eventos ─────────────────────────────────────────────────────
+    // Las partidas guardadas antes de que existiera la bolsa no traen el campo:
+    // Object.assign las restaura sin él, así que todos los métodos lo levantan
+    // en vez de darlo por hecho.
+    addToBag(entry) {
+        if (!entry || !entry.uid) return;
+        if (!Array.isArray(this.bag)) this.bag = [];
+        this.bag.push(entry);
+    }
+
+    removeFromBag(uid) {
+        if (!Array.isArray(this.bag)) { this.bag = []; return; }
+        this.bag = this.bag.filter(item => item.uid !== uid);
+    }
+
+    markEventUsed(eventId) {
+        if (!eventId) return;
+        if (!this.eventsUsed) this.eventsUsed = {};
+        this.eventsUsed[eventId] = true;
+    }
+
+    // Un evento se puede lanzar una vez por turno: al empezar el turno se
+    // borran las marcas y vuelven a estar todos disponibles.
+    resetTurnEvents() {
+        this.eventsUsed = {};
+    }
+
     changeStatus(idPokemon,status){
         console.log("Player function");
         const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
@@ -212,20 +255,45 @@ class Player {
         console.log("New status:" + pokemon.status);
     }
 
+    setMote(idPokemon, mote){
+        const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
+        if (!pokemon) {
+            console.log('Pokémon no encontrado');
+            return;
+        }
+        pokemon.setMote(mote);
+
+        // Las megas y las formas G-Max son objetos aparte que el jugador elige
+        // en la batalla, así que hay que arrastrarles el mote o el mismo
+        // Pokémon aparecería con dos nombres distintos según la pantalla.
+        (this.megas || [])
+            .filter(m => m.basePokemonId === idPokemon)
+            .forEach(m => m.setMote(pokemon.mote));
+        if (pokemon.gmaxPokedex) {
+            (this.gmaxes || [])
+                .filter(g => g.pokedex === pokemon.gmaxPokedex)
+                .forEach(g => g.setMote(pokemon.mote));
+        }
+
+        console.log('Mote de ' + pokemon.name + ': "' + pokemon.mote + '"');
+    }
+
     decreaseStatusCounter(idPokemon){
         const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
         if (!pokemon) return;
         pokemon.decreaseStatusCounter();
     }
 
-    startTurn() {
-        this.turnStartTime = Date.now(); // Guardar la hora de inicio del turno
+    // `now` permite arrancar/cerrar el turno en el instante de la pausa en vez
+    // de en el reloj real, para que el tiempo pausado no se contabilice.
+    startTurn(now = Date.now()) {
+        this.turnStartTime = now; // Guardar la hora de inicio del turno
     }
 
     // Método para terminar el turno y actualizar el tiempo total
-    endTurn() {
+    endTurn(now = Date.now()) {
         if (this.turnStartTime) {
-            const turnDuration = (Date.now() - this.turnStartTime) / 1000; // Duración en segundos
+            const turnDuration = Math.max(0, (now - this.turnStartTime) / 1000); // Duración en segundos
             this.timeSpent += turnDuration; // Sumar al tiempo total
             this.turnStartTime = null; // Resetear la hora de inicio del turno
         }

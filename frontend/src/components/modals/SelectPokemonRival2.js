@@ -1,4 +1,5 @@
 import React from 'react';
+import PokemonName from '../PokemonName';
 
 
 const SelectPokemonRival2 = ({ show, onClose,setActiveModal, setRivalPokemon,Rival}) => {
@@ -24,7 +25,7 @@ const SelectPokemonRival2 = ({ show, onClose,setActiveModal, setRivalPokemon,Riv
                 {Rival.pokemons.map((pokemon) => {
                     return (
                         <button key={pokemon.id} onClick={() => handleSelectRivalPokemon(pokemon)}>
-                            {pokemon.name}
+                            <PokemonName pkm={pokemon} />
                         </button>
                     );
                 })}
