@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { MAX_MOVE_LIST, maxEffectText } from '../../data/maxMoves';
+import { typeColor, typeLabel } from '../../pokemonTypes';
 
 const getImg = (path) => {
     try { return require(`../../images/${path}`); } catch { return null; }
@@ -340,7 +342,14 @@ const SPECIAL_EFFECTS = [
 
 // La tabla de tipos vive en ModalTypeChart, que se abre con su propio botón
 // flotante junto al de música.
-const TABS = ['Icons', 'Field', 'Status', 'Special'];
+const TABS = ['Icons', 'Field', 'Status', 'Max Moves', 'Special'];
+
+// Encabezado de la pestaña Max: la regla completa, que es lo que hay que tener a
+// mano cuando alguien pregunta "¿y este ataque en qué se convierte?".
+const MAX_INTRO = {
+    en: 'When Pokémon Dynamax, their moves become the Max Move that corresponds to the same type as their base state move, keeping the Attack Strength of the original moves. When a Dynamaxed/G-Maxed Pokémon is switched out, it reverts back to its base form. Base state moves with 0 or lower Attack Strength become Max Guard (Normal Type) regardless of type.',
+    es: 'Al dinamaxizarse, cada movimiento se convierte en el Movimiento Max de su mismo tipo, conservando la Fuerza de Ataque del movimiento original. Al cambiar a un Pokémon Dynamax/G-Max, vuelve a su forma base. Los movimientos con Fuerza 0 o menos se convierten en Max Guard (tipo Normal), sea cual sea su tipo.',
+};
 
 const ModalRulesGuide = ({ show, onClose }) => {
     const [tab, setTab] = useState(0);
@@ -475,8 +484,62 @@ const ModalRulesGuide = ({ show, onClose }) => {
                         </div>
                     )}
 
-                    {/* ── Tab 3: Special Moves ── */}
+                    {/* ── Tab 3: Movimientos Max (Dynamax) ──
+                        A dos columnas como la carta física, para que quepan los
+                        19 sin scroll: es una tabla de CONSULTA y se abre a media
+                        batalla, con el ataque a medio elegir. */}
                     {tab === 3 && (
+                        <div className="rules-guide-max">
+                            <div className="rules-guide-section-title rules-guide-max-title">
+                                💥 {lang === 'en' ? 'MAX MOVE EFFECTS' : 'EFECTOS DE LOS MOVIMIENTOS MAX'}
+                            </div>
+                            <div className="rules-guide-field-note">{MAX_INTRO[lang]}</div>
+
+                            <div className="rules-guide-max-grid">
+                                {MAX_MOVE_LIST.map(max => {
+                                    const icon = max.type ? getImg(`Types/${max.type}.png`) : null;
+                                    const color = max.type ? typeColor(max.type) : '#9aa0b5';
+                                    const isField = max.kind === 'field';
+                                    return (
+                                        <div key={max.name}
+                                             className={`rules-guide-max-card rules-guide-max-card--${max.kind}`}
+                                             style={{ '--max-type': color }}>
+                                            <div className="rules-guide-max-orb">
+                                                {icon
+                                                    ? <img src={icon} alt={max.type || ''} />
+                                                    : <span className="rules-guide-max-orb-fallback">🛡️</span>}
+                                            </div>
+                                            <div className="rules-guide-max-body">
+                                                <div className="rules-guide-max-name">
+                                                    {max.name}
+                                                    <em className="rules-guide-max-type">
+                                                        {/* typeLabel solo habla español; en EN vale el tipo tal cual */}
+                                                        {max.type
+                                                            ? (lang === 'es' ? typeLabel(max.type) : max.type)
+                                                            : (lang === 'es' ? 'Fuerza 0 o menos' : 'Attack Strength 0 or lower')}
+                                                    </em>
+                                                </div>
+                                                <div className="rules-guide-max-desc">
+                                                    {maxEffectText(max, lang)}
+                                                </div>
+                                                {/* Los de campo obligan a una acción física en la
+                                                    mesa: sacar la carta. Se marca aparte porque es
+                                                    lo único de esta tabla que hay que RECORDAR hacer. */}
+                                                {isField && (
+                                                    <span className="rules-guide-max-tag">
+                                                        {lang === 'en' ? 'play a card' : 'juega una carta'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Tab 4: Special Moves ── */}
+                    {tab === 4 && (
                         <div className="rules-guide-special">
                             <input
                                 className="rules-guide-search"

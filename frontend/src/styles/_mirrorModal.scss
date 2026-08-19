@@ -3,6 +3,22 @@
 // Todas las clases con prefijo "mirror-" para identificarlas facilmente
 // =============================================================================
 
+// Texto que tiene que leerse encima de CUALQUIER arena.
+//
+// El fondo del espejo ya no es un estadio fijo: son 18 ilustraciones que van de
+// la nieve al pantano, así que ningún color de letra funciona en todas por sí
+// solo. La salida es no depender del fondo: contorno oscuro pegado a la letra
+// —que la recorta contra los fondos claros— y un halo difuso que la separa de
+// los oscuros. `paint-order` pinta el contorno DEBAJO del relleno, si no el
+// trazo se come la mitad de su grosor hacia dentro y adelgaza la letra.
+@mixin mirror-legible {
+    -webkit-text-stroke: 0.045em rgba(18, 14, 26, 0.92);
+    paint-order: stroke fill;
+    text-shadow:
+        0 0 0.28em rgba(0, 0, 0, 0.95),
+        0 0.08em 0.16em rgba(0, 0, 0, 0.85);
+}
+
 // ─── Backdrop y contenedor principal ─────────────────────────────────────────
 
 .mirror-modal-backdrop {
@@ -18,13 +34,36 @@
     z-index: 1000;
 }
 
+// El modal ES la arena: se le dan las proporciones de la ilustración (4:3, que
+// es como están todas) en vez de estirarlo a la pantalla.
+//
+// Es lo que arregla las dos cosas a la vez. Con el modal a 95vw × 95vh —o sea
+// casi 2:1 en un monitor ancho— no había salida buena: `cover` recortaba un
+// tercio de la arena, y `contain` la metía entera pero dejaba franjas a los
+// lados, y ahí caía todo lo que va posicionado contra el borde del modal (las
+// columnas de ataques, que van a left/right: 0). Igualando las proporciones no
+// hay ni recorte ni franjas, y el borde del modal es el borde de la arena.
+//
+// El `min` es para que quepa de las dos maneras: manda el alto en pantallas
+// anchas y el ancho en las angostas.
 .mirror-modal {
-    width: 95vw;
-    height: 95vh;
+    width: min(95vw, calc(95vh * 4 / 3));
+    aspect-ratio: 4 / 3;
     border-radius: 20px;
     overflow: hidden;
     position: relative;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+// Lo que estaba medido en vw contra la pantalla completa hay que remedirlo
+// contra el modal, que ahora es más angosto. Si no, las dos tablas de totales
+// —40vw cada una, pensadas para la pantalla del máster— se montan una sobre la
+// otra en cuanto el modal baja de 80vw.
+.mirror-modal {
+    .MyTotal_label,
+    .MyTotal,
+    .RivalTotal_label,
+    .RivalTotal { width: 42%; }
 }
 
 // =============================================================================
@@ -92,7 +131,10 @@
     top: 0;
     left: 0;
     display: flex;
-    background-image: url("../images/pokeStadium.png");
+    // Misma arena que la tablet, puesta por --arena desde el JSX. El velo blanco
+    // no va aquí: el espejo se ve de lejos y el fondo a plena luz ayuda a leerlo.
+    // `cover` sin recorte real: el modal ya tiene las proporciones de la arena.
+    background-image: var(--arena, url("../images/pokeStadiumSim.webp"));
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
@@ -128,12 +170,29 @@
 
 
 // Basado en: .MyPokemon_name, .RivalPokemon_name
+//
+// Es una FILA, no solo el nombre: al lado van el rótulo Dynamax y las insignias
+// del item adjuntado, igual que en la tablet. El flex las mantiene en el mismo
+// renglón y centradas bajo el token por muy largo que sea el nombre.
 .mirror-mypkm-name,
 .mirror-rivalpkm-name {
     margin: 0.5rem;
-    font-size: 1.3rem;
+    font-size: 1.7rem;
     font-weight: bolder;
-    color: rgb(23, 21, 20);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    flex-wrap: wrap;
+
+    // El texto oscuro que había servía sobre el estadio claro de antes, pero
+    // ahora el fondo son 18 arenas distintas y en las oscuras —Siniestro,
+    // Fantasma, Dragón— el nombre desaparecía. Blanco con contorno oscuro se
+    // lee sobre todas: el relleno gana en las oscuras y el contorno en las
+    // claras. Es el mismo recurso de los nombres de entrenador de más arriba,
+    // subido de punto porque esta línea es bastante más chica.
+    color: #fff;
+    @include mirror-legible;
 }
 
 // Basado en: .MyPokemon_level, .RivalPokemon_level
@@ -142,8 +201,38 @@
     margin: 0.5rem;
     font-size: 1.3rem;
     font-weight: bolder;
-    color: rgb(23, 21, 20);
+    // Va justo debajo del nombre y tenía el mismo problema: dejarlo oscuro
+    // mientras el de arriba se aclara se vería como un descuido.
+    color: #fff;
+    @include mirror-legible;
 }
+
+// El mote conserva su color —es lo que avisa de que ese no es el nombre de la
+// especie— pero en la versión clara. `--mote-ink-light` ya existe en
+// _mote.scss para exactamente esto: el violeta profundo del tema se pierde
+// sobre un fondo oscuro.
+.mirror-mypkm-name .pkm-mote,
+.mirror-rivalpkm-name .pkm-mote {
+    --mote-ink: var(--mote-ink-light);
+}
+
+// El rótulo Dynamax trae su propio fondo y no necesita el contorno: encima del
+// degradado rojo solo lo ensuciaría.
+.mirror-mypkm-name .dyna-chip,
+.mirror-rivalpkm-name .dyna-chip {
+    -webkit-text-stroke: 0;
+    text-shadow: none;
+}
+
+// Medidas de la carta de ataque dentro del espejo. Las dos en vh y juntas a
+// propósito: el grosor tiene que envolver el icono de tipo (6vh) y el margen que
+// separa las cartas giradas se calcula restándolas, así que si se toca una hay
+// que verla al lado de la otra.
+//
+//   largo   — de icono a fuerza. Es lo que mide de ALTO cuando va girada.
+//   grosor  — lo justo para el icono más un respiro.
+$mirror-atk-largo:  25vh;
+$mirror-atk-grosor:  8vh;
 
 // Basado en: .Attack-selected-mypoke, .Attack-selected-rival
 // (texto del ataque seleccionado en la parte superior)
@@ -155,8 +244,25 @@
     // Override: _attacks.scss usa rotate(90deg), aqui se muestra horizontal
     .Attack {
         transform: rotate(0deg);
-        width: 28vh;
-        height: 7vw;
+        width: $mirror-atk-largo;
+        height: $mirror-atk-grosor;
+    }
+}
+
+// Las columnas de ataques de la fase de selección: la misma carta, girada 90°.
+.mirror-modal {
+    .MyPokemon_attacks .Attack,
+    .RivalPokemon_attacks .Attack {
+        width: $mirror-atk-largo;
+        height: $mirror-atk-grosor;
+
+        // Con tres ataques se montaban unas sobre otras, y no era cosa del
+        // tamaño: `transform` no cambia la caja que ve el layout. La columna las
+        // repartía por su ALTO —el grosor, 8vh— mientras que en pantalla, ya
+        // giradas, ocupan su LARGO. Este margen le devuelve a la caja el alto
+        // que la carta pinta de verdad, y entonces el space-evenly de la columna
+        // reparte bien con dos ataques o con tres.
+        margin: calc((#{$mirror-atk-largo} - #{$mirror-atk-grosor}) / 2) 0;
     }
 }
 .mirror-attack-selected-mypoke {
@@ -270,24 +376,161 @@
 
 // Basado en: .myTotalFinal, .rivalTotalFinal
 // Numeros grandes centrados superpuestos
+// En % del modal y no en vw por lo mismo que las tablas de arriba: con el modal
+// más angosto, dos cajas de 10vw a left/right 37% se rozaban en el centro.
+//
+// Van metidos hacia el centro hasta el hueco que dejan libre las cartas del
+// ataque elegido: esas arrancan al 16% y miden 28vh de ancho, así que en un
+// modal 4:3 ocupan hasta el 38% por cada lado. La banda central es lo que queda
+// entre las dos, y ahí caben justo las dos cajas de totales sin tocarlas.
+// El número es lo ÚNICO que la mesa mira de lejos, así que no puede depender del
+// fondo: hay 18 arenas y las hay claras (Hielo, Hada) y oscuras (Siniestro,
+// Fantasma). Un color plano se pierde en la mitad de ellas.
+//
+// La receta es la del marcador deportivo, tres capas que se sostienen solas:
+//   relleno blanco    — el máximo contraste sobre fondo oscuro
+//   contorno oscuro   — el máximo contraste sobre fondo claro
+//   halo de color     — separa la cifra del fondo y dice de quién es
+//
+// El halo va en verde y rojo, los mismos del nombre del jugador y del rival unas
+// líneas más arriba: quien mira la tabla ya asocia esos dos colores a cada lado,
+// así que el total se lee sin buscar de qué columna cuelga.
 .mirror-mytotal-final,
 .mirror-rivaltotal-final {
-    width: 10vw;
+    width: 11%;
     height: 13vh;
     display: flex;
     justify-content: center;
     align-items: center;
     position: absolute;
-    font-size: 7rem;
-    color: rgb(186, 9, 171);
     top: 10%;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    z-index: 10;
+
+    // Negra y algo estrecha: a este tamaño la de la interfaz se ve endeble, y
+    // cuanto más grueso el trazo mejor aguanta el contorno sin cerrarse.
+    font-family: 'Arial Black', 'Franklin Gothic Heavy', Impact, sans-serif;
+    font-weight: 900;
+    font-size: 7rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    // Sin esto un 8 y un 13 no ocupan lo mismo y la cifra baila al cambiar
+    font-variant-numeric: tabular-nums;
+
+    color: #fff;
+    // En em y no en px para que el grosor acompañe al tamaño de letra si algún
+    // día se ajusta. `paint-order` pinta el contorno DEBAJO del relleno; sin él
+    // el trazo se come la mitad de su grosor hacia dentro y adelgaza la cifra.
+    -webkit-text-stroke: 0.085em #17131f;
+    paint-order: stroke fill;
+    text-shadow:
+        0 0 0.16em var(--total-glow),
+        0 0 0.38em var(--total-glow),
+        0 0.05em 0.09em rgba(0, 0, 0, 0.7);
+
+    // Un respingo al cambiar el número, para que se note desde lejos que la
+    // cuenta se movió. Lo dispara React remontando el nodo (key={total}).
+    animation: total-pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.4);
 }
+
+@keyframes total-pop {
+    0%   { transform: scale(0.7);  opacity: 0; }
+    55%  { transform: scale(1.14); opacity: 1; }
+    100% { transform: scale(1);    opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mirror-mytotal-final,
+    .mirror-rivaltotal-final { animation: none; }
+}
+
 .mirror-mytotal-final {
-    left: 37%;
+    --total-glow: #4ade80;   // el verde del nombre del jugador
+    left: 39%;
 }
 .mirror-rivaltotal-final {
-    right: 37%;
+    --total-glow: #ff8080;   // el rojo del nombre del rival
+    right: 39%;
+}
+
+// =============================================================================
+// Cartas de campo activas (clima, terrenos, trampas)
+// Basado en: .sim-field-hud de SimPlayer (styles/_fieldMoves.scss)
+// =============================================================================
+//
+// Misma franja de arriba que en la tablet, pero más compacta: aquí compite con
+// los totales grandes, que empiezan en el 10% del alto. Manteniéndola por debajo
+// de esa marca las dos cosas caben sin estorbarse.
+//
+// `absolute` y no `fixed`: el espejo es un modal dentro de la tabla de totales,
+// y con `fixed` la franja se saldría de su marco redondeado.
+
+.mirror-field-hud {
+    position: absolute;
+    top: 0.4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    pointer-events: none;   // es un cartel, no un control
+}
+
+.mirror-field-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.05rem;
+    width: 7rem;
+    padding: 0.35rem 0.4rem 0.4rem;
+    border: 2px solid;
+    border-radius: 12px;
+    background: rgba(10, 10, 30, 0.92);
+}
+
+.mirror-field-card-emoji {
+    font-size: 1.9rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+.mirror-field-card-name {
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.15;
+}
+.mirror-field-card-side {
+    font-size: 0.58rem;
+    text-align: center;
+    color: rgba(237, 227, 241, 0.6);
+}
+.mirror-field-card-manual {
+    margin-top: 0.1rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: rgba(240, 208, 128, 0.2);
+    color: #f0d080;
+    font-size: 0.52rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+// Tres tonos, los mismos de la tablet: global, lado del jugador, lado del rival
+.mirror-field-card--global {
+    border-color: rgba(120, 180, 240, 0.75);
+    box-shadow: 0 0 12px rgba(120, 180, 240, 0.3);
+    .mirror-field-card-name { color: #78b4f0; }
+}
+.mirror-field-card--mine {
+    border-color: rgba(126, 214, 126, 0.75);
+    box-shadow: 0 0 12px rgba(126, 214, 126, 0.3);
+    .mirror-field-card-name { color: #7ed67e; }
+}
+.mirror-field-card--rival {
+    border-color: rgba(231, 76, 60, 0.75);
+    box-shadow: 0 0 12px rgba(231, 76, 60, 0.3);
+    .mirror-field-card-name { color: #e88; }
 }
 
 // =============================================================================

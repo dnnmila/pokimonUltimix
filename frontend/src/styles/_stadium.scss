@@ -117,7 +117,13 @@
     width: 100vw;
     height: 100vh;
     display: flex;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url("../images/pokeStadiumSim.webp");
+    // La arena la elige el JS según el gimnasio (ver data/arenas.js) y llega por
+    // --arena. El respaldo es el estadio de siempre, el de salvajes y duelos.
+    background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), var(--arena, url("../images/pokeStadiumSim.webp"));
+    // `cover` y no `contain`: la tablet es casi 4:3 igual que las arenas, así que
+    // llena la pantalla recortando un pelo arriba y abajo. Con `contain` salían
+    // franjas a los lados y todo lo que va pegado al borde —las columnas de
+    // ataques— caía fuera de la ilustración.
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
@@ -603,3 +609,290 @@ top: 15%;
         }
     }
 }
+
+// Token de un Pokémon que subió teracristalizado.
+//
+// No es un aura difusa: es CRISTAL, y el cristal EMITE. En el juego el Pokémon
+// se recubre de una capa facetada y de él salen destellos de cuatro puntas y un
+// resplandor. Aquí eso son dos capas con papeles opuestos:
+//
+//   ::before — DENTRO. Va recortada a la silueta (mask-image con
+//     `--tera-sprite`, que pone el componente) y hace de cuerpo de cristal:
+//     dos caras planas de luz en ángulos distintos, más un filo especular que
+//     recorre el cuerpo de lado a lado y vuelve, como la luz jugando sobre una
+//     gema al girarla.
+//   ::after — FUERA. Esta NO se recorta y además desborda la caja: son los
+//     destellos que salen del Pokémon y el resplandor que lo envuelve. Es la
+//     que hace que la luz parezca generada por él y no pegada encima.
+//
+// Las dos van en `screen`: SUMAN luz sobre el sprite en vez de taparlo, que es
+// como se comporta la luz de verdad.
+
+// Destello de cuatro puntas, con las puntas largas y finas como en el juego.
+// Va como data-URI y no como archivo porque es una sola curva; en SVG escala
+// sin pixelarse a cualquier tamaño de token.
+$tera-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 0C52.5 42 58 47.5 100 50C58 52.5 52.5 58 50 100C47.5 58 42 52.5 0 50C42 47.5 47.5 42 50 0Z' fill='white'/%3E%3C/svg%3E");
+
+.MyPokemon_img.tera-img,
+.RivalPokemon_img.tera-img,
+.mirror-mypkm-img.tera-img,
+.mirror-rivalpkm-img.tera-img {
+    position: relative;
+    // Luz fija en el contorno: el cristal no parpadea, refleja. Y como el
+    // drop-shadow se calcula sobre TODO lo pintado —destellos incluidos—, los
+    // brillos de ::after también irradian.
+    filter: drop-shadow(0 0 5px var(--tera-type))
+            drop-shadow(0 0 14px color-mix(in srgb, var(--tera-type) 45%, transparent))
+            saturate(1.12);
+}
+
+// ── DENTRO: cuerpo de cristal ───────────────────────────────────────────────
+.MyPokemon_img.tera-img::before,
+.RivalPokemon_img.tera-img::before,
+.mirror-mypkm-img.tera-img::before,
+.mirror-rivalpkm-img.tera-img::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    -webkit-mask: var(--tera-sprite) center / contain no-repeat;
+            mask: var(--tera-sprite) center / contain no-repeat;
+
+    // El ancho de más (200-260%) es lo que hace que animar la posición se NOTE:
+    // a tamaño automático cada capa llena la caja y desplazarla no mueve nada.
+    background:
+        // Cara ancha del color del tipo: es la que tiñe el cuerpo
+        linear-gradient(115deg,
+            transparent 0 34%,
+            color-mix(in srgb, var(--tera-type) 60%, transparent) 34% 47%,
+            transparent 47%) 0% 0% / 200% 100% no-repeat,
+        // Cara fina y blanca cruzada: sin ella se lee como tinte, no como faceta
+        linear-gradient(58deg,
+            transparent 0 62%,
+            rgba(255, 255, 255, 0.32) 62% 68%,
+            transparent 68%) 100% 0% / 220% 100% no-repeat,
+        // Filo especular, blanco al frente y del color del tipo detrás: el vidrio
+        // descompone la luz, y un brillo blanco a secas parece plástico
+        linear-gradient(105deg,
+            transparent 0 43%,
+            rgba(255, 255, 255, 0.9) 48% 50%,
+            color-mix(in srgb, var(--tera-type) 85%, white) 51% 54%,
+            transparent 59% 100%) 175% 0 / 260% 100% no-repeat;
+
+    mix-blend-mode: screen;
+    animation: tera-facets 6s ease-in-out infinite;
+}
+
+// ── FUERA: destellos y resplandor ───────────────────────────────────────────
+.MyPokemon_img.tera-img::after,
+.RivalPokemon_img.tera-img::after,
+.mirror-mypkm-img.tera-img::after,
+.mirror-rivalpkm-img.tera-img::after {
+    content: '';
+    position: absolute;
+    // Desborda la caja del token a propósito: los destellos tienen que salirse
+    // del Pokémon, si no parecen pegados encima
+    inset: -28%;
+    pointer-events: none;
+
+    background:
+        // Destellos repartidos por FUERA del token —el disco de la carta ocupa el
+        // centro, así que ahí solo taparían—, de tamaños dispares para que no se
+        // lean como un patrón
+        #{$tera-star}   8% 16% / 30% auto no-repeat,
+        #{$tera-star}  92% 28% / 19% auto no-repeat,
+        #{$tera-star}  78% 90% / 24% auto no-repeat,
+        #{$tera-star}  16% 82% / 15% auto no-repeat,
+        #{$tera-star}  50%  2% / 13% auto no-repeat,
+        // Dos fogonazos aplastados: el mismo destello estirado a lo ancho da los
+        // rayos de luz largos y finos que cruzan la escena en el juego
+        #{$tera-star}   4% 54% / 46% 7% no-repeat,
+        #{$tera-star}  96% 66% / 38% 6% no-repeat,
+        // Resplandor del que salen. Lleva un núcleo blanco además del color del
+        // tipo porque los tipos oscuros (Siniestro, Lucha) apenas se veían sobre
+        // el fondo: el blanco garantiza que los 19 iluminen
+        radial-gradient(circle at 50% 50%,
+            rgba(255, 255, 255, 0.28) 0%,
+            color-mix(in srgb, var(--tera-type) 55%, transparent) 22%,
+            color-mix(in srgb, var(--tera-type) 20%, transparent) 42%,
+            transparent 68%) center / 100% 100% no-repeat;
+
+    mix-blend-mode: screen;
+    animation: tera-sparks 3.4s ease-in-out infinite;
+}
+
+// Las caras se cruzan y el filo especular cruza el cuerpo y vuelve. Ida y vuelta
+// en el mismo ciclo, que además evita el salto de un barrido que reaparece.
+@keyframes tera-facets {
+    0%, 100% { background-position:   0% 0%, 100% 0%,  175% 0; }
+    50%      { background-position: 100% 0%,   0% 0%,  -75% 0; }
+}
+
+// Los destellos titilan DESFASADOS entre sí. No se puede dar una animación por
+// capa, pero sí una lista de tamaños por fotograma: en cada uno unos crecen
+// mientras otros se apagan, y eso basta para que no parpadeen todos a la vez.
+// El resplandor (última capa) se queda quieto en 100%.
+@keyframes tera-sparks {
+    0%, 100% { opacity: 0.88; background-size: 30% auto, 11% auto, 24% auto, 15% auto,  8% auto, 46% 7%, 22% 4%, 100% 100%; }
+    25%      { opacity: 1;    background-size: 12% auto, 24% auto, 13% auto, 25% auto, 14% auto, 26% 4%, 38% 6%, 100% 100%; }
+    50%      { opacity: 0.92; background-size: 25% auto, 10% auto, 28% auto, 11% auto,  9% auto, 40% 6%, 20% 3%, 100% 100%; }
+    75%      { opacity: 1;    background-size: 10% auto, 20% auto, 14% auto, 29% auto, 15% auto, 24% 4%, 42% 7%, 100% 100%; }
+}
+
+// Rótulo junto al nombre. El aura ya avisa, pero en la mesa hay que poder
+// DECIRLO ("está dinamaxizado") y el rótulo evita discutirlo.
+.dyna-chip {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(180deg, #ff6b86, #e4384a);
+    box-shadow: 0 0 8px rgba(228, 56, 74, 0.7);
+    vertical-align: middle;
+}
+
+// Token de un Pokémon que subió en forma Dynamax.
+//
+// La idea contraria a la del cristal Tera: el Tera REFLEJA (luz fija, facetas
+// que se cruzan), el Dynamax HINCHA (energía roja que late desde dentro y sube).
+// Se distinguen de un vistazo aunque compartan sitio, que es justo lo que hace
+// falta porque nunca aparecen juntas y hay que saber cuál se está mirando.
+//
+//   ::before — DENTRO. Recortada a la silueta (`--dyna-sprite`): el cuerpo se
+//     tiñe de rojo Dynamax con un frente de luz que sube de los pies a la
+//     cabeza, como la energía llenándolo.
+//   ::after  — FUERA. Anillo de energía que se expande y se desvanece: es lo que
+//     da la sensación de tamaño, que es de lo que va esta forma.
+$dyna-red:  #e4384a;
+$dyna-pink: #ff7ba8;
+
+.MyPokemon_img.dyna-img,
+.RivalPokemon_img.dyna-img,
+.mirror-mypkm-img.dyna-img,
+.mirror-rivalpkm-img.dyna-img {
+    position: relative;
+    // El halo late al mismo compás que el relleno de dentro: es UN cuerpo que se
+    // hincha, no un sprite con una luz encima.
+    animation: dyna-swell 2.4s ease-in-out infinite;
+}
+
+// ── DENTRO: el cuerpo cargado de energía ────────────────────────────────────
+.MyPokemon_img.dyna-img::before,
+.RivalPokemon_img.dyna-img::before,
+.mirror-mypkm-img.dyna-img::before,
+.mirror-rivalpkm-img.dyna-img::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    -webkit-mask: var(--dyna-sprite) center / contain no-repeat;
+            mask: var(--dyna-sprite) center / contain no-repeat;
+
+    // Alto de más (100% / 300%) para que el frente de luz recorra el cuerpo de
+    // abajo arriba en vez de quedarse quieto llenando la caja.
+    background:
+        linear-gradient(0deg,
+            rgba(255, 255, 255, 0.85) 0 6%,
+            #{$dyna-pink} 6% 14%,
+            rgba(228, 56, 74, 0.35) 14% 30%,
+            transparent 30% 100%) 0 100% / 100% 300% no-repeat,
+        linear-gradient(180deg,
+            rgba(228, 56, 74, 0.42) 0%,
+            rgba(228, 56, 74, 0.14) 100%) center / 100% 100% no-repeat;
+
+    mix-blend-mode: screen;
+    animation: dyna-charge 2.4s ease-in-out infinite;
+}
+
+// ── FUERA: el anillo que se expande ─────────────────────────────────────────
+.MyPokemon_img.dyna-img::after,
+.RivalPokemon_img.dyna-img::after,
+.mirror-mypkm-img.dyna-img::after,
+.mirror-rivalpkm-img.dyna-img::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    border-radius: 50%;
+
+    background:
+        radial-gradient(circle at 50% 50%,
+            transparent 0 44%,
+            rgba(255, 123, 168, 0.55) 47% 50%,
+            transparent 54% 100%),
+        radial-gradient(circle at 50% 50%,
+            rgba(228, 56, 74, 0.30) 0%,
+            rgba(228, 56, 74, 0.10) 40%,
+            transparent 66%);
+
+    mix-blend-mode: screen;
+    animation: dyna-ring 2.4s ease-out infinite;
+}
+
+// Latido del contorno. Va en `filter` sobre el elemento entero para que el halo
+// envuelva también a las dos capas pintadas encima.
+@keyframes dyna-swell {
+    0%, 100% { filter: drop-shadow(0 0 6px #{$dyna-red}) drop-shadow(0 0 16px rgba(228, 56, 74, 0.45)) saturate(1.1); }
+    50%      { filter: drop-shadow(0 0 12px #{$dyna-pink}) drop-shadow(0 0 30px rgba(228, 56, 74, 0.75)) saturate(1.25); }
+}
+
+// El frente de luz sube y se apaga arriba: llena, no parpadea
+@keyframes dyna-charge {
+    0%       { background-position: 0 100%, center; opacity: 0.55; }
+    70%      { opacity: 1; }
+    100%     { background-position: 0 -60%, center; opacity: 0.55; }
+}
+
+// El anillo nace pegado al cuerpo y se va abriendo hasta desaparecer
+@keyframes dyna-ring {
+    0%   { transform: scale(0.72); opacity: 0; }
+    25%  { opacity: 0.9; }
+    100% { transform: scale(1.12); opacity: 0; }
+}
+
+// Sin movimiento queda el estado a medio camino: se sigue viendo que ese
+// Pokémon está dinamaxizado, pero nada se mueve.
+@media (prefers-reduced-motion: reduce) {
+    .MyPokemon_img.dyna-img,
+    .RivalPokemon_img.dyna-img,
+    .mirror-mypkm-img.dyna-img,
+    .mirror-rivalpkm-img.dyna-img {
+        animation: none;
+        filter: drop-shadow(0 0 10px #{$dyna-red}) drop-shadow(0 0 24px rgba(228, 56, 74, 0.6));
+    }
+    .MyPokemon_img.dyna-img::before,
+    .RivalPokemon_img.dyna-img::before,
+    .MyPokemon_img.dyna-img::after,
+    .RivalPokemon_img.dyna-img::after,
+    .mirror-mypkm-img.dyna-img::before,
+    .mirror-rivalpkm-img.dyna-img::before,
+    .mirror-mypkm-img.dyna-img::after,
+    .mirror-rivalpkm-img.dyna-img::after { animation: none; }
+}
+
+// Sin animaciones: el cristal se queda quieto, con sus caras, sus destellos y
+// su resplandor. Se distingue igual, solo que no respira.
+@media (prefers-reduced-motion: reduce) {
+    .MyPokemon_img.tera-img::before,
+    .RivalPokemon_img.tera-img::before,
+    .mirror-mypkm-img.tera-img::before,
+    .mirror-rivalpkm-img.tera-img::before { animation: none; }
+    .MyPokemon_img.tera-img::after,
+    .RivalPokemon_img.tera-img::after,
+    .mirror-mypkm-img.tera-img::after,
+    .mirror-rivalpkm-img.tera-img::after { animation: none; opacity: 0.9; }
+}
+
+// Nota sobre el final de la batalla: el cristal no compite con el remate. Sus
+// animaciones viven en los pseudoelementos, así que `winnerPulse` y `loserShake`
+// corren sin estorbo sobre el token. Y el `filter: brightness(30%) !important`
+// de `.loser-img` le gana a la luz de borde de aquí —!important manda por
+// encima de la especificidad—, que es lo correcto: el perdedor tiene que verse
+// apagado aunque hubiera teracristalizado.

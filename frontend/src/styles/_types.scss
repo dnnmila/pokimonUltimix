@@ -93,3 +93,13 @@ $ipad-10th-gen-landscape: 1180px; // 1180px para el modo horizontal
          color: #ffffff;
     }
 }
+// Astral (Stellar): solo existe como Orbe Tera, no hay ataques ni Pokémon de
+// este tipo de base. Va con degradado y texto oscuro —el único de los que se
+// pintan aquí— porque es justo lo que lo hace reconocible al vuelo: si un
+// Pokémon sube con esta etiqueta, no le entra ni ventaja ni desventaja de nadie.
+.type_STELLAR{
+    border: 2px solid #cfc2e8;
+    background: linear-gradient(120deg, #fbe7c6 0%, #e7d3f5 35%, #c8e6f5 70%, #f7d9e8 100%);
+    color: #2b2440;
+    text-shadow: none;
+}

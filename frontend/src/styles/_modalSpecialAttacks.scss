@@ -248,3 +248,27 @@
 
 /* El botón de la barra inferior del master vive ahora en _playerHud.scss
    como .pv-action */
+
+/* ── Pestaña de clima (cartas de campo) ─────────────────────────────────────
+   Reutiliza el selector de Player, cuya rejilla pide más ancho del que usan
+   el dado y el metrónomo. En vez de comprimir la rejilla, se ensancha el modal
+   solo mientras esa pestaña está abierta. */
+.special-attacks-modal--wide{
+    width: 62vw;
+    min-width: 620px;
+}
+
+/* El panel del selector va alineado a la izquierda: sus grupos y la nota son
+   bloques de ancho completo, no contenido centrado como los otros dos. */
+.sa-panel--field{
+    align-items: stretch;
+    gap: 1rem;
+}
+
+@media (max-width: 900px){
+    .special-attacks-modal,
+    .special-attacks-modal--wide{
+        width: 94vw;
+        min-width: 0;
+    }
+}

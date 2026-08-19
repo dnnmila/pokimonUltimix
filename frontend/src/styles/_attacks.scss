@@ -1,3 +1,11 @@
+// La carta del ataque se pinta del color de su tipo, y ese color NO se declara
+// aquí: la clase `type_XXX` de _types.scss —la misma de las fichas que van bajo
+// el Pokémon— le pone el `background-color` y el `border`. Una sola paleta para
+// las dos cosas.
+//
+// Por eso esta regla no declara ni `background-color` ni el atajo `border`: si
+// lo hiciera le ganaría a la clase de tipo, porque _types.scss entra ANTES que
+// este archivo en app.scss y a igual especificidad manda el último.
 .Attack{
     display: flex;
     height: 7vw;
@@ -6,10 +14,25 @@
     align-items: center;
 
     transform: rotate(90deg);
-    border: solid 1px rgb(224, 226, 247);
     border-radius: 35px;
+
+    // El velo blanco encima del color del tipo. `background-image` se pinta
+    // SOBRE `background-color`, así que el sólido de la ficha queda convertido
+    // en un tinte pálido —y ese es justo el punto: el nombre del ataque sigue
+    // en texto oscuro y se lee igual en los 18 tipos, tanto en los oscuros
+    // (Dragón, Fantasma) como en los claros (Eléctrico, Hielo), que es lo que
+    // no aguantaría un color a sangre.
+    background-image: linear-gradient(rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.74));
+    // Despega la carta del suelo de la arena, que tiene mucha textura
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.28);
+}
+
+// Respaldo para un ataque sin tipo reconocible: el gris de siempre. Va con
+// `:where()` —especificidad 0— para que CUALQUIER `type_XXX` le gane sin
+// depender del orden de los @import.
+:where(.Attack) {
     background-color: rgba(245, 247, 249, 0.55);
-    
+    border: solid 1px rgb(224, 226, 247);
 }
 
 
@@ -62,10 +85,14 @@
     font-size: 1rem;
     width: 45%;
     overflow: hidden;
-    font-weight: lighter;
+    // Era `lighter`, que a la distancia de la mesa se deshacía sobre la textura
+    // de la arena. El tinte del tipo pide además algo de cuerpo para no verse
+    // desvaído.
+    font-weight: 600;
+    color: rgb(23, 21, 20);
     display: flex;
     justify-content: center;
-    
+
     }
 .attack_strenght{
     font-size: 1.5rem;

@@ -1,0 +1,467 @@
+// Menú de eventos del SimPlayer (ModalEvents).
+//
+// Mismo lenguaje que el catálogo de cristales Z, pero en tarjetas anchas: son
+// pocas y cada una necesita sitio para el texto de lo que hace el evento.
+// El color de cada tarjeta llega por `--event-accent` desde simEvents.js.
+
+.sim-events-backdrop {
+    z-index: 500;
+}
+
+.sim-events-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-link);
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 94vw;
+    max-width: 760px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.sim-events-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.sim-events-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+}
+
+.sim-events-title {
+    color: var(--hud-accent);
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.sim-events-sub {
+    color: #9a9a9a;
+    font-size: 0.82rem;
+}
+
+// Un solo scroll para eventos + bolsa: si cada bloque tuviera el suyo, en el
+// iPad quedarían dos barras compitiendo en la misma altura.
+.sim-events-scroll {
+    overflow-y: auto;
+    padding: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sim-events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0.7rem;
+}
+
+.sim-event-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--event-accent, var(--hud-link));
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+
+    &:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 12px var(--event-accent, var(--hud-link));
+    }
+
+    // Gris y sin pulsar, pero las reglas se pueden consultar igual: por eso la
+    // opacidad se aplica al contenido y no a la tarjeta entera, que arrastraría
+    // también el botón de ayuda.
+    &.is-disabled {
+        cursor: default;
+        &:hover { transform: none; box-shadow: none; background: rgba(255, 255, 255, 0.05); }
+
+        .sim-event-card-icon,
+        .sim-event-card-text {
+            opacity: 0.45;
+            filter: grayscale(0.7);
+        }
+    }
+}
+
+.sim-event-card-icon {
+    width: 3.4rem;
+    height: 3.4rem;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    }
+}
+
+.sim-event-card-icon-fallback {
+    color: var(--event-accent, var(--hud-link));
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.sim-event-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.sim-event-card-title {
+    color: var(--event-accent, var(--hud-accent));
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+}
+
+.sim-event-card-es {
+    color: white;
+    font-size: 0.85rem;
+}
+
+.sim-event-card-desc {
+    color: #9a9a9a;
+    font-size: 0.75rem;
+    line-height: 1.25;
+}
+
+// Consulta de reglas del evento, en la esquina de su tarjeta. Va abajo a la
+// derecha para no chocar con la etiqueta de "Próximamente"/"Usado", que ocupa
+// la de arriba.
+.sim-event-help {
+    position: absolute;
+    bottom: 0.4rem;
+    right: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--event-accent, var(--hud-link));
+    color: var(--event-accent, var(--hud-link));
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.18); transform: scale(1.12); }
+}
+
+.sim-event-card-tag {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.5rem;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #ddd;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 6px;
+    padding: 0.1rem 0.35rem;
+}
+
+// ── Bolsa: premios de eventos guardados sin usar ────────────────────────────
+
+.sim-events-bag-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--hud-accent);
+    font-size: 0.95rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+
+    i {
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.18);
+    }
+}
+
+.sim-events-bag-count {
+    color: #9a9a9a;
+    font-size: 0.8rem;
+    font-weight: normal;
+}
+
+.sim-events-bag-empty {
+    color: #7d7d7d;
+    font-size: 0.78rem;
+    font-style: italic;
+    padding: 0.4rem 0.2rem;
+}
+
+.sim-events-bag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem;
+}
+
+.sim-bag-card {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--bag-type, var(--hud-link));
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 10px var(--bag-type, var(--hud-link));
+    }
+}
+
+.sim-bag-card-art {
+    width: 2.4rem;
+    height: 3.2rem;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 4px;
+    }
+}
+
+.sim-bag-card-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.sim-bag-card-title {
+    color: white;
+    font-size: 0.85rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sim-bag-card-note {
+    color: #9a9a9a;
+    font-size: 0.72rem;
+}
+
+.sim-bag-card-type {
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: white;
+    border-radius: 5px;
+    padding: 0.1rem 0.3rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+// Icono del botón de la barra de herramientas del setup
+.sim-topbar-events {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.6rem;
+    line-height: 1;
+    color: var(--hud-accent);
+    text-shadow: 0 0 10px var(--hud-accent), 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 600px) {
+    .sim-events-grid { grid-template-columns: 1fr; }
+}
+
+// ── Concentrador de ayuda ───────────────────────────────────────────────────
+//
+// Vive por DEBAJO de las guías que abre (460 contra los 500 de todas ellas):
+// así al cerrar cualquiera se vuelve aquí y no a la pantalla pelada.
+
+.help-backdrop { z-index: 460; }
+
+.help-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-link);
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 94vw;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    overflow-y: auto;
+}
+
+.help-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.help-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+    flex-wrap: wrap;
+}
+
+.help-title {
+    color: var(--hud-accent);
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.help-sub { color: #9a9a9a; font-size: 0.82rem; }
+
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.7rem;
+}
+
+.help-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--hud-link);
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 12px var(--hud-link);
+    }
+}
+
+// Los mismos iconos que tenían los botones sueltos de la barra
+.help-card-icon {
+    width: 3rem;
+    height: 3rem;
+    flex: 0 0 auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.help-card-text { min-width: 0; }
+
+.help-card-title {
+    color: var(--hud-accent);
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.help-card-desc {
+    color: #9a9a9a;
+    font-size: 0.75rem;
+    line-height: 1.25;
+}
+
+.help-events-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--hud-accent);
+    font-size: 0.95rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+
+    i { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.18); }
+}
+
+.help-events-empty {
+    color: #7d7d7d;
+    font-size: 0.78rem;
+    font-style: italic;
+}
+
+.help-events-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.help-event {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.7rem 0.4rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--event-accent, var(--hud-link));
+    color: var(--event-accent, var(--hud-link));
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.14); transform: translateY(-2px); }
+
+    img { width: 1.6rem; height: 1.6rem; object-fit: contain; }
+}
+
+// Icono del botón de la barra: el mismo tratamiento que el de Eventos
+.sim-topbar-help {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.6rem;
+    line-height: 1;
+    font-weight: bold;
+    color: var(--hud-accent);
+    text-shadow: 0 0 10px var(--hud-accent), 0 2px 4px rgba(0, 0, 0, 0.8);
+}

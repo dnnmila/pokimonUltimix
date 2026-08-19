@@ -3,11 +3,12 @@ import dinamaxImg from '../images/dinamax.png';
 import Pokemon from './Pokemon';
 import AddPokemon from './AddPokemon';
 import PokemonNameSearch from './PokemonNameSearch';
+import PokemonName from './PokemonName';
 import ModalMonedas from './modals/ModalMonedas.js';
 import ModalTienda from './modals/ModalTienda.js';
 import ModalBattle from './modals/ModalBattle.js';
 import ModalSpecialAttacks from './modals/ModalSpecialAttacks.js';
-import { FIELD_MOVES } from '../battleRules';
+import ModalFieldPicker from './modals/ModalFieldPicker.js';
 import { getTrainerImage } from '../data/trainers';
 // Iconos de la barra de acciones: dado para el sorteo de tipos/metrónomo,
 // icono de clima para las cartas de campo, y el de intercambio de siempre
@@ -18,10 +19,6 @@ import tradeIcon from '../images/changePoke.png';
 // y el import quedaría en NFC, que solo resuelve por suerte en macOS
 import coinImg from '../images/pokecoins.png';
 
-
-const getFieldCardImg = (id) => {
-    try { return require(`../images/Field Moves/${id}.png`); } catch { return null; }
-};
 
 const getBadgeImg = (gen, num) => {
     try {
@@ -39,7 +36,7 @@ const getPokedexImg = (pokedex) => {
     try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
 };
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon,onPauseGame,onSetFieldMove}) => {
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,attachTera,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon,onPauseGame,onSetFieldMove}) => {
 
     const handleKeyDown = useCallback((event) => {
         // Si el foco está en un campo de texto, las flechas mueven el cursor;
@@ -80,86 +77,10 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
     const [showModalBattle, setShowModalBattle] = useState(false);
     const [showSpecialAttacks, setShowSpecialAttacks] = useState(false);
     const [showFieldPicker, setShowFieldPicker] = useState(false);
-    // Carta de un solo lado esperando que se elija a quién afecta
-    const [pendingCard, setPendingCard] = useState(null);
-    const [fieldWarning, setFieldWarning] = useState(null);
 
     const fieldMoves = game.fieldMoves || [null, null];
     const activeFieldCount = fieldMoves.filter(Boolean).length;
 
-    // El catálogo se parte en dos: las globales afectan a los dos lados, las de
-    // equipo solo al lado que se marque.
-    const globalCards = FIELD_MOVES.filter(c => c.scope === 'global');
-    const teamCards   = FIELD_MOVES.filter(c => c.scope === 'team');
-
-    // Hay 2 espacios; la carta entra en el primero libre
-    const placeCard = (cardId, owner) => {
-        const free = fieldMoves.findIndex(f => !f);
-        if (free === -1) {
-            setFieldWarning('Los 2 espacios están ocupados. Quita una carta antes de poner otra.');
-            return;
-        }
-        setFieldWarning(null);
-        onSetFieldMove(free, cardId, owner);
-    };
-
-    const removeCard = (cardId) => {
-        const idx = fieldMoves.findIndex(f => f && f.id === cardId);
-        if (idx !== -1) onSetFieldMove(idx, null, null);
-        setFieldWarning(null);
-    };
-
-    // Las globales se colocan de una; las de un solo lado preguntan el lado antes
-    const handlePickCard = (card) => {
-        if (fieldMoves.some(f => f && f.id === card.id)) return;   // ya está puesta
-        if (fieldMoves.every(Boolean)) {
-            setFieldWarning('Los 2 espacios están ocupados. Quita una carta antes de poner otra.');
-            return;
-        }
-        setFieldWarning(null);
-        if (card.scope === 'global') placeCard(card.id, null);
-        else setPendingCard(card);
-    };
-
-    const closeFieldPicker = () => {
-        setShowFieldPicker(false);
-        setPendingCard(null);
-        setFieldWarning(null);
-    };
-
-    const renderFieldOption = (card) => {
-        const img = getFieldCardImg(card.id);
-        const active = fieldMoves.find(f => f && f.id === card.id);
-        return (
-            <div key={card.id}
-                 className={`field-option${active ? ' field-option--in-use' : ''}`}
-                 title={card.note || ''}
-                 onClick={() => handlePickCard(card)}>
-                {img
-                    ? <img className="field-option-img" src={img} alt={card.id} />
-                    : <div className="field-option-name">{card.es}</div>}
-                {active ? (
-                    <div className="field-option-active">
-                        <span className={`field-option-side field-option-side--${active.owner || 'global'}`}>
-                            {card.scope === 'global' ? 'En juego'
-                                : active.owner === 'player' ? 'En juego · Jugador'
-                                : 'En juego · Rival'}
-                        </span>
-                        <button className="field-option-remove"
-                                onClick={(e) => { e.stopPropagation(); removeCard(card.id); }}>
-                            Quitar
-                        </button>
-                    </div>
-                ) : (
-                    <div className="field-option-tag">
-                        {card.kind === 'reminder'
-                            ? <span className="field-tag-manual">manual</span>
-                            : <span className="field-tag-auto">automático</span>}
-                    </div>
-                )}
-            </div>
-        );
-    };
     const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
     const [historyTab, setHistoryTab] = useState('purchases');
     const [showTradeModal, setShowTradeModal] = useState(false);
@@ -273,12 +194,14 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                          <Pokemon 
                          key={pokemon.id}
                          id={pokemon.id}
-                         name={pokemon.name} 
-                         level={pokemon.level} 
+                         name={pokemon.name}
+                         mote={pokemon.mote}
+                         level={pokemon.level}
                          extra={pokemon.extra}
                          nextLevel = {pokemon.nextLevel}
                          evolution = {pokemon.evolution}
                          attached = {pokemon.attach}
+                         teraType = {pokemon.teraType}
                          mega = {pokemon.mega}
                          type1={pokemon.type1}
                          type2={pokemon.type2}  
@@ -291,6 +214,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                          onEvolvePokemon={onEvolvePokemon} 
                          onAttach={onAttach}
                          attachTM={attachTM}
+                         attachTera={attachTera}
                          attachMega={attachMega}
                          onChangeState={onChangeState}
                          onChangeStatus={onChangeStatus}
@@ -340,7 +264,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                                             return (
                                                 <div key={pkm.id} className={`trade-pkm-card${tradeMyPkm?.id === pkm.id ? ' trade-pkm-selected' : ''}`} onClick={() => setTradeMyPkm(pkm)}>
                                                     {img && <div className="trade-pkm-img" style={{ backgroundImage: `url(${img})` }} />}
-                                                    <div className="trade-pkm-name">{pkm.name}</div>
+                                                    <PokemonName pkm={pkm} as="div" className="trade-pkm-name" />
                                                     <div className="trade-pkm-level">Lv.{pkm.level}{pkm.extra > 0 ? ` +${pkm.extra}` : ''}</div>
                                                 </div>
                                             );
@@ -354,7 +278,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                                             return (
                                                 <div key={pkm.id} className={`trade-pkm-card${tradeTargetPkm?.id === pkm.id ? ' trade-pkm-selected' : ''}`} onClick={() => setTradeTargetPkm(pkm)}>
                                                     {img && <div className="trade-pkm-img" style={{ backgroundImage: `url(${img})` }} />}
-                                                    <div className="trade-pkm-name">{pkm.name}</div>
+                                                    <PokemonName pkm={pkm} as="div" className="trade-pkm-name" />
                                                     <div className="trade-pkm-level">Lv.{pkm.level}{pkm.extra > 0 ? ` +${pkm.extra}` : ''}</div>
                                                 </div>
                                             );
@@ -402,7 +326,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                                             <span className="ph-round">R{entry.round}</span>
                                             <span className="ph-player">{entry.playerName}</span>
                                             <span className="ph-item">{entry.item}</span>
-                                            <span className="ph-price">-${entry.price}</span>
+                                            <span className={`ph-price${entry.kind === 'sell' ? ' ph-price--sell' : ''}`}>
+                                                {entry.kind === 'sell' ? '+' : '-'}${entry.price}
+                                            </span>
                                             <span className="ph-coins-after">→ ${entry.coinsAfter}</span>
                                         </div>
                                     ))}
@@ -458,11 +384,16 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
             {(game.pendingPurchases || []).length > 0 && (
                 <div className="pending-purchases">
                     <div className="pending-purchases-title">Solicitudes de compra</div>
+                    {/* El signo y el color separan cobrar de pagar: aprobar una
+                        venta le SUMA monedas al jugador, y eso tiene que verse
+                        antes de pulsar el ✓, no después. */}
                     {game.pendingPurchases.map(req => (
                         <div key={req.id} className="pending-purchase-item">
                             <span className="pending-purchase-player">{req.playerName}</span>
                             <span className="pending-purchase-item-name">{req.item}</span>
-                            <span className="pending-purchase-price">${req.price}</span>
+                            <span className={`pending-purchase-price${req.kind === 'sell' ? ' pending-purchase-price--sell' : ''}`}>
+                                {req.kind === 'sell' ? '+' : '-'}${req.price}
+                            </span>
                             <button className="pending-approve" onClick={() => onApprovePurchase(req.id)}>✓</button>
                             <button className="pending-deny" onClick={() => onDenyPurchase(req.id)}>✕</button>
                         </div>
@@ -472,78 +403,10 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
             <ModalBattle show={showModalBattle} onClose={handleCloseModalBattle} game={game} playerBattle={playerBattle} LeaderBattle={LeaderBattle}  />
             <ModalSpecialAttacks show={showSpecialAttacks} onClose={() => setShowSpecialAttacks(false)} />
 
-            {showFieldPicker && (
-                <div className="modal-backdrop" onClick={closeFieldPicker}>
-                    <div className="field-picker" onClick={e => e.stopPropagation()}>
-                        <div className="field-picker-title">
-                            Cartas de campo
-                            <button className="field-picker-close" onClick={closeFieldPicker}>✕</button>
-                        </div>
-
-                        {fieldWarning && <div className="field-warning">{fieldWarning}</div>}
-
-                        {pendingCard ? (
-                            <div className="field-side-step">
-                                <div className="field-side-step-card">
-                                    {getFieldCardImg(pendingCard.id) && (
-                                        <img className="field-side-step-img"
-                                             src={getFieldCardImg(pendingCard.id)}
-                                             alt={pendingCard.id} />
-                                    )}
-                                    <div className="field-side-step-name">{pendingCard.es}</div>
-                                    {pendingCard.note && (
-                                        <div className="field-side-step-note">{pendingCard.note}</div>
-                                    )}
-                                </div>
-                                <div className="field-side-step-ask">
-                                    ¿A qué lado afecta?
-                                </div>
-                                <div className="field-side-step-btns">
-                                    <button className="field-side-btn field-side-btn--player"
-                                            onClick={() => { placeCard(pendingCard.id, 'player'); setPendingCard(null); }}>
-                                        Jugador
-                                    </button>
-                                    <button className="field-side-btn field-side-btn--rival"
-                                            onClick={() => { placeCard(pendingCard.id, 'rival'); setPendingCard(null); }}>
-                                        Rival
-                                    </button>
-                                </div>
-                                <button className="field-side-cancel" onClick={() => setPendingCard(null)}>
-                                    ← Volver
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="field-group">
-                                    <div className="field-group-title field-group-title--global">
-                                        Afectan a los dos lados
-                                        <span className="field-group-count">{globalCards.length}</span>
-                                    </div>
-                                    <div className="field-picker-grid">{globalCards.map(renderFieldOption)}</div>
-                                </div>
-
-                                <div className="field-group">
-                                    <div className="field-group-title field-group-title--team">
-                                        Afectan a un solo lado
-                                        <span className="field-group-count">{teamCards.length}</span>
-                                    </div>
-                                    <div className="field-picker-grid">{teamCards.map(renderFieldOption)}</div>
-                                </div>
-                            </>
-                        )}
-
-                        <div className="field-picker-note">
-                            Las cartas <strong>automáticas</strong> se suman solas al total de batalla.
-                            Las <strong>manuales</strong> solo se muestran como recordatorio a los jugadores.
-                            Todas se descartan al pasar de turno.
-                            <br />
-                            En las cartas de un solo lado, el <strong>lado afectado</strong> es quien recibe
-                            el efecto: en Spikes / Stealth Rock / Toxic Spikes es quien lo sufre,
-                            en Mist / Safeguard / Renewal es quien se beneficia.
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ModalFieldPicker show={showFieldPicker}
+                              onClose={() => setShowFieldPicker(false)}
+                              fieldMoves={fieldMoves}
+                              onSetFieldMove={onSetFieldMove} />
           
                         
 

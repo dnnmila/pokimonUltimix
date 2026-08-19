@@ -108,9 +108,16 @@
 @import "./progressChart";
 @import "./modalTMCatalog";
 @import "./modalZCatalog";
+@import "./modalTeraCatalog";
+@import "./modalEvents";
+@import "./modalEventPick";
+@import "./modalRaid";
 // Al final a propósito: la piel de la tienda tiene que ganarle a la cáscara
 // común de modales del SimPlayer sin recurrir a !important
 @import "./storeShop";
+// El último de todos: el color del mote tiene que ganarle al color de nombre
+// que declara cada tarjeta por su cuenta, y todas empatan en especificidad
+@import "./mote";
 
 
 

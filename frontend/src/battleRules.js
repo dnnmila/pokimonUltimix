@@ -12,6 +12,9 @@ export const ITEM_BONUS = {
     Claw:    0,
     MT:      0,   // el TM ya reemplaza el ataque 3
     Mega:    0,   // la mega ya cambia de forma
+    // El orbe no suma un fijo: da +1 solo a los ataques de su tipo, y solo si
+    // el Pokémon sube teracristalizado (ver getTeraBonus en data/teraTypes.js).
+    Tera:    0,
     // Items de apoyo: son marcadores, su efecto lo aplican los jugadores a mano
     // (monedas, exp, curación...). Poner un número aquí lo suma al total.
     Berry:      0,

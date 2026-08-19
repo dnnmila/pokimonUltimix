@@ -5,16 +5,18 @@ import { ATTACH_ITEMS } from '../../attachItems';
 import imgRemove from '../../images/delete.png';
 import ModalTMCatalog from './ModalTMCatalog';
 import ModalZCatalog from './ModalZCatalog';
+import ModalTeraCatalog from './ModalTeraCatalog';
 import { tmPowerFor } from '../../data/tms';
 
 const TM_POWERS = [1,2,3,4,5];
 
-const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,attachMega}) => {
+const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,attachMega,attachTera}) => {
     const [openTM, setOpenTM] = useState('false');
     const [tmType, setTmType] = useState();
     const [tmLevel, setTmLevel] = useState(0);
     const [showCatalog, setShowCatalog] = useState(false);
     const [showZ, setShowZ] = useState(false);
+    const [showTera, setShowTera] = useState(false);
   
 
     
@@ -39,6 +41,7 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
         attachTM(currentPlayer.id, pokemonId, type, level, extra);
         setShowCatalog(false);
         setShowZ(false);
+        setShowTera(false);
         setOpenTM('false');
         onClose();
     }
@@ -80,6 +83,15 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
             },
         });
 
+    // El orbe no crea ataque: solo marca el Pokémon con el tipo elegido, y es la
+    // batalla la que decide si sube teracristalizado.
+    const attachTeraHandle = (orb) => {
+        attachTera(currentPlayer.id, pokemonId, orb.id);
+        setShowTera(false);
+        setOpenTM('false');
+        onClose();
+    };
+
     const attachMegaHandle = (currentPlayer,pokemonId) => {
         console.log('Atttch Mega');
         attachMega(currentPlayer.id, pokemonId);
@@ -112,6 +124,7 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
     const handlePick = (item) => {
         if (item.kind === 'tm')   return handleOpenTM();
         if (item.kind === 'z')    return setShowZ(true);
+        if (item.kind === 'tera') return setShowTera(true);
         if (item.kind === 'mega') return attachMegaHandle(currentPlayer, pokemonId);
         attachItemHandle(currentPlayer, pokemonId, item.id);
     };
@@ -189,6 +202,13 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
                 show={showZ}
                 onClose={() => setShowZ(false)}
                 onPick={attachZFromCatalog}
+                pokemon={targetPokemon}
+            />
+
+            <ModalTeraCatalog
+                show={showTera}
+                onClose={() => setShowTera(false)}
+                onPick={attachTeraHandle}
                 pokemon={targetPokemon}
             />
         </div>

@@ -102,6 +102,7 @@ async function attachGMaxIfAvailable(player, pokemon, pokemonData, db) {
     );
     gmax.extra = pokemon.extra;
     gmax.totalLevel = gmax.level + gmax.extra;
+    gmax.mote = pokemon.mote || '';
     // Guardar referencia al pokedex del gmax en el pokemon base para poder limpiarlo despues
     pokemon.gmaxPokedex = gmaxData.POKEDEX;
     player.addGMax(gmax);
@@ -334,6 +335,8 @@ export const evolvePokemon = async (req, res) => {
             : Math.max(0, oldPkm.extra - oldPkm.nextLevel);
         newPokemon.extra = transferExtra;
         newPokemon.totalLevel = newPokemon.level + newPokemon.extra;
+        // El mote es del Pokémon, no de su especie: sobrevive a la evolución.
+        newPokemon.mote = oldPkm.mote || '';
         // La mega piedra se consume al evolucionar una fase 'evo' (Zygarde 10% -> 50% -> Complete).
         // El resto de items se conservan.
         const megaStoneConsumed = oldPkm.mega === 'evo' && oldPkm.attach === 'Mega';
@@ -628,6 +631,22 @@ export const attachItem  = async (req, res) => {
     }
 };
 
+// Orbe Tera. Va aparte de attachItem porque, además del marcador en `attach`,
+// hay que guardar QUÉ tipo es — y aparte de attachTM porque no crea ataque.
+export const attachTera = async (req, res) => {
+    try {
+        const { playerId, pokemonId, teraType } = req.body;
+        if (!teraType) return res.status(400).json({ message: 'Falta el tipo Tera' });
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        player.attachTeraToPokemon(pokemonId, teraType);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Orbe Tera adjuntado', player });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const attachTM  = async (req, res) => {
     console.log('attach item  ');
     try {
@@ -720,6 +739,7 @@ export const attachMega  = async (req, res) => {
             );
             mega.extra = pokemon.extra;
             mega.totalLevel = mega.level + mega.extra;
+            mega.mote = pokemon.mote || '';
             // Varias formas base pueden compartir la misma mega (las dos Meowstic
             // apuntan a M0678), así que la mega recuerda de cuál salió: por pokedex
             // sola no se puede distinguir al revertir ni al subir de nivel.
@@ -750,6 +770,7 @@ export const attachMega  = async (req, res) => {
                 );
                 altMega.extra = pokemon.extra;
                 altMega.totalLevel = altMega.level + altMega.extra;
+                altMega.mote = pokemon.mote || '';
                 altMega.basePokemonId = pokemon.id;
                 player.addMega(altMega);
             }
@@ -825,6 +846,25 @@ export const changeStatus  = async (req, res) => {
     }
 };
 
+
+// El mote solo cambia lo que se pinta. No toca `name`, así que no afecta a los
+// cristales Z, ni a los sprites que se buscan por nombre, ni al historial.
+export const setMote = async (req, res) => {
+    try {
+        const { playerId, pokemonId, mote } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) {
+            return res.status(404).json({ message: 'Jugador no encontrado' });
+        }
+
+        player.setMote(pokemonId, mote);
+        updateGameAndNotify();
+
+        res.status(200).json({ message: 'Mote updated', player });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 export const decreaseStatusCounter = async (req, res) => {
     try {
@@ -1143,6 +1183,53 @@ export const toggleFrontier = async (req, res) => {
         player[frontierKey] = !player[frontierKey];
         updateGameAndNotify();
         res.status(200).json({ message: 'Frontera actualizada' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ── Bolsa de eventos ────────────────────────────────────────────────────────
+// Lo que el jugador gana en un evento y decide no usar en el momento se queda
+// aquí hasta que lo active. La entrada la arma el front (es quien conoce el
+// catálogo de cartas); el backend solo la guarda y la borra.
+
+export const bagAdd = async (req, res) => {
+    try {
+        const { playerId, entry } = req.body;
+        if (!entry || !entry.uid) return res.status(400).json({ message: 'Entrada de bolsa no válida' });
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        player.addToBag(entry);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Guardado en la bolsa', bag: player.bag });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const bagRemove = async (req, res) => {
+    try {
+        const { playerId, uid } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        player.removeFromBag(uid);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Sacado de la bolsa', bag: player.bag });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Marca el evento como lanzado: se consume al abrirlo, no al decidir, para que
+// cerrar sin elegir cueste igual que elegir. Se limpia al empezar el turno.
+export const markEventUsed = async (req, res) => {
+    try {
+        const { playerId, eventId } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        player.markEventUsed(eventId);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Evento marcado', eventsUsed: player.eventsUsed });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -1,0 +1,935 @@
+// Incursión Max: montaje, marcador y resultado.
+//
+// Tres piezas con vidas distintas:
+//   .raid-setup-*  — la pantalla de montaje (color → jefe → equipo de 4)
+//   .raid-strip    — la franja de marcador, fija durante los cuatro combates
+//   .raid-round-* / .raid-result-* — el cierre de cada combate y el veredicto
+//
+// La franja es lo único que convive con la pantalla de batalla, así que es lo
+// único que va en position: fixed; el resto son modales normales.
+
+// ── Montaje ─────────────────────────────────────────────────────────────────
+
+.raid-setup-backdrop { z-index: 520; }
+
+.raid-setup-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid #f2506e;
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 94vw;
+    max-width: 880px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    position: relative;
+    overflow-y: auto;
+
+    // Mientras solo hay el buscador del jefe el modal es diminuto y no necesita
+    // scroll. Se le quita el recorte para que la lista de sugerencias pueda
+    // salirse de la caja: con overflow-y:auto quedaba cortada por el borde y no
+    // se veían los Pokémon encontrados.
+    &--search {
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+.raid-error {
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    background: rgba(242, 80, 110, 0.15);
+    border: 1px solid #f2506e;
+    color: #ffb3c2;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.raid-setup-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.raid-setup-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+    flex-wrap: wrap;
+}
+
+.raid-setup-title {
+    color: #f2506e;
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.raid-setup-sub { color: #9a9a9a; font-size: 0.82rem; }
+
+// Paso 1: el jefe se busca por nombre, no se sortea
+.raid-boss-search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+// El buscador es el mismo componente que el de salvajes (PokemonNameSearch), y
+// _pokemonSearch.scss ya resuelve el layout, el desplegable y su posición. Aquí
+// solo va la piel oscura: el componente nació para el HUD claro del máster y
+// sobre el fondo del modal el campo blanco y la lista blanca cantan demasiado.
+.raid-search {
+    .pkm-search-input {
+        width: 100%;
+        min-width: 0;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 8px;
+        color: white;
+        font-size: 0.9rem;
+        padding: 0.5rem 0.7rem;
+
+        &::placeholder { color: #7d7d7d; }
+        &:focus { outline: none; border-color: var(--hud-accent); }
+    }
+
+    .pkm-search-btn {
+        flex: 0 0 auto;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--hud-accent);
+        border-radius: 8px;
+        color: var(--hud-accent);
+        font-size: 0.82rem;
+        font-weight: bold;
+        padding: 0.5rem 0.9rem;
+        cursor: pointer;
+        &:hover { background: rgba(255, 255, 255, 0.18); }
+        &:disabled { opacity: 0.4; cursor: default; }
+    }
+
+    .pkm-suggestions {
+        background: #14141c;
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
+    }
+
+    .pkm-suggestion {
+        color: #ddd;
+        &:hover, &.is-active { background: rgba(255, 255, 255, 0.12); }
+    }
+
+    .pkm-suggestion-id { color: #8a8a8a; }
+
+    &--slot { margin-top: 0.2rem; }
+}
+
+.raid-search-note {
+    color: #8a8a8a;
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+// Paso 2: el jefe
+.raid-boss {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(242, 80, 110, 0.12);
+    border: 1px solid #f2506e;
+}
+
+.raid-boss-art {
+    width: 6rem;
+    height: 6rem;
+    flex: 0 0 auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 10px rgba(242, 80, 110, 0.7));
+}
+
+.raid-boss-meta { min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+
+.raid-boss-tag {
+    align-self: flex-start;
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #2a0a12;
+    background: #f2506e;
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+}
+
+.raid-boss-name {
+    color: white;
+    font-size: 1.15rem;
+    font-weight: bold;
+}
+
+.raid-boss-types {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+
+    span {
+        font-size: 0.62rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: white;
+        border-radius: 5px;
+        padding: 0.1rem 0.35rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+}
+
+.raid-boss-lvl {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.raid-boss-note {
+    color: #b9b9b9;
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+// Paso 2: los cuatro huecos
+.raid-slots {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+}
+
+.raid-slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    min-height: 7rem;
+    padding: 0.5rem 0.35rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.1); }
+    &.is-filled { border-style: solid; border-color: rgba(255, 255, 255, 0.4); }
+    &.is-open { border-color: var(--hud-accent); box-shadow: 0 0 12px rgba(var(--hud-accent-rgb), 0.5); }
+}
+
+.raid-slot-num {
+    position: absolute;
+    top: 0.25rem;
+    left: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.raid-slot-art {
+    width: 3.6rem;
+    height: 3.6rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.raid-slot-name {
+    color: white;
+    font-size: 0.78rem;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.raid-slot-owner { color: #9a9a9a; font-size: 0.65rem; }
+
+// Formas alternativas del Pokémon del host, dentro de su propia tarjeta. Solo
+// aparecen cuando hay más de una, así que un Pokémon sin item ni G-Max no
+// arrastra una fila vacía.
+.raid-slot-forms {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.15rem;
+    margin-top: 0.25rem;
+}
+
+.raid-form {
+    padding: 0.05rem 0.3rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.55rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.12); }
+
+    // Encendida en el mismo dorado claro que el resto de "esto está elegido"
+    &.is-on {
+        background: rgba(var(--hud-accent-rgb), 0.3);
+        border-color: var(--hud-accent-soft);
+        color: var(--hud-accent-soft);
+    }
+}
+
+.raid-slot-empty {
+    margin: auto;
+    color: #7d7d7d;
+    font-size: 0.72rem;
+    font-style: italic;
+    text-align: center;
+}
+
+// Elector del hueco abierto
+.raid-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.raid-picker-title {
+    color: var(--hud-accent);
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+}
+
+.raid-picker-group-name {
+    color: #9a9a9a;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.2rem;
+}
+
+.raid-picker-row {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.raid-picker-pkm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 4.4rem;
+    padding: 0.3rem 0.2rem;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--pkm-type, transparent);
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+
+    &:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.14); }
+
+    // Ya está en otro hueco: se ve, pero no se puede repetir
+    &.is-taken { opacity: 0.3; cursor: default; &:hover { transform: none; } }
+}
+
+.raid-picker-art {
+    width: 2.8rem;
+    height: 2.8rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.raid-picker-name {
+    color: white;
+    font-size: 0.62rem;
+    text-align: center;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.raid-picker-none { color: #6d6d6d; font-size: 0.7rem; font-style: italic; }
+
+.raid-picker-wild,
+.raid-picker-clear {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    &:hover { background: rgba(255, 255, 255, 0.18); }
+}
+
+.raid-picker-clear { color: #f2a24e; border-color: rgba(242, 162, 78, 0.5); }
+
+.raid-setup-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.raid-setup-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.88rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    padding: 0.5rem 1.1rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+    &:disabled { opacity: 0.35; cursor: default; }
+
+    &--main { border-color: var(--hud-accent); color: var(--hud-accent); }
+    &--ghost { color: #bbb; border-color: rgba(255, 255, 255, 0.15); }
+}
+
+// ── Franja de marcador ──────────────────────────────────────────────────────
+//
+// Lo único que convive con la pantalla de batalla. Arriba y centrada, sobre la
+// barra de fronteras, porque durante los cuatro combates es el dato que más se
+// consulta y no puede quedar detrás de nada.
+.raid-strip {
+    position: fixed;
+    top: 0.4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(20, 4, 10, 0.85);
+    border: 1px solid #f2506e;
+    box-shadow: 0 0 14px rgba(242, 80, 110, 0.5);
+    pointer-events: none;
+}
+
+.raid-strip-round {
+    color: #f2506e;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.raid-strip-score {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+
+    i { color: #6d6d6d; font-style: normal; }
+}
+
+.raid-strip-host { color: #4ee0a0; }
+.raid-strip-boss { color: #f2506e; }
+
+.raid-strip-dots { display: flex; gap: 0.25rem; }
+
+.raid-strip-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+
+    &.is-done { background: #4ee0a0; }
+    &.is-now  { background: var(--hud-accent); box-shadow: 0 0 6px var(--hud-accent); }
+}
+
+// ── Cierre de combate y resultado ───────────────────────────────────────────
+
+.raid-round-backdrop { z-index: 560; }
+
+.raid-round-modal,
+.raid-result-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid #f2506e;
+    border-radius: 14px;
+    padding: 1.3rem 1.5rem;
+    width: 92vw;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    text-align: center;
+}
+
+.raid-round-title,
+.raid-result-title {
+    color: #f2506e;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+}
+
+.raid-round-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+
+    i { color: #6d6d6d; font-style: normal; font-size: 0.8rem; }
+}
+
+.raid-round-side { display: flex; flex-direction: column; gap: 0.15rem; }
+
+.raid-round-label {
+    color: #9a9a9a;
+    font-size: 0.7rem;
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.raid-round-num {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+
+    // El "+D4" pegado al total del jefe: se lee que a ese número le falta algo
+    em {
+        font-style: normal;
+        font-size: 0.85rem;
+        color: #f2506e;
+        margin-left: 0.15rem;
+    }
+
+    &--host { color: #4ee0a0; }
+}
+
+// Lo que hace falta para ganar, que es el dato con el que se tira el dado
+.raid-die-hint {
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--hud-accent);
+    font-size: 0.88rem;
+    font-weight: bold;
+
+    // Decidido de antemano: se dice sin rodeos en vez de dejar suspense falso
+    &.is-win  { color: #4ee0a0; border-color: rgba(78, 224, 160, 0.5);  background: rgba(78, 224, 160, 0.12); }
+    &.is-lose { color: #f2506e; border-color: rgba(242, 80, 110, 0.5); background: rgba(242, 80, 110, 0.12); }
+}
+
+.raid-round-note {
+    color: #8a8a8a;
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+// Dos salidas: volver al combate (a corregir un dado) o anotar y encadenar.
+// La de volver va primero y en tono apagado — es la marcha atrás, no el camino.
+.raid-round-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+// El D4 del jefe: cuatro botones grandes, que se pulsan con el dado en la mano
+.raid-die-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.raid-die {
+    width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+    &:hover { transform: translateY(-3px); }
+
+    // Cada cara va teñida según a quién le da la victoria: con el dado en la
+    // mano se busca el número, no se hace la resta.
+    &.is-win {
+        border-color: #4ee0a0;
+        color: #4ee0a0;
+        &:hover { background: rgba(78, 224, 160, 0.3); box-shadow: 0 0 14px rgba(78, 224, 160, 0.6); }
+    }
+
+    &.is-lose {
+        border-color: #f2506e;
+        color: #f2506e;
+        &:hover { background: rgba(242, 80, 110, 0.3); box-shadow: 0 0 14px rgba(242, 80, 110, 0.6); }
+    }
+}
+
+// Resultado
+.raid-result-modal--win  { border-color: #4ee0a0; .raid-result-title { color: #4ee0a0; } }
+.raid-result-modal--lose { border-color: #f2506e; }
+
+.raid-result-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-align: left;
+}
+
+.raid-result-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.8rem;
+
+    &--die {
+        background: rgba(242, 80, 110, 0.18);
+        .raid-result-nums { color: #f2506e; }
+    }
+}
+
+.raid-result-who {
+    color: #ddd;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.raid-result-nums { color: white; font-weight: bold; white-space: nowrap; }
+
+.raid-result-total {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    font-size: 2.1rem;
+    font-weight: bold;
+    color: #7d7d7d;
+
+    i { color: #6d6d6d; font-style: normal; font-size: 0.8rem; }
+    .is-win { color: #4ee0a0; text-shadow: 0 0 12px rgba(78, 224, 160, 0.6); }
+}
+
+.raid-result-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+    .raid-slots { grid-template-columns: repeat(2, 1fr); }
+}
+
+// ── Visor de la hoja de reglas ──────────────────────────────────────────────
+//
+// La hoja escaneada es muy alta y de letra pequeña, así que arranca ajustada al
+// alto de la pantalla y al tocarla pasa a ancho completo con scroll: es la
+// forma de leerla en la tablet sin pellizcar.
+
+.rules-card-backdrop { z-index: 600; }
+
+.rules-card-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid var(--hud-link);
+    border-radius: 14px;
+    padding: 1rem 1rem 0.8rem;
+    width: 94vw;
+    max-width: 720px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    position: relative;
+    overflow: auto;
+}
+
+.rules-card-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.rules-card-title {
+    align-self: flex-start;
+    color: var(--hud-accent);
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    padding-right: 2.5rem;
+}
+
+.rules-card-img {
+    max-width: 100%;
+    max-height: 74vh;
+    object-fit: contain;
+    border-radius: 8px;
+    cursor: zoom-in;
+
+    // Ampliada manda el ancho: el modal se encarga del scroll vertical
+    &.is-zoom {
+        max-height: none;
+        width: 100%;
+        cursor: zoom-out;
+    }
+}
+
+.rules-card-note {
+    color: #8a8a8a;
+    font-size: 0.72rem;
+    font-style: italic;
+}
+
+.rules-card-missing {
+    color: #b9b9b9;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    text-align: center;
+    padding: 1.5rem 0.5rem;
+
+    code {
+        display: inline-block;
+        margin-top: 0.3rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 5px;
+        background: rgba(0, 0, 0, 0.4);
+        color: var(--hud-accent);
+        font-size: 0.8rem;
+    }
+}
+
+// Botón de consulta, en la cabecera del montaje. La hoja de reglas solo se
+// consulta desde el home —aquí y en la tarjeta del evento—, nunca a media
+// batalla: en la franja del marcador estorbaba más que ayudaba.
+.raid-help {
+    width: 1.7rem;
+    height: 1.7rem;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #f2506e;
+    color: #f2506e;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover { background: rgba(242, 80, 110, 0.35); transform: scale(1.1); }
+}
+
+// ── Combate Mega ────────────────────────────────────────────────────────────
+//
+// Reaprovecha la piel de la incursión (.raid-search, .raid-error, los botones)
+// porque son los mismos gestos: buscar un Pokémon y confirmar. Solo se añade lo
+// propio del sorteo y de la ficha de la mega.
+
+.mega-battle-backdrop { z-index: 520; }
+
+.mega-battle-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid #4ee0a0;
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 94vw;
+    max-width: 560px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    position: relative;
+    overflow-y: auto;
+
+    // Sin resultado el modal es corto y no necesita scroll: se le quita el
+    // recorte para que el desplegable del buscador pueda salirse, igual que en
+    // el montaje de la incursión.
+    &--search {
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+.mega-battle-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.mega-battle-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+    flex-wrap: wrap;
+}
+
+.mega-battle-title {
+    color: #4ee0a0;
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.mega-battle-sub { color: #9a9a9a; font-size: 0.82rem; }
+
+// La acción principal: es lo que se pulsa el 90% de las veces
+.mega-battle-roll-btn {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    background: rgba(78, 224, 160, 0.18);
+    border: 2px solid #4ee0a0;
+    color: #4ee0a0;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+    &:hover:not(:disabled) {
+        background: rgba(78, 224, 160, 0.32);
+        transform: translateY(-2px);
+        box-shadow: 0 0 14px rgba(78, 224, 160, 0.5);
+    }
+    &:disabled { opacity: 0.45; cursor: default; }
+}
+
+// Separador de la vía alterna, para que no compita con el sorteo
+.mega-battle-alt {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #6d6d6d;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+
+    i { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.14); }
+}
+
+.mega-battle-search { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.mega-battle-forms { display: flex; justify-content: center; }
+
+.mega-battle-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.8rem 1.4rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--mega-type, #4ee0a0);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--mega-type, #4ee0a0) 45%, transparent);
+}
+
+.mega-battle-form-art {
+    width: 6.5rem;
+    height: 6.5rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--mega-type, #4ee0a0) 70%, transparent));
+}
+
+.mega-battle-form-name {
+    color: white;
+    font-size: 1.15rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.mega-battle-form-types {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    span {
+        font-size: 0.62rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: white;
+        border-radius: 5px;
+        padding: 0.1rem 0.35rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+}
+
+.mega-battle-form-lvl { background: rgba(255, 255, 255, 0.15); }
+
+.mega-battle-roll {
+    color: #8a8a8a;
+    font-size: 0.72rem;
+    font-style: italic;
+    text-align: center;
+}
+
+.mega-battle-note {
+    color: #b9b9b9;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    text-align: center;
+
+    strong { color: #4ee0a0; }
+}

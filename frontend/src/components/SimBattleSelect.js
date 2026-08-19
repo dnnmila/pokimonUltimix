@@ -2,6 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { getTrainerImage } from '../data/trainers';
 import { getLeaderPortrait, getLeaderCardImg } from '../data/leaders';
 import { typeColor, typeLabel } from '../pokemonTypes';
+import PokemonName from './PokemonName';
+import { applyTera, hasTeraOrb, TERA_BY_ID } from '../data/teraTypes';
+import { applyDynamax, canDynamax, previewMaxMoves, maxEffectText } from '../data/maxMoves';
+import imgTeraOrb from '../images/store/chart/TeraOrb.png';
+import imgDynamax from '../images/dinamax.png';
+import { displayName, nameTitle } from '../moteName';
 import pokeBall from '../images/Poke_Ball.png';
 
 // Los require dinámicos lanzan cuando el archivo no está y esta pantalla se
@@ -111,6 +117,22 @@ const SimBattleSelect = ({
     // Carta ampliada a pantalla completa, para leerle bien los ataques
     const [zoomCard, setZoomCard] = useState(null);
 
+    // ¿Sube teracristalizado? Solo aplica al Pokémon elegido, y solo si lleva
+    // orbe. Se guarda como bandera y no como objeto ya transformado porque al
+    // cambiar de Pokémon hay que olvidarla (ver pickMine).
+    const [teraOn, setTeraOn] = useState(false);
+    // ¿Sube dinamaxizado? Misma idea que el orbe, pero la ficha no es del
+    // Pokémon sino del jugador (`player.dynamax`, que se enciende y se apaga a
+    // mano desde la vista de Player). Las dos transformaciones son
+    // EXCLUYENTES: se sube teracristalizado o dinamaxizado, nunca las dos.
+    const [dynaOn, setDynaOn] = useState(false);
+    // Y el mismo interruptor del lado del rival. En esta pantalla el jugador del
+    // turno elige LOS DOS Pokémon (así se juega en la mesa), así que si el rival
+    // no tuviera botón su ficha Dynamax sería inservible en un duelo. Solo puede
+    // encenderse si `rival.dynamax` está activa, que únicamente pasa cuando el
+    // rival es otro entrenador (los líderes y los salvajes no la tienen).
+    const [rivalDynaOn, setRivalDynaOn] = useState(false);
+
     // En el espejo las elecciones no son del componente: vienen de la partida.
     // El salvaje es la excepción: no se elige, así que se da por puesto igual
     // que en la tablet en vez de quedarse en "todavía no ha elegido".
@@ -122,12 +144,40 @@ const SimBattleSelect = ({
     const pickMine = (pkm) => {
         if (readOnly) return;
         setMineLocal(pkm);
+        // Cada Pokémon trae su propio orbe (o ninguno) y no todos pueden
+        // dinamaxizarse: la elección del anterior no puede arrastrarse.
+        setTeraOn(false);
+        setDynaOn(false);
         if (onPreview) onPreview('MyPlayer', pkm);
     };
+
+    // Los dos interruptores se apagan entre sí: encender uno apaga el otro.
+    const toggleTera = () => { setDynaOn(false); setTeraOn(!teraOn); };
+    const toggleDyna = () => { setTeraOn(false); setDynaOn(!dynaOn); };
+
+    // El Pokémon tal y como sube a la batalla, ya transformado. Es lo único que
+    // sale de esta pantalla: a partir de aquí la batalla no sabe (ni necesita
+    // saber) si venía de un orbe o de una ficha Dynamax.
+    const fighterOf = (pkm) => {
+        if (!pkm) return pkm;
+        if (dynaOn) return applyDynamax(pkm);
+        if (teraOn) return applyTera(pkm);
+        return pkm;
+    };
+
+    // La ficha Dynamax es del jugador y se gasta a mano: aquí solo se ofrece
+    // mientras esté encendida y el Pokémon elegido pueda usarla (los que tienen
+    // forma G-Max suben con su token, no con ataques Max — ver canDynamax).
+    const canOfferDyna = Boolean(player.dynamax) && canDynamax(mine);
+    const maxPreview   = dynaOn && mine ? previewMaxMoves(mine) : [];
+
+    const canOfferRivalDyna = Boolean(rival.dynamax) && canDynamax(theirs);
+    const rivalMaxPreview   = rivalDynaOn && theirs ? previewMaxMoves(theirs) : [];
 
     const pickTheirs = (pkm) => {
         if (readOnly || isWild) return;
         setTheirsLocal(pkm);
+        setRivalDynaOn(false);
         if (onPreview) onPreview('Rival', pkm);
     };
 
@@ -218,7 +268,7 @@ const SimBattleSelect = ({
             <div key={pkm.id || `${pkm.name}-${i}`}
                  className={`sbs-orb ${chosen ? 'sbs-orb--chosen' : ''} ${isDead ? 'sbs-orb--dead' : ''}`}
                  style={{ '--pkm-type': typeColor(pkm.type1) }}
-                 title={readOnly ? pkm.name : `Elegir a ${pkm.name}`}
+                 title={readOnly ? nameTitle(pkm) : `Elegir a ${displayName(pkm)}`}
                  onClick={() => pickTheirs(pkm)}>
                 <div className={`sbs-orb-disc ${art.isCard ? 'sbs-orb-disc--card' : ''}`}
                      style={art.src ? { backgroundImage: `url(${art.src})` } : {}}>
@@ -228,7 +278,7 @@ const SimBattleSelect = ({
                     )}
                     {chosen && <span className="sbs-orb-tag">Elegido</span>}
                 </div>
-                <div className="sbs-orb-name">{pkm.name}</div>
+                <PokemonName pkm={pkm} as="div" className="sbs-orb-name" />
                 <div className="sbs-orb-types">
                     <span style={{ backgroundColor: typeColor(pkm.type1) }}>{typeLabel(pkm.type1)}</span>
                     {pkm.type2 && pkm.type2 !== 'NONE' && (
@@ -248,8 +298,8 @@ const SimBattleSelect = ({
             <div key={pkm.id || `${pkm.name}-${i}`}
                  className={`sbs-card ${chosen ? 'sbs-card--chosen' : ''} ${isDead ? 'sbs-card--dead' : ''}`}
                  style={{ '--pkm-type': typeColor(pkm.type1) }}
-                 title={isDead ? `${pkm.name} está debilitado`
-                              : readOnly ? pkm.name : `Elegir a ${pkm.name}`}
+                 title={isDead ? `${displayName(pkm)} está debilitado`
+                              : readOnly ? nameTitle(pkm) : `Elegir a ${displayName(pkm)}`}
                  onClick={() => pickMine(pkm)}>
                 <div className="sbs-card-top">
                     <span className="sbs-card-lvl">{pkm.totalLevel}</span>
@@ -260,13 +310,20 @@ const SimBattleSelect = ({
                 <div className="sbs-card-art" style={art ? { backgroundImage: `url(${art})` } : {}}>
                     {isDead && <span className="sbs-card-ko">KO</span>}
                 </div>
-                <div className="sbs-card-name">{pkm.name}</div>
+                <PokemonName pkm={pkm} as="div" className="sbs-card-name" />
                 <div className="sbs-card-types">
                     <i style={{ backgroundColor: typeColor(pkm.type1) }} />
                     {pkm.type2 && pkm.type2 !== 'NONE' && (
                         <i style={{ backgroundColor: typeColor(pkm.type2) }} />
                     )}
                 </div>
+                {/* Marca del orbe: hay que verla ANTES de elegir, porque es
+                    parte de con qué cuenta ese Pokémon */}
+                {hasTeraOrb(pkm) && (
+                    <span className="sbs-card-tera"
+                          style={{ backgroundColor: typeColor(pkm.teraType) }}
+                          title={`Orbe Tera ${TERA_BY_ID[pkm.teraType]?.tipo || pkm.teraType}`} />
+                )}
             </div>
         );
     };
@@ -340,7 +397,7 @@ const SimBattleSelect = ({
                             {/* En un salvaje "Wild Pokemon" no dice nada que no
                                 diga ya el rótulo de abajo: mejor su nombre */}
                             <span className="sbs-plate-name">
-                                {isWild ? (rivalTeam[0]?.name || rival.name) : rival.name}
+                                {isWild ? (displayName(rivalTeam[0]) || rival.name) : rival.name}
                             </span>
                             <span className="sbs-plate-role">{rivalRole}</span>
                         </div>
@@ -403,7 +460,68 @@ const SimBattleSelect = ({
                          style={mine && artOf(mine) ? { backgroundImage: `url(${artOf(mine)})` } : {}} />
                     <div className="sbs-pick-meta">
                         <span className="sbs-pick-label">Tu elección</span>
-                        <span className="sbs-pick-name">{mine ? mine.name : '—'}</span>
+                        {mine
+                            ? <PokemonName pkm={mine} className="sbs-pick-name" />
+                            : <span className="sbs-pick-name">—</span>}
+
+                        {/* Las transformaciones se declaran al subir, como las
+                            megas: aquí, y no a media batalla. Un botón por cada
+                            una, y son excluyentes —encender una apaga la otra—.
+                            Apagados, el Pokémon sube tal cual; el texto de al
+                            lado canta con qué sube, para que el estado del botón
+                            no se lea al revés. */}
+                        {(hasTeraOrb(mine) || canOfferDyna) && (
+                            <div className="sbs-forms">
+                                {hasTeraOrb(mine) && (
+                                    <div className="sbs-tera">
+                                        <div className={`sbs-tera-orb ${teraOn ? 'is-on' : ''}`}
+                                             title={teraOn
+                                                ? `Sube teracristalizado — ${TERA_BY_ID[mine.teraType]?.tipo || mine.teraType}`
+                                                : `Toca para teracristalizar — ${TERA_BY_ID[mine.teraType]?.tipo || mine.teraType}`}
+                                             onClick={toggleTera}>
+                                            <img src={imgTeraOrb} alt="Orbe Tera" />
+                                        </div>
+                                        <span className={`sbs-tera-label ${teraOn ? 'is-on' : ''}`}>
+                                            {teraOn
+                                                ? `Tera ${typeLabel(mine.teraType)}`
+                                                : `${typeLabel(mine.type1)}${mine.type2 && mine.type2 !== 'NONE' ? ` / ${typeLabel(mine.type2)}` : ''}`}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {canOfferDyna && (
+                                    <div className="sbs-tera sbs-dyna">
+                                        <div className={`sbs-tera-orb ${dynaOn ? 'is-on' : ''}`}
+                                             title={dynaOn
+                                                ? 'Sube en forma Dynamax — sus ataques se vuelven Movimientos Max'
+                                                : 'Toca para dinamaxizar — sus ataques se vuelven Movimientos Max'}
+                                             onClick={toggleDyna}>
+                                            <img src={imgDynamax} alt="Dynamax" />
+                                        </div>
+                                        <span className={`sbs-tera-label ${dynaOn ? 'is-on' : ''}`}>
+                                            {dynaOn ? 'Dynamax' : 'Forma normal'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Qué movimientos le quedan y qué hace cada uno: es lo
+                            que hay que saber ANTES de confirmar, porque un Max
+                            de tipo campo obliga a jugar una carta de la mesa. */}
+                        {maxPreview.length > 0 && (
+                            <div className="sbs-dyna-moves">
+                                {maxPreview.map((atk, i) => (
+                                    <div key={atk.id || i} className="sbs-dyna-move">
+                                        <i className="sbs-dyna-move-type"
+                                           style={{ backgroundColor: typeColor(atk.type) }} />
+                                        <b className="sbs-dyna-move-name">{atk.name}</b>
+                                        <span className="sbs-dyna-move-str">{atk.strength}</span>
+                                        <span className="sbs-dyna-move-eff">{maxEffectText(atk.maxMove, 'es')}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -414,14 +532,53 @@ const SimBattleSelect = ({
                         <span className="sbs-pick-label">
                             {isWild ? 'Salvaje' : `${rival.name} elige`}
                         </span>
-                        <span className="sbs-pick-name">{theirs ? theirs.name : '—'}</span>
+                        {theirs
+                            ? <PokemonName pkm={theirs} className="sbs-pick-name" />
+                            : <span className="sbs-pick-name">—</span>}
+
+                        {/* El rival también declara su forma aquí: en la mesa el
+                            jugador del turno mueve los dos lados. Sin orbe:
+                            el orbe es del Pokémon y el rival elige el suyo en su
+                            propia tablet cuando le toca. */}
+                        {canOfferRivalDyna && (
+                            <div className="sbs-forms sbs-forms--rival">
+                                <div className="sbs-tera sbs-dyna">
+                                    <span className={`sbs-tera-label ${rivalDynaOn ? 'is-on' : ''}`}>
+                                        {rivalDynaOn ? 'Dynamax' : 'Forma normal'}
+                                    </span>
+                                    <div className={`sbs-tera-orb ${rivalDynaOn ? 'is-on' : ''}`}
+                                         title={rivalDynaOn
+                                            ? 'Sube en forma Dynamax — sus ataques se vuelven Movimientos Max'
+                                            : 'Toca para dinamaxizar — sus ataques se vuelven Movimientos Max'}
+                                         onClick={() => setRivalDynaOn(!rivalDynaOn)}>
+                                        <img src={imgDynamax} alt="Dynamax" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {rivalMaxPreview.length > 0 && (
+                            <div className="sbs-dyna-moves sbs-dyna-moves--rival">
+                                {rivalMaxPreview.map((atk, i) => (
+                                    <div key={atk.id || i} className="sbs-dyna-move">
+                                        <i className="sbs-dyna-move-type"
+                                           style={{ backgroundColor: typeColor(atk.type) }} />
+                                        <b className="sbs-dyna-move-name">{atk.name}</b>
+                                        <span className="sbs-dyna-move-str">{atk.strength}</span>
+                                        <span className="sbs-dyna-move-eff">{maxEffectText(atk.maxMove, 'es')}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                     <div className="sbs-pick-art"
                          style={theirs && artOf(theirs) ? { backgroundImage: `url(${artOf(theirs)})` } : {}} />
                 </div>
 
                 <div className={`sbs-fight ${ready ? '' : 'sbs-fight--off'}`}
-                     onClick={() => ready && onConfirm(mine, theirs)}>
+                     onClick={() => ready && onConfirm(
+                        fighterOf(mine),
+                        rivalDynaOn ? applyDynamax(theirs) : theirs)}>
                     ¡Combatir! ▶
                 </div>
             </footer>
