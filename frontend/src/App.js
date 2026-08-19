@@ -548,6 +548,35 @@ const raidRound  = (playerId, hostTotal, bossTotal) => raidPost('raid-round', { 
 const raidFinish = (playerId, die) => raidPost('raid-finish', { playerId, die });
 const raidClear  = (playerId) => raidPost('raid-clear',  { playerId });
 
+// ── Horda ───────────────────────────────────────────────────────────────────
+// Mismo reparto que la incursión —el marcador vive en la partida— pero lo que
+// se anota es quién ganó cada combate, no los totales. `raidPost` sirve igual:
+// es un POST con `ok` delante, no tiene nada de incursión.
+const hordeStart  = (playerId, pokedex) => raidPost('horde-start',  { playerId, pokedex });
+const hordeTeam   = (playerId, slots) => raidPost('horde-team',   { playerId, slots });
+const hordeRound  = (playerId, hostTotal, wildTotal) => raidPost('horde-round', { playerId, hostTotal, wildTotal });
+const hordeFinish = (playerId, caught) => raidPost('horde-finish', { playerId, caught });
+const hordeClear  = (playerId) => raidPost('horde-clear',  { playerId });
+
+// ── Combate de entrenador ───────────────────────────────────────────────────
+// Uno o dos rivales seguidos. El segundo lo pone el propio `-round` al cerrar el
+// primero, así que desde aquí solo hacen falta tres avisos.
+const trainerBattleStart = (playerId, pokedexes) => raidPost('trainer-battle-start', { playerId, pokedexes });
+const trainerBattleRound = (playerId, hostTotal, rivalTotal) => raidPost('trainer-battle-round', { playerId, hostTotal, rivalTotal });
+const trainerBattleClear = (playerId) => raidPost('trainer-battle-clear', { playerId });
+
+// ── Poké Star Studios ───────────────────────────────────────────────────────
+// Solo hace falta montar al Prop Pokémon con el nivel del Pokémon del jugador;
+// el resto del evento lo lleva la tablet.
+const pokeStarStart = (playerId, pokedex) => raidPost('poke-star-start', { playerId, pokedex });
+// El Prop pelea al nivel del Pokémon que saque el jugador, y eso solo se sabe
+// en la pantalla de selección: por eso el nivel va en un aviso aparte.
+const pokeStarLevel = (playerId, level) => raidPost('poke-star-level', { playerId, level });
+const pokeStarClear = (playerId) => raidPost('poke-star-clear', { playerId });
+
+// Descuento de la tienda: lo pone el máster y dura una ronda (ver Game.js).
+const setStoreDiscount = (percent) => raidPost('set-store-discount', { percent });
+
 // Combate Mega: primero se consultan las megas de la especie (pueden ser dos) y
 // después se monta la elegida como Pokémon salvaje del jugador.
 const megaForms = async (pokedex) => {
@@ -1037,14 +1066,14 @@ return (
             <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} generation={game.generation} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
-            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
+            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onSetStoreDiscount={setStoreDiscount} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
             <Route path="/home" element={<HomeMenu />} />
             <Route path="/players" element={<AllPlayers />} />
             {/* Marcador limpio para dejar fijo en otra pantalla. React Router
                 no distingue mayúsculas, así que /Score entra por aquí igual. */}
             <Route path="/Table" element={<Score />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
-            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onHordeStart={hordeStart} onHordeTeam={hordeTeam} onHordeRound={hordeRound} onHordeFinish={hordeFinish} onHordeClear={hordeClear} onTrainerStart={trainerBattleStart} onTrainerRound={trainerBattleRound} onTrainerClear={trainerBattleClear} onPokeStarStart={pokeStarStart} onPokeStarLevel={pokeStarLevel} onPokeStarClear={pokeStarClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove}/>} />
             <Route path="/progress" element={<ProgressChart />} />
 
         </Routes>

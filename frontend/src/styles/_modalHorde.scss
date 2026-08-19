@@ -1,0 +1,548 @@
+// Horda: montaje, marcador y cierre.
+//
+// Reaprovecha casi toda la piel de la incursión (_modalRaid.scss): el sorteo por
+// color, el buscador, los botones y las cajas de cierre son los mismos gestos, y
+// duplicarlos solo traería dos sitios que tocar. Aquí va lo propio de la horda:
+// el verde de su carta, el salvaje, la fila del equipo y el bono de captura.
+//
+// El verde es el de la carta física (#3fbf6a), igual que el rosa de la incursión
+// sale de la suya.
+
+$horde: #3fbf6a;
+
+// ── Montaje ─────────────────────────────────────────────────────────────────
+
+.horde-setup-backdrop { z-index: 520; }
+
+.horde-setup-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid $horde;
+    border-radius: 14px;
+    padding: 1.4rem 1.4rem 1.2rem;
+    width: 96vw;
+    max-width: 1080px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    position: relative;
+    overflow-y: auto;
+
+    // Sin salvaje todavía el modal es corto: se le quita el recorte para que el
+    // desplegable del buscador pueda salirse de la caja, igual que en la
+    // incursión.
+    &--search {
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+.horde-setup-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.horde-setup-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+    flex-wrap: wrap;
+}
+
+.horde-setup-title {
+    color: $horde;
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.horde-setup-sub { color: #9a9a9a; font-size: 0.82rem; }
+
+// El sorteo, en el verde de la horda
+.horde-roll-btn {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    background: rgba(63, 191, 106, 0.18);
+    border: 2px solid $horde;
+    color: #7fe0a4;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+    &:hover:not(:disabled) {
+        background: rgba(63, 191, 106, 0.32);
+        transform: translateY(-2px);
+        box-shadow: 0 0 14px rgba(63, 191, 106, 0.5);
+    }
+    &:disabled { opacity: 0.45; cursor: default; }
+}
+
+// ── Paso 2: el salvaje ──────────────────────────────────────────────────────
+
+.horde-wild {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(63, 191, 106, 0.12);
+    border: 1px solid $horde;
+}
+
+.horde-wild-art {
+    width: 6rem;
+    height: 6rem;
+    flex: 0 0 auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 10px rgba(63, 191, 106, 0.6));
+}
+
+.horde-wild-meta { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+
+.horde-wild-tag {
+    align-self: flex-start;
+    background: $horde;
+    color: #04210f;
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 5px;
+    padding: 0.1rem 0.4rem;
+}
+
+.horde-wild-name { color: white; font-size: 1.25rem; font-weight: bold; }
+
+.horde-wild-types {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+
+    span {
+        font-size: 0.62rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: white;
+        border-radius: 5px;
+        padding: 0.1rem 0.35rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+}
+
+.horde-wild-lvl { background: rgba(255, 255, 255, 0.15); }
+
+.horde-wild-note { color: #b9b9b9; font-size: 0.85rem; line-height: 1.4; }
+
+// ── Orden de combate ────────────────────────────────────────────────────────
+
+.horde-order-title {
+    color: var(--hud-accent);
+    font-size: 0.95rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+}
+
+.horde-order {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.6rem;
+}
+
+.horde-slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.7rem 0.5rem 0.55rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(63, 191, 106, 0.45);
+
+    // Debilitado: pelea igual (la carta dice que pelean todos), pero se ve
+    &.is-ko {
+        opacity: 0.55;
+        border-color: rgba(242, 80, 110, 0.5);
+    }
+}
+
+.horde-slot-num {
+    position: absolute;
+    top: 0.3rem;
+    left: 0.4rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: $horde;
+    color: #04210f;
+    font-size: 0.8rem;
+    font-weight: bold;
+    line-height: 1.5rem;
+    text-align: center;
+}
+
+.horde-slot-art {
+    width: 4.6rem;
+    height: 4.6rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.horde-slot-name {
+    color: white;
+    font-size: 0.88rem;
+    text-align: center;
+    line-height: 1.1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.horde-slot-lvl {
+    color: #9a9a9a;
+    font-size: 0.75rem;
+    em { color: #f2506e; font-style: normal; }
+}
+
+// Subir y bajar en la fila. Botones grandes de dedo, no flechitas de ratón.
+.horde-slot-moves {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.15rem;
+
+    button {
+        width: 2.8rem;
+        height: 2.2rem;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: white;
+        font-size: 1.05rem;
+        cursor: pointer;
+        &:hover:not(:disabled) { background: rgba(63, 191, 106, 0.3); }
+        &:disabled { opacity: 0.25; cursor: default; }
+    }
+}
+
+// ── Marcador y cierre ───────────────────────────────────────────────────────
+
+// Misma franja de la incursión, en verde y con los puntos teñidos por resultado
+.raid-strip.horde-strip {
+    border-color: $horde;
+    box-shadow: 0 0 14px rgba(63, 191, 106, 0.5);
+
+    .raid-strip-round { color: $horde; }
+    .raid-strip-host  { color: $horde; }
+    .raid-strip-score i {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .raid-strip-dot {
+        &.is-done { background: rgba(255, 255, 255, 0.35); }
+        &.is-win  { background: $horde; }
+        &.is-tie  { background: var(--hud-accent); }
+        &.is-lose { background: #f2506e; }
+        &.is-now  { background: var(--hud-accent); box-shadow: 0 0 6px var(--hud-accent); }
+    }
+}
+
+.horde-round-modal,
+.horde-result-modal {
+    border-color: $horde;
+    .raid-round-title, .raid-result-title { color: $horde; }
+}
+
+// El veredicto del combate: es lo que se mira primero al cerrar
+.horde-round-verdict {
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--hud-accent);
+
+    &.is-win  { color: $horde;   border-color: rgba(63, 191, 106, 0.5);  background: rgba(63, 191, 106, 0.14); }
+    &.is-lose { color: #f2506e; border-color: rgba(242, 80, 110, 0.5); background: rgba(242, 80, 110, 0.12); }
+    &.is-tie  { color: #cfcfcf; }
+}
+
+.horde-result-row--win  { .raid-result-nums em { color: $horde; } }
+.horde-result-row--lose { .raid-result-nums em { color: #f2506e; } }
+.horde-result-row--tie  { .raid-result-nums em { color: #9a9a9a; } }
+
+.raid-result-nums em {
+    font-style: normal;
+    margin-left: 0.4rem;
+}
+
+// El bono de captura: el número con el que se va a tirar, en grande
+.horde-bonus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(63, 191, 106, 0.14);
+    border: 2px solid $horde;
+}
+
+.horde-bonus-num {
+    color: $horde;
+    font-size: 2.6rem;
+    font-weight: bold;
+    line-height: 1;
+    text-shadow: 0 0 14px rgba(63, 191, 106, 0.6);
+}
+
+.horde-bonus-label {
+    color: #ddd;
+    font-size: 0.8rem;
+    text-align: left;
+    line-height: 1.3;
+
+    em { color: #9a9a9a; font-style: normal; font-size: 0.72rem; }
+}
+
+@media (max-width: 700px) {
+    .horde-order { grid-template-columns: repeat(2, 1fr); }
+}
+
+// ── Combate de entrenador ───────────────────────────────────────────────────
+//
+// Comparte carta y color con la horda (las tres son cartas verdes del mismo
+// mazo), así que reaprovecha su piel y la de la incursión: aquí solo va el
+// selector de 1/2 rivales y los huecos.
+
+.trainer-battle-backdrop { z-index: 520; }
+
+.trainer-battle-modal {
+    background: var(--hud-modal-bg);
+    border: 2px solid $horde;
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1rem;
+    width: 96vw;
+    max-width: 820px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    position: relative;
+
+    // Sin recorte a propósito: los dos buscadores tienen que poder desplegar su
+    // lista fuera de la caja, como en el resto de montajes.
+    max-height: none;
+    overflow: visible;
+}
+
+.trainer-battle-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.1rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+.trainer-battle-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-right: 2rem;
+    flex-wrap: wrap;
+}
+
+.trainer-battle-title {
+    color: $horde;
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.trainer-battle-sub { color: #9a9a9a; font-size: 0.82rem; }
+
+// Cuál de las dos cartas se está jugando: 1 rival o 2
+.trainer-count {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.trainer-count-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #cfcfcf;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.12); }
+
+    &.is-on {
+        background: rgba(63, 191, 106, 0.25);
+        border-color: $horde;
+        color: #7fe0a4;
+    }
+}
+
+.trainer-roll-btn {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    background: rgba(63, 191, 106, 0.18);
+    border: 2px solid $horde;
+    color: #7fe0a4;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+    &:hover:not(:disabled) {
+        background: rgba(63, 191, 106, 0.32);
+        transform: translateY(-2px);
+        box-shadow: 0 0 14px rgba(63, 191, 106, 0.5);
+    }
+    &:disabled { opacity: 0.45; cursor: default; }
+}
+
+.trainer-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.6rem;
+}
+
+.trainer-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.7rem 0.6rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+
+    // Con Pokémon dentro la caja se cierra y toma el color de su token
+    &.is-filled {
+        border-style: solid;
+        border-color: var(--token-color, #{$horde});
+        box-shadow: 0 0 14px color-mix(in srgb, var(--token-color, #{$horde}) 35%, transparent);
+    }
+}
+
+.trainer-slot-num {
+    align-self: flex-start;
+    color: #9a9a9a;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.trainer-slot-art {
+    width: 5.5rem;
+    height: 5.5rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--token-color, #{$horde}) 60%, transparent));
+}
+
+.trainer-slot-name { color: white; font-size: 1rem; font-weight: bold; text-align: center; }
+
+.trainer-slot-types {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    span {
+        font-size: 0.6rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: white;
+        border-radius: 5px;
+        padding: 0.1rem 0.35rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+}
+
+.trainer-slot-lvl { background: rgba(255, 255, 255, 0.15); }
+
+.trainer-slot-token { color: #8a8a8a; font-size: 0.7rem; }
+
+.trainer-slot-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+
+    button {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 8px;
+        color: white;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.9rem;
+        cursor: pointer;
+        &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.18); }
+        &:disabled { opacity: 0.4; cursor: default; }
+    }
+}
+
+.trainer-slot-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0.6rem 0;
+}
+
+.trainer-slot-roll {
+    align-self: center;
+    background: none;
+    border: none;
+    color: #7fe0a4;
+    font-size: 0.75rem;
+    text-decoration: underline;
+    cursor: pointer;
+    &:disabled { opacity: 0.4; cursor: default; }
+}
+
+// El premio: el número de cartas, en el hueco del bono de la horda
+.trainer-prize .horde-bonus-num::after {
+    content: '×';
+    font-size: 1.2rem;
+    margin-left: 0.15rem;
+    opacity: 0.7;
+}

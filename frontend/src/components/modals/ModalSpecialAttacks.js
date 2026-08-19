@@ -2,16 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import POKEMON_TYPES from '../../pokemonTypes';
 import SERVER_IP from '../../config.js';
 import { FieldPicker, FieldPickerNote } from './ModalFieldPicker.js';
-
-// Los mismos 6 colores que usan los nodos de captura del tablero
-const TOKEN_COLORS = [
-    { id: 'pink',   label: 'Rosa',     hex: '#e91e63' },
-    { id: 'green',  label: 'Verde',    hex: '#27ae60' },
-    { id: 'yellow', label: 'Amarillo', hex: '#f1c40f' },
-    { id: 'blue',   label: 'Azul',     hex: '#3498db' },
-    { id: 'red',    label: 'Rojo',     hex: '#e74c3c' },
-    { id: 'purple', label: 'Morado',   hex: '#9b59b6' },
-];
+import TOKEN_COLORS, { tokenColorHex } from '../../data/tokenColors.js';
 
 const getTokenImg = (pokedex) => {
     try { return require(`../../images/tokens_ultimix/${pokedex}.png`); } catch {
@@ -89,7 +80,7 @@ const ModalSpecialAttacks = ({ show, onClose, title = 'Ataques especiales', fiel
     };
 
     const metroImg = metroPkm ? getTokenImg(metroPkm.pokedex) : null;
-    const metroHex = metroPkm ? TOKEN_COLORS.find(c => c.id === metroPkm.tokenColor)?.hex : null;
+    const metroHex = metroPkm ? tokenColorHex(metroPkm.tokenColor) : null;
 
     return (
         <div className="modal-backdrop" onClick={handleClose}>

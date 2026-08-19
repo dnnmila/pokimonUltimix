@@ -1,17 +1,36 @@
 import { useState } from 'react';
 
-import { STORE_ITEMS as ITEMS } from './storeItems';
+import { STORE_ITEMS as ITEMS, discountedPrice } from './storeItems';
 
 // Lo que paga vender una carta. Va aquí y no en el catálogo de la tienda
 // porque no es un artículo: es la operación inversa, y no se compra.
 const SELL_PRICE = 2;
 
-const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurchase }) => {
+// `discount` es `game.storeDiscount`: { percent, turnsLeft } o null. Lo pone el
+// máster desde su barra y dura una ronda; aquí solo se pinta y se cobra.
+const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurchase, discount = null }) => {
     // Ítem abierto en la vista de detalle. Elegir uno ya no compra: solo abre
     // la carta, y la solicitud sale al confirmar.
     const [selected, setSelected] = useState(null);
 
     if (!show) return null;
+
+    const pct = discount?.percent || 0;
+    const priceOf = (item) => discountedPrice(item.price, pct);
+
+    // Cartel del descuento, arriba de la rejilla y de la ficha: lo que cambia el
+    // precio tiene que verse antes de mirar el precio.
+    const discountBanner = pct > 0 && (
+        <div className="store-discount-banner">
+            <span className="store-discount-tag">-{pct}%</span>
+            <span>
+                Rebaja del máster
+                {discount?.turnsLeft > 0 && (
+                    <em> · {discount.turnsLeft} {discount.turnsLeft === 1 ? 'turno' : 'turnos'}</em>
+                )}
+            </span>
+        </div>
+    );
 
     const handleClose = () => {
         setSelected(null);
@@ -20,8 +39,8 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
 
     const confirmPurchase = () => {
         if (!selected || pendingRequest) return;
-        if (player.coins < selected.price) return;
-        onRequestPurchase(selected.name, selected.price);
+        if (player.coins < priceOf(selected)) return;
+        onRequestPurchase(selected.name, priceOf(selected));
         setSelected(null);
     };
 
@@ -56,11 +75,13 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
     }
 
     if (selected) {
-        const canAfford = player.coins >= selected.price;
+        const price = priceOf(selected);
+        const canAfford = player.coins >= price;
         return (
             <div className="modal-backdrop">
                 <div className="modal-store modal-store--shop modal-store--detail">
                     <div className='Title-modal'>{selected.name}</div>
+                    {discountBanner}
 
                     <div className={`store-detail-cards ${selected.cards.length > 1 ? 'store-detail-cards--multi' : ''}`}>
                         {selected.cards.length > 0
@@ -78,7 +99,8 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
                     )}
 
                     <div className="store-detail-price">
-                        <span className='store-option-cost'>{selected.price}</span>
+                        {pct > 0 && <span className='store-option-cost store-option-cost--old'>{selected.price}</span>}
+                        <span className={`store-option-cost ${pct > 0 ? 'store-option-cost--off' : ''}`}>{price}</span>
                         <span className="store-detail-coins">
                             Tienes {player.coins}
                         </span>
@@ -109,9 +131,11 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
         <div className="modal-backdrop">
             <div className="modal-store modal-store--shop">
                 <div className='Title-modal'>Store</div>
+                {discountBanner}
                 <div className="store_all_options">
                     {ITEMS.map((item) => {
-                        const canAfford = player.coins >= item.price;
+                        const price = priceOf(item);
+                        const canAfford = player.coins >= price;
                         return (
                             <div
                                 key={item.name}
@@ -120,7 +144,10 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
                             >
                                 <div className={`store-option-img ${item.img}`}></div>
                                 <div className='store-option-name'>{item.name}</div>
-                                <div className='store-option-cost'>{item.price}</div>
+                                <div className={`store-option-cost ${pct > 0 ? 'store-option-cost--off' : ''}`}>
+                                    {price}
+                                    {pct > 0 && <em className='store-option-cost-old'>{item.price}</em>}
+                                </div>
                             </div>
                         );
                     })}

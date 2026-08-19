@@ -962,19 +962,22 @@ export const getPokemonList = async (req, res) => {
 
         // NAME puede traer markup <i></i> en las formas alternas — se limpia para poder buscarlo
         const rows = await db.all(
-            `SELECT POKEDEX, NAME, TYPE1, TYPE2, LEVEL
+            `SELECT POKEDEX, NAME, TYPE1, TYPE2, LEVEL, TOKEN_COLOR
              FROM pokemons
              WHERE FORM = 'Normal' AND POKEDEX IS NOT NULL AND POKEDEX <> ''
              GROUP BY POKEDEX
              ORDER BY POKEDEX`
         );
 
+        // TOKEN_COLOR viaja con la lista para que quien busque un Pokémon a mano
+        // pueda enseñar su color de token igual que si lo hubiera sorteado.
         const list = rows.map(r => ({
             pokedex: r.POKEDEX,
             name: (r.NAME || '').replace(/<\/?i>/g, '').trim(),
             type1: r.TYPE1,
             type2: r.TYPE2,
             level: r.LEVEL,
+            tokenColor: r.TOKEN_COLOR || null,
         }));
 
         res.status(200).json(list);
@@ -1084,8 +1087,8 @@ async function buildPokemonFromDex(pokedex, db, idPrefix = 'raid') {
 // Arranca la incursión con el jefe que diga el host y lo deja montado como su
 // simRival, en su forma definitiva.
 //
-// El jefe NO se sortea: los tokens se sacan en físico en la mesa y aquí solo se
-// registra cuál salió, igual que con el buscador de salvajes.
+// Llegue de donde llegue el jefe —del sorteo por color de token o del buscador
+// por nombre, que las dos vías viven en el front— aquí solo entra su POKEDEX.
 export const raidStart = async (req, res) => {
     try {
         const { playerId, pokedex } = req.body;
@@ -1120,6 +1123,11 @@ export const raidStart = async (req, res) => {
             bossMode,
             baseName: base.name,
             basePokedex: base.pokedex,
+            // Color del token con el que se abrió la incursión. Se guarda del
+            // Pokémon BASE (la forma G-Max no siempre lo trae) porque de él salen
+            // luego los salvajes que se sortean para el equipo: son tokens del
+            // mismo montón.
+            bossColor: base.tokenColor || null,
             team: [],
             rounds: [],
             die: null,
@@ -1264,6 +1272,447 @@ export const raidClear = async (req, res) => {
         if (game.raid && game.raid.hostId === playerId) game.raid = null;
         updateGameAndNotify();
         res.status(200).json({ message: 'Incursión cerrada' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// La ficha completa de un Pokémon —con sus tres ataques— sin tocar nada de la
+// partida. `/random-pokemon` solo devuelve la cabecera (nombre, tipos, nivel,
+// color), que basta para el metrónomo pero no para el Concurso Pokémon, donde
+// hay que sumar el poder de los movimientos.
+export const getPokemonCard = async (req, res) => {
+    try {
+        const { pokedex } = req.query;
+        if (!pokedex) return res.status(400).json({ message: 'Falta el Pokémon' });
+        const db = await openDb();
+        const pkm = await buildPokemonFromDex(pokedex, db, 'card');
+        if (!pkm) return res.status(404).json({ message: 'Pokémon no encontrado' });
+        res.status(200).json(pkm);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  HORDA (evento «Horde Encounter»)
+//
+//  Un salvaje contra el equipo ENTERO del jugador, de uno en uno. Se parece a la
+//  incursión en la forma —combates encadenados contra el mismo rival— pero no en
+//  la cuenta: aquí no se suman totales, se cuentan VICTORIAS, y ese número es el
+//  bono de la tirada de captura del final.
+//
+//  Los combates son batallas salvajes normales y corrientes: el que pierde se
+//  debilita y el que gana sube de nivel. Por eso el rival se monta con el nombre
+//  'Wild Pokemon', que es la etiqueta de la que cuelga ese flujo en SimPlayer.
+//  Lo único que la tablet desactiva es la captura de cada combate — la horda se
+//  captura una sola vez, al final y con el bono.
+//
+//  La tirada de captura no se resuelve aquí ni allí: se tira en la mesa, como el
+//  D4 del jefe de la incursión, y la tablet solo registra si se capturó.
+//
+//  El marcador vive en la partida (game.horde) por lo mismo que el de la
+//  incursión: para que sobreviva a un refresco de la tablet.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const HORDE_MAX_TEAM = 6;
+
+// Monta el salvaje de la horda y abre el marcador.
+//
+// Llegue del sorteo por color de token o del buscador por nombre —las dos vías
+// viven en el front—, aquí solo entra su POKEDEX. No hay forma alternativa que
+// resolver: la horda pelea contra el Pokémon tal cual, sin Dinamax ni mega.
+export const hordeStart = async (req, res) => {
+    try {
+        const { playerId, pokedex } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (!pokedex) return res.status(400).json({ message: 'Falta el Pokémon salvaje' });
+
+        const db = await openDb();
+        const wild = await buildPokemonFromDex(pokedex, db, 'horde');
+        if (!wild) return res.status(404).json({ message: 'Pokémon no encontrado' });
+
+        // 'Wild Pokemon' no es decorativo: es lo que hace que SimPlayer aplique
+        // las reglas de batalla salvaje (nivel y debilitado) sin ramas nuevas.
+        const rival = new Rival('SimHorde-' + playerId, 'Wild Pokemon');
+        rival.addPokemon(wild);
+        player.setSimRival(rival);
+
+        game.horde = {
+            hostId: playerId,
+            hostName: player.name,
+            wild,
+            wildColor: wild.tokenColor || null,
+            team: [],
+            rounds: [],
+            wins: 0,
+            caught: null,
+            result: null,
+        };
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Horda iniciada', horde: game.horde });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Fija el orden de combate. Todos los huecos son del host, y llegan con el
+// Pokémon YA montado en la forma con la que sube (Mega, Gigamax, Dinamax o
+// teracristalizado), igual que los huecos propios de la incursión: esas formas
+// las arma el front.
+//
+// Se guarda una copia, pero `pokemonId` viaja aparte y apunta al Pokémon de
+// verdad: en la horda sí se sube de nivel y sí se debilita, y quien aplica eso
+// necesita saber a quién del equipo tocar.
+export const hordeTeam = async (req, res) => {
+    try {
+        const { playerId, slots } = req.body;
+        const game = getGame();
+        if (!game.horde || game.horde.hostId !== playerId) {
+            return res.status(400).json({ message: 'No hay horda activa para este jugador' });
+        }
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (!Array.isArray(slots) || slots.length === 0 || slots.length > HORDE_MAX_TEAM) {
+            return res.status(400).json({ message: `La horda pelea contra 1 a ${HORDE_MAX_TEAM} Pokémon` });
+        }
+
+        const team = [];
+        for (const slot of slots) {
+            const pkm = slot?.pokemon || player.pokemons?.find(p => p.id === slot?.pokemonId);
+            if (!pkm) return res.status(404).json({ message: 'Pokémon del equipo no encontrado' });
+            team.push({
+                pokemonId: slot?.pokemonId || pkm.id,
+                pokemon: JSON.parse(JSON.stringify(pkm)),
+            });
+        }
+
+        game.horde.team = team;
+        game.horde.rounds = [];
+        game.horde.wins = 0;
+        game.horde.caught = null;
+        game.horde.result = null;
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Orden de la horda listo', horde: game.horde });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra un combate. Lo único que importa es quién ganó; los totales se guardan
+// para poder enseñar el detalle al final.
+//
+// **El empate cuenta como victoria del jugador**, igual que el host gana los
+// empates en la incursión. Ojo: eso es solo para la cuenta de la horda; el
+// motor de batalla sigue tratando el empate como «ni subes de nivel ni te
+// debilitas», que es lo suyo.
+export const hordeRound = async (req, res) => {
+    try {
+        const { playerId, hostTotal, wildTotal } = req.body;
+        const game = getGame();
+        if (!game.horde || game.horde.hostId !== playerId) {
+            return res.status(400).json({ message: 'No hay horda activa para este jugador' });
+        }
+        if (game.horde.rounds.length >= game.horde.team.length) {
+            return res.status(400).json({ message: 'La horda ya peleó todos sus combates' });
+        }
+
+        const slot = game.horde.team[game.horde.rounds.length];
+        const mine = Number(hostTotal) || 0;
+        const theirs = Number(wildTotal) || 0;
+        game.horde.rounds.push({
+            attacker: slot?.pokemon?.name || '—',
+            hostTotal: mine,
+            wildTotal: theirs,
+            win: mine >= theirs,
+            tie: mine === theirs,
+        });
+        game.horde.wins = game.horde.rounds.filter(r => r.win).length;
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Combate registrado', horde: game.horde });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra la horda con el resultado de la tirada de captura, que se hace en la
+// mesa con el bono de las victorias.
+export const hordeFinish = async (req, res) => {
+    try {
+        const { playerId, caught } = req.body;
+        const game = getGame();
+        if (!game.horde || game.horde.hostId !== playerId) {
+            return res.status(400).json({ message: 'No hay horda activa para este jugador' });
+        }
+        if (game.horde.rounds.length < game.horde.team.length) {
+            return res.status(400).json({ message: 'Faltan combates por jugar' });
+        }
+
+        game.horde.caught = Boolean(caught);
+        game.horde.result = caught ? 'caught' : 'escaped';
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Horda resuelta', horde: game.horde });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra la horda y libera el rival de simulación del host.
+export const hordeClear = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (player) player.setSimRival(null);
+        if (game.horde && game.horde.hostId === playerId) game.horde = null;
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Horda cerrada' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  COMBATE DE ENTRENADOR (eventos «Trainer Battle (1)» y «(2)»)
+//
+//  Una o dos batallas seguidas contra tokens del color de la casilla. Son las
+//  dos caras de la misma carta —la de 2 se pelea «successively»— así que aquí
+//  van como un solo evento con un contador: `count` vale 1 o 2.
+//
+//  Por dentro cada combate es una batalla salvaje corriente (el rival se monta
+//  con el nombre 'Wild Pokemon'): se sube de nivel y se debilita como siempre.
+//  Lo que la tablet desactiva es la captura — el Pokémon es de un entrenador,
+//  no un salvaje que se quede uno.
+//
+//  El premio son cartas de objeto del mazo físico, y solo si se ganan TODOS los
+//  combates: 1 carta en la de 1, y 2 en la de 2. La tablet no reparte objetos
+//  (siguen siendo físicos), solo dice cuántas cartas tocan.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const TRAINER_MAX_RIVALS = 2;
+
+// Monta el primer rival y abre el marcador. Los POKEDEX llegan ya elegidos: del
+// sorteo por color de token o del buscador por nombre, las dos vías del front.
+export const trainerBattleStart = async (req, res) => {
+    try {
+        const { playerId, pokedexes } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (!Array.isArray(pokedexes) || pokedexes.length === 0 || pokedexes.length > TRAINER_MAX_RIVALS) {
+            return res.status(400).json({ message: `El combate de entrenador es contra 1 o ${TRAINER_MAX_RIVALS} Pokémon` });
+        }
+
+        const db = await openDb();
+        const wilds = [];
+        for (const dex of pokedexes) {
+            const pkm = await buildPokemonFromDex(dex, db, 'trainer');
+            if (!pkm) return res.status(404).json({ message: 'Pokémon no encontrado: ' + dex });
+            wilds.push(pkm);
+        }
+
+        const rival = new Rival('SimTrainer-' + playerId, 'Wild Pokemon');
+        rival.addPokemon(wilds[0]);
+        player.setSimRival(rival);
+
+        game.trainerBattle = {
+            hostId: playerId,
+            hostName: player.name,
+            count: wilds.length,
+            wilds,
+            index: 0,
+            rounds: [],
+            wins: 0,
+            prize: 0,
+            result: null,
+        };
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Combate de entrenador listo', trainerBattle: game.trainerBattle });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra un combate y, si queda otro, pone al siguiente rival en el sitio del
+// anterior. El premio se resuelve aquí mismo al cerrar el último: solo se cobra
+// ganando todos, que es lo que dice la carta.
+export const trainerBattleRound = async (req, res) => {
+    try {
+        const { playerId, hostTotal, rivalTotal } = req.body;
+        const game = getGame();
+        const tb = game.trainerBattle;
+        if (!tb || tb.hostId !== playerId) {
+            return res.status(400).json({ message: 'No hay combate de entrenador para este jugador' });
+        }
+        if (tb.rounds.length >= tb.count) {
+            return res.status(400).json({ message: 'El combate de entrenador ya terminó' });
+        }
+
+        const mine = Number(hostTotal) || 0;
+        const theirs = Number(rivalTotal) || 0;
+        tb.rounds.push({
+            rival: tb.wilds[tb.rounds.length]?.name || '—',
+            hostTotal: mine,
+            rivalTotal: theirs,
+            win: mine > theirs,
+            tie: mine === theirs,
+        });
+        tb.wins = tb.rounds.filter(r => r.win).length;
+
+        if (tb.rounds.length < tb.count) {
+            // Siguiente rival en el mismo hueco: el Rival guarda un Pokémon a la
+            // vez, que es de lo que tira el flujo salvaje del SimPlayer.
+            tb.index = tb.rounds.length;
+            const player = getPlayerById(playerId);
+            const next = tb.wilds[tb.index];
+            // Una partida restaurada de un save trae el rival como objeto pelado,
+            // sin los métodos de la clase: de ahí la segunda vía.
+            if (player?.simRival) {
+                if (typeof player.simRival.addPokemon === 'function') player.simRival.addPokemon(next);
+                else player.simRival.pokemons = [next];
+            }
+        } else {
+            tb.result = tb.wins === tb.count ? 'win' : 'lose';
+            tb.prize = tb.result === 'win' ? tb.count : 0;
+        }
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Combate registrado', trainerBattle: game.trainerBattle });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra el evento y libera el rival de simulación del host.
+export const trainerBattleClear = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (player) player.setSimRival(null);
+        if (game.trainerBattle && game.trainerBattle.hostId === playerId) game.trainerBattle = null;
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Combate de entrenador cerrado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Descuento de la tienda. Lo activa el máster desde su barra y dura una ronda
+// contada desde ese momento (ver Game.setStoreDiscount): 25%, 50%, o 0 para
+// volver a precios normales.
+//
+// Los precios los aplica la tienda al pintarlos y viajan ya rebajados en la
+// solicitud de compra, igual que viajaba el precio normal: aquí solo vive
+// cuánto se descuenta y cuánto le queda de vida.
+export const setStoreDiscount = async (req, res) => {
+    try {
+        const { percent } = req.body;
+        const pct = Number(percent) || 0;
+        if (![0, 25, 50].includes(pct)) {
+            return res.status(400).json({ message: 'El descuento solo puede ser 25% o 50%' });
+        }
+        const game = getGame();
+        game.setStoreDiscount(pct);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Descuento actualizado', storeDiscount: game.storeDiscount });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  POKÉ STAR STUDIOS (evento «Poké Star Studios»)
+//
+//  Una batalla de rodaje contra uno de los seis Prop Pokémon (PS1..PS6), el que
+//  diga un D6. Son fichas de la DB con FORM = 'Special': no salen en el buscador
+//  ni en los sorteos por color, solo aquí.
+//
+//  Lo único que este evento necesita del servidor es montar al Prop y ponerle
+//  nivel, porque su NIVEL no es el suyo: es el del Pokémon con el que se rueda
+//  (por eso el token lo lleva impreso como '?'). Y ese Pokémon no se sabe al
+//  abrir el evento sino al elegir combatiente en la pantalla de siempre, así
+//  que van en dos pasos: `pokeStarStart` monta al Prop y `pokeStarLevel` le
+//  iguala el nivel cada vez que el jugador cambia de Pokémon.
+//
+//  El resto —que no se capture, que nadie se quede debilitado y qué final
+//  salió— lo resuelve la tablet, que reconoce la batalla por el id del rival
+//  ('SimPokeStar-…') y así sobrevive a un refresco sin guardar nada en la
+//  partida.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const pokeStarStart = async (req, res) => {
+    try {
+        const { playerId, pokedex } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (!pokedex) return res.status(400).json({ message: 'Falta el Prop Pokémon' });
+
+        const db = await openDb();
+        const prop = await buildPokemonFromDex(pokedex, db, 'pokestar');
+        if (!prop) return res.status(404).json({ message: 'Prop Pokémon no encontrado' });
+
+        // Sale a nivel 1 de reposo: el de verdad se lo pone `pokeStarLevel` en
+        // cuanto el jugador elija con quién rueda.
+        prop.level = 1;
+        prop.totalLevel = 1;
+
+        // 'Wild Pokemon' para que la tablet aplique el flujo salvaje —de ahí
+        // salen las subidas de nivel, que la carta sí permite.
+        const rival = new Rival('SimPokeStar-' + playerId, 'Wild Pokemon');
+        rival.addPokemon(prop);
+        player.setSimRival(rival);
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Rodaje listo', pokemon: prop });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Iguala el nivel del Prop al del Pokémon que el jugador acaba de sacar. Se
+// llama en cada elección, así que cambiar de combatiente a mitad de selección
+// vuelve a cuadrar los niveles.
+export const pokeStarLevel = async (req, res) => {
+    try {
+        const { playerId, level } = req.body;
+        const player = getPlayerById(playerId);
+        const prop = player?.simRival?.pokemons?.[0];
+        if (!prop || !player.simRival.id.startsWith('SimPokeStar-')) {
+            return res.status(400).json({ message: 'No hay rodaje montado para este jugador' });
+        }
+
+        const lvl = Number(level);
+        if (!Number.isFinite(lvl) || lvl < 1) {
+            return res.status(400).json({ message: 'Nivel no válido' });
+        }
+
+        // `totalLevel` es el que suma en la batalla y `level` el que se pinta
+        prop.level = lvl;
+        prop.totalLevel = lvl;
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Nivel del Prop igualado', pokemon: prop });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra el rodaje y libera el rival de simulación.
+export const pokeStarClear = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const player = getPlayerById(playerId);
+        if (player) player.setSimRival(null);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Rodaje cerrado' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

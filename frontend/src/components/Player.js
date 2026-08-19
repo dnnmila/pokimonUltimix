@@ -1,4 +1,4 @@
-import React, {useState,useEffect,useCallback} from 'react';
+import React, {useState,useEffect,useCallback,useRef} from 'react';
 import dinamaxImg from '../images/dinamax.png';
 import Pokemon from './Pokemon';
 import AddPokemon from './AddPokemon';
@@ -36,35 +36,7 @@ const getPokedexImg = (pokedex) => {
     try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
 };
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,attachTera,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onTradePokemon,onPauseGame,onSetFieldMove}) => {
-
-    const handleKeyDown = useCallback((event) => {
-        // Si el foco está en un campo de texto, las flechas mueven el cursor;
-        // sin esto, escribir en el buscador de salvajes cambiaba de jugador
-        const tag = event.target?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
-
-        switch(event.key) {
-            case 'ArrowRight':
-                onNextView();
-                break;
-            case 'ArrowLeft':
-                onPrevView();
-                break;
-            default:
-                break;
-        }
-    }, [onNextView, onPrevView]);
-    
-    useEffect(() => {
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [handleKeyDown]); // Ahora handleKeyDown es una dependencia
-
-  
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,attachTera,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onSetStoreDiscount,onTradePokemon,onPauseGame,onSetFieldMove}) => {
 
     // El buscador ya devuelve el POKEDEX resuelto (se escriba el nombre o el número)
     const handleButtonWildPokemon = (pokedex) => {
@@ -74,6 +46,10 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
     const [showModalCoins, setShowModalCoins] = useState(false);
     const [showModalStore, setShowModalStore] = useState(false);
+    const [showDiscounts, setShowDiscounts] = useState(false);
+    // Descuento de la tienda en curso, o null. Vive en la partida para que la
+    // tablet del jugador vea los mismos precios que el máster.
+    const storeDiscount = game.storeDiscount || null;
     const [showModalBattle, setShowModalBattle] = useState(false);
     const [showSpecialAttacks, setShowSpecialAttacks] = useState(false);
     const [showFieldPicker, setShowFieldPicker] = useState(false);
@@ -95,6 +71,72 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
         await onTradePokemon(currentPlayerView.id, tradeMyPkm.id, tradeTargetPlayer.id, tradeTargetPkm.id);
         closeTrade();
     };
+
+    // Las solicitudes llegan en cola (push en el backend), así que la primera de
+    // la lista es la más antigua: es la que aprueba Enter.
+    const pendingPurchases = game.pendingPurchases || [];
+    // El estado del juego llega por sondeo, así que la solicitud sigue en la
+    // lista un instante después de aprobarla; sin esta marca, dos Enter seguidos
+    // la aprobarían (y cobrarían) dos veces.
+    const approvedByKeyRef = useRef(new Set());
+    const nextPending = pendingPurchases.find(req => !approvedByKeyRef.current.has(req.id)) || null;
+    // El listener se registra una vez: lee la cola por referencia en lugar de
+    // reengancharse en cada sondeo del estado
+    const pendingRef = useRef(pendingPurchases);
+    pendingRef.current = pendingPurchases;
+
+    useEffect(() => {
+        // Limpieza: en cuanto el backend confirma la baja, el id ya no estorba
+        const liveIds = new Set((game.pendingPurchases || []).map(req => req.id));
+        approvedByKeyRef.current.forEach(id => {
+            if (!liveIds.has(id)) approvedByKeyRef.current.delete(id);
+        });
+    }, [game.pendingPurchases]);
+
+    const anyModalOpen = showModalCoins || showModalStore || showModalBattle ||
+                         showSpecialAttacks || showFieldPicker || showTradeModal ||
+                         showPurchaseHistory;
+
+    const handleKeyDown = useCallback((event) => {
+        // Si el foco está en un campo de texto, las flechas mueven el cursor;
+        // sin esto, escribir en el buscador de salvajes cambiaba de jugador
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+
+        switch(event.key) {
+            case 'ArrowRight':
+                onNextView();
+                break;
+            case 'ArrowLeft':
+                onPrevView();
+                break;
+            case 'Enter': {
+                // Con un botón enfocado el navegador ya dispara su click, y
+                // dejar la tecla pulsada no debe aprobar la cola entera
+                if (tag === 'BUTTON' || tag === 'A' || event.repeat) return;
+                if (anyModalOpen) return;
+                // Se busca aquí y no en el render: dos Enter seguidos llegan
+                // antes de que el sondeo repinte, y el segundo debe ver ya
+                // marcada la solicitud que aprobó el primero
+                const target = pendingRef.current.find(req => !approvedByKeyRef.current.has(req.id));
+                if (!target) return;
+                event.preventDefault();
+                approvedByKeyRef.current.add(target.id);
+                onApprovePurchase(target.id);
+                break;
+            }
+            default:
+                break;
+        }
+    }, [onNextView, onPrevView, anyModalOpen, onApprovePurchase]);
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handleKeyDown]); // Ahora handleKeyDown es una dependencia
 
 
     const handleOpenModalCoins = () => {
@@ -234,7 +276,58 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
      
    
             <ModalMonedas show={showModalCoins} onClose={handleCloseModalCoins} currentPlayer={currentPlayerView} onUpdateCoins={onUpdateCoins}/>
-            <ModalTienda show={showModalStore} onClose={handleCloseModalStore} currentPlayer={currentPlayerView} onMasterPurchase={onMasterPurchase}/>
+            <ModalTienda show={showModalStore} onClose={handleCloseModalStore} currentPlayer={currentPlayerView} onMasterPurchase={onMasterPurchase} discount={storeDiscount}/>
+
+            {/* Descuentos de la tienda: se activan aquí y duran una ronda desde
+                ese momento, así que el propio botón lleva la cuenta atrás. */}
+            {showDiscounts && (
+                <div className='modal-backdrop' onClick={() => setShowDiscounts(false)}>
+                    <div className='discount-modal' onClick={e => e.stopPropagation()}>
+                        <div className='discount-title'>Descuentos de la tienda</div>
+                        <div className='discount-sub'>
+                            Duran una ronda entera contada desde ahora: {game.players.length}
+                            {game.players.length === 1 ? ' turno' : ' turnos'}, uno por jugador.
+                        </div>
+
+                        <div className='discount-options'>
+                            {[25, 50].map(pct => (
+                                <button key={pct}
+                                        className={`discount-opt ${storeDiscount?.percent === pct ? 'is-on' : ''}`}
+                                        onClick={() => { onSetStoreDiscount(pct); setShowDiscounts(false); }}>
+                                    <span className='discount-opt-pct'>-{pct}%</span>
+                                    <span className='discount-opt-note'>
+                                        {pct === 25 ? 'Rebaja de temporada' : 'Todo a mitad de precio'}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {storeDiscount ? (
+                            <div className='discount-active'>
+                                Ahora mismo: <strong>-{storeDiscount.percent}%</strong>, quedan{' '}
+                                <strong>{storeDiscount.turnsLeft}</strong>
+                                {storeDiscount.turnsLeft === 1 ? ' turno' : ' turnos'}.
+                                Volver a pulsar reinicia la cuenta.
+                            </div>
+                        ) : (
+                            <div className='discount-active discount-active--off'>
+                                Precios normales.
+                            </div>
+                        )}
+
+                        <div className='discount-actions'>
+                            <button className='discount-off'
+                                    disabled={!storeDiscount}
+                                    onClick={() => { onSetStoreDiscount(0); setShowDiscounts(false); }}>
+                                Quitar descuento
+                            </button>
+                            <button className='discount-close' onClick={() => setShowDiscounts(false)}>
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {showTradeModal && (
                 <div className="modal-backdrop" onClick={closeTrade}>
@@ -381,23 +474,30 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                 </div>
             )}
 
-            {(game.pendingPurchases || []).length > 0 && (
+            {pendingPurchases.length > 0 && (
                 <div className="pending-purchases">
                     <div className="pending-purchases-title">Solicitudes de compra</div>
                     {/* El signo y el color separan cobrar de pagar: aprobar una
                         venta le SUMA monedas al jugador, y eso tiene que verse
                         antes de pulsar el ✓, no después. */}
-                    {game.pendingPurchases.map(req => (
-                        <div key={req.id} className="pending-purchase-item">
+                    {pendingPurchases.map(req => {
+                        const isNext = nextPending?.id === req.id;
+                        return (
+                        <div key={req.id} className={`pending-purchase-item${isNext ? ' pending-purchase-item--next' : ''}`}>
                             <span className="pending-purchase-player">{req.playerName}</span>
                             <span className="pending-purchase-item-name">{req.item}</span>
                             <span className={`pending-purchase-price${req.kind === 'sell' ? ' pending-purchase-price--sell' : ''}`}>
                                 {req.kind === 'sell' ? '+' : '-'}${req.price}
                             </span>
-                            <button className="pending-approve" onClick={() => onApprovePurchase(req.id)}>✓</button>
+                            {/* El ⏎ marca cuál aprueba la tecla: con varias en
+                                cola hay que saber a cuál le toca */}
+                            <button className="pending-approve" onClick={() => onApprovePurchase(req.id)}>
+                                ✓{isNext && !anyModalOpen && <span className="pending-approve-key">⏎</span>}
+                            </button>
                             <button className="pending-deny" onClick={() => onDenyPurchase(req.id)}>✕</button>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
             <ModalBattle show={showModalBattle} onClose={handleCloseModalBattle} game={game} playerBattle={playerBattle} LeaderBattle={LeaderBattle}  />
@@ -490,6 +590,15 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                         <div className='pv-util' title='Tienda' onClick={handleOpenModalStore}>
                             <div className='pv-util-icon Button-store' />
                             <span className='pv-util-label'>Tienda</span>
+                        </div>
+                        <div className={`pv-util ${storeDiscount ? 'pv-util--on' : ''}`}
+                             title='Descuentos de la tienda'
+                             onClick={() => setShowDiscounts(true)}>
+                            <div className='pv-util-icon Button-store pv-util-icon--discount' />
+                            <span className='pv-util-label'>
+                                {storeDiscount ? `-${storeDiscount.percent}%` : 'Descuentos'}
+                            </span>
+                            {storeDiscount && <span className='pv-util-count'>{storeDiscount.turnsLeft}</span>}
                         </div>
                         <div className='pv-util' title='Historial' onClick={() => setShowPurchaseHistory(v => !v)}>
                             <div className='pv-util-icon Button-purchase-history' />

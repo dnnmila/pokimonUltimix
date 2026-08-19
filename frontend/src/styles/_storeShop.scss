@@ -275,3 +275,61 @@
         }
     }
 }
+
+// ── Descuento del máster ────────────────────────────────────────────────────
+//
+// El precio rebajado ocupa el sitio de siempre (la moneda del chart) y el viejo
+// queda tachado al lado: en la mesa se pregunta «¿cuánto era?» tanto como
+// «¿cuánto es?». Lo pintan igual las dos tiendas, la del máster y la del
+// jugador, porque comparten piel.
+
+.store-discount-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 auto 0.4rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f7c04a, #e8a317);
+    border: 1px solid #c8880f;
+    color: #4a2f05;
+    font-size: 0.85rem;
+    font-weight: bold;
+
+    em { font-style: normal; font-weight: normal; opacity: 0.85; }
+}
+
+.store-discount-tag {
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.8rem;
+}
+
+// El precio de antes: pequeño y tachado, pegado al de ahora
+.store-option-cost-old {
+    position: absolute;
+    top: -0.55rem;
+    right: -0.15rem;
+    font-size: 0.72rem;
+    font-weight: normal;
+    font-style: normal;
+    color: #a05a2c;
+    text-decoration: line-through;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.modal-store.modal-store--shop .store-option-cost--off {
+    // Gana a la regla de la piel (position: static) para que el precio viejo
+    // se ancle a la moneda y no a la fila entera
+    position: relative;
+}
+
+// En la ficha de detalle el precio viejo va como una moneda apagada delante
+.store-detail-price .store-option-cost--old {
+    opacity: 0.5;
+    filter: grayscale(0.7);
+    text-decoration: line-through;
+}

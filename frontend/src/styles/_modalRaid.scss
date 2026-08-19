@@ -16,10 +16,12 @@
     background: var(--hud-modal-bg);
     border: 2px solid #f2506e;
     border-radius: 14px;
-    padding: 1.2rem 1.2rem 1rem;
-    width: 94vw;
-    max-width: 880px;
-    max-height: 90vh;
+    // Más aire que un modal normal: aquí se toca mucho (huecos, formas, dados)
+    // y en la tablet los objetivos pequeños se fallan.
+    padding: 1.4rem 1.4rem 1.2rem;
+    width: 96vw;
+    max-width: 1080px;
+    max-height: 92vh;
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
@@ -78,11 +80,153 @@
 
 .raid-setup-sub { color: #9a9a9a; font-size: 0.82rem; }
 
-// Paso 1: el jefe se busca por nombre, no se sortea
+// Paso 1: el jefe sale del sorteo por color de token o del buscador
 .raid-boss-search {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.raid-color-label {
+    color: #9a9a9a;
+    font-size: 0.78rem;
+}
+
+.raid-colors {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.raid-color {
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+
+    &:hover { transform: scale(1.12); }
+
+    &.is-on {
+        border-color: white;
+        transform: scale(1.12);
+    }
+
+    // "Cualquier color": no es un token, es la ausencia de filtro
+    &--any {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.25);
+        color: #cfcfcf;
+        font-size: 1rem;
+    }
+}
+
+// Marca del color de la incursión donde no cabe el nombre (título del salvaje)
+.raid-color-chip {
+    display: inline-block;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+// La acción principal del paso 1, con el mismo peso que el sorteo de la mega
+.raid-roll-btn {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    background: rgba(242, 80, 110, 0.18);
+    border: 2px solid #f2506e;
+    color: #ff8fa5;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+    &:hover:not(:disabled) {
+        background: rgba(242, 80, 110, 0.32);
+        transform: translateY(-2px);
+        box-shadow: 0 0 14px rgba(242, 80, 110, 0.5);
+    }
+    &:disabled { opacity: 0.45; cursor: default; }
+}
+
+// El Pokémon que salió: todavía no es el jefe, se confirma en su propio botón
+.raid-roll-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--token-color, #f2506e);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--token-color, #f2506e) 40%, transparent);
+}
+
+.raid-roll-art {
+    width: 5.5rem;
+    height: 5.5rem;
+    flex: 0 0 auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--token-color, #f2506e) 70%, transparent));
+}
+
+.raid-roll-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+.raid-roll-name {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.raid-roll-types {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+
+    span {
+        font-size: 0.62rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: white;
+        border-radius: 5px;
+        padding: 0.1rem 0.35rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+}
+
+.raid-roll-lvl { background: rgba(255, 255, 255, 0.15); }
+
+.raid-roll-token { color: #9a9a9a; font-size: 0.72rem; }
+
+// Separador de la vía manual, para que no compita con el sorteo
+.raid-setup-alt {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #6d6d6d;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+
+    i { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.14); }
 }
 
 // El buscador es el mismo componente que el de salvajes (PokemonNameSearch), y
@@ -97,8 +241,8 @@
         border: 1px solid rgba(255, 255, 255, 0.25);
         border-radius: 8px;
         color: white;
-        font-size: 0.9rem;
-        padding: 0.5rem 0.7rem;
+        font-size: 1rem;
+        padding: 0.65rem 0.8rem;
 
         &::placeholder { color: #7d7d7d; }
         &:focus { outline: none; border-color: var(--hud-accent); }
@@ -110,9 +254,9 @@
         border: 1px solid var(--hud-accent);
         border-radius: 8px;
         color: var(--hud-accent);
-        font-size: 0.82rem;
+        font-size: 0.92rem;
         font-weight: bold;
-        padding: 0.5rem 0.9rem;
+        padding: 0.65rem 1.1rem;
         cursor: pointer;
         &:hover { background: rgba(255, 255, 255, 0.18); }
         &:disabled { opacity: 0.4; cursor: default; }
@@ -213,7 +357,7 @@
 .raid-slots {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.6rem;
+    gap: 0.7rem;
 }
 
 .raid-slot {
@@ -221,9 +365,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.15rem;
-    min-height: 7rem;
-    padding: 0.5rem 0.35rem;
+    gap: 0.2rem;
+    min-height: 9.5rem;
+    padding: 0.7rem 0.5rem;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.05);
     border: 2px dashed rgba(255, 255, 255, 0.25);
@@ -245,8 +389,8 @@
 }
 
 .raid-slot-art {
-    width: 3.6rem;
-    height: 3.6rem;
+    width: 4.6rem;
+    height: 4.6rem;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -254,31 +398,38 @@
 
 .raid-slot-name {
     color: white;
-    font-size: 0.78rem;
+    font-size: 0.92rem;
     font-weight: bold;
     text-align: center;
     line-height: 1.1;
 }
 
-.raid-slot-owner { color: #9a9a9a; font-size: 0.65rem; }
+.raid-slot-owner { color: #9a9a9a; font-size: 0.75rem; }
 
 // Formas alternativas del Pokémon del host, dentro de su propia tarjeta. Solo
 // aparecen cuando hay más de una, así que un Pokémon sin item ni G-Max no
 // arrastra una fila vacía.
+// Se tocan con el dedo y son la parte más peleada de la tarjeta: van a tamaño
+// de botón de verdad (~2.2rem de alto), no de etiqueta.
 .raid-slot-forms {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.15rem;
-    margin-top: 0.25rem;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+    width: 100%;
 }
 
 .raid-form {
-    padding: 0.05rem 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.2rem;
+    padding: 0.35rem 0.75rem;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
     font-weight: bold;
     letter-spacing: 0.03em;
     white-space: nowrap;
@@ -298,7 +449,7 @@
 .raid-slot-empty {
     margin: auto;
     color: #7d7d7d;
-    font-size: 0.72rem;
+    font-size: 0.85rem;
     font-style: italic;
     text-align: center;
 }
@@ -316,14 +467,14 @@
 
 .raid-picker-title {
     color: var(--hud-accent);
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     font-weight: bold;
     letter-spacing: 0.04em;
 }
 
 .raid-picker-group-name {
     color: #9a9a9a;
-    font-size: 0.7rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-bottom: 0.2rem;
@@ -339,8 +490,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 4.4rem;
-    padding: 0.3rem 0.2rem;
+    width: 5.6rem;
+    padding: 0.4rem 0.25rem;
     border-radius: 9px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--pkm-type, transparent);
@@ -354,8 +505,8 @@
 }
 
 .raid-picker-art {
-    width: 2.8rem;
-    height: 2.8rem;
+    width: 3.6rem;
+    height: 3.6rem;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -363,7 +514,7 @@
 
 .raid-picker-name {
     color: white;
-    font-size: 0.62rem;
+    font-size: 0.74rem;
     text-align: center;
     line-height: 1.1;
     white-space: nowrap;
@@ -372,7 +523,7 @@
     max-width: 100%;
 }
 
-.raid-picker-none { color: #6d6d6d; font-size: 0.7rem; font-style: italic; }
+.raid-picker-none { color: #6d6d6d; font-size: 0.8rem; font-style: italic; }
 
 .raid-picker-wild,
 .raid-picker-clear {
@@ -381,10 +532,19 @@
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 8px;
     color: white;
-    font-size: 0.75rem;
-    padding: 0.35rem 0.7rem;
+    font-size: 0.88rem;
+    padding: 0.55rem 1rem;
     cursor: pointer;
     &:hover { background: rgba(255, 255, 255, 0.18); }
+    &:disabled { opacity: 0.45; cursor: default; }
+}
+
+// El sorteo del salvaje va del color de la incursión, no del gris de la caja
+.raid-picker-wild {
+    margin-bottom: 0.3rem;
+    color: #ff8fa5;
+    border-color: rgba(242, 80, 110, 0.6);
+    &:hover:not(:disabled) { background: rgba(242, 80, 110, 0.25); }
 }
 
 .raid-picker-clear { color: #f2a24e; border-color: rgba(242, 162, 78, 0.5); }
@@ -399,12 +559,12 @@
 .raid-setup-btn {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 8px;
+    border-radius: 10px;
     color: white;
-    font-size: 0.88rem;
+    font-size: 1rem;
     font-weight: bold;
     letter-spacing: 0.03em;
-    padding: 0.5rem 1.1rem;
+    padding: 0.75rem 1.5rem;
     cursor: pointer;
     transition: background 0.15s, transform 0.15s;
 
@@ -479,9 +639,9 @@
     background: var(--hud-modal-bg);
     border: 2px solid #f2506e;
     border-radius: 14px;
-    padding: 1.3rem 1.5rem;
+    padding: 1.5rem 1.7rem;
     width: 92vw;
-    max-width: 460px;
+    max-width: 560px;
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
@@ -491,7 +651,7 @@
 .raid-round-title,
 .raid-result-title {
     color: #f2506e;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     font-weight: bold;
     letter-spacing: 0.04em;
 }
@@ -550,7 +710,7 @@
 
 .raid-round-note {
     color: #8a8a8a;
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     line-height: 1.35;
 }
 
@@ -614,10 +774,10 @@
     display: flex;
     justify-content: space-between;
     gap: 0.6rem;
-    padding: 0.25rem 0.4rem;
+    padding: 0.35rem 0.55rem;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.05);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
 
     &--die {
         background: rgba(242, 80, 110, 0.18);

@@ -36,6 +36,33 @@ export const RULES_CARDS = [
     title: 'Reglas de la Incursión Max',
     aliases: ['max raid battle', 'max raid battle rules', 'incursion max'],
   },
+  {
+    id: 'horde',
+    title: 'Reglas de la Horda',
+    aliases: ['horde encounter', 'horde', 'horda'],
+  },
+  // El combate de entrenador son dos cartas físicas distintas, una por número de
+  // rivales. El montaje abre la que toque según lo elegido.
+  {
+    id: 'trainerBattle',
+    title: 'Reglas del Combate de Entrenador (1)',
+    aliases: ['trainer battle 1', 'trainer battle', 'combate de entrenador 1'],
+  },
+  {
+    id: 'trainerBattle2',
+    title: 'Reglas del Combate de Entrenador (2)',
+    aliases: ['trainer battle 2', 'combate de entrenador 2'],
+  },
+  {
+    id: 'contest',
+    title: 'Reglas del Concurso Pokémon',
+    aliases: ['contest rules', 'pokemon contest', 'concurso pokemon'],
+  },
+  {
+    id: 'pokeStar',
+    title: 'Reglas de Poké Star Studios',
+    aliases: ['poke star studios battle rules', 'poke star studios', 'pokestar studios'],
+  },
 ];
 
 export const rulesCard = (id) => {

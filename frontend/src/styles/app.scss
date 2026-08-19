@@ -112,6 +112,11 @@
 @import "./modalEvents";
 @import "./modalEventPick";
 @import "./modalRaid";
+// Después de la incursión a propósito: la horda reaprovecha su piel y solo la
+// repinta de verde
+@import "./modalHorde";
+@import "./modalContest";
+@import "./modalPokeStar";
 // Al final a propósito: la piel de la tienda tiene que ganarle a la cáscara
 // común de modales del SimPlayer sin recurrir a !important
 @import "./storeShop";
