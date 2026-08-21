@@ -17,7 +17,7 @@ import ModalMote from "./modals/ModalMote";
 import PokemonName from "./PokemonName";
 import { displayName, nameTitle } from "../moteName";
 import ModalSettings from "./modals/ModalSettings";
-import { getTrainerImage } from "../data/trainers";
+import { getTrainerImage, getTrainerAvatar } from "../data/trainers";
 import SimThemeCurtain, { useSimCurtain } from "./SimThemeCurtain";
 import { themeClass, readTheme, writeTheme, getThemeMascot } from "../data/simThemes";
 import { getLeaderPortrait, RIVAL_COLORS, getRivalColor } from "../data/leaders";
@@ -3025,7 +3025,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                              onClick={() => setShowSettings(true)}
                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowSettings(true); } }}>
                             <div className="sim-hud-trainer-portrait">
-                                <div className="sim-hud-trainer-img" style={{ backgroundImage: `url(${getTrainerImage(player.name)})` }} />
+                                <div className="sim-hud-trainer-img" style={{ backgroundImage: `url(${getTrainerAvatar(player.name)})` }} />
                                 <span className="sim-hud-trainer-gear">⚙</span>
                             </div>
                             <div className="sim-hud-trainer-meta">

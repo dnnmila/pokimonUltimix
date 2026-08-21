@@ -137,13 +137,29 @@
         border: 1px solid rgba(var(--hud-ink-rgb), 0.12);
     }
 
+    // El jugador va igual que el rival, en espejo: su figura a la izquierda y
+    // su equipo a la derecha
     &--mine {
-        flex-direction: column;
-        gap: 0.5rem;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 1rem;
         flex: 1;
+        overflow: hidden;
         background: rgba(255, 255, 255, 0.34);
         border: 1px solid rgba(var(--hud-ink-rgb), 0.12);
     }
+}
+
+// Columna derecha del jugador: el interruptor de pestañas encima y las
+// tarjetas debajo. Existe para que el interruptor no se coma el ancho de la
+// figura, que es lo que pasaba cuando los tres iban en la misma fila.
+.sbs-mine-team {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
 }
 
 // ── Carta del Pokémon rival elegido (izquierda de la banda) ─────────────────
@@ -280,49 +296,26 @@
     filter: drop-shadow(0 2px 5px rgba(var(--hud-shadow-rgb), 0.5));
 }
 
-// ── Cabecera del lado propio ────────────────────────────────────────────────
-.sbs-side-head {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    flex-shrink: 0;
+// ── Figura del jugador ──────────────────────────────────────────────────────
+// Hereda todo de .sbs-figure y solo cambia lo que la distingue del rival: mide
+// algo menos, porque su banda es más baja y porque el que manda en la pantalla
+// es el rival, y lleva la placa en el azul del tema en lugar del dorado, para
+// que de un vistazo se sepa qué lado es cuál.
+.sbs-figure--me {
+    // El tope en rem es el ancho bueno en la tablet; el porcentaje es el que
+    // salva al espejo del máster. Ese espejo es un 4:3 que se mide contra el
+    // ALTO de la pantalla, así que en un portátil 1280x800 la caja se queda en
+    // ~1010px de ancho mientras las media queries, que miran el viewport de
+    // 1280, siguen dando por bueno el tamaño de tablet. Con un ancho fijo, la
+    // figura se comía el sitio de la sexta tarjeta y el equipo lleno envolvía a
+    // dos filas. Midiendo contra la banda, la figura se encoge con ella.
+    width: min(12rem, 18%);
+
+    .sbs-figure-art { min-height: 8rem; }
 }
 
-.sbs-portrait {
-    width: 3rem;
-    height: 3rem;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
-    background-color: var(--hud-paper-2);
-    border: 2px solid var(--hud-gold);
-    box-shadow: var(--hud-shadow);
-
-    &--me { border-color: var(--hud-link); }
-}
-
-.sbs-side-meta {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.sbs-side-name {
-    font-size: 1.05rem;
-    font-weight: bold;
-    line-height: 1.15;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sbs-side-role {
-    font-size: 0.66rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--hud-dim);
+.sbs-plate--me {
+    background: linear-gradient(180deg, var(--hud-blue), var(--hud-blue-deep));
 }
 
 // ── Equipo del rival: círculos ──────────────────────────────────────────────
@@ -1017,7 +1010,13 @@
     .sbs-figure-art { min-height: 9rem; }
     .sbs-orbs { justify-content: center; }
 
-    .sbs-side-head { flex-wrap: wrap; }
+    // Tu figura también pasa arriba y centrada, por lo mismo que la carta del
+    // rival: en vertical no hay ancho para dos columnas
+    .sbs-side--mine { flex-direction: column; }
+    // Apilada ya no le quita ancho a nadie, así que recupera tamaño fijo: el
+    // 18% de arriba la dejaría en cuatro dedos en un móvil estrecho
+    .sbs-figure--me { align-self: center; width: 7.5rem; }
+
     .sbs-switch { width: 100%; margin: 0.4rem 0 0; }
     .sbs-switch-btn { flex: 1; justify-content: center; }
 
