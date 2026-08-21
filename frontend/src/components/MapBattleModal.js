@@ -5,6 +5,7 @@ import Types from './Types';
 import PokemonName from './PokemonName';
 import { displayName } from '../moteName';
 import SERVER_IP from '../config.js';
+import { MAX_EXTRA_LEVEL } from '../battleRules';
 
 // ─── Efectividad de tipo ──────────────────────────────────────────────────────
 const TYPE_TABLE = {
@@ -245,7 +246,10 @@ const MapBattleModal = ({ open, onClose, player, generation, nodeId, onResolved,
     // ── Resultado ─────────────────────────────────────────────────────────────
     const handleConfirmResult = async () => {
         if (myTotal >= rivTotal) {
-            const canLevelUp = rivPkm.totalLevel >= myPkm.totalLevel;
+            // Con el extra al tope (+6) no se ofrece subir: el backend cicla a
+            // +0 al pasarse, que es lo que usa el "+" manual del máster.
+            const canLevelUp = rivPkm.totalLevel >= myPkm.totalLevel
+                && (myPkm.extra ?? 0) < MAX_EXTRA_LEVEL;
             if (canLevelUp) {
                 setPhase('levelup');
             } else if (isLeaderBattle) {

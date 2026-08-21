@@ -214,15 +214,24 @@
     --hud-shadow-rgb:    62, 24, 34;
 }
 
-// ── Psyduck — amarillo despistado ───────────────────────────────────────────
+// ── Psyduck — agua y plumas ─────────────────────────────────────────────────
 .sim-player--psyduck {
-    // El amarillo del cuerpo no puede llevar texto blanco por mucho que se
-    // oscurezca sin volverse mostaza, así que la banda asume el tono terroso.
-    // Quien distingue este tema de Rapidash es el campo, de un limón claro
-    // frente al naranja de fuego del otro.
-    --hud-blue:          #8f7022;
-    --hud-blue-deep:     #765c1c;
-    --hud-blue-rgb:      143, 112, 34;
+    // Antes la banda era un ámbar terroso (#8f7022) sobre campo amarillo, y el
+    // conjunto se leía mostaza: dos tonos vecinos de la rueda, los dos
+    // saturados y pegados el uno al otro, no tienen nada que los corte.
+    //
+    // La restricción que empujaba a ese ámbar sigue en pie —el amarillo del
+    // cuerpo no aguanta texto blanco por mucho que se oscurezca—, pero la
+    // salida no era ir a por un amarillo más oscuro todavía, sino cruzar la
+    // rueda: azul de agua contra amarillo de plumas. Complementarios, así que
+    // el mostaza no puede formarse. Y encima es fiel al bicho, que es de tipo
+    // agua, no de tierra.
+    //
+    // De regalo, resuelve el parecido con Rapidash: ese sigue siendo cálido de
+    // arriba abajo y este pasa a ser el único amarillo con banda fría.
+    --hud-blue:          #256b80;
+    --hud-blue-deep:     #1c5768;
+    --hud-blue-rgb:      37, 107, 128;
 
     --hud-card:          #fffdf3;
     --hud-paper:         #fdf6dd;
@@ -230,57 +239,68 @@
     --hud-paper-3:       #f7ebc2;
     --hud-paper-hover:   #f0dfa8;
     --hud-paper-deep:    #e2cd8a;
-    --hud-tint:          #fdf3c8;
+    // El lavado de filas destacadas se va al agua de la banda: es el único
+    // sitio del cuerpo de la pantalla donde el frío asoma, y ata las dos mitades
+    --hud-tint:          #e4f1f5;
 
-    // El campo va mas hondo de lo que pide el Pokemon a proposito: con el tono
-    // claro original las tarjetas blancas se difuminaban contra el fondo
-    // (1.22:1, por debajo del 1.41 del diseno original). Asi se despegan.
-    --hud-field-1:       #dbae19;
-    --hud-field-2:       #ebc52f;
-    --hud-field-3:       #f0d35d;
-    --hud-field-4:       #f6e17e;
-    --hud-field-5:       #f1da6c;
+    // Mantequilla, no limón: bajar la saturación aquí es la otra mitad del
+    // arreglo, porque el mostaza venía tanto del tono como de la fuerza. Aun
+    // así el campo no puede aclararse del todo — a #f6e17e las tarjetas se
+    // difuminaban contra el fondo (1.22:1, por debajo del 1.41 del diseño
+    // original). Esta rampa deja 1.58:1 arriba y 1.33:1 abajo.
+    --hud-field-1:       #e8c85c;
+    --hud-field-2:       #edd47a;
+    --hud-field-3:       #f0dc96;
+    --hud-field-4:       #f2e2ab;
+    --hud-field-5:       #eddd9e;
 
-    --hud-bg-blend:      #6b5510;
+    --hud-bg-blend:      #17414e;
     --hud-bg-blend-mode: multiply;
 
     --hud-band-mascot:       url("../images/POKEMON/0054.png") no-repeat right 1.5rem center / auto 7.5rem;
     --hud-band-blend:        soft-light, normal;
     --hud-band-mascot-space: 9rem;
 
-    --hud-ink:           #33280a;
-    --hud-ink-rgb:       51, 40, 10;
-    --hud-dim:           #6f5f34;
-    --hud-dim-2:         #9c8d63;
+    // Tinta de pizarra fría, como la de Ultimix: sobre crema no desentona y de
+    // paso deja de empujar la pantalla entera hacia el marrón
+    --hud-ink:           #22323a;
+    --hud-ink-rgb:       34, 50, 58;
+    --hud-dim:           #566a72;
+    --hud-dim-2:         #8898a0;
 
     // El acento sale del pico: naranja sobre amarillo, que es el contraste que
-    // el propio Psyduck ya tiene encima
+    // el propio Psyduck ya tiene encima. Contra la banda azul rinde todavía
+    // mejor que antes, que competía con el ámbar de al lado.
     --hud-accent:        #ff9e4a;
     --hud-accent-rgb:    255, 158, 74;
     --hud-accent-soft:   #ffc48c;
     --hud-accent-warm:   #ff8c2a;
+    // Las monedas se quedan doradas: es el único tema cálido cuya banda ya no
+    // lo es, así que aquí el oro no se pierde contra el fondo
     --hud-gold:          #c98a10;
     --hud-gold-ink:      #96650a;
     --hud-gold-ink-deep: #6f4b06;
-    --hud-link:          #b07a15;
-    --hud-link-rgb:      176, 122, 21;
+    --hud-link:          #2b7a92;
+    --hud-link-rgb:      43, 122, 146;
 
-    --hud-purple:        #6b5510;
-    --hud-purple-rgb:    107, 85, 16;
-    --hud-panel:         #997515;
-    --hud-panel-deep:    #40300a;
-    --hud-panel-deep-2:  #4d3a0c;
-    --hud-lilac:         #d4a83c;
+    --hud-purple:        #1e5464;
+    --hud-purple-rgb:    30, 84, 100;
+    --hud-panel:         #2b7086;
+    --hud-panel-deep:    #123945;
+    --hud-panel-deep-2:  #164451;
+    --hud-lilac:         #6fb8cc;
+    // El contrapeso cálido dentro de la familia oscura: sin él la cortina y los
+    // modales se irían a un azul monocromo que no recuerda a Psyduck
     --hud-pink:          #ffb87a;
 
-    --hud-dark:          #221a06;
-    --hud-dark-2:        #33280a;
-    --hud-band-dark:     #5c470f;
-    --hud-modal-bg:      rgba(26, 20, 6, 0.97);
-    --hud-veil:          rgba(34, 26, 8, 0.58);
-    --hud-highlight:     rgba(200, 150, 20, 0.5);
+    --hud-dark:          #0e2027;
+    --hud-dark-2:        #143039;
+    --hud-band-dark:     #1c4a58;
+    --hud-modal-bg:      rgba(8, 22, 28, 0.97);
+    --hud-veil:          rgba(10, 28, 36, 0.58);
+    --hud-highlight:     rgba(40, 130, 160, 0.5);
 
-    --hud-shadow-rgb:    50, 38, 10;
+    --hud-shadow-rgb:    14, 40, 50;
 }
 
 // ── Togekiss — cielo y nube ─────────────────────────────────────────────────
@@ -350,6 +370,151 @@
     --hud-highlight:     rgba(88, 111, 202, 0.5);
 
     --hud-shadow-rgb:    22, 34, 70;
+}
+
+// ── Corviknight — armadura y noche ──────────────────────────────────────────
+.sim-player--corviknight {
+    // Es el segundo tema azul de la lista, así que se aleja de Togekiss por los
+    // dos extremos: allí el azul es un aciano claro sobre campo de nube, aquí
+    // es un añil de tinta sobre campo de plomo. Y del morado de Gengar lo
+    // separa la saturación: este violeta está lavado, no es un morado de verdad.
+    --hud-blue:          #3f3f6e;
+    --hud-blue-deep:     #2f2f55;
+    --hud-blue-rgb:      63, 63, 110;
+
+    --hud-card:          #f8f9fd;
+    --hud-paper:         #eef0f8;
+    --hud-paper-2:       #e6e8f4;
+    --hud-paper-3:       #e0e2f1;
+    --hud-paper-hover:   #d1d4ea;
+    --hud-paper-deep:    #b7bada;
+    --hud-tint:          #eaebfb;
+
+    // Gris de acero con la sombra violeta del plumaje. Mantiene el tono medio
+    // del diseño original para que el texto oscuro siga leyéndose encima.
+    --hud-field-1:       #8d8fb2;
+    --hud-field-2:       #a3a5c4;
+    --hud-field-3:       #bfc0d6;
+    --hud-field-4:       #d4d5e4;
+    --hud-field-5:       #cacbdc;
+
+    --hud-bg-blend:      #26264a;
+    --hud-bg-blend-mode: multiply;
+
+    // Corviknight es el único que no viene de images/POKEMON a 215px: su render
+    // está a 475 y la banda lo escala igual, porque la altura manda sobre el
+    // ancho en este `background`.
+    --hud-band-mascot:       url("../images/POKEMON/0823.png") no-repeat right 1.5rem center / auto 7.5rem;
+    --hud-band-blend:        soft-light, normal;
+    --hud-band-mascot-space: 9rem;
+
+    --hud-ink:           #1e1e33;
+    --hud-ink-rgb:       30, 30, 51;
+    --hud-dim:           #5a5a7a;
+    --hud-dim-2:         #8888a6;
+
+    // Los brillos del acero, no el ojo rojo: el acento se usa sobre todo como
+    // texto en los modales oscuros, y ahí un rojo se confundiría con el de KO.
+    // El ojo se queda en --hud-pink, que es decoración y no lectura de partida.
+    --hud-accent:        #b7c0f0;
+    --hud-accent-rgb:    183, 192, 240;
+    --hud-accent-soft:   #d9def8;
+    --hud-accent-warm:   #a3aae4;
+    // Monedas de plata bruñida: es un Pokémon de acero y el dorado desentonaba
+    --hud-gold:          #a8b0cf;
+    --hud-gold-ink:      #5d638c;
+    --hud-gold-ink-deep: #444a6d;
+    --hud-link:          #5758ad;
+    --hud-link-rgb:      87, 88, 173;
+
+    --hud-purple:        #343463;
+    --hud-purple-rgb:    52, 52, 99;
+    --hud-panel:         #45457e;
+    --hud-panel-deep:    #1f1f40;
+    --hud-panel-deep-2:  #27274d;
+    --hud-lilac:         #9698d8;
+    --hud-pink:          #f2a3ab;
+
+    --hud-dark:          #15152a;
+    --hud-dark-2:        #1d1d38;
+    --hud-band-dark:     #2c2c57;
+    --hud-modal-bg:      rgba(12, 12, 26, 0.97);
+    --hud-veil:          rgba(16, 16, 34, 0.58);
+    --hud-highlight:     rgba(80, 80, 170, 0.5);
+
+    --hud-shadow-rgb:    22, 22, 48;
+}
+
+// ── Rayquaza variocolor — obsidiana, magenta y oro ──────────────────────────
+.sim-player--rayquaza-shiny {
+    // El variocolor es negro con anillos dorados y aletas magenta. El negro se
+    // queda en la banda —donde el texto blanco lo agradece—, el magenta hace de
+    // acento y el oro se va a las monedas: los tres colores del bicho, cada uno
+    // en el sitio donde no estorba.
+    --hud-blue:          #2f333f;
+    --hud-blue-deep:     #1f222b;
+    --hud-blue-rgb:      47, 51, 63;
+
+    --hud-card:          #fbfbfd;
+    --hud-paper:         #eff0f4;
+    --hud-paper-2:       #e7e9ee;
+    --hud-paper-3:       #e1e3e9;
+    --hud-paper-hover:   #d3d6de;
+    --hud-paper-deep:    #b9bdc8;
+    // El lavado destacado tira a magenta, no a frío: es lo que recuerda que el
+    // tema no es solo blanco y negro
+    --hud-tint:          #fceaf3;
+
+    // Pizarra, no negro: el campo lleva el texto de la partida en tinta oscura
+    // encima, así que aquí el negro del cuerpo se queda en un gris de tormenta.
+    --hud-field-1:       #767d8b;
+    --hud-field-2:       #8b919d;
+    --hud-field-3:       #a9aeb8;
+    --hud-field-4:       #c6cad1;
+    --hud-field-5:       #bcc0c8;
+
+    --hud-bg-blend:      #22252e;
+    --hud-bg-blend-mode: multiply;
+
+    --hud-band-mascot:       url("../images/pokemon_shiny/0384.png") no-repeat right 1.5rem center / auto 7.5rem;
+    --hud-band-blend:        soft-light, normal;
+    --hud-band-mascot-space: 9rem;
+
+    --hud-ink:           #1c1f27;
+    --hud-ink-rgb:       28, 31, 39;
+    --hud-dim:           #5c626e;
+    --hud-dim-2:         #8b909b;
+
+    // Las aletas. Es un magenta más caliente y más hondo que el rosa de Gengar,
+    // que es lila y pastel; sobre el modal oscuro los dos se distinguen bien.
+    --hud-accent:        #f7609e;
+    --hud-accent-rgb:    247, 96, 158;
+    --hud-accent-soft:   #ffa3c9;
+    --hud-accent-warm:   #ff4f93;
+    // Los anillos: aquí sí manda el oro, y de paso las monedas siguen siendo
+    // doradas como en el diseño original
+    --hud-gold:          #e8b923;
+    --hud-gold-ink:      #a9820c;
+    --hud-gold-ink-deep: #7d5f06;
+    --hud-link:          #b8478a;
+    --hud-link-rgb:      184, 71, 138;
+
+    --hud-purple:        #3b2f3f;
+    --hud-purple-rgb:    59, 47, 63;
+    --hud-panel:         #4c3d52;
+    --hud-panel-deep:    #241d28;
+    --hud-panel-deep-2:  #2c2431;
+    --hud-lilac:         #d489b4;
+    --hud-pink:          #ffa8cd;
+
+    --hud-dark:          #15171d;
+    --hud-dark-2:        #1d2028;
+    --hud-band-dark:     #31353f;
+    --hud-modal-bg:      rgba(14, 15, 20, 0.97);
+    --hud-veil:          rgba(18, 20, 26, 0.6);
+    --hud-highlight:     rgba(200, 60, 130, 0.5);
+
+    --hud-shadow-rgb:    24, 26, 34;
 }
 
 

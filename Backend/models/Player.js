@@ -65,11 +65,33 @@ class Player {
     }
 
     removePokemonById(pokemonId) {
+        // Antes del filtro: removeMegasOf necesita encontrar todavía la base
+        // para el caso de las megas viejas sin `basePokemonId`.
+        this.removeMegasOf(pokemonId);
         this.pokemons = this.pokemons.filter(pokemon => pokemon.id !== pokemonId);
     }
 
     removeMegaById(pokemonId) {
         this.megas = this.megas.filter(pokemon => pokemon.id !== pokemonId);
+    }
+
+    // Quita las formas mega que `attachMega` creó PARA este Pokémon (una especie
+    // puede tener dos: Charizard X e Y). Es lo que hay que llamar cada vez que
+    // el Pokémon deja de llevar la piedra, o desaparece: sin esto la mega se
+    // quedaba suelta en «Pokémon especiales» y volver a poner la piedra la
+    // duplicaba.
+    //
+    // El vínculo bueno es `basePokemonId`, que estampa attachMega. Las megas
+    // creadas antes de que ese campo existiera se reconocen por el POKEDEX, que
+    // es el de la base con una o dos letras delante (M0003, MX0006, MZ0359).
+    removeMegasOf(pokemonId) {
+        const base = this.pokemons.find(p => p.id === pokemonId);
+        this.megas = (this.megas || []).filter(mega => {
+            if (mega.basePokemonId) return mega.basePokemonId !== pokemonId;
+            if (!base) return true;
+            const sinPrefijo = String(mega.pokedex || '').replace(/^[A-Za-z]+/, '');
+            return sinPrefijo !== String(base.pokedex) && mega.pokedex !== base.evolution;
+        });
     }
     removeGMaxById(pokemonId) {
         this.gmaxes = this.gmaxes.filter(pokemon => pokemon.id !== pokemonId);
@@ -173,6 +195,10 @@ class Player {
         }
     }
 
+    // Los tres adjuntadores de abajo pisan el mismo hueco (`attach`), así que
+    // cualquiera de ellos puede quitarle la mega piedra a un Pokémon: ponerle
+    // una MT, un orbe Tera o «Ninguno» son todas formas de dejarlo sin piedra.
+    // Por eso los tres tienen que barrer sus megas, no solo el de quitar item.
     attachItemToPokemon(idPokemon, item){
         const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
         if (!pokemon) {
@@ -180,6 +206,7 @@ class Player {
             return;
         }
         pokemon.addAttach(item);
+        if (item !== 'Mega') this.removeMegasOf(idPokemon);
         console.log(pokemon);
     }
 
@@ -190,6 +217,7 @@ class Player {
             return;
         }
         pokemon.addTera(teraType);
+        this.removeMegasOf(idPokemon);
     }
 
     // `attachAs` es "MT" o "Z": ambos ocupan el mismo hueco (ver Pokemons.addTM).
@@ -200,6 +228,7 @@ class Player {
             return;
         }
         pokemon.addTM(Attack, attachAs);
+        this.removeMegasOf(idPokemon);
         console.log(pokemon);
     }
 

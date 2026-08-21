@@ -108,6 +108,8 @@ export const SIM_EVENTS = [
         title: 'Mega Battle',
         es: 'Combate Mega',
         desc: 'Sale una mega al azar y peleas contra ella como si fuera salvaje.',
+        // La carta física es la «Rogue Mega» (ver data/rulesCards.js)
+        rules: 'megaBattle',
         img: imgMega,
         accent: '#4ee0a0',
     },

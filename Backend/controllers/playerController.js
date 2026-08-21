@@ -4,6 +4,10 @@ import Pokemons from '../models/Pokemons.js';
 import Attacks from '../models/Attacks.js';
 import { getGame ,getPlayerById,updateGameAndNotify,getPokemonById } from '../gameInstance.js';
 
+// Niveles extra que puede acumular un Pokémon por encima del nivel de su ficha.
+// Es tope de reglas del juego, no de la interfaz.
+export const MAX_EXTRA_LEVEL = 6;
+
 // Función para abrir la base de datos
 async function openDb() {
     return open({
@@ -288,6 +292,10 @@ export const evolvePokemon = async (req, res) => {
         if (oldPkm?.gmaxPokedex) {
             player.gmaxes = player.gmaxes.filter(g => g.pokedex !== oldPkm.gmaxPokedex);
         }
+        // Y sus megas, por lo mismo: el Pokémon que evoluciona deja de existir
+        // con ese id. Si conserva la piedra se le rehacen más abajo, ya contra
+        // su ficha nueva.
+        player.removeMegasOf(oldPkm.id);
 
         // ajuste Asegurarse de que pokemonId tenga siempre 4 dígitos poemonId ultimixdnn
         console.log('newPokemonId' + newPokemonId);
@@ -390,6 +398,12 @@ export const evolvePokemon = async (req, res) => {
         player.addPokemonbyIndex(newPokemon,oldPkmIndex);
         // Agregar gmax del pokemon evolucionado si aplica
         await attachGMaxIfAvailable(player, newPokemon, pokemonData, db);
+        // La piedra sobrevive a la evolución, así que sus megas hay que
+        // rehacerlas contra la ficha nueva: si no, el Pokémon quedaba marcado
+        // con la piedra pero sin ninguna mega a la que subir.
+        if (newPokemon.attach === 'Mega') {
+            await attachMegaForms(player, newPokemon, db);
+        }
 
         console.log(player.name + ' ha agreago al pokemon ' + newPokemon.name );
         updateGameAndNotify();
@@ -583,6 +597,18 @@ export const increaseLevel  = async (req, res) => {
         const pokemon = player.pokemons.find(p => p.id === pokemonId);
         const previousLevel = pokemon?.totalLevel ?? 0;
 
+        // Tope de nivel extra. `Pokemons.addExtra` CICLA a propósito (+6 vuelve a
+        // +0): eso es para el botón "+" del máster, que así puede corregir a mano
+        // pasándose de largo. Una subida ganada en combate no puede hacer eso —
+        // reiniciaría el Pokémon en vez de premiarlo— así que aquí se corta.
+        if (source !== 'manual-master' && (pokemon?.extra ?? 0) >= MAX_EXTRA_LEVEL) {
+            return res.status(200).json({
+                message: `El Pokémon ya está en el máximo (+${MAX_EXTRA_LEVEL})`,
+                maxed: true,
+                player,
+            });
+        }
+
         player.increasePokemonLevel(pokemonId);
 
         const updatedPokemon = player.pokemons.find(p => p.id === pokemonId);
@@ -694,6 +720,74 @@ export const attachTM  = async (req, res) => {
 };
 
 
+// Crea (o recrea) las formas mega de un Pokémon y le pone la piedra.
+//
+// Empieza SIEMPRE barriendo las megas que ya tuviera ese Pokémon: es lo que
+// hace que poner y quitar la piedra varias veces no acumule copias en «Pokémon
+// especiales». Antes se creaban a pelo y nadie las borraba nunca.
+//
+// Va aparte de `attachMega` porque la evolución también lo necesita: un Pokémon
+// que evoluciona conservando la piedra estrena id, y sus megas hay que
+// rehacerlas contra el id nuevo o se quedan huérfanas.
+async function attachMegaForms(player, pokemon, db) {
+    player.removeMegasOf(pokemon.id);
+
+    // 'evo' (Zygarde 10%/50%): la piedra no crea una mega form, solo habilita
+    // la evolución a la siguiente fase. Se consume al evolucionar.
+    if (pokemon.mega === 'evo') {
+        pokemon.addAttach("Mega");
+        return true;
+    }
+    if (pokemon.mega !== 'Yes' && pokemon.mega !== 'doble') return false;
+
+    // Mega principal (almacenada en pokemon.evolution)
+    const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokemon.evolution]);
+    if (!pokemonData) return false;
+
+    // Las formas que salen de aquí se buscan por id en la pantalla de batalla,
+    // así que el id lleva el del Pokémon base: `totalPokemons` es el mismo para
+    // los dos Charizard del equipo y sus megas salían con el id repetido.
+    const megaId = (data) => player.name + '_' + data.POKEDEX + '_' + pokemon.id;
+
+    const buildMega = async (data) => {
+        const mega = new Pokemons(
+            megaId(data),
+            data.POKEDEX,
+            data.NAME,
+            data.TYPE1,
+            data.TYPE2,
+            data.LEVEL,
+            await getAttack(data.ATK1, db),
+            await getAttack(data.ATK2, db),
+            await getAttack(data.ATK3, db),
+            data.NEXT_LEVEL,
+            data.EVOLUTION,
+            data.MEGA
+        );
+        mega.extra = pokemon.extra;
+        mega.totalLevel = mega.level + mega.extra;
+        mega.mote = pokemon.mote || '';
+        // Varias formas base pueden compartir la misma mega (las dos Meowstic
+        // apuntan a M0678), así que la mega recuerda de cuál salió: por pokedex
+        // sola no se puede distinguir al revertir ni al subir de nivel.
+        mega.basePokemonId = pokemon.id;
+        player.addMega(mega);
+    };
+
+    await buildMega(pokemonData);
+
+    // Megas alternativas (via PREEVOLUCION), excluyendo la principal ya agregada
+    const altMegas = await db.all("SELECT DISTINCT POKEDEX FROM pokemons WHERE PREEVOLUCION = ? AND POKEDEX != ?", [pokemon.pokedex, pokemon.evolution]);
+    for (const alt of altMegas) {
+        const altData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [alt.POKEDEX]);
+        if (!altData) continue;
+        await buildMega(altData);
+    }
+
+    pokemon.addAttach("Mega");
+    return true;
+}
+
 export const attachMega  = async (req, res) => {
     console.log('attach Mega  ');
     try {
@@ -701,85 +795,17 @@ export const attachMega  = async (req, res) => {
         const { playerId, pokemonId} = req.body;
         console.log("playerId: "+playerId + "pokemonId: " + pokemonId );
         const player = getPlayerById(playerId);
-        const pokemon = player.pokemons.find(pokemon => pokemon.id === pokemonId);
         if (!player) {
             return res.status(404).json({ message: 'jugador no encontrado' });
         }
+        const pokemon = player.pokemons.find(pokemon => pokemon.id === pokemonId);
         if (!pokemon) {
             return res.status(404).json({ message: 'pokemon no encontrado' });
         }
-        // 'evo' (Zygarde 10%/50%): la piedra no crea una mega form, solo habilita
-        // la evolución a la siguiente fase. Se consume al evolucionar.
-        if (pokemon.mega === 'evo') {
-            pokemon.addAttach("Mega");
-        } else if (pokemon.mega === 'Yes' || pokemon.mega === 'doble') {
 
-            // Mega principal (almacenada en pokemon.evolution)
-            const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokemon.evolution]);
-            if (!pokemonData) {
-                return res.status(404).json({ message: 'Pokémon no encontrado' });
-            }
-            const Attack1 = await getAttack(pokemonData.ATK1,db);
-            const Attack2 = await getAttack(pokemonData.ATK2,db);
-            const Attack3 = await getAttack(pokemonData.ATK3,db);
+        await attachMegaForms(player, pokemon, db);
 
-            const mega = new Pokemons(
-                player.name + '_' + pokemonData.POKEDEX + '_' + player.totalPokemons,
-                pokemonData.POKEDEX,
-                pokemonData.NAME,
-                pokemonData.TYPE1,
-                pokemonData.TYPE2,
-                pokemonData.LEVEL,
-                Attack1,
-                Attack2,
-                Attack3,
-                pokemonData.NEXT_LEVEL,
-                pokemonData.EVOLUTION,
-                pokemonData.MEGA
-            );
-            mega.extra = pokemon.extra;
-            mega.totalLevel = mega.level + mega.extra;
-            mega.mote = pokemon.mote || '';
-            // Varias formas base pueden compartir la misma mega (las dos Meowstic
-            // apuntan a M0678), así que la mega recuerda de cuál salió: por pokedex
-            // sola no se puede distinguir al revertir ni al subir de nivel.
-            mega.basePokemonId = pokemon.id;
-            player.addMega(mega);
-
-            // Megas alternativas (via PREEVOLUCION), excluyendo la principal ya agregada
-            const altMegas = await db.all("SELECT DISTINCT POKEDEX FROM pokemons WHERE PREEVOLUCION = ? AND POKEDEX != ?", [pokemon.pokedex, pokemon.evolution]);
-            for (const alt of altMegas) {
-                const altData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [alt.POKEDEX]);
-                if (!altData) continue;
-                const altAtk1 = await getAttack(altData.ATK1, db);
-                const altAtk2 = await getAttack(altData.ATK2, db);
-                const altAtk3 = await getAttack(altData.ATK3, db);
-                const altMega = new Pokemons(
-                    player.name + '_' + altData.POKEDEX + '_' + player.totalPokemons,
-                    altData.POKEDEX,
-                    altData.NAME,
-                    altData.TYPE1,
-                    altData.TYPE2,
-                    altData.LEVEL,
-                    altAtk1,
-                    altAtk2,
-                    altAtk3,
-                    altData.NEXT_LEVEL,
-                    altData.EVOLUTION,
-                    altData.MEGA
-                );
-                altMega.extra = pokemon.extra;
-                altMega.totalLevel = altMega.level + altMega.extra;
-                altMega.mote = pokemon.mote || '';
-                altMega.basePokemonId = pokemon.id;
-                player.addMega(altMega);
-            }
-
-            pokemon.addAttach("Mega");
-        }
-        
         console.log('Pokemon mega');
-        console.log(player);
         updateGameAndNotify();
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 

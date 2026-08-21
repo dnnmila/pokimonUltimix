@@ -73,8 +73,8 @@
 
 .sim-settings-themes {
     display: grid;
-    // Se reparten solas: los seis temas caben en una fila en el iPad en
-    // horizontal y bajan a dos filas en pantallas estrechas sin tocar nada
+    // Se reparten solas: con ocho temas ya son dos filas en el iPad en
+    // horizontal, y en pantallas estrechas siguen bajando sin tocar nada
     grid-template-columns: repeat(auto-fit, minmax(6.4rem, 1fr));
     gap: 0.7rem;
 }

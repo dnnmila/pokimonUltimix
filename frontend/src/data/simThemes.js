@@ -50,6 +50,16 @@ import psyduckStill from '../images/POKEMON/0054.png';
 import psyduckAnim from '../images/pokemon_anim/0054.gif';
 import togekissStill from '../images/POKEMON/0468.png';
 import togekissAnim from '../images/pokemon_anim/0468.gif';
+import corviknightStill from '../images/POKEMON/0823.png';
+import corviknightAnim from '../images/pokemon_anim/0823.gif';
+// El variocolor no cabe en images/POKEMON: esa carpeta va indexada por número
+// nacional y varios componentes la recorren con require(`...${pokedex}.png`),
+// que webpack resuelve armando un context module con TODO el directorio. Un
+// `0384_shiny.png` ahí dentro entraría en el bundle de cada uno de esos
+// contextos sin que nadie lo pida nunca. Carpeta aparte, y el número se queda
+// libre para el Rayquaza normal.
+import rayquazaShinyStill from '../images/pokemon_shiny/0384.png';
+import rayquazaShinyAnim from '../images/pokemon_shiny/0384.gif';
 
 export const SIM_THEMES = [
     {
@@ -98,8 +108,8 @@ export const SIM_THEMES = [
     {
         id: 'psyduck',
         name: 'Psyduck',
-        subtitle: 'Amarillo despistado',
-        swatch: ['#8f7022', '#ecc957', '#fffdf3', '#ff9e4a'],
+        subtitle: 'Agua y plumas',
+        swatch: ['#256b80', '#e8c85c', '#fffdf3', '#ff9e4a'],
         mascot: {
             still: psyduckStill,
             anim: psyduckAnim,
@@ -116,6 +126,29 @@ export const SIM_THEMES = [
             still: togekissStill,
             anim: togekissAnim,
             label: 'Trayendo suerte…',
+        },
+    },
+    {
+        id: 'corviknight',
+        name: 'Corviknight',
+        subtitle: 'Armadura y noche',
+        swatch: ['#3f3f6e', '#8d8fb2', '#f8f9fd', '#b7c0f0'],
+        mascot: {
+            still: corviknightStill,
+            anim: corviknightAnim,
+            // El taxi volador de Galar: el que te lleva de una pantalla a otra
+            label: 'Alzando el vuelo…',
+        },
+    },
+    {
+        id: 'rayquaza-shiny',
+        name: 'Rayquaza',
+        subtitle: 'Variocolor de obsidiana',
+        swatch: ['#2f333f', '#767d8b', '#fbfbfd', '#f7609e'],
+        mascot: {
+            still: rayquazaShinyStill,
+            anim: rayquazaShinyAnim,
+            label: 'Rasgando la capa de ozono…',
         },
     },
 ];
