@@ -9,7 +9,7 @@ import ModalTienda from './modals/ModalTienda.js';
 import ModalBattle from './modals/ModalBattle.js';
 import ModalSpecialAttacks from './modals/ModalSpecialAttacks.js';
 import ModalFieldPicker from './modals/ModalFieldPicker.js';
-import { getTrainerImage } from '../data/trainers';
+import { getTrainerAvatar } from '../data/trainers';
 // Iconos de la barra de acciones: dado para el sorteo de tipos/metrónomo,
 // icono de clima para las cartas de campo, y el de intercambio de siempre
 import diceIcon  from '../images/dices/dice6.png';
@@ -184,7 +184,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
     if (!currentPlayerView) return null;
 
-    const trainerImg = getTrainerImage(currentPlayerView.name);
+    const trainerImg = getTrainerAvatar(currentPlayerView.name);
 
     return (
         <div className="CurrentPlayerView">

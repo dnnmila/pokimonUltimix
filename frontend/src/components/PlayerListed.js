@@ -1,5 +1,5 @@
 import PokemonListed from "./PokemonListed";
-import { getTrainerImage } from "../data/trainers";
+import { getTrainerAvatar } from "../data/trainers";
 
 // El catálogo es el mismo que usa el modal de fronteras del SimPlayer: los
 // puntos de aquí y las tarjetas de allí tienen que pintar el mismo color, que
@@ -40,7 +40,7 @@ const PlayerListed = ({player, generation, turnElapsed = 0}) => {
             <div className="apl-trainer">
                 <div className="apl-trainer-top">
                     <div className="apl-rank">{player.position}</div>
-                    <div className="apl-avatar" style={{ backgroundImage: `url(${getTrainerImage(player.name)})` }} />
+                    <div className="apl-avatar" style={{ backgroundImage: `url(${getTrainerAvatar(player.name)})` }} />
                     <div className="apl-name">{player.name}</div>
                 </div>
 

@@ -52,10 +52,11 @@ const DEX_FIX = {
 };
 
 /**
- * Selección de combatientes en una sola pantalla: arriba el rival con su
- * retrato y su equipo en círculos, abajo el equipo del jugador. Antes eran dos
- * pantallas encadenadas (mi Pokémon → Pokémon del rival) y nada se veía junto,
- * que es justo lo que hace falta para decidir el emparejamiento.
+ * Selección de combatientes en una sola pantalla: arriba el rival y abajo tú,
+ * y cada banda con la misma forma — el entrenador de cuerpo entero a la
+ * izquierda y su equipo a la derecha. Antes eran dos pantallas encadenadas
+ * (mi Pokémon → Pokémon del rival) y nada se veía junto, que es justo lo que
+ * hace falta para decidir el emparejamiento.
  *
  * Con `readOnly` el mismo componente sirve de espejo en el marcador del máster:
  * no se toca nada, las elecciones llegan por props y se pintan marcadas. Se
@@ -417,18 +418,27 @@ const SimBattleSelect = ({
                 </div>
             </section>
 
-            {/* ── Lado del jugador ─────────────────────────────────────────── */}
+            {/* ── Lado del jugador ──────────────────────────────────────────
+                Misma forma que la banda del rival, en espejo: tu entrenador de
+                cuerpo entero a la izquierda y tu equipo a la derecha. Antes tu
+                lado era un círculo pequeño en una cabecera y una fila de
+                tarjetas debajo, lo que dejaba la pantalla descompensada — el
+                rival tenía figura de arcade y tú un avatar de lista. */}
             <section className="sbs-side sbs-side--mine">
-                <div className="sbs-side-head">
-                    <div className="sbs-portrait sbs-portrait--me"
+                <div className="sbs-figure sbs-figure--me">
+                    {/* La figura entera, no el recorte de avatar: aquí se pinta
+                        con `contain` y hay sitio de sobra para la escena */}
+                    <div className="sbs-figure-art"
                          style={{ backgroundImage: `url(${getTrainerImage(player.name)})` }} />
-                    <div className="sbs-side-meta">
-                        <div className="sbs-side-name">{player.name}</div>
-                        <div className="sbs-side-role">
+                    <div className="sbs-plate sbs-plate--me">
+                        <span className="sbs-plate-name">{player.name}</span>
+                        <span className="sbs-plate-role">
                             {showForms ? 'Megas y G-Max' : 'Tu equipo'}
-                        </div>
+                        </span>
                     </div>
+                </div>
 
+                <div className="sbs-mine-team">
                     {/* Un grupo u otro, nunca los dos: mezclados saturaban la fila.
                         En el espejo se pinta igual pero sin poder pulsarlo, para que
                         se vea qué pestaña está mirando el jugador. */}
@@ -444,10 +454,10 @@ const SimBattleSelect = ({
                             </div>
                         </div>
                     )}
-                </div>
 
-                <div className="sbs-cards">
-                    {(showForms ? myForms : myTeam).map((pkm, i) => renderCard(pkm, i))}
+                    <div className="sbs-cards">
+                        {(showForms ? myForms : myTeam).map((pkm, i) => renderCard(pkm, i))}
+                    </div>
                 </div>
             </section>
 
