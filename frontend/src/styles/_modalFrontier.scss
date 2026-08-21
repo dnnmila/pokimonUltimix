@@ -1,24 +1,36 @@
+// Battle Frontier.
+//
+// El modal vive dentro de .sim-player, que repinta todas las tarjetas en claro
+// (ver el bloque de tema al final de _simPlayer.scss): el fondo pasa a
+// --hud-card y el texto a --hud-ink. Por eso aquí NO se escribe ningún color
+// literal para el texto — antes iba en blanco y sobre el papel no se leía nada.
+//
+// El color de cada frontera solo pinta cosas que no son texto: el punto, la
+// banda lateral y el borde del botón de retar. El nombre va en tinta normal,
+// que es lo único que garantiza contraste con los seis colores.
+
 .frontier-modal {
-    background: linear-gradient(160deg, #1a1a2e, #16213e);
-    border: 2px solid #f0d080;
+    background: var(--hud-card);
+    color: var(--hud-ink);
+    border: 2px solid rgba(var(--hud-ink-rgb), 0.12);
     border-radius: 16px;
     padding: 1.5rem 1.5rem 2rem;
     position: relative;
     width: 94vw;
-    max-width: 860px;
+    max-width: 900px;
     max-height: 88vh;
     overflow-y: auto;
-    box-shadow: 0 0 30px rgba(240, 208, 128, 0.2);
+    box-shadow: 0 14px 44px rgba(10, 24, 50, 0.45);
     animation: popIn 0.25s ease both;
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.7rem;
 }
 
 .frontier-modal-title {
     font-size: 1.8rem;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    color: #f0d080;
+    color: var(--hud-ink);
     font-weight: bold;
     text-align: center;
     letter-spacing: 0.06em;
@@ -26,9 +38,34 @@
 
 .frontier-modal-subtitle {
     font-size: 1rem;
-    color: rgba(255,255,255,0.5);
+    color: var(--hud-dim);
     text-align: center;
     margin-top: -0.4rem;
+}
+
+// Cómo funciona el evento. Va arriba del todo porque la regla que más sorprende
+// —que la casilla se gasta al lanzar— hay que leerla ANTES de pulsar.
+.frontier-modal-note {
+    background: var(--hud-paper);
+    border: 1px solid rgba(var(--hud-ink-rgb), 0.14);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: var(--hud-dim);
+    text-align: center;
+
+    b { color: var(--hud-ink); }
+}
+
+.frontier-modal-error {
+    background: rgba(231, 76, 60, 0.12);
+    border: 1px solid rgba(231, 76, 60, 0.5);
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.86rem;
+    color: #c0392b;
+    text-align: center;
 }
 
 .frontier-cards {
@@ -39,19 +76,20 @@
 }
 
 .frontier-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid var(--fc);
+    background: var(--hud-paper);
+    border: 1px solid rgba(var(--hud-ink-rgb), 0.14);
+    // La banda de color: es lo que identifica la frontera de un vistazo
+    border-left: 6px solid var(--fc);
     border-radius: 12px;
-    padding: 0.9rem 1rem;
+    padding: 0.8rem 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
     transition: background 0.15s;
 
     &--used {
-        border-color: rgba(255,255,255,0.1);
-        background: rgba(0,0,0,0.2);
-        opacity: 0.55;
+        border-left-color: rgba(var(--hud-ink-rgb), 0.2);
+        opacity: 0.6;
     }
 }
 
@@ -66,7 +104,7 @@
     height: 0.9rem;
     border-radius: 50%;
     background-color: var(--fc);
-    box-shadow: 0 0 6px var(--fc);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(20, 32, 56, 0.35);
     flex-shrink: 0;
 
     .frontier-card--used & {
@@ -77,51 +115,158 @@
 }
 
 .frontier-card-name {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: bold;
-    color: var(--fc);
+    color: var(--hud-ink);
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    letter-spacing: 0.04em;
-
-    .frontier-card--used & { opacity: 0.5; }
+    letter-spacing: 0.03em;
 }
 
 .frontier-card-badge {
     margin-left: auto;
     font-size: 0.72rem;
-    background: rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.5);
+    background: rgba(var(--hud-ink-rgb), 0.1);
+    color: var(--hud-dim);
     border-radius: 10px;
     padding: 0.1rem 0.5rem;
     letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+// De dónde sale el rival. Es el dato operativo de la tarjeta, así que va
+// separado de la recompensa y en tipografía menor.
+.frontier-card-rival {
+    font-size: 0.78rem;
+    color: var(--hud-dim);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .frontier-card-desc {
     font-size: 0.88rem;
-    color: rgba(255,255,255,0.75);
-    line-height: 1.4;
+    color: var(--hud-ink);
+    line-height: 1.45;
 }
 
-.frontier-toggle-btn {
-    align-self: flex-start;
+.frontier-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
     margin-top: 0.2rem;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid var(--fc);
+}
+
+// Lanzar el reto: es la acción principal de la tarjeta y va en el color de la
+// frontera, relleno, para que no se confunda con el marcado manual.
+.frontier-fight-btn {
+    background: var(--fc);
+    border: none;
     border-radius: 20px;
-    color: var(--fc);
-    font-size: 0.82rem;
+    color: #fff;
+    font-size: 0.86rem;
     font-weight: bold;
-    padding: 0.25rem 0.9rem;
+    padding: 0.35rem 1rem;
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 7px rgba(20, 32, 56, 0.2);
+    transition: transform 0.1s, filter 0.15s;
+
+    &:hover:not(:disabled) { filter: brightness(1.08); transform: scale(1.04); }
+    &:active:not(:disabled) { transform: scale(0.97); }
+    &:disabled { opacity: 0.5; cursor: default; }
+}
+
+// Marcado manual: marcha atrás del máster, no la acción de todos los turnos.
+.frontier-toggle-btn {
+    background: transparent;
+    border: 1px solid rgba(var(--hud-ink-rgb), 0.25);
+    border-radius: 20px;
+    color: var(--hud-dim);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.8rem;
     cursor: pointer;
     transition: background 0.15s, transform 0.1s;
 
-    &:hover { background: rgba(255,255,255,0.14); transform: scale(1.04); }
+    &:hover { background: rgba(var(--hud-ink-rgb), 0.07); transform: scale(1.04); }
     &:active { transform: scale(0.97); }
 
     &--used {
-        border-color: rgba(255,255,255,0.2);
-        color: rgba(255,255,255,0.4);
+        border-color: rgba(var(--hud-ink-rgb), 0.35);
+        color: var(--hud-ink);
     }
+}
+
+// ── Reto en curso ───────────────────────────────────────────────────────────
+// Franja de la batalla: hereda todo de .raid-strip y solo añade el punto del
+// color, que es lo que dice de qué frontera se está peleando.
+.frontier-strip {
+    .raid-strip-round {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+}
+
+.frontier-strip-dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background-color: var(--fc);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75);
+    flex-shrink: 0;
+}
+
+// El cierre de combate del reto. La X ancla en la esquina, así que el modal
+// —que no lleva `position` propia— la necesita aquí.
+.frontier-round-modal {
+    position: relative;
+
+    // Hueco simétrico para la X, para que el título siga centrado de verdad
+    .raid-round-title { padding: 0 2rem; }
+}
+
+.frontier-round-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.15rem 0.5rem;
+    cursor: pointer;
+    z-index: 2;
+    transition: background 0.15s;
+
+    &:hover { background: rgba(255, 80, 80, 0.5); }
+}
+
+// La recompensa impresa de la frontera, en el resultado. Va debajo de las
+// PokéMonedas porque esas ya están cobradas y esta hay que ejecutarla a mano
+// con las cartas físicas.
+.frontier-prize-card {
+    background: var(--hud-paper);
+    border: 1px solid rgba(var(--hud-ink-rgb), 0.14);
+    border-left: 6px solid var(--fc);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    text-align: left;
+}
+
+.frontier-prize-card-title {
+    font-size: 0.78rem;
+    color: var(--hud-dim);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.frontier-prize-card-desc {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--hud-ink);
 }
 
 @media (max-width: 768px) {

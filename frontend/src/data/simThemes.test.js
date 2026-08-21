@@ -10,7 +10,8 @@ import { SIM_THEMES, DEFAULT_THEME, themeClass, getThemeMascot } from './simThem
 // build falla. Estas comprobaciones cierran el resto del hueco: que la mascota
 // declare las dos piezas y que no vuelvan a ser la misma.
 
-describe.each(['gengar', 'rapidash', 'slowpoke', 'psyduck', 'togekiss'])('mascota de %s', (id) => {
+describe.each(['gengar', 'rapidash', 'slowpoke', 'psyduck', 'togekiss',
+               'corviknight', 'rayquaza-shiny'])('mascota de %s', (id) => {
     test('trae render quieto y sprite animado, y son distintos', () => {
         const m = getThemeMascot(id);
 

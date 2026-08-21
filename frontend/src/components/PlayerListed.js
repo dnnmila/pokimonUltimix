@@ -1,14 +1,10 @@
 import PokemonListed from "./PokemonListed";
 import { getTrainerImage } from "../data/trainers";
 
-const FRONTIERS = [
-    { key: 'frontierPink',   color: '#f472b6', label: 'Rosa' },
-    { key: 'frontierGreen',  color: '#4ade80', label: 'Verde' },
-    { key: 'frontierBlue',   color: '#60a5fa', label: 'Azul' },
-    { key: 'frontierYellow', color: '#facc15', label: 'Amarilla' },
-    { key: 'frontierRed',    color: '#f87171', label: 'Roja' },
-    { key: 'frontierGolden', color: '#c084fc', label: 'Legendaria' },
-];
+// El catálogo es el mismo que usa el modal de fronteras del SimPlayer: los
+// puntos de aquí y las tarjetas de allí tienen que pintar el mismo color, que
+// además es el del token del que sale el rival del reto.
+import { FRONTIERS } from "../data/frontiers";
 
 const TEAM_SLOTS = 6;
 

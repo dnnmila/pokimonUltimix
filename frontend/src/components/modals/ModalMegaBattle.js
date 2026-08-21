@@ -24,6 +24,7 @@ const ModalMegaBattle = ({
     onSearch,        // (pokedex) => { base, forms } | null
     onStart,         // (megaPokedex) => void
     loading = false,
+    onOpenRules,
 }) => {
     const [result, setResult] = useState(null);   // { base, forms, mega }
     const [error, setError] = useState(null);
@@ -71,6 +72,10 @@ const ModalMegaBattle = ({
 
                 <div className="mega-battle-header">
                     <div className="mega-battle-title">Combate Mega</div>
+                    {onOpenRules && (
+                        <div className="raid-help" title="Ver las reglas del Combate Mega"
+                             onClick={onOpenRules}>?</div>
+                    )}
                     <div className="mega-battle-sub">
                         {result ? 'Listo para el combate' : 'Busca la especie de la que sale la mega'}
                     </div>

@@ -28,24 +28,27 @@ const PokemonListed = ({pokemon}) => {
     const hasStatus = pokemon.status && pokemon.status !== 'Normal';
 
     return (
-        // El objeto adjunto no necesita leyenda: se dibuja el item sobre la
-        // ilustración y la tarjeta se marca con el aro dorado del atributo.
+        // Tres bandas: nombre arriba, ilustración en medio y el pie con el
+        // objeto adjunto y el nivel. El nombre va arriba y a todo el ancho
+        // porque los motes son largos y antes se cortaban al compartir el pie
+        // con el nivel; abajo manda el nivel, que es el dato que más se mira.
         <div className={`apl-pkm ${isDead ? 'apl-pkm--dead' : ''} ${hasItem ? 'apl-pkm--item' : ''}`}
              style={{ '--pkm-type': typeColor(pokemon.type1) }}
              onClick={() => setShowToken(v => !v)}
              title={showToken ? 'Ver sprite' : 'Ver token'}>
 
+            <PokemonName pkm={pokemon} as="div" className="apl-pkm-name" />
+
             <div className="apl-pkm-art" style={{ backgroundImage: `url(${imageUrl})` }}>
                 {hasStatus && <div className={`apl-pkm-status ${pokemon.status}`} />}
+            </div>
+
+            <div className="apl-pkm-foot">
                 {hasItem && (
                     <div className="apl-pkm-attach" title={attachLabel(pokemon.attach, pokemon)}>
                         <i style={attachIconStyle(pokemon.attach, pokemon)} />
                     </div>
                 )}
-            </div>
-
-            <div className="apl-pkm-foot">
-                <PokemonName pkm={pokemon} className="apl-pkm-name" />
                 <span className="apl-pkm-lvl">{pokemon.totalLevel}</span>
             </div>
         </div>

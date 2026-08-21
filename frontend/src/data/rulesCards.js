@@ -63,6 +63,13 @@ export const RULES_CARDS = [
     title: 'Reglas de Poké Star Studios',
     aliases: ['poke star studios battle rules', 'poke star studios', 'pokestar studios'],
   },
+  // La carta física se llama «Rogue Mega»; en la app el evento es «Combate Mega».
+  // El primer alias es el nombre del archivo, así que va el de la carta.
+  {
+    id: 'megaBattle',
+    title: 'Reglas del Combate Mega',
+    aliases: ['rogue mega', 'mega battle', 'combate mega'],
+  },
 ];
 
 export const rulesCard = (id) => {

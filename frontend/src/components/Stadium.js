@@ -5,6 +5,7 @@ import PokemonBattleListed from "./PokemonBattleListed";
 import ModalRulesGuide from "./modals/ModalRulesGuide";
 import PokemonName from "./PokemonName";
 import { displayName } from "../moteName";
+import { MAX_EXTRA_LEVEL } from "../battleRules";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
 
@@ -118,10 +119,13 @@ const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAtta
         }
     }, [myLocked, rivalLocked]);
 
-    // Prompt de subir nivel: player ganó y el rival tenía nivel >= al propio
+    // Prompt de subir nivel: player ganó y el rival tenía nivel >= al propio.
+    // Con el extra al tope no se ofrece: el backend cicla a +0 al pasarse (eso
+    // es para el "+" manual del máster) y aquí sería reiniciar el Pokémon.
     useEffect(() => {
         if (!myLocked || !rivalLocked) return;
         if (!myPokemon || !rivalPokemon) return;
+        if ((myPokemon.extra ?? 0) >= MAX_EXTRA_LEVEL) return;
         if (myTotal > rivalTotal && rivalPokemon.totalLevel >= myPokemon.totalLevel) {
             setShowLevelUpPrompt(true);
         }

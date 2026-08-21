@@ -1315,6 +1315,12 @@
             box-shadow: var(--hud-shadow-lg);
             span { color: var(--hud-ink); }
         }
+
+        // El de tipos abre Y cierra su panel flotante: marca si está abierto
+        &.is-on {
+            box-shadow: 0 0 0 2px var(--hud-link), var(--hud-shadow);
+            span { color: var(--hud-link); }
+        }
     }
 
     // flex-shrink: 0 para que al apretarse la barra se recorte la etiqueta y
@@ -2038,6 +2044,12 @@
         transform: scale(1.1);
         box-shadow: 0 4px 14px rgba(12, 40, 80, 0.6);
     }
+
+    // El botón abre Y cierra el panel, así que enseña si está abierto
+    &.is-on {
+        border-color: var(--hud-link);
+        box-shadow: 0 0 0 3px rgba(var(--hud-link-rgb), 0.35), 0 2px 8px rgba(12, 40, 80, 0.45);
+    }
 }
 // 4 iconos de tipo en rejilla 2x2 dentro del círculo
 .type-chart-fab-grid {
@@ -2053,59 +2065,116 @@
     background-repeat: no-repeat;
 }
 
-.type-chart-modal {
+// Panel flotante, NO modal: sin velo ni desenfoque detrás y sin capturar los
+// clics del resto de la pantalla, que es lo que permite mirar la tabla y los
+// tokens a la vez. Por encima de los modales (900) para que no lo tapen, y por
+// debajo del zoom a pantalla completa (10000).
+//
+// La posición por defecto es la esquina superior derecha, justo debajo del
+// botón flotante; en cuanto se arrastra, el componente pasa left/top en línea
+// y ese `right` deja de aplicar.
+.type-chart-panel {
+    position: fixed;
+    top: 4.8rem;
+    right: 1.2rem;
+    z-index: 950;
     background: var(--hud-modal-bg);
     border: 2px solid var(--hud-link);
     border-radius: 14px;
-    padding: 1.2rem;
-    width: 92vw;
-    max-width: 680px;
-    max-height: 88vh;
+    padding: 0.7rem;
+    max-width: calc(100vw - 1.6rem);
+    max-height: calc(100vh - 6rem);
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.5rem;
+    box-shadow: 0 10px 34px rgba(8, 16, 34, 0.55);
 }
+
+// Además de título es el asa de arrastre: de ahí el grip y el cursor.
 .type-chart-title {
-    position: relative;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     color: var(--hud-link);
-    font-size: 1.3rem;
+    font-size: 1rem;
     font-weight: bold;
     letter-spacing: 0.04em;
+    cursor: grab;
+    touch-action: none;   // el arrastre es nuestro, no scroll de la página
+    user-select: none;
+
+    &:active { cursor: grabbing; }
 }
+
+.type-chart-grip {
+    font-size: 0.9rem;
+    opacity: 0.5;
+    letter-spacing: -0.1em;
+}
+
+.type-chart-tools {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: default;
+}
+
+.type-chart-size {
+    min-width: 1.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.72rem;
+    font-weight: bold;
+    padding: 0.1rem 0.35rem;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, 0.16); }
+    &.is-on {
+        background: var(--hud-link);
+        border-color: var(--hud-link);
+        color: #fff;
+    }
+}
+
 .type-chart-close {
-    position: absolute;
-    top: -0.2rem;
-    right: 0;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid #aaa;
     border-radius: 6px;
     color: white;
-    font-size: 1.1rem;
-    padding: 0.1rem 0.5rem;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0.15rem 0.45rem;
     cursor: pointer;
 
     &:hover { background: rgba(255, 80, 80, 0.5); }
 }
+
+// Las dos mitades una al lado de otra: son verticales y apiladas obligaban a
+// hacer scroll para llegar a la segunda. Si no caben a lo ancho, envuelven.
 .type-chart-body {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    overflow-y: auto;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.5rem;
+    overflow: auto;
 
-    &::-webkit-scrollbar { width: 5px; }
+    &::-webkit-scrollbar { width: 5px; height: 5px; }
     &::-webkit-scrollbar-thumb { background: rgba(var(--hud-link-rgb), 0.5); border-radius: 4px; }
 }
 .type-chart-note {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.45);
     font-style: italic;
+    text-align: center;
 }
 .type-chart-img {
-    width: 100%;
-    max-width: 620px;
+    // El ancho lo pone el componente según el tamaño elegido (S/M/L)
     height: auto;
+    max-width: 100%;
     border-radius: 8px;
     cursor: zoom-in;
 }
@@ -2948,7 +3017,7 @@
     .modal-evolve-choice,
     .frontier-modal,
     .rules-guide-modal,
-    .type-chart-modal,
+    .type-chart-panel,
     .leader-viewer-modal,
     .sim-wild-modal,
     .sim-other-rivals-modal,
@@ -3152,6 +3221,16 @@
         color: var(--hud-ink);
         border: 1px solid rgba(var(--hud-ink-rgb), 0.15);
         &:hover { background: var(--hud-paper-hover); }
+    }
+
+    // Los tamaños S/M/L del panel de tipos: en blanco sobre papel no se veían
+    .type-chart-size {
+        background: var(--hud-paper-2);
+        border-color: rgba(var(--hud-ink-rgb), 0.18);
+        color: var(--hud-dim);
+
+        &:hover { background: var(--hud-paper-hover); }
+        &.is-on { background: var(--hud-link); border-color: var(--hud-link); color: #fff; }
     }
 
     // Paneles interiores: de blanco translúcido (invisible) a papel algo más tostado

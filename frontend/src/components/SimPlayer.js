@@ -41,9 +41,10 @@ import { rollTMs, tmPowerFor, TMS_BY_ID } from "../data/tms";
 import { rollZCrystals, zMoveFor, Z_BY_ID } from "../data/zmoves";
 import { getTeraBonus, rollTeraOrbs, TERA_BY_ID } from "../data/teraTypes";
 import { pokeStarEnding, ENDINGS as POKESTAR_ENDINGS } from "../data/pokeStar";
+import { getFrontier, FRONTIER_COINS } from "../data/frontiers";
 import { applyDynamax } from "../data/maxMoves";
 import SERVER_IP from "../config.js";
-import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove } from "../battleRules";
+import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove, MAX_EXTRA_LEVEL } from "../battleRules";
 import { attachIconStyle, attachLabel } from "../attachItems";
 import { TMBadge, ItemBadge } from "./PokemonBattleBadges";
 import { arenaStyle } from "../data/arenas";
@@ -98,7 +99,7 @@ const battleForm = (pkm) => {
     };
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -119,12 +120,17 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // que no va — el Pokémon es de un entrenador.
     const trainerBattle = game.trainerBattle && game.trainerBattle.hostId === playerId ? game.trainerBattle : null;
     const trainerActive = Boolean(trainerBattle && !trainerBattle.result);
+    // Reto de frontera. Igual que el combate de entrenador: batalla salvaje de
+    // pleno derecho salvo por la captura, que no va — el rival es el guardián de
+    // la frontera, no un salvaje que se quede uno.
+    const frontierBattle = game.frontierBattle && game.frontierBattle.hostId === playerId ? game.frontierBattle : null;
+    const frontierActive = Boolean(frontierBattle && !frontierBattle.result);
     // Poké Star Studios no guarda nada en la partida: se reconoce por el id del
     // rival, así que aguanta un refresco sin ayuda de nadie.
     const pokeStarActive = Boolean(rival?.id?.startsWith('SimPokeStar-'));
     // Ningún evento encadenado ofrece capturar combate a combate. En el rodaje
     // tampoco: el Prop es un actor del estudio, no un salvaje.
-    const noCaptureEvent = hordeActive || trainerActive || pokeStarActive;
+    const noCaptureEvent = hordeActive || trainerActive || frontierActive || pokeStarActive;
     const fieldMoves = (game?.fieldMoves || []).filter(Boolean);
     // Clave estable para detectar cuándo el master cambió las cartas de campo
     const fieldKey = JSON.stringify(game?.fieldMoves || []);
@@ -232,6 +238,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [trainerError, setTrainerError] = useState(null);
     const [trainerRoundHidden, setTrainerRoundHidden] = useState(false);
     const [trainerResultOpen, setTrainerResultOpen] = useState(false);
+    // Reto de frontera. No hay pantalla de montaje: el rival lo sortea el
+    // backend a partir del color de la frontera, así que la llamada sale del
+    // propio modal de fronteras y aquí solo queda su estado en vuelo.
+    const [frontierLoading, setFrontierLoading] = useState(false);
+    const [frontierError, setFrontierError] = useState(null);
+    const [frontierRoundHidden, setFrontierRoundHidden] = useState(false);
+    const [frontierResultOpen, setFrontierResultOpen] = useState(false);
     // Concurso Pokémon. No toca el motor de batalla ni deja rastro en la
     // partida: empieza y acaba dentro de su modal, así que basta con abrirlo.
     const [contestOpen, setContestOpen] = useState(false);
@@ -464,7 +477,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         // que la horda se pelea con las reglas de siempre.
         if (rival?.name === 'Wild Pokemon') {
             if (myTotal > rivalTotal) {
-                const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel;
+                const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel
+                    && canGainLevel(myPokemon);
+                // Al máximo se salta directo a la captura, que es lo que había
+                // después de decir «No» al nivel.
                 if (canLevelUp) setShowLevelUpPrompt(true);
                 else if (!noCaptureEvent) setShowCapturePrompt(true);
             }
@@ -480,7 +496,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         // Batallas oficiales (líderes / jugadores)
         if (!isOfficialBattle) return;
         if (myTotal > rivalTotal) {
-            const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel;
+            // Mismo tope que en la salvaje: al máximo no se ofrece subir, y la
+            // medalla sale de una vez en lugar de esperar a la respuesta.
+            const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel
+                && canGainLevel(myPokemon);
             if (canLevelUp) setShowLevelUpPrompt(true);
             const isLastRivalPkm = rival?.pokemons?.[rival.pokemons.length - 1]?.id === rivalPokemon?.id;
             if (rival?.id?.startsWith('SimLeader-') && gymLeaderBadgeNum !== null && isLastRivalPkm) {
@@ -502,6 +521,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             setRaidRoundHidden(false);
             setHordeRoundHidden(false);
             setTrainerRoundHidden(false);
+            setFrontierRoundHidden(false);
             setPokeStarDone(false);
         }
     }, [myLocked, rivalLocked]);
@@ -1020,6 +1040,20 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         return pkm.id;
     };
 
+    // ¿Le queda nivel por subir? El tope son +6 extras, y a partir de ahí la
+    // victoria ya no ofrece subir: el backend cicla a +0 al pasarse (es lo que
+    // usa el "+" del máster para corregir a mano) y aquí eso sería reiniciar el
+    // Pokémon en vez de premiarlo.
+    //
+    // El extra se lee del Pokémon BASE, que es a quien va el nivel cuando se
+    // pelea como mega o G-Max.
+    const canGainLevel = (pkm) => {
+        if (!pkm) return false;
+        const baseId = resolveBasePokemonId(pkm);
+        const base = (player.pokemons || []).find(p => p.id === baseId) || pkm;
+        return (base.extra ?? 0) < MAX_EXTRA_LEVEL;
+    };
+
     const knockOutIfAbandoned = () => {
         if (!isMyTurn || !game.battlePublic) return;
         if (myPokemonSelected !== 'true') return;
@@ -1361,6 +1395,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowEvolveModal(false);
         setShowAllPlayers(false);
         setShowFrontierModal(false);
+        // El reto de frontera es un solo combate y no tiene pantalla de
+        // montaje a la que volver: si se abandona, se libera. Si no, su cierre
+        // de combate saltaría encima de la siguiente batalla, que no es suya.
+        if (frontierBattle && !frontierBattle.result) {
+            setFrontierRoundHidden(false);
+            onFrontierClear(player.id);
+        }
         setShowCapturePrompt(false);
         setShowReplaceModal(false);
         setPendingCapturePokedex(null);
@@ -1408,6 +1449,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 // que montar uno cierra el que hubiera.
                 if (horde) await onHordeClear(player.id);
                 if (trainerBattle) await onTrainerClear(player.id);
+                if (frontierBattle) await onFrontierClear(player.id);
                 setRaidSetupOpen(true);
                 break;
             case 'horde':
@@ -1416,6 +1458,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 if (horde) await onHordeClear(player.id);
                 if (raid) await onRaidClear(player.id);
                 if (trainerBattle) await onTrainerClear(player.id);
+                if (frontierBattle) await onFrontierClear(player.id);
                 setHordeSetupOpen(true);
                 break;
             case 'pokeStar':
@@ -1424,6 +1467,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 if (raid) await onRaidClear(player.id);
                 if (horde) await onHordeClear(player.id);
                 if (trainerBattle) await onTrainerClear(player.id);
+                if (frontierBattle) await onFrontierClear(player.id);
                 setPokeStarDone(false);
                 setPokeStarOpen(true);
                 break;
@@ -1435,6 +1479,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 if (trainerBattle) await onTrainerClear(player.id);
                 if (raid) await onRaidClear(player.id);
                 if (horde) await onHordeClear(player.id);
+                if (frontierBattle) await onFrontierClear(player.id);
                 setTrainerSetupOpen(true);
                 break;
             case 'megaBattle':
@@ -1528,6 +1573,16 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // (b) anotar el total de cada combate en el marcador del backend.
     const raidRoundsDone = raid?.rounds?.length || 0;
     const raidOver = Boolean(raid && raid.result);
+
+    // Quién participó de verdad: los dueños de los huecos que no son salvajes de
+    // relleno, sin repetir (un jugador puede prestar dos Pokémon). El premio y
+    // el castigo de la carta son para todos ellos, no solo para el host, así que
+    // hay que poder decir sus nombres al cerrar.
+    const raidParticipants = [...new Set(
+        (raid?.team || [])
+            .filter(slot => slot && !slot.wild && slot.ownerName)
+            .map(slot => slot.ownerName)
+    )];
 
     // El jefe entra transformado. Con forma G-Max propia ya viene con su token y
     // sus ataques desde la DB; sin ella se dinamaxiza aquí, que es lo que
@@ -1736,6 +1791,65 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setTrainerResultOpen(false);
         setTrainerRoundHidden(false);
         await onTrainerClear(player.id);
+        resetBattleState();
+        setShowSetup(true);
+    };
+
+    // ── Reto de frontera ────────────────────────────────────────────────────
+    //
+    // El más corto de los eventos de combate: un solo combate contra un salvaje
+    // del color de la frontera. No hay pantalla de montaje porque no hay nada
+    // que montar — el rival lo sortea el backend a partir de la frontera— así
+    // que se lanza desde el propio modal de fronteras y cae directo en la
+    // pantalla de selección de siempre.
+    //
+    // El backend marca la casilla al lanzar y paga las PokéMonedas al cerrar; la
+    // recompensa impresa de la frontera es física y aquí solo se enuncia.
+    const frontierCard = frontierBattle ? getFrontier(frontierBattle.frontierKey) : null;
+
+    const handleFrontierChallenge = async (frontierKey) => {
+        setFrontierLoading(true);
+        setFrontierError(null);
+        // Los eventos de combate se pelean el mismo hueco de rival: montar el
+        // reto cierra el que hubiera, igual que hace cada uno de los otros.
+        if (raid) await onRaidClear(player.id);
+        if (horde) await onHordeClear(player.id);
+        if (trainerBattle) await onTrainerClear(player.id);
+        const res = await onFrontierStart(player.id, frontierKey);
+        setFrontierLoading(false);
+        if (!res?.ok) {
+            setFrontierError(res?.message || 'No se pudo montar el reto de frontera');
+            return;
+        }
+        setShowFrontierModal(false);
+        setFrontierRoundHidden(false);
+        resetBattleState();
+        setShowSetup(false);
+        if (isMyTurn) onStartSimMirror(playerId);
+    };
+
+    const handleFrontierFinish = async () => {
+        setFrontierRoundHidden(true);
+        const res = await onFrontierFinish(player.id, myTotal, rivalTotal);
+        // Se acabó en un solo combate: la pantalla se recoge para enseñar el
+        // premio limpio, igual que en el combate de entrenador.
+        resetBattleState();
+        setShowSetup(true);
+        if (res?.frontierBattle?.result) {
+            setFrontierResultOpen(true);
+            return;
+        }
+        // El servidor no pudo cerrar el reto. El premio lo paga él, así que sin
+        // su respuesta no hay resultado que enseñar: se libera el evento para no
+        // dejarlo colgado y el aviso espera en el modal de fronteras.
+        setFrontierError(res?.message || 'No se pudo cerrar el reto de frontera');
+        await onFrontierClear(player.id);
+    };
+
+    const handleFrontierClose = async () => {
+        setFrontierResultOpen(false);
+        setFrontierRoundHidden(false);
+        await onFrontierClear(player.id);
         resetBattleState();
         setShowSetup(true);
     };
@@ -2224,6 +2338,124 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 </div>
             )}
 
+            {/* Franja del reto de frontera: con un solo combate no hay rondas
+                que contar, pero sí conviene recordar de qué frontera se trata
+                mientras se pelea. */}
+            {frontierBattle && !showSetup && !frontierBattle.result && frontierCard && (
+                <div className="raid-strip horde-strip frontier-strip"
+                     style={{ '--fc': frontierCard.color }}>
+                    <div className="raid-strip-round">
+                        <span className="frontier-strip-dot" />
+                        Frontera {frontierCard.label}
+                    </div>
+                    <div className="raid-strip-score">
+                        <span className="raid-strip-host">+{FRONTIER_COINS}</span>
+                        <i>si ganas</i>
+                    </div>
+                </div>
+            )}
+
+            {/* Cierre de combate del reto de frontera */}
+            {frontierBattle && !frontierBattle.result && myLocked && rivalLocked && !frontierRoundHidden
+                && myPokemon && rivalPokemon
+                && !showLevelUpPrompt && !showEvolveModal && !showReplaceModal && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className="raid-round-modal horde-round-modal frontier-round-modal">
+                        {/* Volver al combate es la marcha atrás (corregir un dado),
+                            no una decisión: va de X en la esquina y no compite con
+                            el botón del premio. */}
+                        <button className="frontier-round-close"
+                                title="Volver al combate"
+                                onClick={() => setFrontierRoundHidden(true)}>✕</button>
+                        <div className="raid-round-title">
+                            {frontierCard ? `Frontera ${frontierCard.label}` : 'Reto de frontera'}
+                        </div>
+                        <div className="raid-round-score">
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{displayName(myPokemon)}</span>
+                                <span className="raid-round-num">{myTotal}</span>
+                            </div>
+                            <i>vs</i>
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{rivalPokemon?.name}</span>
+                                <span className="raid-round-num">{rivalTotal}</span>
+                            </div>
+                        </div>
+                        <div className={`horde-round-verdict ${myTotal > rivalTotal ? 'is-win' : myTotal === rivalTotal ? 'is-tie' : 'is-lose'}`}>
+                            {myTotal > rivalTotal
+                                ? '¡Conquistaste la frontera!'
+                                : myTotal === rivalTotal
+                                    ? 'Empate: la frontera no se conquista'
+                                    : 'Perdiste el reto'}
+                        </div>
+                        <div className="raid-round-note">
+                            Ganando te llevas {FRONTIER_COINS} PokéMonedas más la recompensa de la frontera.
+                        </div>
+                        <div className="raid-round-actions">
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleFrontierFinish}>
+                                {myTotal > rivalTotal ? '🏆 Ver Recompensa' : 'Ver el resultado'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Resultado del reto: las PokéMonedas ya las pagó el backend, así
+                que aquí solo se enseñan junto a la recompensa de la carta, que
+                sigue siendo física. */}
+            {frontierResultOpen && frontierBattle && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className={`raid-result-modal horde-result-modal raid-result-modal--${frontierBattle.result === 'win' ? 'win' : 'lose'}`}>
+                        <div className="raid-result-title">
+                            {frontierBattle.result === 'win'
+                                ? `¡Frontera ${frontierCard?.label || ''} conquistada!`
+                                : 'Frontera no conquistada'}
+                        </div>
+
+                        <div className="raid-result-rows">
+                            <div className={`raid-result-row horde-result-row--${frontierBattle.result === 'win' ? 'win' : frontierBattle.result === 'tie' ? 'tie' : 'lose'}`}>
+                                <span className="raid-result-who">{frontierBattle.wild?.name}</span>
+                                <span className="raid-result-nums">
+                                    {frontierBattle.hostTotal} — {frontierBattle.rivalTotal}
+                                    <em>{frontierBattle.result === 'win' ? '✓' : frontierBattle.result === 'tie' ? '=' : '✗'}</em>
+                                </span>
+                            </div>
+                        </div>
+
+                        {frontierBattle.result === 'win' ? (
+                            <>
+                                <div className="horde-bonus trainer-prize">
+                                    <span className="horde-bonus-num">+{frontierBattle.coins}</span>
+                                    <span className="horde-bonus-label">
+                                        PokéMonedas<br />
+                                        <em>ya están en tu cuenta</em>
+                                    </span>
+                                </div>
+                                {frontierCard && (
+                                    <div className="frontier-prize-card" style={{ '--fc': frontierCard.color }}>
+                                        <div className="frontier-prize-card-title">
+                                            Recompensa de la Frontera {frontierCard.label}
+                                        </div>
+                                        <div className="frontier-prize-card-desc">{frontierCard.reward}</div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="raid-round-note">
+                                La frontera ya está gastada: se marca al lanzar el reto. Las
+                                PokéMonedas y la recompensa solo caen ganando el combate.
+                            </div>
+                        )}
+
+                        <div className="raid-result-actions">
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleFrontierClose}>
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Marcador de la horda: las victorias son el bono de captura del
                 final, así que conviene tenerlas a la vista todo el rato */}
             {horde && !showSetup && !hordeOver && hordeTotalRounds > 0 && (
@@ -2488,6 +2720,45 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             <span className={raid.result === 'lose' ? 'is-win' : ''}>{raid.bossSum}</span>
                         </div>
 
+                        {/* Premio y castigo de la carta. El +3 va ANTES del botón
+                            de capturar a propósito: el tiro se hace en la mesa y
+                            pulsar el botón es anotar que salió. Las cartas de
+                            objeto y el −2 los aplican los jugadores a mano, así
+                            que aquí solo se enuncian con los nombres delante para
+                            que nadie se quede fuera del reparto. */}
+                        {raid.result === 'win' ? (
+                            <>
+                                <div className="horde-bonus">
+                                    <span className="horde-bonus-num">+3</span>
+                                    <span className="horde-bonus-label">
+                                        al tiro de captura<br />
+                                        <em>de {raid.baseName}</em>
+                                    </span>
+                                </div>
+                                <div className="raid-share">
+                                    <span className="raid-share-line">
+                                        Cada jugador que participó roba <b>1 carta de objeto</b>.
+                                    </span>
+                                    {raidParticipants.length > 0 && (
+                                        <span className="raid-share-who">{raidParticipants.join(' · ')}</span>
+                                    )}
+                                </div>
+                                <div className="raid-round-note">
+                                    Tira la captura con el +3 antes de darle al botón.
+                                </div>
+                            </>
+                        ) : (
+                            <div className="raid-share raid-share--lose">
+                                <span className="raid-share-line">
+                                    Cada jugador que participó elige:
+                                    descartar <b>1 carta de objeto</b> o <b>−2</b> en su próximo movimiento.
+                                </span>
+                                {raidParticipants.length > 0 && (
+                                    <span className="raid-share-who">{raidParticipants.join(' · ')}</span>
+                                )}
+                            </div>
+                        )}
+
                         <div className="raid-result-actions">
                             {raid.result === 'win' && (
                                 <button className="raid-setup-btn raid-setup-btn--main"
@@ -2496,7 +2767,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 </button>
                             )}
                             <button className="raid-setup-btn raid-setup-btn--ghost" onClick={handleRaidClose}>
-                                Cerrar
+                                {raid.result === 'win' ? 'Se escapó' : 'Cerrar'}
                             </button>
                         </div>
                     </div>
@@ -2523,6 +2794,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onSearch={handleMegaSearch}
                 onStart={handleMegaStart}
                 loading={megaLoading}
+                onOpenRules={() => setRaidRulesOpen('megaBattle')}
             />
 
             <ModalHelp
@@ -2941,7 +3213,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             {/* En el setup la tabla de tipos vive aquí, no en el
                                 botón flotante: arriba a la derecha tapaba el
                                 diseño de la cabecera */}
-                            <div className="sim-setup-btn" onClick={() => setShowTypeChart(true)}>
+                            <div className={`sim-setup-btn ${showTypeChart ? 'is-on' : ''}`}
+                                 onClick={() => setShowTypeChart(v => !v)}>
                                 <div className="sim-setup-btn-icon sim-setup-btn-icon--types">
                                     {typeChartGrid}
                                 </div>
@@ -2980,7 +3253,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     onPreview={handlePreviewSelection}
                     onToggleForms={(showForms) => { if (isMyTurn) onSetFormsView(showForms); }}
                     onBack={handleNewSimulation}
-                    onOpenTypeChart={() => setShowTypeChart(true)}
+                    onOpenTypeChart={() => setShowTypeChart(v => !v)}
                     onOpenRules={() => setShowRulesGuide(true)}
                     onNextTurn={handleNextTurn}
                 />
@@ -3300,9 +3573,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             )}
             <ModalFrontier
                 show={showFrontierModal}
-                onClose={() => setShowFrontierModal(false)}
+                onClose={() => { setShowFrontierModal(false); setFrontierError(null); }}
                 player={player}
                 onToggle={handleToggleFrontier}
+                onChallenge={handleFrontierChallenge}
+                busy={frontierLoading}
+                error={frontierError}
             />
 
             {/* Tabla de tipos flotante: solo durante la batalla, que es donde no
@@ -3311,7 +3587,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 El icono son 4 tipos reales del juego, para que se lea de golpe.
                 La selección de combatientes lo lleva en su barra superior. */}
             {!showingSetup && !inSelection && (
-                <div className="type-chart-fab" title="Tabla de tipos" onClick={() => setShowTypeChart(true)}>
+                <div className={`type-chart-fab ${showTypeChart ? 'is-on' : ''}`}
+                     title={showTypeChart ? 'Cerrar la tabla de tipos' : 'Tabla de tipos'}
+                     onClick={() => setShowTypeChart(v => !v)}>
                     {typeChartGrid}
                 </div>
             )}

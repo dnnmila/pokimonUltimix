@@ -66,6 +66,11 @@ class Game {
         // Combate de entrenador (1 o 2 rivales seguidos), o null. Ver los
         // trainerBattle* de gameController.
         this.trainerBattle = null;
+        // Reto de frontera en curso, o null. Un solo combate contra un salvaje
+        // del color de la frontera; guarda qué frontera se retó para poder
+        // enseñar su recompensa al cerrar. Ver los frontierBattle* de
+        // gameController.
+        this.frontierBattle = null;
         // Descuento de la tienda que activa el máster, o null:
         //   { percent, turnsLeft, startedRound }
         // Dura UNA RONDA contada desde que se activa, no hasta el final de la

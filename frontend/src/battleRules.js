@@ -4,6 +4,11 @@
 //  físicas en frontend/src/images/Field Moves/.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Niveles extra que puede acumular un Pokémon por encima del nivel de su ficha.
+// Al llegar aquí la victoria ya no ofrece subir. El mismo tope está en el
+// backend (MAX_EXTRA_LEVEL en playerController.js), que es quien lo hace valer.
+export const MAX_EXTRA_LEVEL = 6;
+
 // Cuánto suma cada item adjunto al total. Las llaves son los valores que puede
 // tomar pokemon.attach (ver ModalAttach). Poner 0 = el item no afecta el total.
 export const ITEM_BONUS = {

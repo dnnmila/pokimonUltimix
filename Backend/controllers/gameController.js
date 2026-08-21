@@ -1605,6 +1605,148 @@ export const trainerBattleClear = async (req, res) => {
     }
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  RETO DE FRONTERA (Battle Frontier)
+//
+//  Las seis fronteras del tablero son retos de color: al lanzar una sale un
+//  Pokémon salvaje del color de token que le toca y se pelea con las reglas de
+//  siempre. Por dentro es una batalla salvaje corriente (el rival se monta con
+//  el nombre 'Wild Pokemon'): se sube de nivel y se debilita como siempre. Lo
+//  que la tablet desactiva es la captura — el rival es el guardián de la
+//  frontera, no un salvaje que se quede uno.
+//
+//  La frontera se marca AL LANZAR el reto, no al ganarlo: se tiene un intento y
+//  la casilla queda gastada pase lo que pase. Lo que sí depende de ganar es el
+//  premio: FRONTIER_PRIZE_COINS PokéMonedas —que se cobran aquí, porque son el
+//  único premio digital— más la recompensa impresa en la carta de la frontera,
+//  que sigue siendo física y solo se enuncia en pantalla.
+//
+//  El catálogo de fronteras vive en el front (frontend/src/data/frontiers.js);
+//  aquí solo hace falta el color de token de cada una, que es lo que decide de
+//  dónde se sortea el rival.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const FRONTIER_PRIZE_COINS = 5;
+
+// La Legendaria no tiene color físico propio: usa el morado, el sexto color de
+// token, que ninguna otra frontera reclama.
+const FRONTIER_TOKEN_COLORS = {
+    frontierPink:   'pink',
+    frontierGreen:  'green',
+    frontierBlue:   'blue',
+    frontierYellow: 'yellow',
+    frontierRed:    'red',
+    frontierGolden: 'purple',
+};
+
+// Sortea el guardián y lo deja montado como simRival del host. Mismos filtros
+// que /random-pokemon: solo formas normales con POKEDEX de cuatro cifras, que
+// son los tokens que existen de verdad en la caja.
+export const frontierBattleStart = async (req, res) => {
+    try {
+        const { playerId, frontierKey } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+
+        const color = FRONTIER_TOKEN_COLORS[frontierKey];
+        if (!color) return res.status(400).json({ message: 'Frontera no válida' });
+        if (player[frontierKey]) return res.status(400).json({ message: 'Esa frontera ya está conquistada' });
+
+        const db = await openDb();
+        const row = await db.get(
+            `SELECT POKEDEX
+               FROM pokemons
+              WHERE FORM = 'Normal'
+                AND POKEDEX GLOB '[0-9][0-9][0-9][0-9]'
+                AND TOKEN_COLOR = ?
+              ORDER BY RANDOM()
+              LIMIT 1`,
+            [color]
+        );
+        if (!row) return res.status(404).json({ message: 'Sin Pokémon para ese color' });
+
+        const wild = await buildPokemonFromDex(row.POKEDEX, db, 'frontier');
+        if (!wild) return res.status(404).json({ message: 'Pokémon no encontrado: ' + row.POKEDEX });
+
+        const rival = new Rival('SimFrontier-' + playerId, 'Wild Pokemon');
+        rival.addPokemon(wild);
+        player.setSimRival(rival);
+
+        // La casilla se gasta al lanzar el reto, gane o pierda.
+        player[frontierKey] = true;
+
+        game.frontierBattle = {
+            hostId: playerId,
+            hostName: player.name,
+            frontierKey,
+            color,
+            wild,
+            hostTotal: 0,
+            rivalTotal: 0,
+            coins: 0,
+            result: null,
+        };
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Reto de frontera listo', frontierBattle: game.frontierBattle });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra el combate y paga. Solo se cobra ganando: el empate no conquista nada,
+// igual que en el combate de entrenador.
+export const frontierBattleFinish = async (req, res) => {
+    try {
+        const { playerId, hostTotal, rivalTotal } = req.body;
+        const game = getGame();
+        const fb = game.frontierBattle;
+        if (!fb || fb.hostId !== playerId) {
+            return res.status(400).json({ message: 'No hay reto de frontera para este jugador' });
+        }
+        if (fb.result) return res.status(400).json({ message: 'El reto de frontera ya terminó' });
+
+        const mine = Number(hostTotal) || 0;
+        const theirs = Number(rivalTotal) || 0;
+        fb.hostTotal = mine;
+        fb.rivalTotal = theirs;
+        fb.result = mine > theirs ? 'win' : mine === theirs ? 'tie' : 'lose';
+        fb.coins = fb.result === 'win' ? FRONTIER_PRIZE_COINS : 0;
+
+        if (fb.coins) {
+            const player = getPlayerById(playerId);
+            if (player) {
+                const before = Number(player.coins) || 0;
+                // Una partida restaurada de un save trae el jugador como objeto
+                // pelado, sin los métodos de la clase: de ahí la segunda vía.
+                if (typeof player.updateNewCoins === 'function') player.updateNewCoins(before + fb.coins);
+                else player.coins = before + fb.coins;
+            }
+        }
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Reto de frontera registrado', frontierBattle: game.frontierBattle });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra el evento y libera el rival de simulación del host.
+export const frontierBattleClear = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (player) player.setSimRival(null);
+        if (game.frontierBattle && game.frontierBattle.hostId === playerId) game.frontierBattle = null;
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Reto de frontera cerrado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Descuento de la tienda. Lo activa el máster desde su barra y dura una ronda
 // contada desde ese momento (ver Game.setStoreDiscount): 25%, 50%, o 0 para
 // volver a precios normales.
