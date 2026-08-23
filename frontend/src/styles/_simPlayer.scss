@@ -1898,7 +1898,7 @@
 
         .pokedex-token { width: 70px; height: 70px; }
         .pokedex-arrow { font-size: 1.2rem; }
-        .pokedex-arrow--mega, .pokedex-arrow--gmax { width: 28px; height: 28px; }
+        .pokedex-arrow--mega, .pokedex-arrow--gmax, .pokedex-arrow--legend { width: 28px; height: 28px; }
         .pokedex-row { padding: 0.5rem 0.6rem; gap: 0.3rem; }
         .pokedex-list { gap: 0.6rem; }
     }
@@ -2899,47 +2899,20 @@
     width: 100%;
     flex: 1;
 
-    .PlayerListedClass {
-        height: auto !important;
-        min-height: 80px;
-        border-radius: 10px;
-        border: 1px solid rgba(var(--hud-accent-rgb), 0.2);
-        background: rgba(255, 255, 255, 0.04);
-    }
+    // Las columnas de la fila se estrechan: aquí no hay pantalla entera, sino un
+    // modal de 70rem como mucho, y con los anchos de /players el bloque del
+    // medio (el equipo) se quedaba sin sitio.
+    --apl-col-left:  clamp(11rem, 30%, 20rem);
+    --apl-col-right: clamp(7rem, 16%, 11rem);
 
-    .PlayerPosition, .PlayerName { font-size: 2rem; }
-    .PlayerPoints                { font-size: 1.1rem; }
-    .PlayerCoins, .PlayerTime    { font-size: 1.2rem; }
-
-    .isMyturn {
-        width: 2.2vw;
-        height: 3.5vh;
-    }
-
-    #badge1Won, #badge2Won, #badge3Won, #badge4Won,
-    #badge5Won, #badge6Won, #badge7Won, #badge8Won,
-    #badge9Won, #badge10Won {
-        height: 3.2vh;
-        width: 1.6vw;
-    }
-
-    .img_pokemon_listed,
-    .img_pokemon_listed_dead {
-        height: 7.5vh;
-        width: 8vw;
-    }
-
-    .level_pokekon_listed { font-size: 1.4rem; }
-
-    .attached {
-        width: 2.2vw;
-        height: 2.2vh;
-    }
-
-    .status {
-        width: 2.2vw;
-        height: 2.2vh;
-        font-size: 0.8rem;
+    // `.apl-row` está pensada para repartirse el alto de la pantalla
+    // (`flex: 1 1 0`). En un modal que crece con su contenido eso no vale, y
+    // encima la fila declara `container-type: size`, que EXIGE un alto
+    // definido: sin él la caja de consulta colapsa, los textos en `cqh` salen
+    // a cero y la tabla se ve rota. De ahí el alto fijo.
+    .apl-row {
+        flex: 0 0 auto;
+        height: clamp(4.5rem, 11vh, 7.5rem);
     }
 }
 
@@ -2951,43 +2924,10 @@
 
     .sim-allplayers-list {
         gap: 0.4rem;
+        --apl-col-left:  clamp(8rem, 34%, 12rem);
+        --apl-col-right: clamp(5rem, 20%, 7.5rem);
 
-        .PlayerListedClass { min-height: 55px; }
-
-        .PlayerPosition, .PlayerName { font-size: 1rem; }
-        .PlayerPoints                { font-size: 0.65rem; }
-        .PlayerCoins, .PlayerTime    { font-size: 0.65rem; }
-
-        .isMyturn {
-            width: 4vw;
-            height: 2vh;
-        }
-
-        #badge1Won, #badge2Won, #badge3Won, #badge4Won,
-        #badge5Won, #badge6Won, #badge7Won, #badge8Won,
-        #badge9Won, #badge10Won {
-            height: 2vh;
-            width: 3.5vw;
-        }
-
-        .img_pokemon_listed,
-        .img_pokemon_listed_dead {
-            height: 4.5vh;
-            width: 12vw;
-        }
-
-        .level_pokekon_listed { font-size: 0.7rem; }
-
-        .attached {
-            width: 3.5vw;
-            height: 1.8vh;
-        }
-
-        .status {
-            width: 3.5vw;
-            height: 1.8vh;
-            font-size: 0.55rem;
-        }
+        .apl-row { height: clamp(3.6rem, 9vh, 5rem); }
     }
 }
 
@@ -3060,9 +3000,12 @@
     }
 
     // Filas y celdas con fondo propio: de translúcido oscuro a papel
+    //
+    // La fila del marcador NO entra aquí: desde el rediseño trae su propia
+    // paleta clara (_playerListed.scss, con las variables de _AllPlayers), así
+    // que repintarla la dejaría distinta de como se ve en /players.
     .pokedex-row,
-    .store-option,
-    .sim-allplayers-list .PlayerListedClass {
+    .store-option {
         background: var(--hud-paper);
         border-color: rgba(var(--hud-ink-rgb), 0.14);
         color: var(--hud-ink);
@@ -3196,22 +3139,11 @@
     }
 
     // ── Tabla de jugadores ───────────────────────────────────────────────────
-    // Mismo caso: la ficha era una tarjeta oscura y todos sus textos eran claros.
-    .sim-allplayers-list {
-        .PlayerName      { color: var(--hud-blue-deep); }
-        .PlayerPosition  { color: #c0392b; }
-        .PlayerPoints    { color: var(--hud-ink); }
-        .PlayerCoins     { color: var(--hud-gold-ink-deep); }
-        .PlayerTime      { color: var(--hud-dim); }
-        .PlayerTurnTimer { color: var(--hud-gold-ink); }
-        .PlayerFrontierDot { background-color: rgba(var(--hud-ink-rgb), 0.12); }
-
-        .PlayerListedClass--active {
-            background: var(--hud-tint);
-            border-color: var(--hud-blue);
-            .PlayerName, .PlayerPoints { color: var(--hud-blue-deep); }
-        }
-    }
+    // Aquí ya no hay nada que repintar. Cuando la ficha era una tarjeta oscura
+    // había que aclararle todos los textos a mano; desde el rediseño la fila es
+    // la MISMA que la de /players y trae su paleta puesta. Lo único que necesita
+    // el modal son los anchos de columna y un alto definido, y eso está arriba,
+    // en la regla de .sim-allplayers-list.
 
     // El precio en ámbar claro sobre papel se leía a duras penas
     .store-option-name { color: var(--hud-ink); }

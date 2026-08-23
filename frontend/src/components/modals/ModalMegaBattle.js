@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { typeColor, typeLabel } from '../../pokemonTypes';
 import PokemonNameSearch from '../PokemonNameSearch';
+import { mirrorPkm, mirrorView, mirrorClosed } from '../../data/eventMirror';
 
 // Evento «Mega Battle»: un combate suelto contra la mega evolución de la
 // especie que diga el host.
@@ -25,9 +26,22 @@ const ModalMegaBattle = ({
     onStart,         // (megaPokedex) => void
     loading = false,
     onOpenRules,
+    onMirror,        // publica la foto para la tabla de /players
 }) => {
     const [result, setResult] = useState(null);   // { base, forms, mega }
     const [error, setError] = useState(null);
+
+    // Espejo (ver data/eventMirror.js). La mega no tiene color de token propio:
+    // lo que se enseña es quién salió y de qué especie sale.
+    useEffect(() => {
+        if (!onMirror) return;
+        if (!show) { onMirror(mirrorClosed('megaBattle')); return; }
+        onMirror(mirrorView('megaBattle',
+            result
+                ? `Le tocó ${result.mega.name}${result.base?.name ? ` · sale de ${result.base.name}` : ''}`
+                : 'Sorteando entre las 94 megas del juego',
+            { main: mirrorPkm(result?.mega, 'Mega salvaje') }));
+    }, [show, result, onMirror]);
 
     if (!show) return null;
 

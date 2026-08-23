@@ -3,7 +3,14 @@
 // verde→arena y tarjetas crema. Las variables se declaran aquí para que las
 // consuman también _playerListed y _pokemonListed.
 // ═══════════════════════════════════════════════════════════════════════════
-.AllPlayers_class{
+// Las variables van en su propia regla, separadas de la maqueta, porque hay DOS
+// sitios que pintan filas del marcador: esta pantalla y el modal «Jugadores»
+// del SimPlayer, que reusa PlayerListed sin colgar de .AllPlayers_class. Sin
+// esto, allí `--apl-col-*` no existe, `grid-template-columns` queda inválida y
+// la fila se desmonta. La maqueta de pantalla completa (100vh/100vw) se queda
+// abajo, que esa sí es solo de aquí.
+.AllPlayers_class,
+.sim-allplayers-list {
    --hud-blue:      #1a6ec0;
    --hud-blue-deep: #14589e;
    --hud-card:      #fdfbf4;
@@ -16,10 +23,13 @@
    --hud-radius:    14px;
 
    // Ancho de las columnas laterales. Se comparte con la cabecera de columnas
-   // para que las tres etiquetas caigan justo sobre su bloque.
+   // para que las tres etiquetas caigan justo sobre su bloque. El modal del
+   // SimPlayer las estrecha, que ahí no hay pantalla entera (ver _simPlayer).
    --apl-col-left:  clamp(15rem, 24vw, 30rem);
    --apl-col-right: clamp(9rem, 12vw, 15rem);
+}
 
+.AllPlayers_class{
    display: flex;
    flex-direction: column;
    gap: 0.5vh;

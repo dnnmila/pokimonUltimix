@@ -84,6 +84,30 @@ const getTokenImg = (pokedex) => {
     try { return require(`../images/tokens_ultimix/${pokedex}.png`); } catch { return null; }
 };
 
+// Formas que cuelgan de un eslabón de la cadena en vez de continuarla: megas y
+// formas legendarias. Se dibujan igual —una flecha y los tokens al lado— y solo
+// cambia el icono de la flecha, que es el objeto que provoca el cambio.
+const SideForms = ({ forms, kind }) => {
+    if (!forms || forms.length === 0) return null;
+    return (
+        <>
+            <div className={`pokedex-arrow pokedex-arrow--${kind}`} />
+            <div className="pokedex-branches">
+                {forms.map(mp => {
+                    const img = getTokenImg(mp);
+                    return img ? (
+                        <div key={mp} className="pokedex-branch-group">
+                            <div className="pokedex-token-wrapper">
+                                <div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} />
+                            </div>
+                        </div>
+                    ) : null;
+                })}
+            </div>
+        </>
+    );
+};
+
 const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 function findReachable(startId, steps, edges, allNodes) {
@@ -603,9 +627,8 @@ const MapPlayer = ({ game }) => {
                                             const img = getTokenImg(node.gmax);
                                             return img ? (<><div className="pokedex-arrow pokedex-arrow--gmax" /><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
                                         })()}
-                                        {node.megas?.length > 0 && (
-                                            <><div className="pokedex-arrow pokedex-arrow--mega" /><div className="pokedex-branches">{node.megas.map(mp => { const img = getTokenImg(mp); return img ? <div key={mp} className="pokedex-branch-group"><div className="pokedex-token-wrapper"><div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} /></div></div> : null; })}</div></>
-                                        )}
+                                        <SideForms forms={node.megas} kind="mega" />
+                                        <SideForms forms={node.legendaries} kind="legend" />
                                         {node.branches?.length > 0 && (
                                             <><div className="pokedex-arrow">▶</div><div className="pokedex-branches">{node.branches.map(branch => {
                                                 const bImg = getTokenImg(branch.pokedex);
@@ -614,7 +637,8 @@ const MapPlayer = ({ game }) => {
                                                     <div key={branch.pokedex} className="pokedex-branch-group">
                                                         <div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${bImg})` }} /></div>
                                                         {branch.gmax && (() => { const img = getTokenImg(branch.gmax); return img ? (<><div className="pokedex-arrow pokedex-arrow--gmax" /><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null; })()}
-                                                        {branch.megas?.length > 0 && (<><div className="pokedex-arrow pokedex-arrow--mega" /><div className="pokedex-branches">{branch.megas.map(mp => { const img = getTokenImg(mp); return img ? <div key={mp} className="pokedex-branch-group"><div className="pokedex-token-wrapper"><div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} /></div></div> : null; })}</div></>)}
+                                                        <SideForms forms={branch.megas} kind="mega" />
+                                                        <SideForms forms={branch.legendaries} kind="legend" />
                                                         {branch.nextEvolution && (() => { const img = getTokenImg(branch.nextEvolution); return img ? (<><div className="pokedex-arrow">▶</div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null; })()}
                                                     </div>
                                                 );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import PlayerListed from './PlayerListed';
 import StadiumMirrorModal from './StadiumMirrorModal';
+import EventMirrorModal from './EventMirrorModal';
 import ModalVictory from './modals/ModalVictory';
 
 import SERVER_IP from '../config';
@@ -145,6 +146,10 @@ const AllPlayers = ({ showOverlays = true }) => {
                 ))}
             </div>
             {showOverlays && <StadiumMirrorModal game={game} />}
+            {/* El montaje del evento, antes de que haya combate. Se retira solo
+                en cuanto arranca la batalla y toma el relevo el espejo de
+                arriba, así que los dos nunca se pisan. */}
+            {showOverlays && <EventMirrorModal game={game} />}
         </div>
     );
 };

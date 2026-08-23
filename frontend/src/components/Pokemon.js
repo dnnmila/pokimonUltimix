@@ -6,7 +6,7 @@ import SERVER_IP from '../config';
 import { attachIconStyle, attachLabel } from '../attachItems';
 import PokemonName from './PokemonName';
 
-const Pokemon = ({  id,name,mote,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached,teraType,mega, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,attachTera,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
+const Pokemon = ({  id,name,mote,level,extra,nextLevel,evolution,type1,type2,pokedex ,state,status,statusCounter,attached,teraType,equipItem,mega, onDelete , currentPlayer , onIncreaseLevel, onEvolvePokemon,onAttach,attachTM,attachMega,attachTera,attachEquip,attachLegendary,onChangeState,onChangeStatus,onDecreaseStatusCounter}) => {
    
     const img_id = `img_${id}`;
     const level_id = `level_${id}`;
@@ -44,8 +44,10 @@ const Pokemon = ({  id,name,mote,level,extra,nextLevel,evolution,type1,type2,pok
         // Limpia el campo de entrada después de agregar
     };
 
-    // Fases 'evo' (Zygarde 10%/50%): solo evolucionan si tienen la mega piedra puesta
-    const canEvolveWithStone = mega === 'evo' && attached === 'Mega';
+    // Fases 'evo' (Zygarde 10%/50%): solo evolucionan si llevan puesto el objeto
+    // legendario, que se gasta al hacerlo. Antes lo hacía la mega piedra, y se
+    // sigue aceptando por las partidas que ya tuvieran un Zygarde con ella.
+    const canEvolveWithStone = mega === 'evo' && (attached === 'LegendEvo' || attached === 'Mega');
 
     const handleEvolvePokemon = async () => {
         if (nextLevel === -1) {
@@ -184,14 +186,14 @@ const Pokemon = ({  id,name,mote,level,extra,nextLevel,evolution,type1,type2,pok
                     {attached === "None"
                         ? <div className="pv-card-attach" onClick={handleOpenModalAttach}>Adjuntar</div>
                         : <div className="pv-card-attached attached-item"
-                               style={attachIconStyle(attached, { teraType })}
-                               title={attachLabel(attached, { teraType })}
+                               style={attachIconStyle(attached, { teraType, equipItem })}
+                               title={attachLabel(attached, { teraType, equipItem })}
                                onClick={handleOpenModalAttach}></div>}
                     <div className="pv-card-delete delete_pokemon" id={delete_id} title='Quitar del equipo' onClick={handleDeletePokemon} > </div>
                 </div>
             </div>
 
-            <ModalAttach show={showModalAttach} onClose={handleCloseModalAttach} currentPlayer={currentPlayer} pokemonId={id} onAttach={onAttach} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera}/>
+            <ModalAttach show={showModalAttach} onClose={handleCloseModalAttach} currentPlayer={currentPlayer} pokemonId={id} onAttach={onAttach} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} attachEquip={attachEquip} attachLegendary={attachLegendary}/>
             <ModalEvolveChoice show={showEvolveModal} options={evolveOptions} onSelect={handleEvolveSelect} onClose={() => setShowEvolveModal(false)} />
         </div>
     )

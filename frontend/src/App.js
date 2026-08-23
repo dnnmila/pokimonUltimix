@@ -485,6 +485,26 @@ const attachMega = async (playerId ,pokemonId) => {
 };
 
 
+// Objeto legendario. No crea nada al lado del Pokémon como la piedra mega:
+// TRANSFORMA al que ya está en el equipo, y solo mientras lo lleve puesto.
+// `formPokedex` es cuál de las formas de esa especie, que Kyurem y Necrozma
+// tienen varias.
+const attachLegendary = async (playerId, pokemonId, formPokedex) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/attach-legendary`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ playerId, pokemonId, formPokedex }),
+        });
+        if (!response.ok) console.error('Error al adjuntar el objeto legendario:', response.status);
+    } catch (error) {
+        console.error('Error al adjuntar el objeto legendario:', error);
+    }
+};
+
+
 // Adjunta un ataque al hueco de attack3. Lo usan tanto las MTs como los
 // cristales Z, porque el mecanismo es el mismo y por diseño son excluyentes.
 //
@@ -601,6 +621,14 @@ const megaForms = async (pokedex) => {
 
 const simMegaBattle = (playerId, megaPokedex) => raidPost('sim-mega-battle', { playerId, megaPokedex });
 
+// Grand Underground: el salvaje ya viene sorteado del modal (color + tipo), aquí
+// solo se planta enfrente. Sin estado en la partida, como el combate mega.
+const undergroundBattle = (playerId, pokedex) => raidPost('underground-battle', { playerId, pokedex });
+
+// Espejo de eventos: la tablet publica lo que está enseñando el modal para que
+// la tabla de /players lo repita. Ver data/eventMirror.js.
+const eventMirror = (playerId, view) => raidPost('event-mirror', { playerId, view });
+
 // Una mega al azar de entre las 94 del juego: es la vía principal del evento.
 const randomMega = async () => {
     try {
@@ -627,6 +655,22 @@ const attachTera = async (playerId, pokemonId, teraType) => {
         if (!response.ok) console.error('Error al adjuntar el Orbe Tera:', response.status);
     } catch (error) {
         console.error('Error al adjuntar el Orbe Tera:', error);
+    }
+};
+
+// Objeto de equipo. Como el orbe: no crea ataque ni forma nueva, solo deja
+// apuntado cuál lleva puesto. El +1 a los ataques de su tipo lo aplica el
+// cálculo del Extra en la batalla (ver getEquipBonus en data/equipment.js).
+const attachEquip = async (playerId, pokemonId, equipItem) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/attach-equip`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, pokemonId, equipItem }),
+        });
+        if (!response.ok) console.error('Error al adjuntar el objeto de equipo:', response.status);
+    } catch (error) {
+        console.error('Error al adjuntar el objeto de equipo:', error);
     }
 };
 
@@ -1074,14 +1118,14 @@ return (
             <Route path="/selectGeneration" element={<SelectGeneration onSetGeneration={setGeneration} />} />
             <Route path="/menuPlayers" element={<MenuPlayers addPlayer={addPlayer} generation={game.generation} />} />
             <Route path="/game" element={<Player currentPlayerTurn={game.players[game.currentTurn]} currentPlayerView={game.players[game.currentView]} AllPlayers={game.players}onNextTurn={nextTurn} onPrevTurn={prevTurn} onNextView={nextView} onPrevView={prevView} onAddPokemon={addPokemonToPlayer} onEvolvePokemon={evolvePokemon} onDeletePokemon={removePokemonToPlayer} onUpdateCoins={updateCoins} increaseLevel={increaseLevel} badgeWon={badgeWon} badgeLost={badgeLost}
-            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onSetStoreDiscount={setStoreDiscount} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
+            onAttach={attachItem} game={game} onStartBattle={startBattle} onChangeState={changeState} onChangeStatus={changeStatus} onDecreaseStatusCounter={decreaseStatusCounter} wildBattle={wildBattle} playerBattle={playerBattle} LeaderBattle={LeaderBattle} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} attachEquip={attachEquip} attachLegendary={attachLegendary} toggleDynamax={toggleDynamax} onApprovePurchase={approvePurchase} onDenyPurchase={denyPurchase} onMasterPurchase={masterPurchase} onSetStoreDiscount={setStoreDiscount} onTradePokemon={tradePokemon} onPauseGame={pauseGame} onEndGame={endGame} onSetFieldMove={setFieldMove}/>} />
             <Route path="/home" element={<HomeMenu />} />
             <Route path="/players" element={<AllPlayers />} />
             {/* Marcador limpio para dejar fijo en otra pantalla. React Router
                 no distingue mayúsculas, así que /Score entra por aquí igual. */}
             <Route path="/Table" element={<Score />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
-            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onHordeStart={hordeStart} onHordeTeam={hordeTeam} onHordeRound={hordeRound} onHordeFinish={hordeFinish} onHordeClear={hordeClear} onTrainerStart={trainerBattleStart} onTrainerRound={trainerBattleRound} onTrainerClear={trainerBattleClear} onFrontierStart={frontierBattleStart} onFrontierFinish={frontierBattleFinish} onFrontierClear={frontierBattleClear} onPokeStarStart={pokeStarStart} onPokeStarLevel={pokeStarLevel} onPokeStarClear={pokeStarClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} attachEquip={attachEquip} attachLegendary={attachLegendary} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onHordeStart={hordeStart} onHordeTeam={hordeTeam} onHordeRound={hordeRound} onHordeFinish={hordeFinish} onHordeClear={hordeClear} onTrainerStart={trainerBattleStart} onTrainerRound={trainerBattleRound} onTrainerClear={trainerBattleClear} onFrontierStart={frontierBattleStart} onFrontierFinish={frontierBattleFinish} onFrontierClear={frontierBattleClear} onPokeStarStart={pokeStarStart} onPokeStarLevel={pokeStarLevel} onPokeStarClear={pokeStarClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onUndergroundBattle={undergroundBattle} onEventMirror={eventMirror} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove}/>} />
             <Route path="/progress" element={<ProgressChart />} />
 
         </Routes>

@@ -6,6 +6,7 @@ import SERVER_IP from '../../config.js';
 import TOKEN_COLORS, { tokenColorHex, tokenColorLabel } from '../../data/tokenColors.js';
 import { applyDynamax, canDynamax } from '../../data/maxMoves';
 import { applyTera, hasTeraOrb } from '../../data/teraTypes';
+import { mirrorPkm, mirrorView, mirrorClosed } from '../../data/eventMirror';
 
 // Montaje de la Horda, en dos pasos.
 //
@@ -40,6 +41,7 @@ const ModalHordeSetup = ({
     loading = false,
     error = null,
     onOpenRules,
+    onMirror,        // publica la foto para la tabla de /players
 }) => {
     // El orden de combate: ids del equipo, movibles. Se rellena solo en cuanto
     // hay salvaje, porque pelean todos y el orden por defecto es el del equipo.
@@ -66,6 +68,36 @@ const ModalHordeSetup = ({
             return [...kept, ...added];
         });
     }, [wild, team.map(p => p.id).join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Espejo (ver data/eventMirror.js). Los dos pasos comparten panel: primero
+    // el salvaje solo mientras se sortea, y en cuanto está montado se le añade
+    // debajo la fila del equipo EN EL ORDEN de combate, que es lo que se está
+    // decidiendo en ese paso y lo que la mesa quiere ver.
+    useEffect(() => {
+        if (!onMirror) return;
+        if (!show) { onMirror(mirrorClosed('horde')); return; }
+        const fila = wild
+            ? order.map((id, i) => {
+                const p = team.find(t => t.id === id);
+                return p ? mirrorPkm(p, `${i + 1}º`) : null;
+              }).filter(Boolean)
+            : [];
+        onMirror(mirrorView('horde',
+            wild
+                ? `${wild.name} contra el equipo entero · cada victoria es +1 a la captura`
+                : rolled
+                    ? `Le salió ${rolled.name}`
+                    : 'Eligiendo el color del token del salvaje',
+            {
+                color: color || wild?.tokenColor || rolled?.tokenColor || null,
+                main: mirrorPkm(wild || rolled, 'Salvaje'),
+                list: fila,
+            }));
+        // `wild` NO puede ir aquí: sale de `game.horde`, que llega por el
+        // socket con objetos nuevos en CADA actualización de la partida. El
+        // efecto se dispararía sin parar y publicaría sin parar. Lo que
+        // identifica al salvaje es su pokedex, que sí es estable.
+    }, [show, color, rolled, wild?.pokedex, order.join('|'), onMirror]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!show) return null;
 

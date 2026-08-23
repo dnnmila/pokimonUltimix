@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { typeColor, typeLabel } from '../../pokemonTypes';
 import PokemonName from '../PokemonName';
 import PokemonNameSearch, { usePokemonList } from '../PokemonNameSearch';
 import SERVER_IP from '../../config.js';
 import TOKEN_COLORS, { tokenColorHex, tokenColorLabel } from '../../data/tokenColors.js';
 import { contestRows, contestPower, diceSum, contestVerdict, ZERO_MOVE_VALUE } from '../../data/contest.js';
+import { mirrorPkm, mirrorView, mirrorClosed } from '../../data/eventMirror';
 
 // Concurso Pokémon.
 //
@@ -34,8 +35,10 @@ const ModalContest = ({
     onClose,
     player,
     pokemonImg,
+    tokenImg,         // (pokedex) => imagen del token físico, en grande
     onCatch,          // (pokedex) => void
     onOpenRules,
+    onMirror,         // publica la foto para la tabla de /players
 }) => {
     // Los Pokémon del equipo no guardan su color de token, así que se resuelve
     // del catálogo, que ya está cacheado por el buscador.
@@ -48,13 +51,23 @@ const ModalContest = ({
     const [myDice, setMyDice] = useState([null]);
     const [rivalDice, setRivalDice] = useState([null]);
     const [done, setDone] = useState(false);      // concurso cerrado: se ve el veredicto
+    // Token abierto a tamaño grande: el Pokémon, o null. Para ir a por él al
+    // montón de fichas hay que verlo entero, y en la cabecera mide 4rem.
+    const [zoom, setZoom] = useState(null);
 
-    if (!show) return null;
+    // Ojo con el orden: el `return null` de «modal cerrado» está más abajo, tras
+    // los totales. El efecto que publica el espejo los necesita, y un hook no
+    // puede quedar por detrás de un return.
 
     const reset = () => {
         setMine(null); setRival(null); setColor(null);
         setError(null); setMyDice([null]); setRivalDice([null]); setDone(false);
+        setZoom(null);
     };
+
+    // La ficha grande enseña el TOKEN físico (tokens_ultimix, 914 px), no el
+    // recorte de 215 px de images/POKEMON que basta para la cabecera.
+    const bigImg = (pkm) => (tokenImg && tokenImg(pkm.pokedex)) || pokemonImg(pkm);
 
     const handleClose = () => { reset(); onClose(); };
 
@@ -131,13 +144,51 @@ const ModalContest = ({
         && diceSum(myDice) > 0 && diceSum(rivalDice) > 0;
     const verdict = contestVerdict(myTotal, rivalTotal);
 
+    // Espejo (ver data/eventMirror.js). Es el único evento con dos lados, así
+    // que usa el `vs` del panel y el marcador: poder + dados de cada uno, que es
+    // exactamente la cuenta que se sigue desde la mesa mientras se tira.
+    useEffect(() => {
+        if (!onMirror) return;
+        if (!show) { onMirror(mirrorClosed('contest')); return; }
+        const estado = !mine
+            ? 'Eligiendo con qué Pokémon concursa'
+            : !rival
+                ? 'Eligiendo el color del token del rival'
+                : done
+                    ? (verdict === 'win' ? '¡Ganó el concurso!'
+                        : verdict === 'lose' ? `Ganó ${rival.name}`
+                        : 'Empate: ni premio ni castigo')
+                    : 'Marcando los dados';
+        onMirror(mirrorView('contest', estado, {
+            color,
+            vs: mirrorPkm(mine, 'Concursante'),
+            main: mirrorPkm(rival, 'Rival'),
+            // El marcador solo aparece cuando hay con quién comparar; antes de
+            // eso serían dos ceros grandes sin significado.
+            score: mine && rival
+                ? { mine: myTotal, theirs: rivalTotal,
+                    mineLabel: mine.name, theirsLabel: rival.name }
+                : null,
+        }));
+    }, [show, mine, rival, color, myTotal, rivalTotal, done, verdict, onMirror]);
+
+    if (!show) return null;
+
     // Una columna del concurso: el Pokémon, el desglose de sus movimientos, sus
     // dados y su total.
-    const renderSide = (side, pkm, rows, dice, power, total) => (
+    const renderSide = (side, pkm, rows, dice, power, total) => {
+      // Sin imagen grande no hay nada que ampliar: la cabecera se queda como
+      // una cabecera y no promete una lupa que no lleva a ningún sitio.
+      const big = bigImg(pkm);
+      return (
         <div className={`contest-side contest-side--${side}`}>
             <div className="contest-side-head">
-                <div className="contest-side-art"
-                     style={pokemonImg(pkm) ? { backgroundImage: `url(${pokemonImg(pkm)})` } : {}} />
+                <div className={`contest-side-art ${big ? 'is-zoomable' : ''}`}
+                     title={big ? `Ver el token de ${pkm.name} en grande` : undefined}
+                     onClick={big ? () => setZoom(pkm) : undefined}
+                     style={pokemonImg(pkm) ? { backgroundImage: `url(${pokemonImg(pkm)})` } : {}}>
+                    {big && <span className="contest-side-art-zoom">⤢</span>}
+                </div>
                 <div className="contest-side-id">
                     {side === 'mine'
                         ? <PokemonName pkm={pkm} as="div" className="contest-side-name" />
@@ -206,7 +257,8 @@ const ModalContest = ({
                 <strong>{total}</strong>
             </div>
         </div>
-    );
+      );
+    };
 
     return (
         <div className="modal-backdrop contest-backdrop" onClick={handleClose}>
@@ -396,6 +448,18 @@ const ModalContest = ({
                     </>
                 )}
             </div>
+
+            {/* El token a tamaño de buscarlo en la mesa. Va fuera del modal —no
+                dentro— para que no herede su recorte ni su desplazamiento, igual
+                que el mapa del Grand Underground. */}
+            {zoom && (
+                <div className="contest-token-full"
+                     onClick={(e) => { e.stopPropagation(); setZoom(null); }}>
+                    <img src={bigImg(zoom)} alt={`Token de ${zoom.name}`} />
+                    <div className="contest-token-full-name">{zoom.name}</div>
+                    <button className="contest-token-full-close">✕</button>
+                </div>
+            )}
         </div>
     );
 };

@@ -200,13 +200,84 @@ $contest: #5ec8f2;
 
 .contest-side-head { display: flex; align-items: center; gap: 0.5rem; }
 
+// Pulsable: abre el token a tamaño de ir a buscarlo al montón de fichas, que a
+// 4rem no se distingue. La lupa se queda visible siempre —no solo al pasar por
+// encima— porque esto se juega en tablet y ahí no hay hover que valga.
 .contest-side-art {
+    position: relative;
     width: 4rem;
     height: 4rem;
     flex: 0 0 auto;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+    transition: transform 0.13s ease;
+
+    &.is-zoomable {
+        cursor: zoom-in;
+        &:hover { transform: scale(1.06); }
+    }
+}
+
+.contest-side-art-zoom {
+    position: absolute;
+    right: -0.2rem;
+    bottom: -0.2rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    color: #eaeaea;
+    font-size: 0.62rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+// El token en grande. Por encima del propio modal del concurso.
+.contest-token-full {
+    position: fixed;
+    inset: 0;
+    z-index: 620;
+    background: rgba(0, 0, 0, 0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 1.5rem;
+    cursor: zoom-out;
+
+    img {
+        max-width: 90vw;
+        max-height: 78vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+}
+
+.contest-token-full-name {
+    color: white;
+    font-size: 1.15rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+}
+
+.contest-token-full-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    color: white;
+    font-size: 1.3rem;
+    padding: 0.15rem 0.6rem;
+    cursor: pointer;
 }
 
 .contest-side-id { min-width: 0; }

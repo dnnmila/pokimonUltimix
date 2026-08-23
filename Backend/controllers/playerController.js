@@ -3,6 +3,7 @@ import { open } from 'sqlite';
 import Pokemons from '../models/Pokemons.js';
 import Attacks from '../models/Attacks.js';
 import { getGame ,getPlayerById,updateGameAndNotify,getPokemonById } from '../gameInstance.js';
+import { isLegendaryBase, isLegendaryFormOf, legendaryFormsOf } from '../data/legendaryEvos.js';
 
 // Niveles extra que puede acumular un Pokémon por encima del nivel de su ficha.
 // Es tope de reglas del juego, no de la interfaz.
@@ -345,11 +346,22 @@ export const evolvePokemon = async (req, res) => {
         newPokemon.totalLevel = newPokemon.level + newPokemon.extra;
         // El mote es del Pokémon, no de su especie: sobrevive a la evolución.
         newPokemon.mote = oldPkm.mote || '';
-        // La mega piedra se consume al evolucionar una fase 'evo' (Zygarde 10% -> 50% -> Complete).
-        // El resto de items se conservan.
-        const megaStoneConsumed = oldPkm.mega === 'evo' && oldPkm.attach === 'Mega';
+        // El objeto legendario se consume al evolucionar una fase 'evo' (Zygarde
+        // 10% -> 50% -> Complete): ahí no transforma nada, solo habilita el paso
+        // y se gasta al darlo. El resto de items se conservan.
+        //
+        // Se sigue aceptando la mega piedra, que era la que hacía esto antes: hay
+        // partidas guardadas con un Zygarde que ya la lleva puesta y esperando.
+        const megaStoneConsumed = oldPkm.mega === 'evo' &&
+            (oldPkm.attach === 'LegendEvo' || oldPkm.attach === 'Mega');
         if (oldPkm.attach && !megaStoneConsumed) {
             newPokemon.attach = oldPkm.attach;
+            // El orbe y el objeto de equipo no viven solo en `attach`: llevan al
+            // lado CUÁL es (el tipo del orbe, el id del objeto). Sin copiarlo, el
+            // Pokémon evolucionado salía marcado con el item pero sin saber cuál
+            // era, y se quedaba sin su +1 y sin su dibujo.
+            newPokemon.teraType  = oldPkm.teraType;
+            newPokemon.equipItem = oldPkm.equipItem;
         }
 
         // La MT o el cristal Z sobreviven a la evolución. Viven en attack3, así
@@ -645,7 +657,11 @@ export const attachItem  = async (req, res) => {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
 
-        
+        // Quitar el item, o cambiarlo por otro, deshace la forma legendaria:
+        // esa forma solo existe mientras el objeto esté puesto.
+        const db = await openDb();
+        await revertLegendaryForm(player.pokemons.find(p => p.id === pokemonId), db);
+
         player.attachItemToPokemon(pokemonId,itemAttached);
         console.log('Pokemon actualizado');
         updateGameAndNotify();
@@ -665,9 +681,33 @@ export const attachTera = async (req, res) => {
         if (!teraType) return res.status(400).json({ message: 'Falta el tipo Tera' });
         const player = getPlayerById(playerId);
         if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        // El orbe ocupa el hueco del objeto legendario, así que lo desplaza y con
+        // él la forma (ver revertLegendaryForm).
+        const db = await openDb();
+        await revertLegendaryForm(player.pokemons.find(p => p.id === pokemonId), db);
         player.attachTeraToPokemon(pokemonId, teraType);
         updateGameAndNotify();
         res.status(200).json({ message: 'Orbe Tera adjuntado', player });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Objeto de equipo. Mismo caso que el orbe: además del marcador en `attach`
+// hay que guardar CUÁL de los 18 es, y no crea ataque.
+export const attachEquip = async (req, res) => {
+    try {
+        const { playerId, pokemonId, equipItem } = req.body;
+        if (!equipItem) return res.status(400).json({ message: 'Falta el objeto de equipo' });
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        // También ocupa el hueco del objeto legendario, así que lo desplaza y
+        // con él la forma (ver revertLegendaryForm).
+        const db = await openDb();
+        await revertLegendaryForm(player.pokemons.find(p => p.id === pokemonId), db);
+        player.attachEquipToPokemon(pokemonId, equipItem);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Objeto de equipo adjuntado', player });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -708,6 +748,23 @@ export const attachTM  = async (req, res) => {
         // nombre nuevo sin tener el catálogo completo en el backend.
         if (slot === 'Z' && zData) newAttack.z = zData;
 
+        // La MT y el cristal Z desplazan al objeto legendario, así que el
+        // Pokémon vuelve a su forma base ANTES de recibirlos. El catálogo del
+        // front resolvió la carta contra la forma transformada —los tipos de
+        // Crown Sword Zacian, su nombre—, así que hay que rehacer esa cuenta
+        // contra la ficha de vuelta, igual que se hace al evolucionar.
+        const db = await openDb();
+        const pkm = player.pokemons.find(p => p.id === pokemonId);
+        if (await revertLegendaryForm(pkm, db)) {
+            if (slot === 'Z' && newAttack.z) {
+                const mov = zMoveForName(newAttack.z, pkm.name);
+                newAttack.name     = mov.nombre;
+                newAttack.strength = mov.poder;
+            } else {
+                newAttack.strength = tmStrengthFor(newAttack, pkm.type1, pkm.type2);
+            }
+        }
+
         player.attachTM(pokemonId,newAttack,slot);
         console.log('Pokemon actualizado');
         updateGameAndNotify();
@@ -732,12 +789,18 @@ export const attachTM  = async (req, res) => {
 async function attachMegaForms(player, pokemon, db) {
     player.removeMegasOf(pokemon.id);
 
-    // 'evo' (Zygarde 10%/50%): la piedra no crea una mega form, solo habilita
-    // la evolución a la siguiente fase. Se consume al evolucionar.
-    if (pokemon.mega === 'evo') {
-        pokemon.addAttach("Mega");
-        return true;
-    }
+    // Kyogre, Groudon, Hoopa y Kyurem traen MEGA='Yes' en la base de datos, pero
+    // su forma poderosa la da el objeto legendario, no la piedra: sin este corte
+    // habría dos caminos al mismo sitio y con reglas distintas (uno crea carta
+    // aparte, el otro transforma). La piedra no les hace nada.
+    if (isLegendaryBase(pokemon.pokedex)) return false;
+
+    // 'evo' (Zygarde 10%/50%) tampoco es cosa de la piedra ya. Nunca creó una
+    // mega form —solo habilitaba el paso a la fase siguiente, y se gastaba al
+    // darlo—, y ese trabajo pasó al objeto legendario. La ficha sigue diciendo
+    // 'evo' porque es la marca que usa la cadena de evolución para saber que ese
+    // paso no va por niveles; lo que cambió es qué objeto lo dispara.
+    // (Zygarde Complete sí tiene mega de verdad, M0718, y viene con MEGA='Yes'.)
     if (pokemon.mega !== 'Yes' && pokemon.mega !== 'doble') return false;
 
     // Mega principal (almacenada en pokemon.evolution)
@@ -803,12 +866,120 @@ export const attachMega  = async (req, res) => {
             return res.status(404).json({ message: 'pokemon no encontrado' });
         }
 
+        // La piedra ocupa el mismo hueco que el objeto legendario, así que
+        // ponerla deshace la transformación (ver revertLegendaryForm).
+        await revertLegendaryForm(pokemon, db);
         await attachMegaForms(player, pokemon, db);
 
         console.log('Pokemon mega');
         updateGameAndNotify();
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 
+        res.status(200).json({ message: 'Pokemon updated', player });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ── Formas legendarias («Legendary Evo. Item») ──────────────────────────────
+//
+// Zacian con su objeto ES Crown Sword Zacian, no un Zacian con una carta extra
+// al lado. Por eso esto no se parece a `attachMegaForms`: no se añade nada a
+// `player.megas`, se reescribe el Pokémon que ya está en el equipo.
+//
+// El `id` NO cambia. Es lo que hace que la transformación sea reversible sin
+// dejar rastro: la batalla en curso, el historial y el hueco del equipo siguen
+// apuntando al mismo Pokémon, se llame como se llame ahora. (La evolución
+// normal sí estrena id, pero allí la forma vieja no vuelve nunca.)
+
+// Copia sobre `pokemon` la ficha `data` de la base de datos. Lo que describe a
+// la especie se reemplaza; lo que es de ESTE Pokémon —niveles extra, estado,
+// mote— sobrevive, porque la transformación no lo cura ni lo reinicia.
+async function applyFormFromRow(pokemon, data, db) {
+    pokemon.pokedex = data.POKEDEX;
+    pokemon.name    = data.NAME;
+    pokemon.type1   = data.TYPE1;
+    pokemon.type2   = data.TYPE2;
+    pokemon.level   = data.LEVEL;
+    pokemon.attack1 = await getAttack(data.ATK1, db);
+    pokemon.attack2 = await getAttack(data.ATK2, db);
+    pokemon.attack3 = await getAttack(data.ATK3, db);
+    pokemon.nextLevel  = data.NEXT_LEVEL;
+    // Los extra se conservan tal cual: un Zacian con +2 sube a Crown Sword con
+    // esos +2 encima del nivel de la forma nueva.
+    pokemon.totalLevel = pokemon.level + pokemon.extra;
+}
+
+// Deshace la transformación si la hay. La llaman los CUATRO adjuntadores, no
+// solo el de quitar item: la MT, el cristal Z, el orbe Tera y la piedra mega
+// pisan el mismo hueco `attach`, así que cualquiera de ellos le quita el objeto
+// legendario al Pokémon — y sin el objeto no hay forma que valga.
+//
+// Devuelve true si revirtió algo, para que quien llama sepa si tiene que
+// notificar aunque no haya hecho nada más.
+async function revertLegendaryForm(pokemon, db) {
+    if (!pokemon?.legendaryBase) return false;
+
+    const base = await db.get(
+        "SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokemon.legendaryBase]);
+    if (!base) return false;
+
+    await applyFormFromRow(pokemon, base, db);
+    pokemon.evolution = base.EVOLUTION;
+    pokemon.mega      = base.MEGA;
+    pokemon.legendaryBase = null;
+    return true;
+}
+
+// Transforma al Pokémon en la forma pedida y le deja el objeto puesto.
+async function applyLegendaryForm(player, pokemon, formPokedex, db) {
+    // De qué base sale: si ya está transformado es la que guardó el marcador,
+    // no su POKEDEX actual. Así se puede pasar de Black a White Kyurem directo.
+    const basePokedex = pokemon.legendaryBase || pokemon.pokedex;
+    if (!isLegendaryFormOf(basePokedex, formPokedex)) return null;
+
+    const data = await db.get(
+        "SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [formPokedex]);
+    if (!data) return null;
+
+    // Las megas que tuviera se van con la piedra: el objeto legendario ocupa su
+    // hueco. Se barre antes de reescribir el Pokémon porque `removeMegasOf`
+    // necesita reconocerlo por su POKEDEX de base.
+    player.removeMegasOf(pokemon.id);
+
+    await applyFormFromRow(pokemon, data, db);
+    // La forma transformada es terminal, aunque su fila diga otra cosa: C0888 y
+    // C0889 se apuntan a sí mismas en EVOLUTION y traen MEGA='Yes', restos de
+    // cuando estas formas colgaban de la lógica mega. Se normaliza aquí en vez
+    // de tocar la base para no arrastrar el cambio a los respaldos ni al
+    // combate mega, que sigue sorteando entre las fichas FORM='Mega'.
+    pokemon.evolution = '0000';
+    pokemon.mega      = 'No';
+    pokemon.attach    = 'LegendEvo';
+    pokemon.teraType  = null;
+    pokemon.equipItem = null;
+    pokemon.legendaryBase = basePokedex;
+    return pokemon;
+}
+
+export const attachLegendary = async (req, res) => {
+    try {
+        const db = await openDb();
+        const { playerId, pokemonId, formPokedex } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+
+        const pokemon = player.pokemons.find(p => p.id === pokemonId);
+        if (!pokemon) return res.status(404).json({ message: 'Pokémon no encontrado' });
+
+        if (!formPokedex) return res.status(400).json({ message: 'Falta la forma legendaria' });
+
+        const applied = await applyLegendaryForm(player, pokemon, formPokedex, db);
+        if (!applied) {
+            return res.status(400).json({ message: 'Esa forma no sale de este Pokémon' });
+        }
+
+        updateGameAndNotify();
         res.status(200).json({ message: 'Pokemon updated', player });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -1022,7 +1193,25 @@ export const getEvolutionChain = async (req, res) => {
             return g ? g.POKEDEX : null;
         };
 
+        // Formas que da el objeto legendario. Van por su lado y no mezcladas con
+        // las megas, porque la flecha que las precede es el objeto que las
+        // provoca —igual que la mega lleva el símbolo de mega y el G-Max el de
+        // Dinamax—, y decir «mega» de un Crown Sword Zacian sería mentir.
+        const getLegendaries = (data) => {
+            const forms = legendaryFormsOf(data.POKEDEX);
+            if (!forms.length) return [];
+            // Necrozma ya enseña sus tres formas como ramas de evolución
+            // (EVOLUTION='pre'): además de con el objeto, se llega a ellas
+            // subiendo un nivel. Repetirlas aquí las pintaría dos veces.
+            if (data.EVOLUTION === 'pre') return [];
+            return forms;
+        };
+
         const getMegas = async (data) => {
+            // Kyogre, Groudon, Hoopa y Kyurem vienen marcados como mega en la
+            // base de datos, pero su forma ya no la da la piedra (ver
+            // attachMegaForms). Salen por getLegendaries, con su propia flecha.
+            if (isLegendaryBase(data.POKEDEX)) return [];
             // 'evo': la mega piedra dispara una evolución normal, no una mega form
             if (!data.MEGA || data.MEGA === 'No' || data.MEGA === 'evo') return [];
             if (data.MEGA === 'doble') {
@@ -1056,7 +1245,7 @@ export const getEvolutionChain = async (req, res) => {
                 b.MEGA !== 'Yes' && b.MEGA !== 'doble';
             return {
                 pokedex: b.POKEDEX, name: b.NAME, type1: b.TYPE1, type2: b.TYPE2,
-                gmax: bGmax, megas: bMegas,
+                gmax: bGmax, megas: bMegas, legendaries: getLegendaries(b),
                 nextEvolution: hasSingleLinearEvolution ? b.EVOLUTION : null
             };
         };
@@ -1106,7 +1295,8 @@ export const getEvolutionChain = async (req, res) => {
                 nextId = data.EVOLUTION;
             }
 
-            chain.push({ pokedex: data.POKEDEX, name: data.NAME, type1: data.TYPE1, type2: data.TYPE2, gmax, megas, branches });
+            chain.push({ pokedex: data.POKEDEX, name: data.NAME, type1: data.TYPE1, type2: data.TYPE2,
+                         gmax, megas, legendaries: getLegendaries(data), branches });
 
             if (!nextId) break;
             currentId = nextId;

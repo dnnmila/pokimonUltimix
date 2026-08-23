@@ -1,6 +1,7 @@
 import React from 'react';
 import { getAttachItem, getAttachCard, attachLabel, attachIconStyle } from '../../attachItems';
-import { ITEM_BONUS } from '../../battleRules';
+import { ITEM_BONUS, ALPHA_BONUS, ALPHA_CAP } from '../../battleRules';
+import { EQUIP_BY_ID } from '../../data/equipment';
 
 // Visor de la carta del item que un Pokémon lleva adjuntado durante la batalla.
 //
@@ -21,6 +22,9 @@ const ModalItemCard = ({ show, onClose, itemId, pokemon, pokemonName }) => {
     // Los items de apoyo son marcadores: su efecto lo aplican los jugadores a
     // mano. Solo se anuncia el bono cuando de verdad suma al total.
     const bono  = ITEM_BONUS[itemId] || 0;
+    // ...pero el objeto de equipo sí suma, solo que a los ataques de su tipo y
+    // no al total, así que se dice tal cual en vez de "no suma".
+    const equip = itemId === 'Equip' ? EQUIP_BY_ID[pokemon?.equipItem] : null;
 
     return (
         <div className="modal-backdrop tm-card-backdrop" onClick={onClose}>
@@ -41,10 +45,14 @@ const ModalItemCard = ({ show, onClose, itemId, pokemon, pokemonName }) => {
                 }
 
                 <div className="tm-card-zmove">
-                    <div className="tm-card-zmove-name">{item?.es || label}</div>
+                    <div className="tm-card-zmove-name">{equip?.es || item?.es || label}</div>
                     <div className="tm-card-badges">
                         <span className="tm-card-power">
-                            {bono > 0 ? `+${bono} al total` : 'No suma al total'}
+                            {equip
+                                ? `+1 a los ataques ${equip.tipo}`
+                                : itemId === 'Alpha'
+                                    ? `+${ALPHA_BONUS} al ataque, sin pasar de ${ALPHA_CAP}`
+                                    : bono > 0 ? `+${bono} al total` : 'No suma al total'}
                         </span>
                     </div>
                 </div>

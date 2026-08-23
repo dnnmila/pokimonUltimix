@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { typeColor, typeLabel } from '../../pokemonTypes';
 import PokemonName from '../PokemonName';
 import PokemonNameSearch from '../PokemonNameSearch';
@@ -6,6 +6,7 @@ import SERVER_IP from '../../config.js';
 import TOKEN_COLORS, { tokenColorHex, tokenColorLabel } from '../../data/tokenColors.js';
 import { applyDynamax, canDynamax } from '../../data/maxMoves';
 import { applyTera, hasTeraOrb } from '../../data/teraTypes';
+import { mirrorPkm, mirrorView, mirrorClosed } from '../../data/eventMirror';
 
 // Montaje de la Incursión Max, en dos pasos.
 //
@@ -51,6 +52,7 @@ const ModalRaidSetup = ({
     loading = false,
     error = null,
     onOpenRules,
+    onMirror,         // publica la foto para la tabla de /players
 }) => {
     // Un hueco es null (vacío), {pokedex, name} (salvaje) o {ownerId, pokemonId}
     const [slots, setSlots] = useState(Array(SLOTS).fill(null));
@@ -67,8 +69,10 @@ const ModalRaidSetup = ({
     const [wildRolling, setWildRolling] = useState(false);
     const [wildError, setWildError] = useState(null);
 
-    if (!show) return null;
-
+    // Ojo con el orden: el `return null` de «modal cerrado» está más abajo, al
+    // final de los ayudantes, y no aquí. El efecto que publica el espejo
+    // necesita `describeSlot` para resolver los huecos, y un hook no puede
+    // quedar por detrás de un return.
     const boss = raid?.boss || null;
     const others = allPlayers.filter(p => p.id !== player.id);
 
@@ -183,6 +187,38 @@ const ModalRaidSetup = ({
         const pkm = (owner?.id === player.id && base) ? resolveForm(base, slot.form) : base;
         return { name: pkm?.name || '—', sub: owner?.name || '', pkm };
     };
+
+    // Espejo (ver data/eventMirror.js). El jefe arriba y, en cuanto empieza a
+    // llenarse, el equipo de 4 en la fila de abajo con el nombre de quién pone
+    // cada uno: en la incursión los Pokémon salen de varios jugadores y eso es
+    // justo lo que la mesa necesita ver mientras se arma.
+    //
+    // El hueco viaja YA resuelto en su forma (`describeSlot` aplica mega, G-Max,
+    // Dinamax o Tera), así que el token que se pinta es el que va a pelear.
+    useEffect(() => {
+        if (!onMirror) return;
+        if (!show) { onMirror(mirrorClosed('raidMax')); return; }
+        const fila = slots.map((slot, i) => {
+            const d = describeSlot(slot);
+            return d?.pkm ? mirrorPkm({ ...d.pkm, name: d.name }, d.sub || `Hueco ${i + 1}`) : null;
+        }).filter(Boolean);
+        onMirror(mirrorView('raidMax',
+            boss
+                ? `Armando el equipo de 4 contra ${boss.name} (${fila.length}/${SLOTS})`
+                : rolled
+                    ? `Le salió ${rolled.name}`
+                    : 'Eligiendo el color del token del jefe',
+            {
+                color: raidColor,
+                main: mirrorPkm(boss || rolled, boss ? 'Jefe' : 'Candidato a jefe'),
+                list: fila,
+            }));
+        // `boss` NO puede ir aquí: sale de `game.raid`, que llega por el socket
+        // con objetos nuevos en CADA actualización de la partida. El efecto se
+        // dispararía sin parar y publicaría sin parar. Su pokedex sí es estable.
+    }, [show, raidColor, rolled, boss?.pokedex, slots, onMirror]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    if (!show) return null;
 
     return (
         <div className="modal-backdrop raid-setup-backdrop" onClick={handleClose}>

@@ -37,8 +37,17 @@ import imgExpShare   from './images/expShare.webp';
 // falta es reconocer el objeto de un vistazo, y a ese tamaño las 19 cartas se
 // distinguen mal entre sí. El tipo va en el tooltip (ver attachLabel).
 import imgTeraOrb   from './images/store/chart/TeraOrb.png';
+// Los objetos de equipo sí tienen sprite propio cada uno —se recortaron de sus
+// cartas—, así que en la carta del Pokémon se dibuja el que lleve puesto (ver
+// attachIconStyle). Esta imagen es solo la de la tarjeta que abre el catálogo:
+// tres de ellos juntos, para que se lea "objetos" y no un objeto concreto.
+import imgEquipment from './images/EquipmentItems.png';
+// El objeto legendario tampoco tiene carta física propia todavía: por ahora se
+// dibuja con el icono de la tabla de la tienda, igual que el orbe.
+import imgLegendaryEvo from './images/store/chart/LegendaryEvo.png';
 import { typeColor } from './pokemonTypes';
 import { TERA_BY_ID } from './data/teraTypes';
+import { EQUIP_BY_ID } from './data/equipment';
 
 // ── Cartas grandes ───────────────────────────────────────────────────────────
 // El sprite de arriba sirve para reconocer el objeto de un vistazo; esto es el
@@ -63,12 +72,20 @@ import cardPotion     from './images/Nuevos items/itesm shop updated/Shop_-_Poti
 import cardBerry      from './images/Nuevos items/itesm shop updated/Shop_-_Berry.png';
 import cardMega       from './images/Nuevos items/itesm shop updated/Mega_Stone.png';
 
+// El Pokémon Alfa se dibuja con su emblema. Va por contexto y no por import a
+// propósito: si el fichero todavía no está puesto, el item se queda sin icono
+// pero la aplicación compila igual, en vez de romper el build entero.
+const alphaCtx = require.context('./images', false, /^\.\/AlphaPokemon\.png$/);
+const imgAlpha = alphaCtx.keys().length ? alphaCtx(alphaCtx.keys()[0]) : null;
+
 // `kind`:
 //   'item'   → se adjunta directo, manda el id al backend
 //   'tm'     → abre el sub-panel de tipo + power
 //   'z'      → abre el selector de cristales Z
 //   'mega'   → llama a attachMega, que además crea la forma mega
 //   'tera'   → abre el selector de Orbes Tera
+//   'equip'  → abre el selector de Objetos de Equipo
+//   'legend' → transforma al Pokémon en su forma legendaria (ver más abajo)
 //   'remove' → limpia el item (se guarda como 'None')
 export const ATTACH_ITEMS = [
     { id: 'MT',         label: 'TM',          es: 'MT',              kind: 'tm',     img: imgTM },
@@ -78,6 +95,18 @@ export const ATTACH_ITEMS = [
     // También ocupa el hueco: un Pokémon lleva orbe o lleva MT/Z/Mega.
     // El orbe no lleva `card`: su carta depende del tipo, la resuelve getAttachCard.
     { id: 'Tera',       label: 'Tera Orb',    es: 'Orbe Tera',       kind: 'tera',   img: imgTeraOrb },
+    // Y otro más: 18 objetos, uno por tipo, que dan +1 a los ataques de ese
+    // tipo. Como el orbe, ni `img` ni `card` fijas — dependen de cuál se haya
+    // elegido, y las resuelven attachIconStyle y getAttachCard.
+    { id: 'Equip',      label: 'Attach Item', es: 'Objeto de Equipo', kind: 'equip', img: imgEquipment },
+    // Otro que ocupa el hueco, y el único que cambia al Pokémon en sí: mientras
+    // esté puesto, Zacian ES Crown Sword Zacian. Solo se ofrece a las especies
+    // que tienen forma legendaria (ver data/legendaryEvos.js); al resto ni se
+    // les enseña la carta.
+    { id: 'LegendEvo',  label: 'Legendary Evo', es: 'Objeto Legendario', kind: 'legend', img: imgLegendaryEvo },
+    // Sube el golpe como la proteína, pero con techo: los ataques que ya pegan
+    // 4 o más no ganan nada (ver getAlphaBonus en battleRules.js).
+    { id: 'Alpha',      label: 'Alpha Pokemon', es: 'Pokémon Alfa',  kind: 'item',   img: imgAlpha },
     { id: 'Protein',    label: 'Protein',     es: 'Proteína',        kind: 'item',   img: imgProtein,    card: cardProtein },
     { id: 'Potion',     label: 'Potion',      es: 'Poción',          kind: 'item',   img: imgPotion,     card: cardPotion },
     { id: 'Claw',       label: 'Razor Claw',  es: 'Garra Afilada',   kind: 'item',   img: imgClaw,       card: cardClaw },
@@ -103,6 +132,12 @@ export const attachLabel = (id, pkm) => {
     if (id === 'Tera' && pkm?.teraType) {
         return `Tera Orb — ${TERA_BY_ID[pkm.teraType]?.tipo || pkm.teraType}`;
     }
+    // El objeto de equipo sí tiene nombre propio, así que ese es el que manda;
+    // el tipo va detrás porque es su único efecto.
+    if (id === 'Equip' && pkm?.equipItem) {
+        const item = EQUIP_BY_ID[pkm.equipItem];
+        return item ? `${item.nombre} — ${item.tipo} +1` : pkm.equipItem;
+    }
     return getAttachItem(id)?.label || id || '';
 };
 
@@ -116,9 +151,21 @@ export const attachLabel = (id, pkm) => {
 export const attachIconStyle = (id, pkm) => {
     const item = getAttachItem(id);
     if (!item) return undefined;
-    const style = { backgroundImage: `url(${item.img})` };
+    // Sin imagen (un item al que todavía no le han puesto el arte) se devuelve
+    // el hueco vacío en vez de un `url(null)` que el navegador intenta cargar.
+    const style = item.img ? { backgroundImage: `url(${item.img})` } : {};
     if (id === 'Tera' && pkm?.teraType) {
         style.filter = `drop-shadow(0 0 4px ${typeColor(pkm.teraType)})`;
+    }
+    // Al revés que el orbe: aquí cada objeto tiene su propio sprite, así que se
+    // dibuja el que lleve puesto y el halo solo sirve de recordatorio del tipo
+    // que refuerza.
+    if (id === 'Equip' && pkm?.equipItem) {
+        const equip = EQUIP_BY_ID[pkm.equipItem];
+        if (equip?.img) {
+            style.backgroundImage = `url(${equip.img})`;
+            style.filter = `drop-shadow(0 0 4px ${typeColor(equip.typeId)})`;
+        }
     }
     return style;
 };
@@ -126,11 +173,13 @@ export const attachIconStyle = (id, pkm) => {
 // Arte grande de la carta que lleva pegada un Pokémon, o null si ese item no
 // tiene carta propia.
 //
-// El Orbe Tera es el único que depende del Pokémon: hay 19 cartas, una por
-// tipo, y cuál toca lo dice `teraType`. MT y cristal Z no salen por aquí: su
-// carta la resuelve ModalTMCard a partir de `attack3`, no del id del item.
+// Dos dependen del Pokémon: el Orbe Tera —19 cartas, una por tipo, y cuál toca
+// lo dice `teraType`— y el objeto de equipo, que son 18 y las dice `equipItem`.
+// MT y cristal Z no salen por aquí: su carta la resuelve ModalTMCard a partir
+// de `attack3`, no del id del item.
 export const getAttachCard = (id, pkm) => {
-    if (id === 'Tera') return TERA_BY_ID[pkm?.teraType]?.img || null;
+    if (id === 'Tera')  return TERA_BY_ID[pkm?.teraType]?.img || null;
+    if (id === 'Equip') return EQUIP_BY_ID[pkm?.equipItem]?.card || null;
     return getAttachItem(id)?.card || null;
 };
 

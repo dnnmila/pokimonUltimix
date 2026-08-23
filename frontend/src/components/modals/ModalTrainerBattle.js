@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { typeColor, typeLabel } from '../../pokemonTypes';
 import PokemonNameSearch, { usePokemonList } from '../PokemonNameSearch';
 import SERVER_IP from '../../config.js';
 import TOKEN_COLORS, { tokenColorHex, tokenColorLabel } from '../../data/tokenColors.js';
+import { mirrorPkm, mirrorView, mirrorClosed } from '../../data/eventMirror';
 
 // Montaje del Combate de Entrenador.
 //
@@ -34,6 +35,7 @@ const ModalTrainerBattle = ({
     loading = false,
     error = null,
     onOpenRules,
+    onMirror,         // publica la foto para la tabla de /players
 }) => {
     // El catálogo ya está cacheado por el buscador; sirve para completar la ficha
     // cuando se escribe el nombre a pelo y no se toca ninguna sugerencia.
@@ -44,6 +46,24 @@ const ModalTrainerBattle = ({
     const [rivals, setRivals] = useState([null, null]);
     const [rolling, setRolling] = useState(false);
     const [rollError, setRollError] = useState(null);
+
+    // Espejo (ver data/eventMirror.js). Los dos rivales van a la FILA de abajo
+    // aunque solo haya uno: así el panel no cambia de forma al pasar de la
+    // carta (1) a la (2), que es el mismo evento con otro número de huecos.
+    useEffect(() => {
+        if (!onMirror) return;
+        if (!show) { onMirror(mirrorClosed('trainerBattle')); return; }
+        const puestos = rivals.slice(0, count);
+        const listos = puestos.filter(Boolean);
+        onMirror(mirrorView('trainerBattle',
+            listos.length === puestos.length
+                ? `${count === 1 ? 'Rival listo' : 'Los 2 rivales listos'} · ganándolos todos se lleva ${count === 1 ? 'una carta' : '2 cartas'} de objeto`
+                : `Entrenador de ${count} ${count === 1 ? 'Pokémon' : 'Pokémon'} · eligiendo rival${count === 1 ? '' : 'es'}`,
+            {
+                color,
+                list: puestos.map((r, i) => mirrorPkm(r, `Rival ${i + 1}`)).filter(Boolean),
+            }));
+    }, [show, count, color, rivals, onMirror]);
 
     if (!show) return null;
 
