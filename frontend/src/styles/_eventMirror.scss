@@ -1,0 +1,352 @@
+// Espejo de eventos en la tabla de /players.
+//
+// Pantalla de mesa: se mira de lejos y de pie, así que todo va a un tamaño que
+// en una tablet sería exagerado — token enorme, nombre grande y una sola línea
+// de estado. El color de la tarjeta del evento entra por `--ev-accent`, que lo
+// pone el componente desde data/simEvents.
+//
+// Comparte z-index con el espejo de la batalla (1000): nunca coinciden, porque
+// el del evento se retira en cuanto `battlePublic` se enciende.
+
+.evmirror-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2vh 2vw;
+}
+
+.evmirror-panel {
+    background: #14161c;
+    border: 3px solid var(--ev-accent, #5ec8f2);
+    border-radius: 18px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8),
+                0 0 26px var(--ev-accent, #5ec8f2);
+    padding: 1.6rem 2rem 1.4rem;
+    width: min(1200px, 92vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+}
+
+// ── Cabecera ────────────────────────────────────────────────────────────────
+.evmirror-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.8rem;
+}
+
+.evmirror-head-icon {
+    width: 3.2rem;
+    height: 3.2rem;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.7));
+}
+
+.evmirror-head-text { flex: 1 1 auto; min-width: 0; }
+
+.evmirror-head-title {
+    color: var(--ev-accent, #5ec8f2);
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+}
+
+.evmirror-head-en {
+    color: #8f8f8f;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+// Quién está jugando el evento. Va a la derecha y en grande porque en la mesa
+// lo primero que se pregunta al ver saltar el panel es «¿de quién es esto?».
+.evmirror-head-host {
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    color: #eaeaea;
+    font-size: 1.15rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    padding: 0.3rem 1rem;
+}
+
+// ── Lo elegido ──────────────────────────────────────────────────────────────
+.evmirror-picks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.4rem;
+}
+
+.evmirror-pick {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.evmirror-pick-label {
+    color: #8f8f8f;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.evmirror-pick-dot {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.65);
+}
+
+.evmirror-pick-val {
+    color: #eaeaea;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.evmirror-pick-type {
+    border-radius: 6px;
+    color: white;
+    font-size: 1.15rem;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    padding: 0.15rem 0.8rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+// ── Lámina del evento ───────────────────────────────────────────────────────
+// El mapa del subsuelo. Comparte panel con las fichas y la línea de estado, así
+// que va a un tope de alto bajo: aquí es referencia —«¿de qué caverna salió
+// esto?»— y quien tiene que leer las cavernas con detalle las tiene en la
+// tablet. Los dos topes con la proporción libre: entero y sin franjas.
+.evmirror-art {
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    overflow: hidden;
+    line-height: 0;
+    max-width: 100%;
+
+    img {
+        display: block;
+        max-width: 100%;
+        max-height: 34vh;
+        width: auto;
+        height: auto;
+    }
+}
+
+// ── Fichas ──────────────────────────────────────────────────────────────────
+.evmirror-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+}
+
+.evmirror-vs {
+    color: #8f8f8f;
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+}
+
+.evmirror-pkm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.evmirror-pkm-label {
+    color: var(--token-color, #5ec8f2);
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+// El anillo del color del token: es como se identifica la ficha en la mesa, así
+// que va alrededor del token y no como una etiqueta aparte.
+// Sin `overflow: hidden` a propósito: la marca del dado va montada en la
+// esquina, medio fuera del círculo, y el recorte se la comía. Los tokens son
+// PNG cuadrados con la ficha redonda dentro y fondo transparente, así que no
+// hay nada que recortar.
+.evmirror-pkm-art {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 3px solid var(--token-color, #5ec8f2);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--token-color, #5ec8f2) 55%, transparent);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    img { width: 100%; height: 100%; object-fit: contain; }
+}
+
+.evmirror-pkm-art-fallback {
+    color: #6a6a78;
+    font-weight: bold;
+}
+
+// La marca redonda de la esquina: hoy, la cara del D6 que saca a cada Prop del
+// reparto. Va encima del token y no debajo para que se lea como «este sale con
+// el 3», no como un pie de foto más.
+.evmirror-pkm-badge {
+    position: absolute;
+    top: -0.35rem;
+    left: -0.35rem;
+    min-width: 1.9rem;
+    height: 1.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #14161c;
+    border: 2px solid var(--ev-accent, #5ec8f2);
+    border-radius: 50%;
+    color: #eaeaea;
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+// Fila de opciones: la elegida se enciende y el resto se retiran. No se ocultan
+// —la gracia es ver la tabla entera de la carta—, solo pierden fuerza.
+.evmirror-pkm.is-off {
+    opacity: 0.32;
+    filter: grayscale(0.85);
+}
+
+.evmirror-pkm.is-on {
+    .evmirror-pkm-art {
+        border-color: var(--ev-accent, #5ec8f2);
+        box-shadow: 0 0 20px var(--ev-accent, #5ec8f2);
+        transform: scale(1.08);
+    }
+    .evmirror-pkm-badge {
+        background: var(--ev-accent, #5ec8f2);
+        color: #111;
+    }
+    .evmirror-pkm-name { color: var(--ev-accent, #5ec8f2); }
+}
+
+.evmirror-pkm-name {
+    color: white;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    text-align: center;
+}
+
+.evmirror-pkm-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.3rem;
+
+    span {
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        letter-spacing: 0.02em;
+        padding: 0.1rem 0.5rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+}
+
+.evmirror-pkm-lvl { background: rgba(255, 255, 255, 0.16); }
+
+// Dos tamaños: el protagonista y los acompañantes de la fila de abajo.
+//
+// El grande va en `clamp` contra el alto de la pantalla y no en un rem fijo. En
+// la mesa hay eventos que traen las tres zonas a la vez —dos fichas, marcador y
+// una fila de cuatro— y con un tamaño fijo el panel se pasaba de largo y había
+// que desplazarlo, que en una pantalla que solo se mira es como no verlo.
+.evmirror-pkm--big {
+    .evmirror-pkm-art {
+        width: clamp(8rem, 22vh, 15rem);
+        height: clamp(8rem, 22vh, 15rem);
+    }
+    .evmirror-pkm-name { font-size: clamp(1.2rem, 2.4vh, 1.9rem); }
+    .evmirror-pkm-meta span { font-size: 0.95rem; }
+}
+
+.evmirror-pkm--small {
+    .evmirror-pkm-art {
+        width: clamp(4rem, 9vh, 6.2rem);
+        height: clamp(4rem, 9vh, 6.2rem);
+        border-width: 2px;
+    }
+    .evmirror-pkm-name { font-size: 0.95rem; }
+    .evmirror-pkm-meta span { font-size: 0.7rem; }
+    .evmirror-pkm-label { font-size: 0.68rem; }
+}
+
+// ── Marcador ────────────────────────────────────────────────────────────────
+.evmirror-score {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+
+    i {
+        color: #6a6a78;
+        font-size: 1.6rem;
+        font-style: normal;
+    }
+}
+
+.evmirror-score-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    strong {
+        color: white;
+        font-size: 2.6rem;
+        line-height: 1;
+    }
+}
+
+.evmirror-score-label {
+    color: #8f8f8f;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+// ── Acompañantes ────────────────────────────────────────────────────────────
+.evmirror-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.1rem;
+    width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1rem;
+}
+
+// ── Estado ──────────────────────────────────────────────────────────────────
+.evmirror-status {
+    background: color-mix(in srgb, var(--ev-accent, #5ec8f2) 16%, transparent);
+    border: 1px solid var(--ev-accent, #5ec8f2);
+    border-radius: 999px;
+    color: #eaeaea;
+    font-size: 1.15rem;
+    letter-spacing: 0.03em;
+    padding: 0.4rem 1.4rem;
+    text-align: center;
+}

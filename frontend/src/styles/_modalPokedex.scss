@@ -97,6 +97,20 @@
     color: transparent;
 }
 
+/* Formas legendarias. Sigue la regla de las otras dos flechas: el icono es el
+   objeto que provoca el cambio, para que se lea de un vistazo qué hace falta
+   para llegar ahí. Con el símbolo de mega diría algo que no es —un Crown Sword
+   Zacian no es una megaevolución. */
+.pokedex-arrow--legend {
+    background-image: url('../images/store/chart/LegendaryEvo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+}
+
 .pokedex-arrow--gmax {
     background-image: url('../images/dinamax.png');
     background-size: contain;

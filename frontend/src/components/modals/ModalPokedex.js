@@ -23,6 +23,26 @@ const TokenImg = ({ pokedex, isMega, isCurrent }) => {
     );
 };
 
+// Formas que cuelgan de un eslabón en vez de continuar la cadena: megas y
+// formas legendarias. Se dibujan igual —una flecha y los tokens al lado— y solo
+// cambia el icono de la flecha, que es el objeto que provoca el cambio: el
+// símbolo de mega para unas, el objeto legendario para las otras.
+const SideForms = ({ forms, kind }) => {
+    if (!forms || forms.length === 0) return null;
+    return (
+        <>
+            <div className={`pokedex-arrow pokedex-arrow--${kind}`}></div>
+            <div className="pokedex-branches">
+                {forms.map(pokedex => (
+                    <div key={pokedex} className="pokedex-branch-group">
+                        <TokenImg pokedex={pokedex} isMega={true} />
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+};
+
 const ModalPokedex = ({ show, onClose, player }) => {
     const [chains, setChains] = useState({});
 
@@ -75,19 +95,9 @@ const ModalPokedex = ({ show, onClose, player }) => {
                                                     <TokenImg pokedex={step.gmax} />
                                                 </>
                                             )}
-                                            {/* Megas — separadas */}
-                                            {step.megas && step.megas.length > 0 && (
-                                                <>
-                                                    <div className="pokedex-arrow pokedex-arrow--mega"></div>
-                                                    <div className="pokedex-branches">
-                                                        {step.megas.map(megaPokedex => (
-                                                            <div key={megaPokedex} className="pokedex-branch-group">
-                                                                <TokenImg pokedex={megaPokedex} isMega={true} />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            )}
+                                            {/* Megas y formas legendarias — separadas */}
+                                            <SideForms forms={step.megas} kind="mega" />
+                                            <SideForms forms={step.legendaries} kind="legend" />
                                             {/* Ramas de evolución */}
                                             {step.branches && step.branches.length > 0 && (
                                                 <>
@@ -102,18 +112,8 @@ const ModalPokedex = ({ show, onClose, player }) => {
                                                                         <TokenImg pokedex={branch.gmax} />
                                                                     </>
                                                                 )}
-                                                                {branch.megas && branch.megas.length > 0 && (
-                                                                    <>
-                                                                        <div className="pokedex-arrow pokedex-arrow--mega"></div>
-                                                                        <div className="pokedex-branches">
-                                                                            {branch.megas.map(megaPokedex => (
-                                                                                <div key={megaPokedex} className="pokedex-branch-group">
-                                                                                    <TokenImg pokedex={megaPokedex} isMega={true} />
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </>
-                                                                )}
+                                                                <SideForms forms={branch.megas} kind="mega" />
+                                                                <SideForms forms={branch.legendaries} kind="legend" />
                                                                 {branch.nextEvolution && (
                                                                     <>
                                                                         <div className="pokedex-arrow">▶</div>

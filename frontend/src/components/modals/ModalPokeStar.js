@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PROPS, propForDie } from '../../data/pokeStar.js';
+import { mirrorPkm, mirrorView, mirrorClosed } from '../../data/eventMirror';
 
 // Montaje de Poké Star Studios.
 //
@@ -26,12 +27,42 @@ const ModalPokeStar = ({
     loading = false,
     error = null,
     onOpenRules,
+    onMirror,         // publica la foto para la tabla de /players
 }) => {
     const [die, setDie] = useState(null);
     const [rolling, setRolling] = useState(false);
     const spinRef = useRef(null);
 
     useEffect(() => () => clearInterval(spinRef.current), []);
+
+    // Espejo (ver data/eventMirror.js). `rolling` corta el publicado mientras
+    // el dado gira: son doce caras por segundo y no se trata de retransmitir la
+    // animación, sino la cara que se quedó. El nivel del Prop es el del Pokémon
+    // con el que se rueda, y eso todavía no se sabe aquí — de ahí el '?'.
+    useEffect(() => {
+        if (!onMirror) return;
+        if (!show) { onMirror(mirrorClosed('pokeStar')); return; }
+        if (rolling) return;
+        const prop = propForDie(die);
+        onMirror(mirrorView('pokeStar',
+            prop ? `D6 · ${die} → ${prop.name}` : 'Tirando el D6 del reparto',
+            {
+                main: prop ? { ...mirrorPkm(prop, 'Prop Pokémon'), level: '?' } : null,
+                // El reparto entero, con la cara del dado que saca a cada uno:
+                // en la mesa se sigue la tabla de la carta, así que enseñarla es
+                // lo que deja ver por qué salió ese y de cuál se libró uno.
+                //
+                // Sin etiqueta ni nivel: el número del dado va en la marca y el
+                // nivel de un Prop no existe hasta saber con quién rueda, así
+                // que seis «Nv ?» en fila solo serían ruido.
+                list: PROPS.map(p => ({
+                    ...mirrorPkm(p),
+                    level: null,
+                    badge: p.die,
+                    on: p.die === die,
+                })),
+            }));
+    }, [show, die, rolling, onMirror]);
 
     if (!show) return null;
 

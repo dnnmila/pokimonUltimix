@@ -14,21 +14,22 @@ import imgTM   from '../images/tm.png';
 import imgZ    from '../images/Cristal_Z.png';
 import imgMax  from '../images/dinamax.png';
 import imgMega from '../images/Megaevo.webp';
-// La horda no tiene icono propio: usa el token de Zubat, que es el de la carta.
-import imgHorde from '../images/tokens_ultimix/0041.png';
+// La horda va con el arte de su propia carta física, la misma que se consulta
+// desde el «?» del evento (images/rules/horde encounter.png).
+import imgHorde from '../images/rules/horde encounter.png';
 // El combate de entrenador usa un retrato de entrenador de los que ya hay.
 import imgTrainer from '../images/trainers/Trainer1.webp';
 // El concurso se premia con una carta Ribbon: su arte hace de icono.
 import imgRibbon from '../images/Nuevos items/Map Specific Items/Ribbon.png';
 // El rodaje usa el token de Brycen-Man, el primero de la tabla del D6.
 import imgPokeStar from '../images/tokens_ultimix/PS1.png';
+// El subsuelo va con el token de Diglett, que es el excavador de la casa.
+import imgUnderground from '../images/tokens_ultimix/0050.png';
 
-// El directorio de tipos Tera tiene un espacio al final del nombre. El require
-// va en template literal a propósito: webpack arma un contexto y, si el archivo
-// falta, falla en runtime (lo atrapa el catch) en vez de romper el build.
-const loadTeraImg = () => {
-    try { return require(`../images/Tera Type /Tera_Type_-_Stellar.png`); } catch { return null; }
-};
+// El Orbe Tera va con el mismo icono que en la tienda: el orbe en sí, no el
+// símbolo de un tipo — el evento reparte el objeto, y el tipo lo elige cada
+// carta. Es además el que ya pinta la bolsa en ModalEvents.
+import imgTeraOrb from '../images/store/chart/TeraOrb.png';
 
 // `accent` pinta el borde y el título de la tarjeta: agrupa de un vistazo los
 // eventos de «recoger objeto» (los tres primeros) frente a los de combate.
@@ -51,10 +52,10 @@ export const SIM_EVENTS = [
     },
     {
         id: 'takeTera',
-        title: 'Take Terra Orb',
+        title: 'Take Tera Orb',
         es: 'Toma el Orbe Tera',
         desc: 'Salen 3 Orbes Tera al azar: quédate uno para equiparlo o guardarlo.',
-        img: loadTeraImg(),
+        img: imgTeraOrb,
         accent: '#b06ef2',
     },
     {
@@ -102,6 +103,15 @@ export const SIM_EVENTS = [
         rules: 'contest',
         img: imgRibbon,
         accent: '#5ec8f2',
+    },
+    {
+        id: 'underground',
+        title: 'Grand Underground',
+        es: 'Subsuelo de Sinnoh',
+        desc: 'Elige color de token y tipo de caverna: sale un salvaje y se pelea.',
+        rules: 'underground',
+        img: imgUnderground,
+        accent: '#4fb6e8',
     },
     {
         id: 'megaBattle',

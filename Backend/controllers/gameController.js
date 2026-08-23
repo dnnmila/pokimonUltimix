@@ -990,7 +990,7 @@ export const getPokemonList = async (req, res) => {
 // Solo formas normales con POKEDEX de 4 dígitos (sin megas, G-Max ni formas alternas).
 export const getRandomPokemon = async (req, res) => {
     try {
-        const { color } = req.query;
+        const { color, type } = req.query;
         const db = await openDb();
 
         const filters = [
@@ -1001,6 +1001,12 @@ export const getRandomPokemon = async (req, res) => {
         if (color) {
             filters.push('TOKEN_COLOR = ?');
             params.push(color);
+        }
+        // El tipo mira las DOS columnas: en el Grand Underground vale que el
+        // Pokémon TENGA el tipo de la caverna, no que sea el primero.
+        if (type) {
+            filters.push('(TYPE1 = ? OR TYPE2 = ?)');
+            params.push(type.toUpperCase(), type.toUpperCase());
         }
 
         const row = await db.get(
@@ -2003,6 +2009,80 @@ export const simMegaBattle = async (req, res) => {
 
         updateGameAndNotify();
         res.status(200).json({ message: 'Combate mega listo', pokemon: mega });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  ESPEJO DE EVENTOS
+//
+//  La tablet publica aquí una FOTO de lo que está enseñando el modal del evento
+//  (color de token elegido, tipo, quién salió, en qué paso va) y la tabla de
+//  /players la repinta. No es estado de juego: nada de lo que llega manda sobre
+//  la partida, así que no se valida más allá de que el jugador exista.
+//
+//  Cerrar: llega el mismo `event` con `closed: true`. Se compara el id del
+//  evento antes de borrar porque los modales publican al abrirse Y al cerrarse,
+//  y al saltar de un evento a otro las dos peticiones se cruzan: sin la
+//  comparación, el «cerré la horda» que sale un instante después borraría la
+//  incursión que acaba de abrirse.
+// ═══════════════════════════════════════════════════════════════════════════
+export const setEventMirror = async (req, res) => {
+    try {
+        const { playerId, view } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        const game = getGame();
+
+        if (!view || view.closed) {
+            const mismoEvento = !view || game.eventMirror?.event === view.event;
+            if (game.eventMirror?.hostId === playerId && mismoEvento) game.eventMirror = null;
+        } else {
+            game.eventMirror = { ...view, hostId: playerId, hostName: player.name };
+        }
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Espejo del evento actualizado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  GRAND UNDERGROUND (evento «Underground»)
+//
+//  La carta dice «battle it under wild conditions», así que no hay nada que
+//  inventar: se monta el Pokémon como salvaje y el flujo de siempre se encarga
+//  del resto (subir nivel, capturar, debilitar). Por eso, igual que el Combate
+//  Mega, NO guarda estado en `game`: quién salió ya vive en el simRival.
+//
+//  El sorteo en sí lo hace /random-pokemon con `?color=&type=`; aquí solo llega
+//  el elegido para plantarlo enfrente.
+// ═══════════════════════════════════════════════════════════════════════════
+export const undergroundBattle = async (req, res) => {
+    try {
+        const { playerId, pokedex } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+        if (!pokedex) return res.status(400).json({ message: 'Falta el Pokémon' });
+
+        const db = await openDb();
+        const wild = await buildPokemonFromDex(pokedex, db, 'underground');
+        if (!wild) return res.status(404).json({ message: 'Pokémon no encontrado: ' + pokedex });
+
+        const rival = new Rival('SimUnderground-' + playerId, 'Wild Pokemon');
+        rival.addPokemon(wild);
+        player.setSimRival(rival);
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Encuentro subterráneo listo', pokemon: wild });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

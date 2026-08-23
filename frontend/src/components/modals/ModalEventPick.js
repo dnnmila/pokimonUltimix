@@ -7,7 +7,7 @@ import { attachLabel } from '../../attachItems';
 import PokemonName from '../PokemonName';
 import imgTM from '../../images/tm.png';
 
-// Eventos de «toma una carta»: Take TM, Take Z Crystal y Take Terra Orb.
+// Eventos de «toma una carta»: Take TM, Take Z Crystal y Take Tera Orb.
 //
 // Los tres son el mismo evento con distinta baraja —salen 3, eliges 1, decides
 // si la equipas ahora o la guardas— así que comparten componente y estilos. Lo
@@ -41,7 +41,7 @@ const LABELS = {
         confirmText: 'Pierdes los 3 cristales y no puedes volver a lanzar este evento en tu turno.',
     },
     tera: {
-        title: 'Take Terra Orb',
+        title: 'Take Tera Orb',
         titleSaved: 'Orbe Tera guardado',
         rollSub: 'Salieron 3 Orbes Tera al azar. Elige uno.',
         targetSub: (n) => `¿A qué Pokémon le doy ${n || 'el orbe'}?`,

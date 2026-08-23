@@ -129,7 +129,7 @@ export const getTeraBonus = (pkm, attack) => {
 };
 
 /**
- * Sorteo del evento «Take Terra Orb»: n orbes distintos.
+ * Sorteo del evento «Take Tera Orb»: n orbes distintos.
  *
  * Entran los 19, Stellar incluido: es una carta rara pero legítima —defensa
  * total a cambio de no dar el +1— y esconderla del sorteo la volvería inútil.

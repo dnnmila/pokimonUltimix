@@ -220,6 +220,16 @@ class Player {
         this.removeMegasOf(idPokemon);
     }
 
+    attachEquipToPokemon(idPokemon, equipItem){
+        const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);
+        if (!pokemon) {
+            console.log('Pokémon no encontrado');
+            return;
+        }
+        pokemon.addEquip(equipItem);
+        this.removeMegasOf(idPokemon);
+    }
+
     // `attachAs` es "MT" o "Z": ambos ocupan el mismo hueco (ver Pokemons.addTM).
     attachTM(idPokemon, Attack, attachAs = "MT"){
         const pokemon = this.pokemons.find(pkmn => pkmn.id === idPokemon);

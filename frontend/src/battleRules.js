@@ -17,9 +17,18 @@ export const ITEM_BONUS = {
     Claw:    0,
     MT:      0,   // el TM ya reemplaza el ataque 3
     Mega:    0,   // la mega ya cambia de forma
+    // Tampoco suma: la ventaja es la forma en sí, que trae su propio nivel y sus
+    // propios ataques (Crown Sword Zacian sube de 7 a 8 y estrena Behemoth Blade).
+    LegendEvo: 0,
     // El orbe no suma un fijo: da +1 solo a los ataques de su tipo, y solo si
     // el Pokémon sube teracristalizado (ver getTeraBonus en data/teraTypes.js).
     Tera:    0,
+    // Tampoco: el objeto de equipo da +1 solo a los ataques de su tipo, y con
+    // poder 0 ni eso (ver getEquipBonus en data/equipment.js).
+    Equip:   0,
+    // El Pokémon Alfa sí sube el golpe, pero no un fijo: depende de lo fuerte
+    // que sea ya el ataque (ver getAlphaBonus, aquí abajo).
+    Alpha:   0,
     // Items de apoyo: son marcadores, su efecto lo aplican los jugadores a mano
     // (monedas, exp, curación...). Poner un número aquí lo suma al total.
     Berry:      0,
@@ -106,6 +115,27 @@ const appliesTo = (slot, side) => {
 
 // El item va pegado al Pokémon, así que no depende del ataque
 export const getItemBonus = (pkm) => (pkm && ITEM_BONUS[pkm.attach]) || 0;
+
+// ─── Pokémon Alfa ────────────────────────────────────────────────────────────
+//
+// Sube todos los ataques, pero con techo: el ataque no puede acabar pegando más
+// de ALPHA_CAP. Así que el +2 entero solo lo ven los ataques flojos, y a partir
+// de ahí se recorta hasta desaparecer:
+//
+//   poder 1 → +2 (queda en 3)     poder 3 → +1 (queda en 4)
+//   poder 2 → +2 (queda en 4)     poder 4 o más → nada
+//
+// Los movimientos de poder 0 quedan fuera: el objeto refuerza el golpe, y un
+// movimiento de estado no golpea. Es la misma excepción que la de los objetos
+// de equipo, que la traen escrita en la carta.
+export const ALPHA_BONUS = 2;
+export const ALPHA_CAP   = 4;
+
+export const getAlphaBonus = (pkm, attack) => {
+    if (!pkm || pkm.attach !== 'Alpha') return 0;
+    if (!attack || !attack.strength) return 0;
+    return Math.max(0, Math.min(ALPHA_BONUS, ALPHA_CAP - attack.strength));
+};
 
 // Stealth Rock: los exentos ganan sobre los débiles cuando un Pokémon es las dos
 // cosas, porque la carta los exime de forma explícita.

@@ -78,6 +78,18 @@ class Game {
         // que todos pasen una vez por la tienda barata. `nextTurn` los descuenta
         // y al llegar a cero el descuento se apaga solo.
         this.storeDiscount = null;
+        // Espejo de eventos: lo que la tablet está enseñando ahora mismo en el
+        // modal de un evento, para repetirlo en la tabla de /players. Es una
+        // FOTO de solo lectura —color elegido, tipo, quién salió, en qué paso
+        // va—, no estado de juego: nada de aquí manda sobre la partida, y
+        // borrarlo no deshace nada. La tablet la va publicando con
+        // /event-mirror; ver setEventMirror en gameController.
+        //
+        //   { hostId, hostName, event, status, color, type, main, vs, list, score }
+        //
+        // Los eventos de «toma una carta» (MT, Cristal Z, Orbe Tera) NO pasan
+        // por aquí a propósito: son la mano del jugador y se juegan en privado.
+        this.eventMirror = null;
 
 
 
@@ -260,6 +272,9 @@ class Game {
         this.battlePublic = true;
         this.battlePhase = 'PokemonSelection';
         this.simFormsView = false;
+        // Manda el espejo de la batalla: el del evento ya cumplió (el montaje
+        // era justo lo que enseñaba) y dejarlo puesto solo taparía el combate.
+        this.eventMirror = null;
         this.myPlayerPkm = [];
         this.myRivalPkm = [];
         this.myPlayerPkmAtk = [];
@@ -330,6 +345,8 @@ class Game {
 
         this.battlePublic = false;
         this.battlePhase = 'PokemonSelection';
+        // El espejo del evento es de la jugada de quien acaba de salir
+        this.eventMirror = null;
         // Las cartas de campo se descartan al terminar la batalla
         this.clearFieldMoves();
         this.myPlayerPkm = [];
@@ -380,6 +397,8 @@ class Game {
 
         this.battlePublic = false;
         this.battlePhase = 'PokemonSelection';
+        // El espejo del evento es de la jugada de quien acaba de salir
+        this.eventMirror = null;
         // Las cartas de campo se descartan al terminar la batalla
         this.clearFieldMoves();
         this.myPlayerPkm = [];

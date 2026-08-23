@@ -6,17 +6,22 @@ import imgRemove from '../../images/delete.png';
 import ModalTMCatalog from './ModalTMCatalog';
 import ModalZCatalog from './ModalZCatalog';
 import ModalTeraCatalog from './ModalTeraCatalog';
+import ModalEquipCatalog from './ModalEquipCatalog';
+import ModalLegendaryChoice from './ModalLegendaryChoice';
 import { tmPowerFor } from '../../data/tms';
+import { legendaryFormsFor, legendaryUse } from '../../data/legendaryEvos';
 
 const TM_POWERS = [1,2,3,4,5];
 
-const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,attachMega,attachTera}) => {
+const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,attachMega,attachTera,attachEquip,attachLegendary}) => {
     const [openTM, setOpenTM] = useState('false');
     const [tmType, setTmType] = useState();
     const [tmLevel, setTmLevel] = useState(0);
     const [showCatalog, setShowCatalog] = useState(false);
     const [showZ, setShowZ] = useState(false);
     const [showTera, setShowTera] = useState(false);
+    const [showEquip, setShowEquip] = useState(false);
+    const [showLegend, setShowLegend] = useState(false);
   
 
     
@@ -42,6 +47,7 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
         setShowCatalog(false);
         setShowZ(false);
         setShowTera(false);
+        setShowEquip(false);
         setOpenTM('false');
         onClose();
     }
@@ -92,13 +98,37 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
         onClose();
     };
 
+    // El objeto de equipo tampoco crea ataque ni cambia al Pokémon: se guarda
+    // cuál es y ya la batalla le suma el +1 a los ataques de su tipo.
+    const attachEquipHandle = (item) => {
+        attachEquip(currentPlayer.id, pokemonId, item.id);
+        setShowEquip(false);
+        setOpenTM('false');
+        onClose();
+    };
+
     const attachMegaHandle = (currentPlayer,pokemonId) => {
         console.log('Atttch Mega');
         attachMega(currentPlayer.id, pokemonId);
         setOpenTM('false');
         onClose();
-        
+
     }
+
+    // Para qué le sirve el objeto legendario a este Pokémon: 'form' (lo
+    // transforma), 'evolve' (le habilita la evolución, Zygarde) o null.
+    const legendKind  = legendaryUse(targetPokemon);
+    // Formas que admite. Un Pokémon ya transformado sigue devolviendo las de su
+    // base, que es lo que deja pasar de Black a White Kyurem sin quitarle antes
+    // el objeto. Vacío para Zygarde: ahí el objeto no monta ninguna forma.
+    const legendForms = legendaryFormsFor(targetPokemon);
+
+    const attachLegendaryHandle = (formPokedex) => {
+        attachLegendary(currentPlayer.id, pokemonId, formPokedex);
+        setShowLegend(false);
+        setOpenTM('false');
+        onClose();
+    };
 
     const handleTM_type = (type) => {
         setTmType(type);
@@ -125,21 +155,48 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
         if (item.kind === 'tm')   return handleOpenTM();
         if (item.kind === 'z')    return setShowZ(true);
         if (item.kind === 'tera') return setShowTera(true);
+        if (item.kind === 'equip') return setShowEquip(true);
         if (item.kind === 'mega') return attachMegaHandle(currentPlayer, pokemonId);
+        if (item.kind === 'legend') {
+            // Zygarde: el objeto no monta ninguna forma, solo se queda puesto
+            // para habilitar la evolución. Es un adjuntar normal y corriente.
+            if (legendKind === 'evolve') {
+                return attachItemHandle(currentPlayer, pokemonId, item.id);
+            }
+            // Con una sola forma no hay nada que elegir: se pone y ya. El
+            // selector solo tiene sentido para Kyurem y Necrozma.
+            return legendForms.length === 1
+                ? attachLegendaryHandle(legendForms[0].pokedex)
+                : setShowLegend(true);
+        }
         attachItemHandle(currentPlayer, pokemonId, item.id);
     };
+
+    // Qué cartas ve el jugador. Las dos que se filtran son las que dependen de
+    // la especie:
+    //
+    //   'legend' → solo a quien le sirve de algo (ver legendaryUse).
+    //   'mega'   → a esos mismos se les esconde. Kyogre, Groudon, Hoopa, Kyurem
+    //              y las fases de Zygarde vienen marcados como mega en la base
+    //              de datos, pero lo suyo lo hace ahora el objeto legendario:
+    //              dejar la piedra ahí sería ofrecer un camino muerto.
+    const items = ATTACH_ITEMS.filter(item => {
+        if (item.kind === 'legend') return legendKind !== null;
+        if (item.kind === 'mega')   return legendKind === null;
+        return true;
+    });
 
     return (
         <div className="modal-backdrop">
             <div className="modal-attach">
                <div className='Title-modal'>Items to Attach</div>
                {openTM === 'false' && (<div className="Attach_all_options" >
-               {ATTACH_ITEMS.map(item => (
+               {items.map(item => (
                    <div key={item.id}
                         className={`Attach-item-card Attach-item-card--${item.kind}`}
                         title={item.es}
                         onClick={() => handlePick(item)}>
-                       <div className='Attach-item-icon' style={{ backgroundImage: `url(${item.img})` }}></div>
+                       <div className='Attach-item-icon' style={item.img ? { backgroundImage: `url(${item.img})` } : undefined}></div>
                        <span className='Attach-item-name'>{item.label}</span>
                    </div>
                ))}
@@ -210,6 +267,20 @@ const ModalAttach = ({ show, onClose,currentPlayer,pokemonId,onAttach,attachTM,a
                 onClose={() => setShowTera(false)}
                 onPick={attachTeraHandle}
                 pokemon={targetPokemon}
+            />
+
+            <ModalEquipCatalog
+                show={showEquip}
+                onClose={() => setShowEquip(false)}
+                onPick={attachEquipHandle}
+                pokemon={targetPokemon}
+            />
+
+            <ModalLegendaryChoice
+                show={showLegend}
+                options={legendForms}
+                onSelect={attachLegendaryHandle}
+                onClose={() => setShowLegend(false)}
             />
         </div>
     );

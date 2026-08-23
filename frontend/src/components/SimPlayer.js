@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import pokellamada from "../tones/pokellamada.mp3";
 import lifepointsSound from "../tones/lifepoints.mp3";
@@ -12,6 +12,7 @@ import ModalTiendaSim from "./modals/ModalTiendaSim";
 import ModalRulesGuide from "./modals/ModalRulesGuide";
 import ModalEvolveChoice from "./modals/ModalEvolveChoice";
 import ModalFrontier from "./modals/ModalFrontier";
+import ModalUnderground from "./modals/ModalUnderground";
 import ModalAttach from "./modals/ModalAttach";
 import ModalMote from "./modals/ModalMote";
 import PokemonName from "./PokemonName";
@@ -40,11 +41,12 @@ import ModalMegaBattle from "./modals/ModalMegaBattle";
 import { rollTMs, tmPowerFor, TMS_BY_ID } from "../data/tms";
 import { rollZCrystals, zMoveFor, Z_BY_ID } from "../data/zmoves";
 import { getTeraBonus, rollTeraOrbs, TERA_BY_ID } from "../data/teraTypes";
+import { getEquipBonus } from "../data/equipment";
 import { pokeStarEnding, ENDINGS as POKESTAR_ENDINGS } from "../data/pokeStar";
 import { getFrontier, FRONTIER_COINS } from "../data/frontiers";
 import { applyDynamax } from "../data/maxMoves";
 import SERVER_IP from "../config.js";
-import { getItemBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove, MAX_EXTRA_LEVEL } from "../battleRules";
+import { getItemBonus, getAlphaBonus, getFieldAttackBonus, getFieldFinalBonus, getFieldMove, MAX_EXTRA_LEVEL } from "../battleRules";
 import { attachIconStyle, attachLabel } from "../attachItems";
 import { TMBadge, ItemBadge } from "./PokemonBattleBadges";
 import { arenaStyle } from "../data/arenas";
@@ -73,6 +75,32 @@ const getPokemonImg = (pokedex) => {
     try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
 };
 
+// Formas que cuelgan de un eslabón de la cadena en vez de continuarla: megas y
+// formas legendarias. Se dibujan igual —una flecha y los tokens al lado— y solo
+// cambia el icono de la flecha, que es el objeto que provoca el cambio: el
+// símbolo de mega para unas, el objeto legendario para las otras.
+const SideForms = ({ forms, kind, generation }) => {
+    if (!forms || forms.length === 0) return null;
+    return (
+        <>
+            <div className={`pokedex-arrow pokedex-arrow--${kind}`}></div>
+            <div className="pokedex-branches">
+                {forms.map(pokedex => {
+                    const img = getSafePkmImg(pokedex, generation);
+                    return img ? (
+                        <div key={pokedex} className="pokedex-branch-group">
+                            <div className="pokedex-token-wrapper">
+                                <div className="pokedex-token pokedex-token--mega"
+                                     style={{ backgroundImage: `url(${img})` }} />
+                            </div>
+                        </div>
+                    ) : null;
+                })}
+            </div>
+        </>
+    );
+};
+
 const getFieldCardImg = (id) => {
     try { return require(`../images/Field Moves/${id}.png`); } catch { return null; }
 };
@@ -99,7 +127,7 @@ const battleForm = (pkm) => {
     };
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, attachEquip, attachLegendary, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onUndergroundBattle, onEventMirror, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -139,14 +167,16 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // el ataque queda anulado, así que las cartas que dependen del ataque tampoco
     // cuentan; el item y las que pegan al valor final siguen aplicando.
     //
-    // El +1 del Orbe Tera va con las que dependen del ataque —solo lo ganan los
-    // ataques del tipo del orbe—, así que también se cae si el ataque está
-    // anulado: sin ataque no hay ataque que reforzar.
+    // Los bonos del Orbe Tera, del objeto de equipo y del Pokémon Alfa van con
+    // las que dependen del ataque —miran su tipo o su poder—, así que también
+    // se caen si el ataque está anulado: sin ataque no hay nada que reforzar.
     const computeExtra = (pkm, attack, status, side) => {
         const always = getItemBonus(pkm) + getFieldFinalBonus(pkm, fieldMoves, side);
         const nullified = status === 'Asleep' || status === 'Paralized' || status === 'Frozen';
         if (nullified) return always;
-        return always + getFieldAttackBonus(attack, fieldMoves, side) + getTeraBonus(pkm, attack);
+        return always + getFieldAttackBonus(attack, fieldMoves, side)
+            + getTeraBonus(pkm, attack) + getEquipBonus(pkm, attack)
+            + getAlphaBonus(pkm, attack);
     };
 
     const [leaders, setLeaders] = useState([]);
@@ -256,6 +286,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [showHelp, setShowHelp] = useState(false);
     const [megaBattleOpen, setMegaBattleOpen] = useState(false);
     const [megaLoading, setMegaLoading] = useState(false);
+    const [undergroundOpen, setUndergroundOpen] = useState(false);
+    const [undergroundLoading, setUndergroundLoading] = useState(false);
     // ¿Hay alguna guía abierta encima del concentrador de Ayuda?
     const guideOpen = showLeaderViewer || showRulesGuide || showTMCatalog || Boolean(raidRulesOpen);
     // MT abierta a tamaño carta durante la batalla: {attack, pokemonName}
@@ -581,6 +613,42 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             .catch(() => setShowWildModal(false));
     }, [player?.simRival?.id]);
 
+    // ── Espejo de eventos ───────────────────────────────────────────────────
+    // Lo que cada modal de evento va enseñando se publica aquí para que la tabla
+    // de /players lo repita. Es solo para mirar: no manda sobre la partida y si
+    // se pierde no pasa nada, así que ni se espera la respuesta ni se avisa de
+    // los fallos — un espejo que se queda atrás no puede tumbar la jugada.
+    //
+    // Los tres eventos de «toma una carta» no llaman aquí: se juegan en privado.
+    //
+    // Esta función TIENE QUE SER ESTABLE entre renders, y con cuidado: los
+    // modales la llevan en las dependencias de su useEffect, así que una
+    // identidad nueva vuelve a disparar los siete efectos. Y como publicar
+    // provoca un `gameUpdated`, que re-renderiza esto, sería un bucle cerrado
+    // que ahoga el socket — se cayó en él y dejó lento hasta el sorteo por
+    // color.
+    //
+    // De ahí las dos precauciones:
+    //   1. `onEventMirror` NO va en las dependencias. Viene de App, que la
+    //      redefine en cada render, así que se guarda en una ref y se lee al
+    //      llamar; la función de fuera cambia, esta no.
+    //   2. No se manda lo mismo dos veces seguidas. La firma se guarda POR
+    //      EVENTO, porque hay siete modales montados a la vez publicando cada
+    //      uno lo suyo. Es la red de seguridad: aunque un efecto se dispare de
+    //      más, si no hay nada nuevo que contar no sale ninguna petición.
+    const mirrorFnRef = useRef(onEventMirror);
+    mirrorFnRef.current = onEventMirror;
+    const lastMirrorRef = useRef({});
+
+    const publishEventMirror = useCallback((view) => {
+        const enviar = mirrorFnRef.current;
+        if (!playerId || !enviar || !view?.event) return;
+        const firma = JSON.stringify(view);
+        if (lastMirrorRef.current[view.event] === firma) return;
+        lastMirrorRef.current[view.event] = firma;
+        enviar(playerId, view);
+    }, [playerId]);
+
     if (!player) {
         return <div className="sim-player">Jugador no encontrado.</div>;
     }
@@ -708,8 +776,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         });
     };
 
-    // Fases 'evo' (Zygarde 10%/50%): solo evolucionan si tienen la mega piedra puesta
-    const canEvolveWithStone = (pkm) => pkm.mega === 'evo' && pkm.attach === 'Mega';
+    // Fases 'evo' (Zygarde 10%/50%): solo evolucionan si llevan puesto el objeto
+    // legendario, que se gasta al hacerlo. Antes lo hacía la mega piedra, y se
+    // sigue aceptando por las partidas que ya tuvieran un Zygarde con ella.
+    const canEvolveWithStone = (pkm) =>
+        pkm.mega === 'evo' && (pkm.attach === 'LegendEvo' || pkm.attach === 'Mega');
 
     const handleSimEvolve = async (pkm) => {
         if (pkm.nextLevel === -1) {
@@ -1383,6 +1454,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowHelp(false);
         setShowSpecialFns(false);
         setMegaBattleOpen(false);
+        setUndergroundOpen(false);
         setHordeSetupOpen(false);
         setTrainerSetupOpen(false);
         setContestOpen(false);
@@ -1486,6 +1558,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 // No se consume por turno, igual que la incursión: es un combate
                 // suelto que se puede montar las veces que haga falta.
                 setMegaBattleOpen(true);
+                break;
+            case 'underground':
+                // Mismo criterio que el resto de eventos de combate: el hueco de
+                // rival es uno solo, así que montar este cierra el que hubiera.
+                if (raid) await onRaidClear(player.id);
+                if (horde) await onHordeClear(player.id);
+                if (trainerBattle) await onTrainerClear(player.id);
+                if (frontierBattle) await onFrontierClear(player.id);
+                setUndergroundOpen(true);
                 break;
             default:
                 break;
@@ -1936,6 +2017,20 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (isMyTurn) onStartSimMirror(playerId);
     };
 
+    // ── Grand Underground ───────────────────────────────────────────────────
+    // El sorteo (color de token + tipo de caverna) lo resuelve el propio modal
+    // contra /random-pokemon; aquí solo llega el elegido. A partir de montarlo
+    // es una batalla salvaje corriente, igual que el Combate Mega.
+    const handleUndergroundStart = async (pokedex) => {
+        setUndergroundLoading(true);
+        const res = await onUndergroundBattle(player.id, pokedex);
+        setUndergroundLoading(false);
+        if (!res?.ok) return;
+        setUndergroundOpen(false);
+        setShowSetup(false);
+        if (isMyTurn) onStartSimMirror(playerId);
+    };
+
     // Botón "Nueva Simulacion" durante la batalla: mantiene el rival, vuelve a selección de pokemon
     const handleResetBattle = () => {
         resetBattleState();
@@ -2102,6 +2197,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onPickBoss={handleRaidBoss}
                 error={raidError}
                 onOpenRules={() => setRaidRulesOpen('maxRaid')}
+                onMirror={publishEventMirror}
                 onConfirmTeam={handleRaidTeam}
                 loading={raidLoading}
             />
@@ -2116,6 +2212,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onConfirmOrder={handleHordeOrder}
                 error={hordeError}
                 onOpenRules={() => setRaidRulesOpen('horde')}
+                onMirror={publishEventMirror}
                 loading={hordeLoading}
             />
 
@@ -2126,6 +2223,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onStart={handlePokeStarStart}
                 error={pokeStarError}
                 onOpenRules={() => setRaidRulesOpen('pokeStar')}
+                onMirror={publishEventMirror}
                 loading={pokeStarLoading}
             />
 
@@ -2206,8 +2304,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onClose={() => setContestOpen(false)}
                 player={player}
                 pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                tokenImg={(pokedex) => getSafePkmImg(pokedex, generation)}
                 onCatch={handleAddToTeam}
                 onOpenRules={() => setRaidRulesOpen('contest')}
+                onMirror={publishEventMirror}
             />
 
             <ModalTrainerBattle
@@ -2217,6 +2317,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onStart={handleTrainerStart}
                 error={trainerError}
                 onOpenRules={(cardId) => setRaidRulesOpen(cardId)}
+                onMirror={publishEventMirror}
                 loading={trainerLoading}
             />
 
@@ -2795,6 +2896,17 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onStart={handleMegaStart}
                 loading={megaLoading}
                 onOpenRules={() => setRaidRulesOpen('megaBattle')}
+                onMirror={publishEventMirror}
+            />
+
+            <ModalUnderground
+                show={undergroundOpen}
+                onClose={() => setUndergroundOpen(false)}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onStart={handleUndergroundStart}
+                loading={undergroundLoading}
+                onOpenRules={() => setRaidRulesOpen('underground')}
+                onMirror={publishEventMirror}
             />
 
             <ModalHelp
@@ -2850,6 +2962,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 attachTM={attachTM}
                 attachMega={attachMega}
                 attachTera={attachTera}
+                attachEquip={attachEquip}
+                attachLegendary={attachLegendary}
             />
             <ModalMote
                 show={motePkmId !== null}
@@ -2878,24 +2992,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                             const img = getSafePkmImg(node.gmax, generation);
                                             return img ? (<><div className="pokedex-arrow pokedex-arrow--gmax"></div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
                                         })()}
-                                        {/* Megas — separadas de evoluciones */}
-                                        {node.megas && node.megas.length > 0 && (
-                                            <>
-                                                <div className="pokedex-arrow pokedex-arrow--mega"></div>
-                                                <div className="pokedex-branches">
-                                                    {node.megas.map(megaPokedex => {
-                                                        const img = getSafePkmImg(megaPokedex, generation);
-                                                        return img ? (
-                                                            <div key={megaPokedex} className="pokedex-branch-group">
-                                                                <div className="pokedex-token-wrapper">
-                                                                    <div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} />
-                                                                </div>
-                                                            </div>
-                                                        ) : null;
-                                                    })}
-                                                </div>
-                                            </>
-                                        )}
+                                        {/* Megas y formas legendarias — separadas de evoluciones */}
+                                        <SideForms forms={node.megas} kind="mega" generation={generation} />
+                                        <SideForms forms={node.legendaries} kind="legend" generation={generation} />
                                         {/* Ramas de evolución */}
                                         {node.branches && node.branches.length > 0 && (
                                             <>
@@ -2913,23 +3012,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                                                     const img = getSafePkmImg(branch.gmax, generation);
                                                                     return img ? (<><div className="pokedex-arrow pokedex-arrow--gmax"></div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
                                                                 })()}
-                                                                {branch.megas && branch.megas.length > 0 && (
-                                                                    <>
-                                                                        <div className="pokedex-arrow pokedex-arrow--mega"></div>
-                                                                        <div className="pokedex-branches">
-                                                                            {branch.megas.map(megaPokedex => {
-                                                                                const img = getSafePkmImg(megaPokedex, generation);
-                                                                                return img ? (
-                                                                                    <div key={megaPokedex} className="pokedex-branch-group">
-                                                                                        <div className="pokedex-token-wrapper">
-                                                                                            <div className="pokedex-token pokedex-token--mega" style={{ backgroundImage: `url(${img})` }} />
-                                                                                        </div>
-                                                                                    </div>
-                                                                                ) : null;
-                                                                            })}
-                                                                        </div>
-                                                                    </>
-                                                                )}
+                                                                <SideForms forms={branch.megas} kind="mega" generation={generation} />
+                                                                <SideForms forms={branch.legendaries} kind="legend" generation={generation} />
                                                                 {branch.nextEvolution && (() => {
                                                                     const img = getSafePkmImg(branch.nextEvolution, generation);
                                                                     return img ? (<><div className="pokedex-arrow">▶</div><div className="pokedex-token-wrapper"><div className="pokedex-token" style={{ backgroundImage: `url(${img})` }} /></div></>) : null;
@@ -3565,7 +3649,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                         <div className="trade-modal-title">Jugadores</div>
                         <div className="sim-allplayers-list">
                             {[...game.players].sort((a, b) => a.position - b.position).map(p => (
-                                <PlayerListed key={p.id} player={p} totalPLayers={game.players.length} generation={generation} />
+                                <PlayerListed key={p.id} player={p} generation={generation} />
                             ))}
                         </div>
                     </div>

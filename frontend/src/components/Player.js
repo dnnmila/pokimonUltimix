@@ -36,7 +36,7 @@ const getPokedexImg = (pokedex) => {
     try { return require(`../images/POKEMON/${pokedex}.png`); } catch { return null; }
 };
 
-const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,attachTera,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onSetStoreDiscount,onTradePokemon,onPauseGame,onSetFieldMove}) => {
+const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextTurn,onPrevTurn,onNextView,onPrevView, onAddPokemon,onEvolvePokemon, onDeletePokemon ,onUpdateCoins ,increaseLevel ,badgeWon,badgeLost, onAttach,onChangeState, onChangeStatus,onDecreaseStatusCounter,wildBattle,playerBattle,LeaderBattle,attachTM,attachMega,attachTera,attachEquip,attachLegendary,toggleDynamax,onApprovePurchase,onDenyPurchase,onMasterPurchase,onSetStoreDiscount,onTradePokemon,onPauseGame,onSetFieldMove}) => {
 
     // El buscador ya devuelve el POKEDEX resuelto (se escriba el nombre o el número)
     const handleButtonWildPokemon = (pokedex) => {
@@ -244,6 +244,7 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                          evolution = {pokemon.evolution}
                          attached = {pokemon.attach}
                          teraType = {pokemon.teraType}
+                         equipItem = {pokemon.equipItem}
                          mega = {pokemon.mega}
                          type1={pokemon.type1}
                          type2={pokemon.type2}  
@@ -257,7 +258,9 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                          onAttach={onAttach}
                          attachTM={attachTM}
                          attachTera={attachTera}
+                         attachEquip={attachEquip}
                          attachMega={attachMega}
+                         attachLegendary={attachLegendary}
                          onChangeState={onChangeState}
                          onChangeStatus={onChangeStatus}
                          statusCounter={pokemon.statusCounter}

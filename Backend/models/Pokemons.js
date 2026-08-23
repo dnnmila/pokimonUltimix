@@ -29,6 +29,15 @@ class Pokemons {
         // Tipo del Orbe Tera adjunto ("DARK", "STELLAR"...), en mayúsculas como
         // los tipos de la DB. Solo tiene valor mientras `attach` sea 'Tera'.
         this.teraType = null;
+        // Id del objeto de equipo adjunto ("black-belt", "mystic-water"...), tal
+        // como lo nombra frontend/src/data/equipment.js. Solo tiene valor
+        // mientras `attach` sea 'Equip'.
+        this.equipItem = null;
+        // POKEDEX de la forma de la que salió, si ahora mismo está transformado
+        // por el objeto legendario (Zacian → Crown Sword Zacian). Es lo que
+        // permite deshacerlo, porque el resto del Pokémon ya es el de la forma
+        // nueva. Solo tiene valor mientras `attach` sea 'LegendEvo'.
+        this.legendaryBase = null;
     }
 
     addAttack1(attack1) {
@@ -40,11 +49,18 @@ class Pokemons {
     addAttack3(attack3) {
         this.attack3 = attack3;
     }
+    // Ojo: el objeto legendario NO pasa por aquí. Su forma se monta reescribiendo
+    // el Pokémon entero (applyLegendaryForm), así que limpiar `legendaryBase` en
+    // estos tres es una red de seguridad: cualquier otro item que llegue por la
+    // vía normal significa que el legendario ya no está puesto, y la forma tiene
+    // que haberse deshecho antes (revertLegendaryForm).
     addAttach(itemAttached) {
         this.attack3.name = "NONE";
         this.attack3.id = "000";
         this.attach = itemAttached;
         this.teraType = null;
+        this.equipItem = null;
+        this.legendaryBase = null;
     }
 
     // Las MTs y los cristales Z comparten mecanismo: un ataque que ocupa el
@@ -54,6 +70,8 @@ class Pokemons {
         this.attack3 = TM;
         this.attach = attachAs
         this.teraType = null;
+        this.equipItem = null;
+        this.legendaryBase = null;
         console.log(attachAs + " attached");
     }
 
@@ -70,7 +88,27 @@ class Pokemons {
         this.attack3.id = "000";
         this.attach = "Tera";
         this.teraType = (teraType || '').toUpperCase() || null;
+        this.equipItem = null;
+        this.legendaryBase = null;
         console.log("Tera " + this.teraType + " attached");
+    }
+
+    // Objeto de equipo. Ocupa el mismo hueco que el resto —un Pokémon lleva
+    // objeto o lleva MT/Z/Mega/orbe—, así que al ponerlo se limpia el ataque
+    // que hubiera dejado una MT, igual que hacen addAttach y addTera.
+    //
+    // Aquí no se guarda el tipo que refuerza: lo dice el propio objeto, y el
+    // catálogo del front es quien lo sabe (ver data/equipment.js). Guardar solo
+    // el id evita que una partida vieja se quede con el tipo equivocado si
+    // alguna carta se retoca.
+    addEquip(equipItem) {
+        this.attack3.name = "NONE";
+        this.attack3.id = "000";
+        this.attach = "Equip";
+        this.equipItem = equipItem || null;
+        this.teraType = null;
+        this.legendaryBase = null;
+        console.log("Equip " + this.equipItem + " attached");
     }
     addExtra(){
         if(this.extra > 5){

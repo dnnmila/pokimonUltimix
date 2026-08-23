@@ -74,6 +74,12 @@
 .Attach-item-card--mega{
     border-color: var(--hud-blue);
 }
+/* El objeto legendario va un paso más allá: no añade nada al lado del Pokémon,
+   lo transforma. Solo se ofrece a las siete especies que tienen forma, así que
+   cuando aparece conviene que se note que no es un item más de la fila. */
+.Attach-item-card--legend{
+    border-color: var(--hud-gold, #d9a441);
+}
 .Attach-item-card--remove{
     border-style: dashed;
     .Attach-item-name{ color: var(--hud-dim); }
