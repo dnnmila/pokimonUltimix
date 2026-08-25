@@ -43,6 +43,14 @@ class Player {
         // Eventos ya lanzados en el turno en curso: { [eventId]: true }.
         // Se vacía al empezar el turno del jugador (Game.nextTurn).
         this.eventsUsed = {};
+        // Casilla del tablero donde está la ficha. `null` = aún sin colocar:
+        // el mapa deja elegir cualquier nodo como salida en ese caso.
+        // Es el id del nodo (`node-…` de boardNodes, o `gym-N` de mapCoords).
+        this.mapNodeId = null;
+        // Habilidad Surf. Las casillas de tipo `surf` del tablero no se pueden
+        // pisar hasta tenerla. Hoy se activa a mano desde el mapa; el día que
+        // haya un objeto o evento que la conceda, bastará con ponerla a true.
+        this.surf = false;
 
 
     }

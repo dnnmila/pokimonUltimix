@@ -405,6 +405,9 @@
     border: 1px solid #0f3460;
     border-radius: 6px;
     overflow: hidden;
+    // Sin esto el panel lo encoge cuando se llena y, al tener overflow:hidden,
+    // recorta el control de puertas sin dejar rastro: parece que no existe.
+    flex-shrink: 0;
 }
 
 .map-board-sel-header {
@@ -553,8 +556,110 @@
     display: flex;
     justify-content: space-between;
     margin-top: auto;
+    flex-shrink: 0;
     padding-top: 8px;
     border-top: 1px solid #0f3460;
     font-size: 0.72rem;
     color: #555;
+}
+
+// ── Puerta por medallas ─────────────────────────────────────────────────────
+// `requiredBadge: N` = "N medallas o más", como el «or higher» del tablero
+// físico. El guion quita la puerta.
+.map-board-badge-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+    padding: 0 10px;
+}
+
+.map-board-badge-btn {
+    aspect-ratio: 1;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #2a2a3e;
+    color: #bbb;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.1s, border-color 0.1s;
+
+    &:hover { border-color: #888; color: #fff; }
+
+    &.active {
+        background: #c0392b;
+        border-color: #e74c3c;
+        color: #fff;
+    }
+
+}
+
+// Atajos: todas de golpe, o limpiar
+.map-board-badge-actions {
+    display: flex;
+    gap: 4px;
+    padding: 6px 10px 0;
+
+    button {
+        flex: 1;
+        padding: 4px 6px;
+        border: 1px solid #444;
+        border-radius: 4px;
+        background: #2a2a3e;
+        color: #bbb;
+        font-size: 0.68rem;
+        cursor: pointer;
+
+        &:hover { border-color: #888; color: #fff; }
+    }
+}
+
+.map-board-badge-hint {
+    padding: 4px 10px 6px;
+    margin: 0;
+    font-size: 0.68rem;
+    color: #888;
+}
+
+// Distintivo en el propio mapa, para localizar las puertas de un vistazo
+.map-board-node.has-gate {
+    box-shadow: 0 0 0 2px #c0392b, 0 0 8px rgba(192, 57, 43, 0.7);
+}
+
+.map-board-node-gate {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #c0392b;
+    border: 1px solid #fff;
+    color: #fff;
+    font-size: 0.55rem;
+    font-weight: bold;
+    line-height: 12px;
+    text-align: center;
+    pointer-events: none;
+}
+
+// Renombrar un nodo ya colocado
+.map-board-label-edit {
+    padding: 6px 10px 0;
+
+    input {
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 3px;
+        padding: 5px 8px;
+        border-radius: 4px;
+        border: 1px solid #0f3460;
+        background: #1a1a2e;
+        color: #eee;
+        font-size: 0.78rem;
+        outline: none;
+
+        &:focus { border-color: #e94560; }
+    }
 }

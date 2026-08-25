@@ -27,32 +27,9 @@
     flex-shrink: 0;
 }
 
-.imap-progress {
+// Ocupa el hueco entre el destino y los controles de la derecha
+.imap-header-spacer {
     flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.imap-progress-label {
-    font-size: 0.85rem;
-    color: #eee;
-    white-space: nowrap;
-}
-
-.imap-progress-bar {
-    flex: 1;
-    height: 8px;
-    background: #0f3460;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.imap-progress-fill {
-    height: 100%;
-    background: #27ae60;
-    border-radius: 4px;
-    transition: width 0.4s ease;
 }
 
 .imap-close {
@@ -70,11 +47,12 @@
     &:hover { background: #c0392b; }
 }
 
-// Body
+// Body — el mapa ocupa todo; la ficha del líder se superpone
 .imap-body {
     display: flex;
     flex: 1;
     overflow: hidden;
+    position: relative;
 }
 
 // Map
@@ -101,14 +79,14 @@
     pointer-events: none;
 }
 
-// Markers
+// Markers — el retrato del líder en su ciudad
 .imap-marker {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 30px;
-    height: 30px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
-    border: 2px solid #fff;
+    border: 3px solid #fff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -116,35 +94,105 @@
     z-index: 10;
     transition: transform 0.15s, box-shadow 0.15s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     font-weight: bold;
     color: #fff;
+    background: #2c3e50;
 
-    &:hover { transform: translate(-50%, -50%) scale(1.25); }
+    &:hover { transform: translate(-50%, -50%) scale(1.2); z-index: 25; }
 
     &.earned {
-        background: rgba(39, 174, 96, 0.85);
         border-color: #2ecc71;
-        box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        box-shadow: 0 0 12px rgba(46, 204, 113, 0.55);
     }
 
+    // Pendiente: el retrato se apaga para que las ganadas canten a simple vista
     &.missing {
-        background: rgba(80, 80, 100, 0.85);
-        border-color: #999;
+        border-color: #7f8c8d;
+        .imap-marker-face { filter: grayscale(0.85) brightness(0.7); }
+    }
+
+    // El siguiente que toca: late para localizarlo sin buscarlo
+    &.next {
+        border-color: #f1c40f;
+        box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.35), 0 0 14px rgba(241, 196, 15, 0.6);
+        .imap-marker-face { filter: none; }
     }
 
     &.active {
-        transform: translate(-50%, -50%) scale(1.3);
+        transform: translate(-50%, -50%) scale(1.25);
         box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.6);
         border-color: #f39c12;
-        z-index: 20;
+        z-index: 30;
     }
 }
 
+.imap-marker-face {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    pointer-events: none;
+}
+
+.imap-marker-initial {
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+// Número de medalla, arriba a la izquierda del retrato
+.imap-marker-order {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #16213e;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: bold;
+    color: #fff;
+    pointer-events: none;
+
+    .earned & { background: #27ae60; border-color: #2ecc71; }
+    .next &   { background: #f1c40f; border-color: #fff; color: #16213e; }
+}
+
+// Medalla ganada, abajo a la derecha
 .imap-marker-badge {
-    width: 22px;
-    height: 22px;
+    position: absolute;
+    bottom: -5px;
+    right: -7px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8));
+    pointer-events: none;
+}
+
+// Nombre del líder bajo el retrato
+.imap-marker-name {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 15, 30, 0.85);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    pointer-events: none;
+
+    .missing & { color: #bdc3c7; }
+    .next &    { background: rgba(241, 196, 15, 0.9); color: #16213e; }
 }
 
 // Side panel
@@ -223,7 +271,432 @@
     &.missing { background: rgba(231,76,60,0.2);  color: #e74c3c; }
 }
 
-// Summary (panel closed)
+// ── Siguiente gimnasio y casillas que faltan (cabecera) ─────────────────────
+.imap-next {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: #0f3460;
+    border-radius: 999px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.imap-next-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7f8c8d;
+}
+
+.imap-next-leader {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #f1c40f;
+}
+
+.imap-next-steps {
+    font-size: 0.78rem;
+    color: #eee;
+}
+
+// Destino elegido a mano: se distingue del automático
+.imap-next.custom {
+    background: #4a2f6b;
+    .imap-next-leader { color: #c39bff; }
+}
+
+// Casillas de la segunda ruta
+.imap-next-alt {
+    font-size: 0.72rem;
+    color: #5dade2;
+    font-weight: bold;
+    padding-left: 6px;
+    border-left: 1px solid rgba(255,255,255,0.15);
+}
+
+// Interruptor de Surf
+.imap-surf {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #0f3460;
+    color: #6c7a89;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover { border-color: rgba(255,255,255,0.2); }
+
+    &.on {
+        background: #1f6f8b;
+        color: #fff;
+        border-color: #5dade2;
+    }
+}
+
+.imap-surf-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.imap-next-reset {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    cursor: pointer;
+    &:hover { background: #e94560; }
+}
+
+// Región sin tablero dibujado
+.imap-noboard {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: rgba(10, 15, 30, 0.85);
+    color: #8a96a8;
+    font-size: 0.72rem;
+    pointer-events: none;
+}
+
+// ── Ruta mínima al siguiente gimnasio ───────────────────────────────────────
+.imap-route-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+
+    line {
+        stroke: #f1c40f;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-dasharray: 6 6;
+        opacity: 0.9;
+        animation: imap-route-flow 1s linear infinite;
+    }
+
+    // Segunda ruta: más apagada y sin animar, para que no compita con la buena
+    line.alt {
+        stroke: #5dade2;
+        stroke-width: 2.5;
+        stroke-dasharray: 3 7;
+        opacity: 0.75;
+        animation: none;
+    }
+}
+
+@keyframes imap-route-flow {
+    to { stroke-dashoffset: -12; }
+}
+
+// Casillas del tablero. Solo se ven las de la ruta; el resto aparecen al
+// arrastrar la ficha, para poder apuntar sin llenar el mapa de puntos.
+.imap-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    border: 2px solid rgba(10, 15, 30, 0.6);
+    z-index: 6;
+    pointer-events: none;
+
+    &.in-route {
+        background: #f1c40f;
+        border-color: #16213e;
+        box-shadow: 0 0 6px rgba(241, 196, 15, 0.8);
+    }
+
+    &.in-alt {
+        background: #5dade2;
+        border-color: #16213e;
+        box-shadow: 0 0 5px rgba(93, 173, 226, 0.7);
+    }
+
+    // Bajo el dedo al arrastrar
+    &.drop {
+        width: 26px;
+        height: 26px;
+        background: #2ecc71;
+        border-color: #fff;
+        box-shadow: 0 0 12px rgba(46, 204, 113, 0.9);
+        z-index: 40;
+    }
+
+    // Cerrada por medalla: ni se pisa ni acepta la ficha
+    &.locked {
+        width: 22px;
+        height: 22px;
+        background: #c0392b;
+        border-color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 8px rgba(192, 57, 43, 0.7);
+        z-index: 8;
+    }
+}
+
+.imap-node-lock {
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1;
+}
+
+// ── Ficha del jugador ───────────────────────────────────────────────────────
+//
+// Tarjeta con pico, no círculo: los círculos con foto ya son los líderes de
+// gimnasio, y las casillas del tablero repiten la misma paleta de colores
+// (rosa, verde, amarillo, azul, rojo, morado). Distinguir por FORMA funciona
+// donde el color ya no puede.
+//
+// OJO: no llamarla `.imap-token` — ese nombre ya lo usan los tokens de captura
+// del tablero (fase 2), que se declaran más abajo y la anularían con
+// `pointer-events: none`, dejándola imposible de arrastrar.
+.imap-player-token {
+    position: absolute;
+    // El pico apunta a la casilla, así que el ancla es abajo-centro
+    transform: translate(-50%, -100%);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    // Blanco y grafito: dos tonos que el tablero no usa en ninguna casilla
+    background: #fff;
+    border: 3px solid #10162b;
+    box-shadow: 0 0 0 2px #fff, 0 6px 14px rgba(0, 0, 0, 0.75);
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 45;
+    // El navegador no debe robar el gesto para hacer scroll del mapa
+    touch-action: none;
+    user-select: none;
+    transition: box-shadow 0.15s, transform 0.15s;
+
+    // El pico que marca la casilla exacta
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -11px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 11px solid #10162b;
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+    }
+
+    // Sin posición guardada todavía: se dibuja en la salida, pero atenuada
+    &.unset {
+        opacity: 0.7;
+        border-style: dashed;
+    }
+
+    &.dragging {
+        cursor: grabbing;
+        transform: translate(-50%, -100%) scale(1.15);
+        box-shadow: 0 0 0 2px #fff, 0 0 0 7px rgba(255, 255, 255, 0.25), 0 10px 20px rgba(0,0,0,0.8);
+        z-index: 50;
+    }
+}
+
+.imap-player-token-face {
+    width: 100%;
+    height: 100%;
+    border-radius: 9px;
+    object-fit: cover;
+    // Igual que los avatares del HUD: el arte es vertical y la cara va arriba
+    object-position: center top;
+    display: block;
+    pointer-events: none;
+}
+
+.imap-player-token-initial {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #10162b;
+    pointer-events: none;
+}
+
+// El gimnasio también acepta la ficha
+.imap-marker.drop {
+    box-shadow: 0 0 0 5px rgba(46, 204, 113, 0.7), 0 0 18px rgba(46, 204, 113, 0.8);
+    border-color: #2ecc71;
+}
+
+// ── Ficha del líder: modal dentro del modal ─────────────────────────────────
+//
+// Vive dentro de `.imap-body` (que es position:relative), no en la pantalla
+// entera: así el mapa se sigue viendo alrededor y la cabecera con el contador
+// de medallas no queda tapada.
+.imap-leader-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(8, 10, 20, 0.55);
+    backdrop-filter: blur(2px);
+    animation: imap-fade-in 0.12s ease-out;
+}
+
+.imap-leader-card {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 12px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.7);
+    width: min(560px, 100%);
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: imap-pop-in 0.15s ease-out;
+}
+
+@keyframes imap-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes imap-pop-in {
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.imap-leader-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #0f3460;
+    flex-shrink: 0;
+}
+
+.imap-leader-face {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    border: 2px solid #0f3460;
+    flex-shrink: 0;
+}
+
+.imap-leader-id {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.imap-leader-name {
+    font-size: 1.15rem;
+    font-weight: bold;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.imap-leader-city {
+    font-size: 0.8rem;
+    color: #8a96a8;
+}
+
+.imap-leader-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e94560;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    &:hover { background: #c0392b; }
+}
+
+.imap-leader-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    flex-shrink: 0;
+}
+
+.imap-leader-badge {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.imap-leader-order {
+    font-size: 0.78rem;
+    color: #aaa;
+    flex: 1;
+}
+
+.imap-leader-status {
+    font-size: 0.78rem;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 4px;
+
+    &.earned  { background: rgba(39,174,96,0.2); color: #2ecc71; }
+    &.missing { background: rgba(231,76,60,0.2); color: #e74c3c; }
+}
+
+// Las dos cartas del líder, lado a lado
+.imap-leader-cards {
+    display: flex;
+    gap: 8px;
+    padding: 0 14px 14px;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.imap-leader-card-img {
+    width: 50%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+}
+
+.imap-leader-nocards {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    padding: 10px 0;
+}
+
+// ── FASE 2: panel lateral con dado y lista. Sin usar en fase 1, se conserva
+// para cuando vuelva el tablero (ver ModalInteractiveMap.js). ────────────────
 .imap-panel-badges-summary {
     display: flex;
     flex-direction: column;
@@ -231,6 +704,9 @@
     padding: 10px;
     width: 100%;
     overflow-y: auto;
+    // El panel es flex column: sin esto la lista empuja en vez de hacer scroll
+    flex: 1;
+    min-height: 0;
 }
 
 .imap-summary-item {
@@ -242,6 +718,7 @@
     cursor: pointer;
     transition: background 0.1s;
     border: 1px solid transparent;
+    flex-shrink: 0;
 
     span {
         font-size: 0.75rem;
@@ -474,3 +951,41 @@
 
 .imap-player-name { flex: 1; color: #ccc; }
 .imap-player-loc  { font-size: 0.65rem; color: #666; max-width: 80px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+// ── Ciudades y Liga: siempre visibles y elegibles como destino ──────────────
+.imap-node.landmark {
+    width: 22px;
+    height: 22px;
+    background: #16a085;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    // Estas sí reciben el clic; el resto de casillas siguen siendo decorativas
+    pointer-events: auto;
+    z-index: 12;
+    transition: transform 0.12s, box-shadow 0.12s;
+
+    &:hover { transform: translate(-50%, -50%) scale(1.25); z-index: 26; }
+
+    &.imap-node--league {
+        background: #8e44ad;
+        width: 25px;
+        height: 25px;
+    }
+
+    // Destino elegido
+    &.is-dest {
+        box-shadow: 0 0 0 3px rgba(195, 155, 255, 0.45), 0 0 14px rgba(195, 155, 255, 0.8);
+        border-color: #c39bff;
+    }
+}
+
+.imap-node-icon {
+    font-size: 0.68rem;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1;
+    pointer-events: none;
+}

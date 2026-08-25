@@ -38,6 +38,7 @@ import ModalPokeStar from "./modals/ModalPokeStar";
 import ModalRulesCard from "./modals/ModalRulesCard";
 import ModalHelp from "./modals/ModalHelp";
 import ModalMegaBattle from "./modals/ModalMegaBattle";
+import ModalInteractiveMap from "./modals/ModalInteractiveMap";
 import { rollTMs, tmPowerFor, TMS_BY_ID } from "../data/tms";
 import { rollZCrystals, zMoveFor, Z_BY_ID } from "../data/zmoves";
 import { getTeraBonus, rollTeraOrbs, TERA_BY_ID } from "../data/teraTypes";
@@ -52,6 +53,12 @@ import { TMBadge, ItemBadge } from "./PokemonBattleBadges";
 import { arenaStyle } from "../data/arenas";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
+
+// Generaciones con tablero dibujado en Backend/saves/boardNodes/. Solo en
+// estas se ofrece el botón Mapa: sin nodos no hay ficha, ni ruta, ni casillas,
+// y el mapa se quedaría en una foto de los líderes. Las cuatro regiones están
+// mapeadas y validadas (recorrido completable y Liga sellada hasta la 8ª medalla).
+const MAP_GENERATIONS = [1, 2, 3, 4];
 
 const getBadgeImg = (gen, num) => {
     try {
@@ -127,7 +134,7 @@ const battleForm = (pkm) => {
     };
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, attachEquip, attachLegendary, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onUndergroundBattle, onEventMirror, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, attachEquip, attachLegendary, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onUndergroundBattle, onEventMirror, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove, onMovePlayerMap, onToggleSurf }) => {
     const { playerId } = useParams();
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
@@ -219,6 +226,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [showLeaderViewer, setShowLeaderViewer] = useState(false);
     const [showStore, setShowStore] = useState(false);
     const [showRulesGuide, setShowRulesGuide] = useState(false);
+    const [showMap, setShowMap] = useState(false);
     const [pendingRequest, setPendingRequest] = useState(null);
     const [showOtherRivals, setShowOtherRivals] = useState(false);
     const [attachPkmId, setAttachPkmId] = useState(null);
@@ -817,6 +825,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (badgeNum !== null) {
             setGymLeaderBadgeNum(badgeNum);
             setPendingBadge(false);
+            // Retar a un líder en oficial significa estar en su ciudad, así que
+            // la ficha del mapa se coloca sola en ese gimnasio. Se mueve sin
+            // preguntar: una confirmación en mitad del combate estorba, y si el
+            // sitio no era ese la ficha se arrastra a mano desde el mapa.
+            // Solo donde hay tablero: en el resto sería guardar una casilla
+            // que no existe.
+            if (MAP_GENERATIONS.includes(generation)) {
+                onMovePlayerMap?.(playerId, `gym-${badgeNum}`);
+            }
         }
         await runCurtain(async () => {
             await onSimLeaderBattle(playerId, leaderID, pkm1, pkm2);
@@ -1451,6 +1468,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowLeaderViewer(false);
         setShowStore(false);
         setShowRulesGuide(false);
+        setShowMap(false);
         setShowHelp(false);
         setShowSpecialFns(false);
         setMegaBattleOpen(false);
@@ -1680,6 +1698,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (!slot || !boss) return;
         resetBattleState();
         setShowSetup(false);
+        // Sin esto la incursión no se ve en el espejo de /players: el resto de
+        // eventos lo llaman y estos dos se quedaron fuera.
+        //
+        // Y hay que ESPERARLO: `startSimMirror` vacía los Pokémon del combate y
+        // vuelve la fase a PokemonSelection en el servidor. Aquí los dos
+        // Pokémon se eligen solos justo después, así que si no se espera, el
+        // espejo llega tarde y borra la selección que acaba de mandarse.
+        if (isMyTurn) await onStartSimMirror(playerId);
         await handleSelectMyPokemon(slot.pokemon);
         await handleSelectRivalPokemon(boss, slot.pokemon);
     };
@@ -1709,6 +1735,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         const boss = res.raid.bossMode === 'gmax' ? res.raid.boss : applyDynamax(res.raid.boss);
         resetBattleState();
         setShowSetup(false);
+        // Esperado a propósito, igual que en startRaidRound: si no, borra la
+        // selección de Pokémon que se manda justo detrás.
+        if (isMyTurn) await onStartSimMirror(playerId);
         await handleSelectMyPokemon(slot.pokemon);
         await handleSelectRivalPokemon(boss, slot.pokemon);
     };
@@ -1765,6 +1794,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (!slot || !wild) return;
         resetBattleState();
         setShowSetup(false);
+        // Mismo caso que la incursión: sin esto la horda no llega al espejo, y
+        // hay que esperarlo para no pisar la selección de Pokémon de abajo.
+        if (isMyTurn) await onStartSimMirror(playerId);
         await handleSelectMyPokemon(slot.pokemon);
         await handleSelectRivalPokemon(wild, slot.pokemon);
     };
@@ -2176,6 +2208,17 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             <ModalLeaderViewer show={showLeaderViewer} onClose={() => setShowLeaderViewer(false)} generation={generation} />
             <ModalTiendaSim show={showStore} onClose={() => setShowStore(false)} player={player} pendingRequest={pendingRequest} onRequestPurchase={handleRequestPurchase} discount={game.storeDiscount || null} />
             <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
+            {/* Mapa de referencia: líderes por ciudad, orden de medallas y
+                —solo donde hay tablero— ficha arrastrable y ruta mínima al
+                siguiente gimnasio. El dado y los turnos siguen en MapPlayer.js. */}
+            <ModalInteractiveMap
+                show={showMap && MAP_GENERATIONS.includes(generation)}
+                onClose={() => setShowMap(false)}
+                generation={generation}
+                player={player}
+                onMovePlayer={(nodeId) => onMovePlayerMap?.(playerId, nodeId)}
+                onToggleSurf={(value) => onToggleSurf?.(playerId, value)}
+            />
             <ModalTMCatalog show={showTMCatalog} onClose={() => setShowTMCatalog(false)} />
             <ModalEvents
                 show={showEvents}
@@ -3294,6 +3337,17 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 <div className="sim-setup-btn-icon sim-topbar-players"></div>
                                 <span>Jugadores</span>
                             </div>
+                            {/* Solo Kanto: es la única región con tablero
+                                dibujado en Backend/saves/boardNodes/. En las
+                                demás el mapa se quedaría en foto de líderes,
+                                así que ni se ofrece. Al mapear Johto, añadir
+                                su generación aquí. */}
+                            {MAP_GENERATIONS.includes(generation) && (
+                                <div className="sim-setup-btn" onClick={() => setShowMap(true)}>
+                                    <div className="sim-setup-btn-icon sim-topbar-map">🗺</div>
+                                    <span>Mapa</span>
+                                </div>
+                            )}
                             {/* En el setup la tabla de tipos vive aquí, no en el
                                 botón flotante: arriba a la derecha tapaba el
                                 diseño de la cabecera */}

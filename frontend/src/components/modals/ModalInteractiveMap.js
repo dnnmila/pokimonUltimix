@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import SERVER_IP from '../../config';
+import { getLeaderArt } from '../../data/leaders';
+import { getTrainerAvatar } from '../../data/trainers';
 import '../../styles/_modalInteractiveMap.scss';
 
 import mapGen1 from '../../images/maps/gen1.jpg';
@@ -9,30 +11,43 @@ import mapGen4 from '../../images/maps/gen4.png';
 
 const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4 };
 
-const PLAYER_COLORS = ['#e74c3c','#3498db','#27ae60','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63'];
+// Cuántas casillas de más puede tener la ruta alternativa para que valga la
+// pena enseñarla. Por encima deja de ser una opción y solo estorba el mapa.
+const ALT_MAX_EXTRA = 10;
 
-const NODE_COLOR = {
-    gym: '#f1c40f', start: '#27ae60', catch: '#3498db',
-    event: '#e67e22', league: '#8e44ad', city: '#16a085',
-    surf: '#00bcd4', medals: '#e91e63',
-};
-const NODE_ICON = {
-    gym: null, start: '▶', catch: '●', event: '!',
-    league: '★', city: 'C', surf: '≈', medals: 'M',
-};
+const TOTAL_BADGES = 8;
 
-const TOKEN_DIR_OFFSET = {
-    'top':          { x: 0,    y: -1.6 },
-    'bottom':       { x: 0,    y:  1.6 },
-    'left':         { x: -1.4, y:  0   },
-    'right':        { x:  1.4, y:  0   },
-    'top-left':     { x: -1.1, y: -1.1 },
-    'top-right':    { x:  1.1, y: -1.1 },
-    'bottom-left':  { x: -1.1, y:  1.1 },
-    'bottom-right': { x:  1.1, y:  1.1 },
+// Umbral de una puerta. `requiredBadges` guarda las medallas marcadas en el
+// editor, pero la regla es «esa medalla o cualquiera superior», así que manda
+// la más alta: [3] abre con la 3, 4, 5… y [1..8] abre solo con la 8.
+const gateThreshold = (badges) =>
+    (Array.isArray(badges) && badges.length) ? Math.max(...badges) : null;
+
+// Texto de una puerta: "la medalla 3 o superior", "la medalla 8".
+const describeGate = (badges) => {
+    const t = gateThreshold(badges);
+    if (!t) return '';
+    return t >= TOTAL_BADGES ? `la medalla ${TOTAL_BADGES}` : `la medalla ${t} o superior`;
 };
 
-const getLeaderImgs = (gen, order) => {
+// Marca corta para el punto del mapa: el umbral.
+const gateMark = (badges) => gateThreshold(badges) ?? '';
+
+// ─── Mapa de referencia ─────────────────────────────────────────────────────
+//
+// Muestra dónde está cada líder, en qué orden se le gana la medalla y —donde
+// hay tablero dibujado— cuántas casillas faltan hasta el siguiente gimnasio.
+// El mapa ocupa toda la pantalla y la ficha del líder se abre encima.
+//
+// Hoy solo Kanto tiene tablero (`Backend/saves/boardNodes/gen1.json`). En las
+// demás generaciones el modal se queda en el mapa y los líderes, sin ficha ni
+// ruta: no es un fallo, es que sus nodos aún no están colocados en /map-editor.
+//
+// Del tablero se usa la topología, no las reglas: aquí no hay dado ni turnos,
+// solo el camino más corto. Eso sigue siendo cosa de MapPlayer.js.
+
+// Los dos Pokémon de la carta física del líder (gym3_1, gym3_2).
+const getLeaderPokemon = (gen, order) => {
     const imgs = [];
     try { imgs.push(require(`../../images/Leaders${gen}/gym${order}_1.png`)); } catch {}
     try { imgs.push(require(`../../images/Leaders${gen}/gym${order}_2.png`)); } catch {}
@@ -45,333 +60,489 @@ const getBadgeImg = (gen, order) => {
     }
 };
 
-// Tipos de nodo donde el jugador puede detenerse antes de agotar el dado
-const STOP_TYPES = new Set(['gym', 'city', 'medals', 'league']);
+// Camino más corto entre dos nodos. BFS a secas: las aristas no tienen peso,
+// así que el primero que llega es el mínimo. Devuelve la lista de nodos
+// incluyendo origen y destino, o null si no hay ruta.
+//
+// `canEnter` deja fuera las casillas bloqueadas por medalla: la ruta las
+// rodea en vez de atravesarlas. El origen se acepta siempre —si la ficha ya
+// está ahí, da igual lo que pida la casilla— y el destino también, para poder
+// enseñar la ruta hasta un gimnasio aunque su puerta esté cerrada.
+function shortestPath(fromId, toId, adjacency, canEnter = () => true, blockedEdges = null) {
+    if (!fromId || !toId || !adjacency[fromId] || !adjacency[toId]) return null;
+    if (fromId === toId) return [fromId];
 
-// BFS con dos reglas:
-//   1. Sin retroceso inmediato (no volver al nodo anterior en el mismo paso)
-//   2. visitedStates evita ciclos/oscilaciones
-//   3. Ciudades/gyms en pasos intermedios son paradas opcionales válidas
-function findReachable(startId, steps, edges, allNodes) {
-    if (!startId || steps < 1) return new Set();
+    const prev = { [fromId]: null };
+    let frontier = [fromId];
 
-    const adj = {};
-    const typeOf = {};
-    allNodes.forEach(n => { adj[n.id] = []; typeOf[n.id] = n.type; });
-    edges.forEach(e => {
-        if (adj[e.from] !== undefined) adj[e.from].push(e.to);
-        if (adj[e.to]   !== undefined) adj[e.to].push(e.from);
-    });
-
-    const reachable     = new Set();
-    const visitedStates = new Set([`${startId}|null`]); // evita ciclos
-    let frontier = [[startId, null]]; // [currentId, prevId]
-
-    for (let step = 1; step <= steps; step++) {
+    while (frontier.length) {
         const next = [];
-        for (const [cur, prev] of frontier) {
-            const neighbors = adj[cur] || [];
-            const forward   = neighbors.filter(n => n !== prev);
-            const moveable  = forward.length > 0 ? forward : neighbors; // dead-end: forzado a volver
-
-            for (const n of moveable) {
-                const key = `${n}|${cur}`;
-                if (visitedStates.has(key)) continue; // no repetir el mismo arco direccional
-                visitedStates.add(key);
-                next.push([n, cur]);
-
-                // Ciudad/gym a paso intermedio → parada opcional
-                if (step < steps && STOP_TYPES.has(typeOf[n])) {
-                    reachable.add(n);
+        for (const current of frontier) {
+            for (const neighbour of adjacency[current]) {
+                if (neighbour in prev) continue;
+                if (neighbour !== toId && !canEnter(neighbour)) continue;
+                if (blockedEdges?.has(`${current}|${neighbour}`)) continue;
+                prev[neighbour] = current;
+                if (neighbour === toId) {
+                    const path = [];
+                    let step = toId;
+                    while (step !== null) { path.push(step); step = prev[step]; }
+                    return path.reverse();
                 }
+                next.push(neighbour);
             }
         }
         frontier = next;
-        if (frontier.length === 0) break;
     }
-
-    // Todos los nodos al paso exacto N siempre son destinos válidos
-    frontier.forEach(([id]) => reachable.add(id));
-
-    return reachable;
+    return null;
 }
 
-// ─────────────────────────────────────────────────────────────
-const ModalInteractiveMap = ({ show, onClose, generation = 1, player, allPlayers = [], onMovePlayer }) => {
-    const [gymCoords, setGymCoords]   = useState([]);
-    const [boardGraph, setBoardGraph] = useState({ nodes: [], edges: [] });
-    const [active, setActive]         = useState(null);   // gym marker clicked
-    const [dice, setDice]             = useState(null);
-    const [reachable, setReachable]   = useState(new Set());
-
-    // All nodes merged (gym + board) — misma lógica que el editor
-    const gymNodesMapped = gymCoords.map(g => ({
-        id: `gym-${g.order}`, type: 'gym', x: g.x, y: g.y,
-        label: `${g.leader} — ${g.city}`, gymOrder: g.order,
-    }));
-    const allNodes = [...gymNodesMapped, ...boardGraph.nodes];
+const ModalInteractiveMap = ({ show, onClose, generation = 1, player, onMovePlayer, onToggleSurf }) => {
+    const [gyms, setGyms]           = useState([]);
+    const [board, setBoard]         = useState({ nodes: [], edges: [] });
+    const [active, setActive]       = useState(null);   // líder abierto en el popup
+    const [destId, setDestId]       = useState(null);   // destino elegido a mano
+    const [dragging, setDragging]   = useState(false);
+    const [dropTarget, setDropTarget] = useState(null); // nodo bajo el dedo
+    const wrapperRef = useRef(null);
 
     useEffect(() => {
         if (!show) return;
-        setActive(null); setDice(null); setReachable(new Set());
+        setActive(null);
+        setDestId(null);
         fetch(`${SERVER_IP}/map-coords/${generation}`)
-            .then(r => r.json()).then(d => setGymCoords(Array.isArray(d) ? d : []));
+            .then(r => r.json())
+            .then(d => setGyms(Array.isArray(d) ? d : []))
+            .catch(() => setGyms([]));
         fetch(`${SERVER_IP}/board-nodes/${generation}`)
             .then(r => r.json())
-            .then(d => setBoardGraph({ nodes: d.nodes || [], edges: d.edges || [] }))
-            .catch(() => setBoardGraph({ nodes: [], edges: [] }));
+            .then(d => setBoard({ nodes: d.nodes || [], edges: d.edges || [] }))
+            .catch(() => setBoard({ nodes: [], edges: [] }));
     }, [show, generation]);
 
-    // Recalcular alcanzables cuando cambia el dado o la posición
+    // Esc cierra primero la ficha del líder y solo después el mapa.
     useEffect(() => {
-        if (dice === null || !player?.mapNodeId) { setReachable(new Set()); return; }
-        setReachable(findReachable(player.mapNodeId, dice, boardGraph.edges, allNodes));
-    }, [dice, player?.mapNodeId, boardGraph, gymCoords]); // eslint-disable-line
+        if (!show) return;
+        const onKey = (e) => {
+            if (e.key !== 'Escape') return;
+            if (active) { e.stopPropagation(); setActive(null); }
+            else onClose?.();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [show, active, onClose]);
+
+    const ordered  = useMemo(() => gyms.slice().sort((a, b) => a.order - b.order), [gyms]);
+    const hasBadge = (order) => !!player?.[`badge${order}`];
+
+    // Los gimnasios son nodos del grafo como cualquier otro: las aristas del
+    // tablero apuntan a `gym-1`…`gym-8`, así que se mezclan con los del tablero.
+    const allNodes = useMemo(() => ([
+        ...ordered.map(g => ({ id: `gym-${g.order}`, type: 'gym', x: g.x, y: g.y, label: g.leader })),
+        ...board.nodes,
+    ]), [ordered, board.nodes]);
+
+    const nodeById = useMemo(() => {
+        const map = {};
+        allNodes.forEach(n => { map[n.id] = n; });
+        return map;
+    }, [allNodes]);
+
+    const adjacency = useMemo(() => {
+        const adj = {};
+        allNodes.forEach(n => { adj[n.id] = []; });
+        board.edges.forEach(e => {
+            if (adj[e.from] && adj[e.to]) { adj[e.from].push(e.to); adj[e.to].push(e.from); }
+        });
+        return adj;
+    }, [allNodes, board.edges]);
+
+    const hasBoard = board.nodes.length > 0;
+    const startNode = board.nodes.find(n => n.type === 'start');
+
+    // Sin posición guardada se parte de la casilla de salida: siempre hay algo
+    // que arrastrar, y la salida es donde de verdad empieza todo el mundo.
+    const posId = player?.mapNodeId && nodeById[player.mapNodeId]
+        ? player.mapNodeId
+        : startNode?.id || null;
+
+    const total   = ordered.length;
+    const nextGym = ordered.find(m => !hasBadge(m.order));
+
+    // Destino de la ruta: por defecto el siguiente gimnasio pendiente, pero al
+    // abrir la ficha de otra ciudad pasa a ser esa. No siempre se va al
+    // siguiente, así que el automático es solo el punto de partida.
+    // Destino: por defecto el siguiente gimnasio pendiente, pero se puede
+    // elegir cualquier gimnasio, ciudad o la Liga tocándolo en el mapa.
+    const defaultDestId = nextGym ? `gym-${nextGym.order}` : null;
+    const destNodeId = (destId && nodeById[destId]) ? destId : defaultDestId;
+    const isCustomDest = !!destNodeId && destNodeId !== defaultDestId;
+
+    // Nombre legible del destino para la cabecera.
+    const destLabel = (() => {
+        if (!destNodeId) return '';
+        const gym = ordered.find(g => `gym-${g.order}` === destNodeId);
+        if (gym) return gym.city;
+        const node = nodeById[destNodeId];
+        if (!node) return '';
+        if (node.label?.trim()) return node.label.trim();
+        return node.type === 'league' ? 'Liga Pokémon' : 'Ciudad';
+    })();
+
+    // Motivo por el que una casilla está cerrada, o null si se puede pisar.
+    //
+    // La puerta abre con la medalla marcada **o cualquiera superior**: [3] la
+    // abren la 3, la 4… hasta la 8. No es un contador —tener tres medallas
+    // cualesquiera no basta— sino un umbral por número de medalla.
+    //
+    // Cuando hay varias marcadas manda la más alta, que es la más restrictiva:
+    // por eso la puerta de la Liga con [1..8] solo abre con la medalla 8.
+    //
+    // Las casillas `surf` van por la habilidad, no por medallas.
+    const lockReason = useMemo(() => (id) => {
+        const node = nodeById[id];
+        if (!node) return null;
+        if (node.type === 'surf' && !player?.surf) return { kind: 'surf' };
+        const threshold = gateThreshold(node.requiredBadges);
+        if (threshold) {
+            let abierta = false;
+            for (let n = threshold; n <= TOTAL_BADGES; n++) if (hasBadge(n)) { abierta = true; break; }
+            if (!abierta) return { kind: 'badge', need: node.requiredBadges, threshold };
+        }
+        return null;
+    }, [nodeById, player]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const canEnter = useMemo(() => (id) => !lockReason(id), [lockReason]);
+
+    // Ruta mínima respetando las puertas.
+    const route = useMemo(() => {
+        if (!hasBoard || !posId || !destNodeId) return null;
+        return shortestPath(posId, destNodeId, adjacency, canEnter);
+    }, [hasBoard, posId, destNodeId, adjacency, canEnter]);
+
+    // Si no hay ruta, ¿es por una puerta o es que el tablero está partido? Se
+    // recalcula ignorando los bloqueos para poder decir qué falta exactamente.
+    const blockReason = useMemo(() => {
+        if (route || !hasBoard || !posId || !destNodeId) return null;
+        const open = shortestPath(posId, destNodeId, adjacency);
+        if (!open) return null;
+        const gate = open.find(id => lockReason(id));
+        return gate ? lockReason(gate) : null;
+    }, [route, hasBoard, posId, destNodeId, adjacency, lockReason]);
+
+    // Segunda ruta: la mejor alternativa que no repita el camino principal. Se
+    // busca cortando de una en una las aristas de la ruta buena y quedándose
+    // con el mejor resultado (segundo camino más corto, a lo bruto pero exacto
+    // con 115 nodos). Solo se enseña si no es mucho más larga: un rodeo de 30
+    // casillas no es una opción, es ruido.
+    const altRoute = useMemo(() => {
+        if (!route || route.length < 2 || !destNodeId) return null;
+        let best = null;
+        for (let i = 0; i < route.length - 1; i++) {
+            const blocked = new Set([`${route[i]}|${route[i + 1]}`, `${route[i + 1]}|${route[i]}`]);
+            const cand = shortestPath(posId, destNodeId, adjacency, canEnter, blocked);
+            if (!cand) continue;
+            if (cand.length === route.length && cand.every((id, j) => id === route[j])) continue;
+            if (!best || cand.length < best.length) best = cand;
+        }
+        if (!best) return null;
+        const extra = best.length - route.length;
+        return extra >= 0 && extra <= ALT_MAX_EXTRA ? best : null;
+    }, [route, posId, destNodeId, adjacency, canEnter]);
+
+    const routeIds  = useMemo(() => new Set(route || []), [route]);
+    const altIds    = useMemo(() => new Set(altRoute || []), [altRoute]);
+    const stepsLeft = route ? route.length - 1 : null;
+    const altSteps  = altRoute ? altRoute.length - 1 : null;
+
+    // ── Arrastre de la ficha ────────────────────────────────────────────────
+    // Pointer events, no drag-and-drop de HTML5: el nativo no dispara en
+    // iPad. Se busca el nodo más cercano al dedo en píxeles reales, porque los
+    // % de x e y van contra dimensiones distintas y comparar en % deforma.
+    const nearestNode = (clientX, clientY) => {
+        const rect = wrapperRef.current?.getBoundingClientRect();
+        if (!rect) return null;
+        let best = null, bestDist = Infinity;
+        for (const n of allNodes) {
+            const dx = rect.left + (n.x / 100) * rect.width  - clientX;
+            const dy = rect.top  + (n.y / 100) * rect.height - clientY;
+            const dist = Math.hypot(dx, dy);
+            if (dist < bestDist) { bestDist = dist; best = n; }
+        }
+        return bestDist <= 60 ? best : null;   // 60px: radio de imantado
+    };
+
+    const handleTokenDown = (e) => {
+        if (!hasBoard) return;
+        e.stopPropagation();
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        setDragging(true);
+        setActive(null);
+    };
+
+    const handleTokenMove = (e) => {
+        if (!dragging) return;
+        e.stopPropagation();
+        setDropTarget(nearestNode(e.clientX, e.clientY));
+    };
+
+    const handleTokenUp = (e) => {
+        if (!dragging) return;
+        e.stopPropagation();
+        const target = nearestNode(e.clientX, e.clientY);
+        setDragging(false);
+        setDropTarget(null);
+        // Una casilla cerrada por medalla no acepta la ficha: es justo lo que
+        // significa que no esté disponible todavía.
+        if (target && canEnter(target.id) && target.id !== player?.mapNodeId) {
+            onMovePlayer?.(target.id);
+        }
+    };
 
     if (!show) return null;
 
-    const earned = gymCoords.filter(m => player?.[`badge${m.order}`]).length;
-    const total  = gymCoords.length;
-    const currentNode = allNodes.find(n => n.id === player?.mapNodeId);
-
-    const handleBoardNodeClick = (e, nodeId) => {
-        e.stopPropagation();
-        setActive(null);
-
-        // Sin posición inicial → colocarse aquí
-        if (!player?.mapNodeId) {
-            onMovePlayer?.(nodeId);
-            return;
-        }
-        // Nodo alcanzable → moverse
-        if (reachable.has(nodeId)) {
-            onMovePlayer?.(nodeId);
-            setDice(null);
-            setReachable(new Set());
-        }
-    };
-
-    const handleGymClick = (e, gymCoord) => {
-        e.stopPropagation();
-        // Si es alcanzable → mover
-        const gymNodeId = `gym-${gymCoord.order}`;
-        if (player?.mapNodeId && reachable.has(gymNodeId)) {
-            onMovePlayer?.(gymNodeId);
-            setDice(null); setReachable(new Set());
-            return;
-        }
-        setActive(prev => prev?.order === gymCoord.order ? null : gymCoord);
-    };
-
-    const handleDice = (n) => {
-        setActive(null);
-        setDice(prev => prev === n ? null : n);
-    };
+    const activeArt   = active ? getLeaderArt(`gym${active.order}_1`, active.leader, generation) : null;
+    const activeBadge = active ? getBadgeImg(generation, active.order) : null;
+    const activeCards = active ? getLeaderPokemon(generation, active.order) : [];
+    const tokenNode   = posId ? nodeById[posId] : null;
+    // El avatar se resuelve por nombre, igual que en el HUD de SimPlayer.
+    const avatarUrl   = player?.name ? getTrainerAvatar(player.name) : null;
 
     return (
         <div className="imap-overlay" onClick={onClose}>
             <div className="imap-modal" onClick={e => e.stopPropagation()}>
 
-                {/* Header */}
+                {/* El contador de medallas no va aquí: ya se ve en el HUD de
+                    SimPlayer, en el home y en los iconos de los entrenadores. */}
                 <div className="imap-header">
-                    <div className="imap-progress">
-                        <span className="imap-progress-label">Medallas: {earned}/{total}</span>
-                        <div className="imap-progress-bar">
-                            <div className="imap-progress-fill" style={{ width: total ? `${(earned/total)*100}%` : '0%' }} />
+                    {/* Destino de la ruta y cuántas casillas faltan */}
+                    {destNodeId && (
+                        <div className={`imap-next ${isCustomDest ? 'custom' : ''}`}>
+                            <span className="imap-next-label">{isCustomDest ? 'Destino' : 'Siguiente'}</span>
+                            <span className="imap-next-leader">{destLabel}</span>
+                            {hasBoard && (
+                                <span className="imap-next-steps">
+                                    {stepsLeft === 0 ? '¡ya estás aquí!'
+                                        : stepsLeft !== null ? `faltan ${stepsLeft} ${stepsLeft === 1 ? 'casilla' : 'casillas'}`
+                                        : blockReason?.kind === 'surf' ? 'bloqueado: necesitas Surf'
+                                        : blockReason?.kind === 'badge' ? `bloqueado: necesitas ${describeGate(blockReason.need)}`
+                                        : 'sin ruta'}
+                                </span>
+                            )}
+                            {altSteps !== null && (
+                                <span className="imap-next-alt" title="Segunda ruta">
+                                    o {altSteps}
+                                </span>
+                            )}
+                            {isCustomDest && (
+                                <span className="imap-next-reset"
+                                      onClick={() => setDestId(null)}
+                                      title="Volver al siguiente gimnasio">✕</span>
+                            )}
                         </div>
-                    </div>
+                    )}
+                    {!destNodeId && total > 0 && (
+                        <div className="imap-next"><span className="imap-next-leader">¡Todas las medallas!</span></div>
+                    )}
+
+                    {/* Empuja Surf y la ✕ a la derecha ahora que la barra de
+                        progreso, que era quien ocupaba el hueco, ya no está */}
+                    <div className="imap-header-spacer" />
+
+                    {/* Surf abre las casillas de agua. Se activa aquí a mano
+                        mientras no haya un objeto o evento que la conceda. */}
+                    {hasBoard && onToggleSurf && (
+                        <div className={`imap-surf ${player?.surf ? 'on' : ''}`}
+                             onClick={() => onToggleSurf(!player?.surf)}
+                             title={player?.surf ? 'Surf activo — clic para quitarlo' : 'Sin Surf — clic para activarlo'}>
+                            <span className="imap-surf-icon">≈</span>
+                            <span>Surf</span>
+                        </div>
+                    )}
+
                     <div className="imap-close" onClick={onClose}>✕</div>
                 </div>
 
                 <div className="imap-body">
-                    {/* ── Mapa ── */}
-                    <div className="imap-map-container" onClick={() => { setActive(null); }}>
-                        <div className="imap-img-wrapper">
+                    <div className="imap-map-container" onClick={() => setActive(null)}>
+                        <div className="imap-img-wrapper" ref={wrapperRef}>
                             <img src={MAPS[generation]} alt={`Mapa Gen ${generation}`} className="imap-img" draggable={false} />
 
-                            {/* Board nodes (pequeños) */}
-                            {boardGraph.nodes.map(node => {
-                                const isReachable = reachable.has(node.id);
-                                const isCurrent   = player?.mapNodeId === node.id;
+                            {/* Trazo de la ruta mínima. viewBox 0-100 + preserveAspectRatio
+                                none hace que los % de los nodos sean las coordenadas. */}
+                            {route && route.length > 1 && (
+                                <svg className="imap-route-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    {/* La alternativa va debajo para que la principal mande */}
+                                    {altRoute && altRoute.slice(0, -1).map((id, i) => {
+                                        const a = nodeById[id], b = nodeById[altRoute[i + 1]];
+                                        if (!a || !b) return null;
+                                        return (
+                                            <line key={`alt-${id}`} className="alt"
+                                                  x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                                                  vectorEffect="non-scaling-stroke" />
+                                        );
+                                    })}
+                                    {route.slice(0, -1).map((id, i) => {
+                                        const a = nodeById[id], b = nodeById[route[i + 1]];
+                                        if (!a || !b) return null;
+                                        return (
+                                            <line key={id} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                                                  vectorEffect="non-scaling-stroke" />
+                                        );
+                                    })}
+                                </svg>
+                            )}
+
+                            {/* Casillas del tablero: discretas de fondo, todas visibles
+                                mientras se arrastra para poder apuntar. */}
+                            {hasBoard && board.nodes.map(n => {
+                                const inRoute = routeIds.has(n.id);
+                                const inAlt   = altIds.has(n.id);
+                                const lock    = lockReason(n.id);
+                                // Ciudades y Liga se ven siempre: son los sitios a
+                                // los que uno quiere ir, así que hacen de destino.
+                                const landmark = n.type === 'city' || n.type === 'league';
+                                // Las cerradas también: saber dónde está el muro
+                                // importa más que tener el mapa limpio.
+                                if (!inRoute && !inAlt && !lock && !landmark && !dragging) return null;
+                                const name = n.label?.trim() || (n.type === 'league' ? 'Liga Pokémon' : 'Ciudad');
                                 return (
-                                    <div
-                                        key={node.id}
+                                    <div key={n.id}
                                         className={[
-                                            'imap-board-node',
-                                            `imap-board-node--${node.type}`,
-                                            isReachable ? 'reachable' : '',
-                                            isCurrent   ? 'current-pos' : '',
+                                            'imap-node',
+                                            landmark ? 'landmark' : '',
+                                            `imap-node--${n.type}`,
+                                            inRoute ? 'in-route' : (inAlt ? 'in-alt' : ''),
+                                            lock ? 'locked' : '',
+                                            !lock && dropTarget?.id === n.id ? 'drop' : '',
+                                            n.id === posId ? 'is-pos' : '',
+                                            destNodeId === n.id ? 'is-dest' : '',
                                         ].join(' ')}
-                                        style={{ left: `${node.x}%`, top: `${node.y}%`, '--nc': node.catchColor || NODE_COLOR[node.type] }}
-                                        onClick={e => handleBoardNodeClick(e, node.id)}
-                                        title={node.label || node.type}
+                                        style={{ left: `${n.x}%`, top: `${n.y}%` }}
+                                        onClick={landmark ? (e) => {
+                                            e.stopPropagation();
+                                            setActive(null);
+                                            setDestId(prev => prev === n.id ? null : n.id);
+                                        } : undefined}
+                                        title={!lock
+                                            ? (landmark ? `${name} — tocar para ir aquí` : (n.label || n.type))
+                                            : lock.kind === 'surf'
+                                                ? 'Bloqueado — necesitas Surf'
+                                                : `Bloqueado — necesitas ${describeGate(lock.need)}`}
                                     >
-                                        {isCurrent ? null : (isReachable ? '' : NODE_ICON[node.type])}
+                                        {lock && (
+                                            <span className="imap-node-lock">
+                                                {lock.kind === 'surf' ? '≈' : gateMark(lock.need)}
+                                            </span>
+                                        )}
+                                        {landmark && !lock && (
+                                            <span className="imap-node-icon">{n.type === 'league' ? '★' : 'C'}</span>
+                                        )}
                                     </div>
                                 );
                             })}
 
-                            {/* Token placeholders para nodos de captura */}
-                            {boardGraph.nodes.filter(n => n.type === 'catch' && n.tokenDir).map(node => {
-                                const off = TOKEN_DIR_OFFSET[node.tokenDir];
-                                if (!off) return null;
-                                return (
-                                    <div key={`token-${node.id}`}
-                                        className="imap-token"
-                                        style={{
-                                            left: `${node.x + off.x}%`,
-                                            top:  `${node.y + off.y}%`,
-                                            '--tc': node.catchColor || '#888',
-                                            transform: 'translate(-50%, -50%)',
-                                        }}
-                                    />
-                                );
-                            })}
-
-                            {/* Gym markers (grandes, con estado de medalla) */}
-                            {gymCoords.map(m => {
-                                const hasBadge  = player?.[`badge${m.order}`];
-                                const badgeImg  = getBadgeImg(generation, m.order);
-                                const gymId     = `gym-${m.order}`;
-                                const isReachable = reachable.has(gymId);
-                                const isCurrent   = player?.mapNodeId === gymId;
+                            {ordered.map(m => {
+                                const won   = hasBadge(m.order);
+                                const art   = getLeaderArt(`gym${m.order}_1`, m.leader, generation);
+                                const badge = getBadgeImg(generation, m.order);
                                 return (
                                     <div
                                         key={m.order}
                                         className={[
                                             'imap-marker',
-                                            hasBadge ? 'earned' : 'missing',
+                                            won ? 'earned' : 'missing',
                                             active?.order === m.order ? 'active' : '',
-                                            isReachable ? 'reachable' : '',
-                                            isCurrent   ? 'current-pos' : '',
+                                            nextGym?.order === m.order ? 'next' : '',
+                                            destNodeId === `gym-${m.order}` ? 'is-dest' : '',
+                                            dropTarget?.id === `gym-${m.order}` ? 'drop' : '',
                                         ].join(' ')}
                                         style={{ left: `${m.x}%`, top: `${m.y}%` }}
-                                        onClick={e => handleGymClick(e, m)}
-                                        title={`#${m.order} ${m.leader}`}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            // Abrir una ciudad la fija como destino de la ruta
+                                            const closing = active?.order === m.order;
+                                            setActive(closing ? null : m);
+                                            if (!closing) setDestId(`gym-${m.order}`);
+                                        }}
+                                        title={`#${m.order} · ${m.leader} — ${m.city}`}
                                     >
-                                        {hasBadge && badgeImg
-                                            ? <img src={badgeImg} alt={m.leader} className="imap-marker-badge" />
-                                            : <span>{m.order}</span>
-                                        }
+                                        {art.src
+                                            ? <img src={art.src} alt={m.leader} className="imap-marker-face" />
+                                            : <span className="imap-marker-initial">{m.leader?.[0]}</span>}
+
+                                        <span className="imap-marker-order">{m.order}</span>
+
+                                        {won && badge && <img src={badge} alt="" className="imap-marker-badge" />}
+
+                                        <span className="imap-marker-name">{m.leader}</span>
                                     </div>
                                 );
                             })}
 
-                            {/* Pins de otros jugadores */}
-                            {allPlayers.filter(p => p.id !== player?.id && p.mapNodeId).map((p) => {
-                                const node = allNodes.find(n => n.id === p.mapNodeId);
-                                if (!node) return null;
-                                const color = PLAYER_COLORS[allPlayers.indexOf(p) % PLAYER_COLORS.length];
-                                return (
-                                    <div key={p.id} className="imap-player-pin imap-player-pin--other"
-                                        style={{ left: `${node.x}%`, top: `${node.y}%`, '--pc': color }}
-                                        title={p.name}>
-                                        {p.name?.[0]?.toUpperCase()}
-                                    </div>
-                                );
-                            })}
-
-                            {/* Pin del jugador actual */}
-                            {player?.mapNodeId && currentNode && (() => {
-                                const myColor = PLAYER_COLORS[allPlayers.indexOf(player) % PLAYER_COLORS.length] || '#e74c3c';
-                                return (
-                                    <div className="imap-player-pin imap-player-pin--me"
-                                        style={{ left: `${currentNode.x}%`, top: `${currentNode.y}%`, '--pc': myColor }}
-                                        title={player.name}>
-                                        {player.name?.[0]?.toUpperCase()}
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    </div>
-
-                    {/* ── Panel lateral ── */}
-                    <div className={`imap-panel ${active || true ? 'open' : ''}`}>
-
-                        {/* Dados */}
-                        <div className="imap-dice-section">
-                            <span className="imap-dice-label">
-                                {!player?.mapNodeId ? 'Toca un nodo para colocarte' : 'Tirada del dado'}
-                            </span>
-                            {player?.mapNodeId && (
-                                <div className="imap-dice-grid">
-                                    {[1,2,3,4,5,6].map(n => (
-                                        <button
-                                            key={n}
-                                            className={`imap-dice-btn ${dice === n ? 'active' : ''}`}
-                                            onClick={() => handleDice(n)}
-                                        >
-                                            {n}
-                                        </button>
-                                    ))}
+                            {/* Ficha del jugador: se arrastra a cualquier casilla */}
+                            {hasBoard && tokenNode && (
+                                <div
+                                    className={`imap-player-token ${dragging ? 'dragging' : ''} ${player?.mapNodeId ? '' : 'unset'}`}
+                                    style={{ left: `${tokenNode.x}%`, top: `${tokenNode.y}%` }}
+                                    onPointerDown={handleTokenDown}
+                                    onPointerMove={handleTokenMove}
+                                    onPointerUp={handleTokenUp}
+                                    onPointerCancel={handleTokenUp}
+                                    onClick={e => e.stopPropagation()}
+                                    title={`${player?.name || 'Tu ficha'} — arrástrala a otra casilla`}
+                                >
+                                    {/* Tarjeta con pico, no círculo: los redondos con
+                                        foto ya son los líderes de gimnasio, y las
+                                        casillas del tablero repiten los mismos
+                                        colores. La forma distingue mejor que el tono. */}
+                                    {avatarUrl
+                                        ? <img src={avatarUrl} alt={player?.name || ''} className="imap-player-token-face" />
+                                        : <span className="imap-player-token-initial">{player?.name?.[0]?.toUpperCase() || '?'}</span>}
                                 </div>
                             )}
-                            {dice && <span className="imap-dice-hint">{reachable.size} casillas alcanzables — toca una</span>}
                         </div>
-
-                        {/* Info de gym seleccionado */}
-                        {active ? (
-                            <>
-                                <div className="imap-panel-leader-imgs">
-                                    {getLeaderImgs(generation, active.order).map((src) => (
-                                        <img key={src} src={src} alt={active.leader} className="imap-panel-leader-img" />
-                                    ))}
-                                </div>
-                                <div className="imap-panel-info">
-                                    <div className="imap-panel-badge-row">
-                                        {getBadgeImg(generation, active.order) && (
-                                            <img src={getBadgeImg(generation, active.order)} alt="badge" className="imap-panel-badge-img" />
-                                        )}
-                                        <span className="imap-panel-order">Medalla #{active.order}</span>
-                                    </div>
-                                    <div className="imap-panel-leader">{active.leader}</div>
-                                    <div className="imap-panel-city">{active.city}</div>
-                                    <div className={`imap-panel-status ${player?.[`badge${active.order}`] ? 'earned' : 'missing'}`}>
-                                        {player?.[`badge${active.order}`] ? '✓ Medalla obtenida' : '✗ Pendiente'}
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            /* Resumen de medallas */
-                            <div className="imap-panel-badges-summary">
-                                {gymCoords.slice().sort((a,b) => a.order - b.order).map(m => {
-                                    const hasBadge = player?.[`badge${m.order}`];
-                                    const badgeImg = getBadgeImg(generation, m.order);
-                                    return (
-                                        <div key={m.order}
-                                            className={`imap-summary-item ${hasBadge ? 'earned' : 'missing'}`}
-                                            onClick={() => setActive(m)}>
-                                            {badgeImg
-                                                ? <img src={badgeImg} alt={m.leader} className="imap-summary-badge" />
-                                                : <div className="imap-summary-badge-placeholder">{m.order}</div>}
-                                            <span>{m.leader}</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {/* Posiciones de todos los jugadores */}
-                        {allPlayers.length > 1 && (
-                            <div className="imap-players-list">
-                                <span className="imap-players-title">Jugadores</span>
-                                {allPlayers.map((p, i) => {
-                                    const node = allNodes.find(n => n.id === p.mapNodeId);
-                                    const color = PLAYER_COLORS[i % PLAYER_COLORS.length];
-                                    const isMe  = p.id === player?.id;
-                                    return (
-                                        <div key={p.id} className={`imap-player-row ${isMe ? 'me' : ''}`}>
-                                            <div className="imap-player-dot" style={{ background: color }}>
-                                                {p.name?.[0]?.toUpperCase()}
-                                            </div>
-                                            <span className="imap-player-name">{p.name}{isMe ? ' (tú)' : ''}</span>
-                                            <span className="imap-player-loc">{node?.label || (p.mapNodeId ? node?.type : '—')}</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
                     </div>
+
+                    {/* Aviso cuando la región aún no tiene tablero dibujado */}
+                    {!hasBoard && (
+                        <div className="imap-noboard">Esta región aún no tiene tablero: solo mapa y líderes</div>
+                    )}
+
+                    {/* ── Ficha del líder: modal dentro del modal ── */}
+                    {active && (
+                        <div className="imap-leader-backdrop" onClick={() => setActive(null)}>
+                            <div className="imap-leader-card" onClick={e => e.stopPropagation()}>
+
+                                <div className="imap-leader-head">
+                                    {activeArt?.src && (
+                                        <img src={activeArt.src} alt={active.leader} className="imap-leader-face" />
+                                    )}
+                                    <div className="imap-leader-id">
+                                        <span className="imap-leader-name">{active.leader}</span>
+                                        <span className="imap-leader-city">{active.city}</span>
+                                    </div>
+                                    <div className="imap-leader-close" onClick={() => setActive(null)}>✕</div>
+                                </div>
+
+                                <div className="imap-leader-meta">
+                                    {activeBadge && <img src={activeBadge} alt="" className="imap-leader-badge" />}
+                                    <span className="imap-leader-order">Medalla #{active.order}</span>
+                                    <span className={`imap-leader-status ${hasBadge(active.order) ? 'earned' : 'missing'}`}>
+                                        {hasBadge(active.order) ? '✓ Obtenida' : '✗ Pendiente'}
+                                    </span>
+                                </div>
+
+                                <div className="imap-leader-cards">
+                                    {activeCards.length > 0
+                                        ? activeCards.map(src => (
+                                            <img key={src} src={src} alt={active.leader} className="imap-leader-card-img" />
+                                        ))
+                                        : <span className="imap-leader-nocards">Sin cartas para este líder</span>}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

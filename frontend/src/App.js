@@ -11,6 +11,7 @@ import AllPlayers from './components/AllPlayers.js';
 import Score from './components/Score.js';
 import HomeMenu from './components/HomeMenu.js';
 import ProgressChart from './components/ProgressChart.js';
+import MapEditor from './components/MapEditor.js';
 import { io } from 'socket.io-client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import "./styles/app.scss";
@@ -720,6 +721,35 @@ const markEventUsed = async (playerId, eventId) => {
     }
 };
 
+// Casilla del jugador en el tablero del mapa. El alcance con el dado lo calcula
+// el propio mapa; aquí solo se persiste el nodo elegido.
+const updateMapPosition = async (playerId, nodeId) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/update-map-position`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, nodeId }),
+        });
+        if (!response.ok) console.error('Error al mover la ficha del mapa:', response.status);
+    } catch (error) {
+        console.error('Error al mover la ficha del mapa:', error);
+    }
+};
+
+// Habilidad Surf: abre las casillas de agua del tablero del mapa.
+const toggleSurf = async (playerId, value) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/toggle-surf`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId, value }),
+        });
+        if (!response.ok) console.error('Error al cambiar Surf:', response.status);
+    } catch (error) {
+        console.error('Error al cambiar Surf:', error);
+    }
+};
+
 const badgeWon = async (playerId ,numBadge) => {
     try {
         const response = await fetch(`${SERVER_IP}/badge-won`, {
@@ -1125,8 +1155,11 @@ return (
                 no distingue mayúsculas, así que /Score entra por aquí igual. */}
             <Route path="/Table" element={<Score />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
-            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} attachEquip={attachEquip} attachLegendary={attachLegendary} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onHordeStart={hordeStart} onHordeTeam={hordeTeam} onHordeRound={hordeRound} onHordeFinish={hordeFinish} onHordeClear={hordeClear} onTrainerStart={trainerBattleStart} onTrainerRound={trainerBattleRound} onTrainerClear={trainerBattleClear} onFrontierStart={frontierBattleStart} onFrontierFinish={frontierBattleFinish} onFrontierClear={frontierBattleClear} onPokeStarStart={pokeStarStart} onPokeStarLevel={pokeStarLevel} onPokeStarClear={pokeStarClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onUndergroundBattle={undergroundBattle} onEventMirror={eventMirror} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} attachEquip={attachEquip} attachLegendary={attachLegendary} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onHordeStart={hordeStart} onHordeTeam={hordeTeam} onHordeRound={hordeRound} onHordeFinish={hordeFinish} onHordeClear={hordeClear} onTrainerStart={trainerBattleStart} onTrainerRound={trainerBattleRound} onTrainerClear={trainerBattleClear} onFrontierStart={frontierBattleStart} onFrontierFinish={frontierBattleFinish} onFrontierClear={frontierBattleClear} onPokeStarStart={pokeStarStart} onPokeStarLevel={pokeStarLevel} onPokeStarClear={pokeStarClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onUndergroundBattle={undergroundBattle} onEventMirror={eventMirror} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove} onMovePlayerMap={updateMapPosition} onToggleSurf={toggleSurf}/>} />
             <Route path="/progress" element={<ProgressChart />} />
+            {/* Editor del tablero: coloca gimnasios y nodos, y los guarda en
+                Backend/saves/. No forma parte de la partida — es herramienta. */}
+            <Route path="/map-editor" element={<MapEditor />} />
 
         </Routes>
     </Router>

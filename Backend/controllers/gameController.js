@@ -5,6 +5,9 @@ import Pokemons from '../models/Pokemons.js';
 import Attacks from '../models/Attacks.js';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 
 import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame, getSaveInfo, setGameRivals } from "../gameInstance.js";
@@ -2084,6 +2087,100 @@ export const undergroundBattle = async (req, res) => {
         updateGameAndNotify();
         res.status(200).json({ message: 'Encuentro subterráneo listo', pokemon: wild });
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ── Mapa interactivo ────────────────────────────────────────────────────────
+//
+// Los dos ficheros son datos de tablero, no de partida: viven en `saves/` pero
+// no entran en el autosave. `mapCoords` son los gimnasios (los pinta el mapa
+// aunque no haya tablero); `boardNodes` son los nodos y aristas por los que se
+// mueve la ficha. Hoy solo Kanto tiene tablero, así que board-nodes devuelve
+// la estructura vacía en vez de 404: el modal la pinta sin nodos y ya está.
+
+const __mapDirname = path.dirname(fileURLToPath(import.meta.url));
+
+const mapDataPath = (folder, gen) =>
+    path.join(__mapDirname, '..', 'saves', folder, `gen${gen}.json`);
+
+// Solo gens 1-4: evita que un `..` en la URL se cuele hasta el disco.
+const validGen = (gen) => {
+    const n = Number(gen);
+    return Number.isInteger(n) && n >= 1 && n <= 4 ? n : null;
+};
+
+const readMapData = (folder, gen, fallback) => {
+    const file = mapDataPath(folder, gen);
+    if (!fs.existsSync(file)) return fallback;
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+};
+
+export const getMapCoords = async (req, res) => {
+    try {
+        const gen = validGen(req.params.gen);
+        if (!gen) return res.status(400).json({ message: 'Generación no válida' });
+        res.status(200).json(readMapData('mapCoords', gen, []));
+    } catch (error) {
+        console.error('Error al leer las coordenadas del mapa:', error);
+        res.status(200).json([]);
+    }
+};
+
+export const getBoardNodes = async (req, res) => {
+    try {
+        const gen = validGen(req.params.gen);
+        if (!gen) return res.status(400).json({ message: 'Generación no válida' });
+        res.status(200).json(readMapData('boardNodes', gen, { nodes: [], edges: [] }));
+    } catch (error) {
+        console.error('Error al leer el tablero:', error);
+        res.status(200).json({ nodes: [], edges: [] });
+    }
+};
+
+// ── Guardado desde /map-editor ──────────────────────────────────────────────
+//
+// Se guarda lo que manda el editor tal cual, sin filtrar campos: así los
+// atributos que el editor todavía no sabe tocar —hoy `requiredBadge`— sobreviven
+// al ir y volver en vez de perderse en cada guardado.
+//
+// Antes de escribir se deja una copia `.bak`: son horas de colocar nodos a mano
+// y un guardado en mal momento los borraría sin vuelta atrás.
+const writeMapData = (folder, gen, data) => {
+    const dir = path.join(__mapDirname, '..', 'saves', folder);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const file = mapDataPath(folder, gen);
+    if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak');
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+};
+
+export const saveMapCoords = async (req, res) => {
+    try {
+        const gen = validGen(req.params.gen);
+        if (!gen) return res.status(400).json({ message: 'Generación no válida' });
+        if (!Array.isArray(req.body)) {
+            return res.status(400).json({ message: 'Se esperaba una lista de marcadores' });
+        }
+        writeMapData('mapCoords', gen, req.body);
+        res.status(200).json({ message: 'Coordenadas guardadas', count: req.body.length });
+    } catch (error) {
+        console.error('Error al guardar las coordenadas del mapa:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const saveBoardNodes = async (req, res) => {
+    try {
+        const gen = validGen(req.params.gen);
+        if (!gen) return res.status(400).json({ message: 'Generación no válida' });
+        const { nodes, edges } = req.body || {};
+        if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+            return res.status(400).json({ message: 'Se esperaba { nodes: [], edges: [] }' });
+        }
+        writeMapData('boardNodes', gen, { nodes, edges });
+        res.status(200).json({ message: 'Tablero guardado', nodes: nodes.length, edges: edges.length });
+    } catch (error) {
+        console.error('Error al guardar el tablero:', error);
         res.status(500).json({ message: error.message });
     }
 };

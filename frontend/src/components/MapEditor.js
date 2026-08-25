@@ -9,15 +9,19 @@ import mapGen4 from '../images/maps/gen4.png';
 
 const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4 };
 
+// Solo son los valores por defecto al colocar un gimnasio NUEVO: al pinchar en
+// uno existente el formulario se rellena desde el fichero, no desde aquí.
+// Aun así deben coincidir con `saves/mapCoords/`, porque un nombre distinto
+// rompe la búsqueda del retrato (Surge → surge.webp, no "Lt. Surge").
 const GYM_LEADERS = {
-    1: ['Brock', 'Misty', 'Lt. Surge', 'Erika', 'Koga', 'Sabrina', 'Blaine', 'Giovanni'],
+    1: ['Brock', 'Misty', 'Surge', 'Erika', 'Koga', 'Sabrina', 'Blaine', 'Giovanni'],
     2: ['Falkner', 'Bugsy', 'Whitney', 'Morty', 'Chuck', 'Jasmine', 'Pryce', 'Clair'],
     3: ['Roxanne', 'Brawly', 'Wattson', 'Flannery', 'Norman', 'Winona', 'Tate & Liza', 'Wallace'],
     4: ['Roark', 'Gardenia', 'Maylene', 'Crasher Wake', 'Fantina', 'Byron', 'Candice', 'Volkner'],
 };
 
 const CITIES = {
-    1: ['Ciudad Plateada', 'Ciudad Celeste', 'Ciudad Carmín', 'Ciudad Azulona', 'Ciudad Fucsia', 'Ciudad Lavanda', 'Ciudad Cinábara', 'Ciudad Azafrana'],
+    1: ['Ciudad Plateada', 'Ciudad Celeste', 'Ciudad Carmín', 'Ciudad Azulona', 'Ciudad Fucsia', 'Ciudad Azafran', 'Isla Canela', 'Ciudad Verde'],
     2: ['Ciudad Malva', 'Ciudad Ázalea', 'Ciudad Goldenrod', 'Ciudad Escarcha', 'Ciudad Olivina', 'Ciudad Acero', 'Ciudad Mahogany', 'Ciudad Blackthorn'],
     3: ['Ciudad Rocavelo', 'Ciudad Dorsalia', 'Ciudad Mauville', 'Ciudad Lavaridge', 'Petalburg City', 'Ciudad Fortree', 'Mossdeep City', 'Ciudad Sootópolis'],
     4: ['Oreburgh City', 'Ciudad Eterna', 'Ciudad Mauville', 'Ciudad Pastoria', 'Ciudad Hearthome', 'Ciudad Canalave', 'Ciudad Snowpoint', 'Ciudad Sunyshore'],
@@ -210,6 +214,35 @@ const MapEditor = () => {
         setBoardSaved(false);
     };
 
+    // Puerta por medallas concretas: `requiredBadges: [3]` pide LA medalla 3,
+    // no tres medallas. Se exigen todas las de la lista, así que la puerta de
+    // la Liga lleva las ocho. Lista vacía = sin puerta, y entonces se borra el
+    // campo en vez de dejar un array vacío, para no ensuciar el JSON.
+    const setRequiredBadges = (badges) => {
+        setBoardNodes(prev => prev.map(n => {
+            if (n.id !== selNodeId) return n;
+            const { requiredBadges, ...rest } = n;
+            return badges.length
+                ? { ...rest, requiredBadges: badges.slice().sort((a, b) => a - b) }
+                : rest;
+        }));
+        setBoardSaved(false);
+    };
+
+    // Renombrar un nodo ya colocado. Hace falta para las ciudades: el mapa las
+    // ofrece como destino y sin etiqueta todas se llamarían "Ciudad".
+    const handleUpdateLabel = (texto) => {
+        setBoardNodes(prev => prev.map(n => n.id === selNodeId ? { ...n, label: texto } : n));
+        setBoardSaved(false);
+    };
+
+    const handleToggleBadge = (num) => {
+        const actuales = selNode?.requiredBadges || [];
+        setRequiredBadges(actuales.includes(num)
+            ? actuales.filter(b => b !== num)
+            : [...actuales, num]);
+    };
+
     const handleSaveBoard = async () => {
         await fetch(`${SERVER_IP}/board-nodes/${gen}`, {
             method: 'POST',
@@ -348,12 +381,23 @@ const MapEditor = () => {
                                         `map-board-node--${node.type}`,
                                         selNodeId === node.id   ? 'selected'      : '',
                                         connectStart === node.id ? 'connect-start' : '',
+                                        node.requiredBadges?.length ? 'has-gate' : '',
                                     ].join(' ')}
                                     style={{ left: `${node.x}%`, top: `${node.y}%`, '--node-color': node.catchColor || NODE_COLOR[node.type] }}
                                     onClick={e => handleBoardNodeClick(e, node.id)}
-                                    title={node.label || node.type}
+                                    title={node.requiredBadges?.length
+                                        ? `${node.label || node.type} — pide ${node.requiredBadges.length >= 8 ? 'las 8 medallas' : 'la medalla ' + node.requiredBadges.join(', ')}`
+                                        : (node.label || node.type)}
                                 >
                                     {node.type === 'gym' ? node.gymOrder : NODE_ICON[node.type]}
+                                    {/* Marca la puerta sin abrir el panel */}
+                                    {node.requiredBadges?.length > 0 && (
+                                        <span className="map-board-node-gate">
+                                            {node.requiredBadges.length >= 8 ? '★'
+                                                : node.requiredBadges.length === 1 ? node.requiredBadges[0]
+                                                : node.requiredBadges.length + '·'}
+                                        </span>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -476,6 +520,60 @@ const MapEditor = () => {
                                         </div>
                                     </>
                                 )}
+                                {/* Nombre del nodo. Las ciudades se pueden elegir
+                                    como destino en el mapa, así que conviene
+                                    ponerles el nombre real. */}
+                                {!selNode.readonly && (
+                                    <div className="map-board-label-edit">
+                                        <span className="map-board-connections-title">Nombre</span>
+                                        <input
+                                            type="text"
+                                            value={selNode.label || ''}
+                                            placeholder={selNode.type === 'city' ? 'ej. Ciudad Lavanda' : 'sin nombre'}
+                                            onChange={e => handleUpdateLabel(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Puerta por medallas concretas. Vale para cualquier
+                                    tipo de nodo, no solo los de medallas: una puerta
+                                    puede estar en mitad de una ruta. */}
+                                {!selNode.readonly && (() => {
+                                    const sel = selNode.requiredBadges || [];
+                                    return (
+                                        <>
+                                            <span className="map-board-connections-title" style={{ padding: '6px 10px 2px', display: 'block' }}>
+                                                Puerta — ¿qué medallas pide?
+                                            </span>
+                                            <div className="map-board-badge-grid">
+                                                {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
+                                                    <button
+                                                        key={n}
+                                                        className={`map-board-badge-btn ${sel.includes(n) ? 'active' : ''}`}
+                                                        onClick={() => handleToggleBadge(n)}
+                                                        title={`Exigir la medalla ${n}`}
+                                                    >{n}</button>
+                                                ))}
+                                            </div>
+                                            <div className="map-board-badge-actions">
+                                                <button onClick={() => setRequiredBadges([1, 2, 3, 4, 5, 6, 7, 8])}>Las 8</button>
+                                                <button onClick={() => setRequiredBadges([])}>Sin puerta</button>
+                                            </div>
+                                            <p className="map-board-badge-hint">
+                                                {sel.length === 0
+                                                    ? (selNode.type === 'surf'
+                                                        ? 'Sin puerta (las casillas de agua ya piden Surf aparte)'
+                                                        : 'Sin puerta: se puede pasar siempre')
+                                                    : sel.length >= 8
+                                                        ? 'Cerrada hasta tener las 8 medallas'
+                                                        : sel.length === 1
+                                                            ? `Cerrada hasta tener la medalla ${sel[0]}`
+                                                            : `Cerrada hasta tener las medallas ${sel.slice().sort((a, b) => a - b).join(', ')}`}
+                                            </p>
+                                        </>
+                                    );
+                                })()}
+
                                 {selNodeEdges.length > 0 && (
                                     <div className="map-board-connections">
                                         <span className="map-board-connections-title">Conexiones ({selNodeEdges.length})</span>
