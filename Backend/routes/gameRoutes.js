@@ -1,7 +1,7 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,getPokemonCard,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame,raidStart,raidTeam,raidRound,raidFinish,raidClear,hordeStart,hordeTeam,hordeRound,hordeFinish,hordeClear,trainerBattleStart,trainerBattleRound,trainerBattleClear,frontierBattleStart,frontierBattleFinish,frontierBattleClear,pokeStarStart,pokeStarLevel,pokeStarClear,setStoreDiscount,getMegaForms,getRandomMega,simMegaBattle,undergroundBattle,setEventMirror} from '../controllers/gameController.js';
-import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,setMote,attachMega,attachLegendary,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier,attachTera,attachEquip,bagAdd,bagRemove,markEventUsed} from '../controllers/playerController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,getPokemonCard,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame,raidStart,raidTeam,raidRound,raidFinish,raidClear,hordeStart,hordeTeam,hordeRound,hordeFinish,hordeClear,trainerBattleStart,trainerBattleRound,trainerBattleClear,frontierBattleStart,frontierBattleFinish,frontierBattleClear,pokeStarStart,pokeStarLevel,pokeStarClear,setStoreDiscount,getMegaForms,getRandomMega,simMegaBattle,undergroundBattle,setEventMirror,getMapCoords,getBoardNodes,saveMapCoords,saveBoardNodes} from '../controllers/gameController.js';
+import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,setMote,attachMega,attachLegendary,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier,attachTera,attachEquip,bagAdd,bagRemove,markEventUsed,updateMapPosition,toggleSurf} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
 //router.post('/game', createGame);
@@ -96,6 +96,14 @@ router.post('/deny-purchase', denyPurchase);
 router.post('/master-purchase', masterPurchase);
 router.post('/pause-game', pauseGame);
 router.post('/end-game', endGame);
+
+// Mapa interactivo
+router.get('/map-coords/:gen', getMapCoords);
+router.get('/board-nodes/:gen', getBoardNodes);
+router.post('/map-coords/:gen', saveMapCoords);     // /map-editor
+router.post('/board-nodes/:gen', saveBoardNodes);   // /map-editor
+router.post('/update-map-position', updateMapPosition);
+router.post('/toggle-surf', toggleSurf);
 
 
 

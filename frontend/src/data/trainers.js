@@ -3,10 +3,12 @@
 import trainer1  from '../images/trainers/Trainer1.webp';
 import trainer1Avatar from '../images/trainers/Trainer1Avatar.webp';
 import trainer2  from '../images/trainers/Trainer2.webp';
+import trainer2Avatar from '../images/trainers/Trainer2Avatar.webp';
 import trainer3  from '../images/trainers/Trainer3.webp';
 import trainer4  from '../images/trainers/Trainer4.webp';
 import trainer5  from '../images/trainers/Trainer5.webp';
 import trainer6  from '../images/trainers/Trainer6.webp';
+import trainer6Avatar from '../images/trainers/Trainer6Avatar.webp';
 import trainer7  from '../images/trainers/Trainer7.webp';
 import trainer8  from '../images/trainers/Trainer8.webp';
 import trainer9  from '../images/trainers/Trainer9.webp';
@@ -17,11 +19,11 @@ import trainer12 from '../images/trainers/Trainer12.webp';
 
 export const TRAINERS = [
     { name: 'Mila',    image: trainer1,  avatar: trainer1Avatar },
-    { name: 'Wuicho',  image: trainer2  },
+    { name: 'Wuicho',  image: trainer2, avatar: trainer2Avatar },
     { name: 'Kevin',   image: trainer3  },
     { name: 'Kampis',  image: trainer4  },
     { name: 'Mandito', image: trainer5  },
-    { name: 'Doc',     image: trainer6  },
+    { name: 'Doc',     image: trainer6, avatar: trainer6Avatar },
     { name: 'Tacho',   image: trainer7  },
     { name: 'Fede',    image: trainer8  },
     { name: 'Perry',   image: trainer9  },
@@ -48,6 +50,11 @@ export const getTrainerImage = (name) =>
 // cuadrado superior es la escena entera y a 54px su cara se queda en una docena
 // de píxeles. `avatar` es la vía de escape: un recorte cerrado solo para los
 // círculos, mientras la tarjeta del menú sigue enseñando la escena completa.
+//
+// Las de Wuicho y Doc fallan por otro lado: son verticales y de cuerpo entero,
+// sí, pero muy anchas, porque el Pokémon va al lado (Gengar al hombro, el
+// Rapidash entero a la derecha). El cuadrado superior los entra a los dos y
+// deja la cara en un puñado de píxeles, así que también llevan su recorte.
 //
 // Es opcional a propósito. Sin ese campo esto devuelve exactamente lo mismo que
 // getTrainerImage, así que los otros once entrenadores no se enteran de nada.

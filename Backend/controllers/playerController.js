@@ -1450,3 +1450,40 @@ export const markEventUsed = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Mueve la ficha del jugador en el tablero del mapa. El alcance lo calcula el
+// mapa en el front (BFS con el dado), aquí solo se guarda la casilla: es la
+// misma confianza que ya se le da al resto de acciones del simulador.
+// `nodeId` null deja al jugador fuera del tablero (vuelve a poder colocarse).
+export const updateMapPosition = async (req, res) => {
+    try {
+        const { playerId, nodeId } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+
+        player.mapNodeId = nodeId || null;
+        updateGameAndNotify();
+
+        res.status(200).json({ message: 'Posición actualizada', mapNodeId: player.mapNodeId });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Habilidad Surf: abre las casillas de tipo `surf` del tablero del mapa.
+// `value` opcional; sin él alterna. Se llama desde el mapa mientras no exista
+// un objeto o evento que la conceda.
+export const toggleSurf = async (req, res) => {
+    try {
+        const { playerId, value } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+
+        player.surf = typeof value === 'boolean' ? value : !player.surf;
+        updateGameAndNotify();
+
+        res.status(200).json({ message: 'Surf actualizado', surf: player.surf });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
