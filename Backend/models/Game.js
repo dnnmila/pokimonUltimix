@@ -54,6 +54,19 @@ class Game {
         this.ended = false;
         this.winner = null;
         this.badgeHistory = [];
+        // Derrotas contra líderes de gimnasio:
+        //   { round, timestamp, playerId, playerName, badge, gymName }
+        // No va en `badgeHistory` a propósito: el 'lost' de ahí es el máster
+        // QUITANDO una medalla, no un combate perdido. Aquí se apunta cuando al
+        // jugador se le cae el último Pokémon vivo enfrentándose a un líder, que
+        // es lo único que cuenta de verdad como reto fallado. Lo consume la
+        // línea de tiempo de /progress.
+        this.gymHistory = [];
+        // Pokémon que entran en un equipo: { round, timestamp, playerId,
+        // playerName, pokedex, pokemonName }. Guarda el pokedex y no solo el
+        // nombre porque la línea de tiempo pinta su sprite. Ver recordCatch en
+        // playerController.
+        this.catchHistory = [];
         // Incursión Max en curso, o null. La lleva un solo jugador (el host) y
         // guarda el marcador acumulado de los cuatro combates. Vive aquí y no en
         // el SimPlayer para que el espejo del marcador la vea y para que

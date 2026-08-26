@@ -105,6 +105,7 @@ export const nextTurn = async (req, res) => {
                     const rivalPkm = game.myRivalPkm[game.myRivalPkm.length - 1];
                     game.stateHistory.push({
                         round: game.round,
+                        timestamp: Date.now(),
                         playerName: currentPlayer.name,
                         pokemonName: target.name,
                         rivalName: game.CurrentRival?.name || null,

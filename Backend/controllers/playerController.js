@@ -9,6 +9,24 @@ import { isLegendaryBase, isLegendaryFormOf, legendaryFormsOf } from '../data/le
 // Es tope de reglas del juego, no de la interfaz.
 export const MAX_EXTRA_LEVEL = 6;
 
+// Todo Pokémon que entra en un equipo pasa por aquí: la captura del SimPlayer,
+// la del mapa y el alta a mano del máster. No se distingue entre ellas a
+// propósito —para la línea de tiempo de /progress lo que importa es CUÁNDO se
+// hizo con él y CUÁL es—, y guardar el pokedex es lo que deja pintar su sprite.
+function recordCatch(player, pokemon) {
+    const game = getGame();
+    if (!game) return;
+    if (!game.catchHistory) game.catchHistory = [];
+    game.catchHistory.push({
+        round: game.round,
+        timestamp: Date.now(),
+        playerId: player.id,
+        playerName: player.name,
+        pokedex: pokemon.pokedex,
+        pokemonName: pokemon.name,
+    });
+}
+
 // Función para abrir la base de datos
 async function openDb() {
     return open({
@@ -175,6 +193,7 @@ export const addPokemonToPlayer = async (req, res) => {
       
 
         player.addPokemon(pokemon);
+        recordCatch(player, pokemon);
         await attachGMaxIfAvailable(player, pokemon, pokemonData, db);
         console.log(player.name + ' ha agreago al pokemon ' + pokemon.name );
         console.log(pokemon);
@@ -251,6 +270,7 @@ export const addPokemonScanned = async (req, res) => {
       
 
         player.addPokemon(pokemon);
+        recordCatch(player, pokemon);
         await attachGMaxIfAvailable(player, pokemon, pokemonData, db);
         console.log(player.name + ' ha agreago al pokemon ' + pokemon.name );
         console.log(pokemon);
@@ -511,7 +531,7 @@ export const badgeWon  = async (req, res) => {
         player.BadgeWon(numBadge);
         console.log(player.name + ' badge WON: ' + numBadge);
         const gameForHistory = getGame();
-        gameForHistory.badgeHistory.push({ round: gameForHistory.round, playerId: player.id, playerName: player.name, badge: numBadge, action: 'won' });
+        gameForHistory.badgeHistory.push({ round: gameForHistory.round, timestamp: Date.now(), playerId: player.id, playerName: player.name, badge: numBadge, action: 'won' });
         if (numBadge === 10) {
             const game = getGame();
             game.paused = true;
@@ -541,7 +561,7 @@ export const badgeLost = async (req, res) => {
         player.BadgeLost(numBadge);
         console.log(player.name + ' badge LOST: ' + numBadge);
         const gameForLostHistory = getGame();
-        gameForLostHistory.badgeHistory.push({ round: gameForLostHistory.round, playerId: player.id, playerName: player.name, badge: numBadge, action: 'lost' });
+        gameForLostHistory.badgeHistory.push({ round: gameForLostHistory.round, timestamp: Date.now(), playerId: player.id, playerName: player.name, badge: numBadge, action: 'lost' });
         if (numBadge === 10) {
             const game = getGame();
             game.ended = false;
@@ -552,6 +572,41 @@ export const badgeLost = async (req, res) => {
         // Aquí, lógica para actualizar el jugador en la base de datos con el nuevo Pokémon
 
         res.status(200).json({ message: 'Badge removed successfully', player });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Reto de gimnasio fallado: al jugador se le cayó el último Pokémon vivo contra
+// un líder. Lo avisa la tablet, que es la única que sabe si quedaba equipo en
+// pie cuando el combate se resolvió. No toca nada de la partida —solo apunta—,
+// así que repetirlo no rompe nada, pero sí se ignoran los avisos duplicados de
+// la misma ronda y el mismo gimnasio: si el jugador vuelve a entrar y a caer en
+// la misma ronda es el mismo intento fallido, no dos.
+export const gymDefeat = async (req, res) => {
+    try {
+        const { playerId, badge, gymName } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) {
+            return res.status(404).json({ message: 'Jugador no encontrado' });
+        }
+        const game = getGame();
+        if (!game.gymHistory) game.gymHistory = [];
+        const numBadge = Number(badge) || null;
+        const already = game.gymHistory.some(e =>
+            e.playerId === player.id && e.round === game.round && e.badge === numBadge);
+        if (!already) {
+            game.gymHistory.push({
+                round: game.round,
+                timestamp: Date.now(),
+                playerId: player.id,
+                playerName: player.name,
+                badge: numBadge,
+                gymName: gymName || null,
+            });
+            updateGameAndNotify();
+        }
+        res.status(200).json({ message: 'Gym defeat recorded' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -628,6 +683,7 @@ export const increaseLevel  = async (req, res) => {
         if (game && updatedPokemon) {
             game.levelHistory.push({
                 round: game.round,
+                timestamp: Date.now(),
                 playerName: player.name,
                 pokemonName: updatedPokemon.name,
                 previousLevel,
@@ -1002,6 +1058,7 @@ export const changeState  = async (req, res) => {
         if (game && changedPokemon) {
             game.stateHistory.push({
                 round: game.round,
+                timestamp: Date.now(),
                 playerName: player.name,
                 pokemonName: changedPokemon.name,
                 newState: changedPokemon.state,
