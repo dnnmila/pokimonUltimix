@@ -550,6 +550,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
             new Audio(lifepointsSound).play().catch(() => {});
             onChangeState(player.id, myPokemon.id, { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
+            reportGymDefeatIfWiped(myPokemon);
         }
     }, [myLocked, rivalLocked]);
 
@@ -1142,12 +1143,40 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         return (base.extra ?? 0) < MAX_EXTRA_LEVEL;
     };
 
+    // Reto de gimnasio fallado. El combate contra un líder no tiene un final
+    // explícito —se pelea hasta que uno de los dos se queda sin equipo—, así
+    // que la derrota se detecta aquí: si el Pokémon que acaba de caer era el
+    // último en pie, el intento se apunta en `gymHistory` para que la línea de
+    // tiempo de /progress lo pinte.
+    //
+    // Se cuenta sobre el equipo BASE (los megas y G-Max no van aparte: el KO
+    // siempre viaja a su base) y se descuenta a mano el que se acaba de tumbar,
+    // porque el estado nuevo todavía no ha vuelto del backend.
+    const reportGymDefeatIfWiped = async (knockedOutPkm) => {
+        if (!rival?.id?.startsWith('SimLeader-')) return;
+        if (gymLeaderBadgeNum === null) return;
+        const knockedId = resolveBasePokemonId(knockedOutPkm);
+        const stillAlive = (player.pokemons || [])
+            .filter(p => p.id !== knockedId && p.state === 'Alive').length;
+        if (stillAlive > 0) return;
+        try {
+            await fetch(`${SERVER_IP}/gym-defeat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId, badge: gymLeaderBadgeNum, gymName: rival?.name }),
+            });
+        } catch (e) {
+            console.error('Error al registrar la derrota de gimnasio:', e);
+        }
+    };
+
     const knockOutIfAbandoned = () => {
         if (!isMyTurn || !game.battlePublic) return;
         if (myPokemonSelected !== 'true') return;
         if (!myPokemon || myPokemon.state !== 'Alive') return;
         if (myLocked && rivalLocked) return;
         onChangeState(player.id, resolveBasePokemonId(myPokemon), { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' });
+        reportGymDefeatIfWiped(myPokemon);
     };
 
     const handleSelectMyPokemon = async (pokemon) => {

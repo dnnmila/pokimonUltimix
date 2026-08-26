@@ -258,13 +258,34 @@ const MapBattleModal = ({ open, onClose, player, generation, nodeId, onResolved,
                 setPhase('capture');
             }
         } else {
-            // Knock out del pokémon derrotado
+            // Knock out del pokémon derrotado. El rival se lee de simRival en
+            // vez de darlo por salvaje: por aquí también pasan los combates de
+            // líder, y el historial los quiere con su nombre.
             if (myPkm && myPkm.state === 'Alive') {
                 await fetch(`${SERVER_IP}/change-state`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ playerId: player.id, pokemonId: myPkm.id, rivalName: 'Wild Pokemon', rivalPokemonName: rivPkm?.name, source: 'map-wild-battle' }),
+                    body: JSON.stringify({ playerId: player.id, pokemonId: myPkm.id, rivalName: player?.simRival?.name || 'Wild Pokemon', rivalPokemonName: rivPkm?.name, source: isLeaderBattle ? 'map-leader-battle' : 'map-wild-battle' }),
                 });
+            }
+            // Reto de gimnasio fallado: sin equipo en pie contra un líder el
+            // combate está perdido, y eso se apunta para la línea de tiempo de
+            // /progress. Se descuenta a mano el que se acaba de tumbar, porque
+            // el estado nuevo aún no ha vuelto del backend.
+            if (isLeaderBattle && badgeNum) {
+                const stillAlive = (player.pokemons || [])
+                    .filter(p => p.id !== myPkm?.id && p.state === 'Alive').length;
+                if (stillAlive === 0) {
+                    try {
+                        await fetch(`${SERVER_IP}/gym-defeat`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ playerId: player.id, badge: badgeNum, gymName: player?.simRival?.name }),
+                        });
+                    } catch (e) {
+                        console.error('Error al registrar la derrota de gimnasio:', e);
+                    }
+                }
             }
             setHasLostPokemon(true);
             // Reset parcial para elegir otro Pokémon, sin cerrar modal

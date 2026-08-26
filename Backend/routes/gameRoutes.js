@@ -1,7 +1,7 @@
 import { Router } from 'express';
 const router = Router();
 import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,getPokemonCard,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,pauseGame,endGame,raidStart,raidTeam,raidRound,raidFinish,raidClear,hordeStart,hordeTeam,hordeRound,hordeFinish,hordeClear,trainerBattleStart,trainerBattleRound,trainerBattleClear,frontierBattleStart,frontierBattleFinish,frontierBattleClear,pokeStarStart,pokeStarLevel,pokeStarClear,setStoreDiscount,getMegaForms,getRandomMega,simMegaBattle,undergroundBattle,setEventMirror,getMapCoords,getBoardNodes,saveMapCoords,saveBoardNodes} from '../controllers/gameController.js';
-import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,setMote,attachMega,attachLegendary,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier,attachTera,attachEquip,bagAdd,bagRemove,markEventUsed,updateMapPosition,toggleSurf} from '../controllers/playerController.js';
+import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,gymDefeat,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,setMote,attachMega,attachLegendary,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier,attachTera,attachEquip,bagAdd,bagRemove,markEventUsed,updateMapPosition,toggleSurf} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
 //router.post('/game', createGame);
@@ -22,6 +22,7 @@ router.post('/remove-pokemon', removePokemonToPlayer);
 router.post('/update-coins', updateCoins);
 router.post('/badge-won', badgeWon);
 router.post('/badge-lost', badgeLost);
+router.post('/gym-defeat', gymDefeat);
 router.post('/add-points', addPoints);
 router.post('/change-position', changePosition);
 router.post('/increase-level', increaseLevel);

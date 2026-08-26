@@ -1,16 +1,32 @@
+// Línea de tiempo de la partida (/progress). Un carril por jugador: la columna
+// de nombres se queda fija a la izquierda y el SVG de los carriles se desplaza,
+// así que las dos tienen que compartir el alto de fila. Ese alto lo pone el
+// componente en --pt-row-h / --pt-axis-h para no tener el número escrito en dos
+// sitios; aquí solo se consume.
+
+$pt-font: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+$pt-names-w: 190px;
+
 .progress-chart-page {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2rem 1.5rem;
-    gap: 1.5rem;
+    gap: 1.2rem;
     background: linear-gradient(160deg, #0d0d1a, #1a1a2e, #16213e);
+}
+
+.pt-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
 }
 
 .progress-chart-title {
     font-size: 2.2rem;
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-family: $pt-font;
     color: #f0d080;
     font-weight: bold;
     letter-spacing: 0.08em;
@@ -21,56 +37,229 @@
 .progress-chart-round {
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.5);
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-family: $pt-font;
     letter-spacing: 0.05em;
 }
 
 .progress-chart-empty {
     color: rgba(255, 255, 255, 0.4);
     font-size: 1.1rem;
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-family: $pt-font;
     margin-top: 4rem;
 }
 
-.progress-chart-legend {
+// ─── Filtros de capa ─────────────────────────────────────────────────────────
+.pt-filters {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1rem 2rem;
-}
-
-.progress-chart-legend-item {
-    display: flex;
-    align-items: center;
     gap: 0.5rem;
 }
 
-.progress-chart-legend-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.progress-chart-legend-name {
-    color: white;
-    font-size: 0.95rem;
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+.pt-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.4);
+    font-family: $pt-font;
+    font-size: 0.85rem;
     letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+
+    .pt-filter-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+    }
+
+    &.is-on {
+        color: var(--pt-filter-color);
+        border-color: var(--pt-filter-color);
+        background: rgba(255, 255, 255, 0.09);
+    }
 }
 
-.progress-chart-svg-wrapper {
+// ─── Tablero ─────────────────────────────────────────────────────────────────
+.pt-board {
+    display: flex;
     width: 100%;
-    max-width: 780px;
+    max-width: 1200px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
-    padding: 1rem;
+    overflow: hidden;
     box-sizing: border-box;
 }
 
-.progress-chart-svg {
-    width: 100%;
-    height: auto;
+.pt-names {
+    flex: 0 0 $pt-names-w;
+    width: $pt-names-w;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.18);
+}
+
+// Deja hueco para la cabecera de rondas, que va dentro del SVG.
+.pt-names-spacer {
+    height: var(--pt-axis-h);
+}
+
+.pt-name-row {
+    height: var(--pt-row-h);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0 0.7rem;
+    box-sizing: border-box;
+    border-left: 3px solid var(--pt-color);
+
+    // El hueco de la cabecera es el hijo 1, así que las filas impares son los
+    // jugadores de índice impar: las mismas que sombrea el SVG.
+    &:nth-child(odd) {
+        background: rgba(255, 255, 255, 0.02);
+    }
+}
+
+.pt-name-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center top;
+    border: 2px solid var(--pt-color);
+}
+
+.pt-name-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.pt-name-label {
+    color: white;
+    font-family: $pt-font;
+    font-size: 1.05rem;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pt-name-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.4rem;
+}
+
+// Medallas / derrotas / debilitados, en el mismo orden y color que las marcas.
+.pt-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-family: $pt-font;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+
+    &::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    &--badge::before { background: #f0d080; }
+    &--lost::before  { background: #f87171; }
+    &--catch::before { background: #38bdf8; }
+    &--faint::before { background: #94a3b8; }
+}
+
+.pt-scroll {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+}
+
+.pt-svg {
     display: block;
+}
+
+.pt-marker {
+    cursor: pointer;
+
+    &:hover .pt-marker-halo {
+        fill-opacity: 0.35;
+    }
+}
+
+.pt-marker-halo {
+    fill: #f0d080;
+    fill-opacity: 0.18;
+}
+
+// ─── Tooltip ─────────────────────────────────────────────────────────────────
+.pt-tip {
+    position: absolute;
+    z-index: 5;
+    transform: translate(-50%, calc(-100% - 14px));
+    pointer-events: none;
+    min-width: 170px;
+    max-width: 280px;
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    background: rgba(10, 10, 22, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-top: 2px solid var(--pt-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    font-family: $pt-font;
+}
+
+.pt-tip-head {
+    font-size: 0.75rem;
+    color: var(--pt-color);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.pt-tip-row {
+    display: grid;
+    grid-template-columns: 8px 1fr;
+    gap: 0.1rem 0.4rem;
+    align-items: baseline;
+
+    & + & {
+        margin-top: 0.3rem;
+        padding-top: 0.3rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+}
+
+.pt-tip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    align-self: center;
+}
+
+.pt-tip-title {
+    color: white;
+    font-size: 0.85rem;
+    line-height: 1.25;
+}
+
+.pt-tip-detail {
+    grid-column: 2;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.75rem;
+    line-height: 1.2;
 }

@@ -30,7 +30,7 @@ const HomeMenu = () => {
                     <div className="home-menu-card-icon" style={{ backgroundImage: `url(${iconPlayers})` }} />
                     <span>Jugadores</span>
                 </div>
-                <div className="home-menu-card" onClick={() => navigate('/score')}>
+                <div className="home-menu-card" onClick={() => navigate('/Table')}>
                     <div className="home-menu-card-icon" style={{ backgroundImage: `url(${iconPlayers})` }} />
                     <span>Marcador</span>
                 </div>
