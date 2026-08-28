@@ -1,0 +1,66 @@
+[
+  {
+    "order": 1,
+    "city": "Ciudad Angora",
+    "leader": "Cheren",
+    "type": "gym",
+    "x": 7.41,
+    "y": 87.48
+  },
+  {
+    "order": 2,
+    "city": "Ciudad Loza",
+    "leader": "Roxie",
+    "type": "gym",
+    "x": 30.74,
+    "y": 70.09
+  },
+  {
+    "order": 3,
+    "city": "Ciudad Porcelana",
+    "leader": "Burgh",
+    "type": "gym",
+    "x": 54.07,
+    "y": 80.92
+  },
+  {
+    "order": 4,
+    "city": "Ciudad Mayólica",
+    "leader": "Elesa",
+    "type": "gym",
+    "x": 53.0,
+    "y": 47.86
+  },
+  {
+    "order": 5,
+    "city": "Ciudad Esmalte",
+    "leader": "Clay",
+    "type": "gym",
+    "x": 24.74,
+    "y": 53.84
+  },
+  {
+    "order": 6,
+    "city": "Ciudad Fayenza",
+    "leader": "Skyla",
+    "type": "gym",
+    "x": 16.89,
+    "y": 35.23
+  },
+  {
+    "order": 7,
+    "city": "Ciudad Teja",
+    "leader": "Drayden",
+    "type": "gym",
+    "x": 51.13,
+    "y": 20.95
+  },
+  {
+    "order": 8,
+    "city": "Ciudad Nacarada",
+    "leader": "Marlon",
+    "type": "gym",
+    "x": 92.91,
+    "y": 10.88
+  }
+]

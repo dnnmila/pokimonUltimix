@@ -2105,10 +2105,10 @@ const __mapDirname = path.dirname(fileURLToPath(import.meta.url));
 const mapDataPath = (folder, gen) =>
     path.join(__mapDirname, '..', 'saves', folder, `gen${gen}.json`);
 
-// Solo gens 1-4: evita que un `..` en la URL se cuele hasta el disco.
+// Solo gens 1-5: evita que un `..` en la URL se cuele hasta el disco.
 const validGen = (gen) => {
     const n = Number(gen);
-    return Number.isInteger(n) && n >= 1 && n <= 4 ? n : null;
+    return Number.isInteger(n) && n >= 1 && n <= 5 ? n : null;
 };
 
 const readMapData = (folder, gen, fallback) => {
