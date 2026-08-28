@@ -6,6 +6,7 @@ import Types from "./Types";
 import Attack from "./Attacks";
 import PlayerListed from "./PlayerListed";
 import SimBattleSelect from "./SimBattleSelect";
+import MusicPlayer, { stopMusic } from "./MusicPlayer";
 import ModalPokedex from "./modals/ModalPokedex";
 import ModalLeaderViewer from "./modals/ModalLeaderViewer";
 import ModalTiendaSim from "./modals/ModalTiendaSim";
@@ -134,8 +135,14 @@ const battleForm = (pkm) => {
     };
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, attachEquip, attachLegendary, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onUndergroundBattle, onEventMirror, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove, onMovePlayerMap, onToggleSurf }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onSimRematch, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, attachEquip, attachLegendary, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onUndergroundBattle, onEventMirror, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove, onMovePlayerMap, onToggleSurf }) => {
     const { playerId } = useParams();
+
+    // El audio del reproductor vive fuera de React para que la música no se
+    // corte al saltar entre el home, la selección y la batalla. El precio es
+    // que hay que pararla a mano al salir de SimPlayer.
+    useEffect(() => stopMusic, []);
+
     const player = game.players.find(p => p.id === playerId);
     const rival = player ? player.simRival : null;
     const generation = game?.generation || 1;
@@ -1399,9 +1406,38 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         }
     };
 
+    // Re-Match repite la ronda con los mismos dos Pokémon: solo se limpia lo de
+    // la ronda (ataques, dados, bonus y totales) y se vuelve a la selección de
+    // ataque. Los Pokémon y sus estados alterados se quedan como estaban — es
+    // el mismo combate. Quien los cambia es Change Pokemon, con resetBattleState.
     const handleRematch = () => {
-        resetBattleState();
-        if (isMyTurn) onStartSimMirror(playerId);
+        resetRoundState();
+        if (isMyTurn) onSimRematch(playerId);
+    };
+
+    const resetRoundState = () => {
+        setMyAttackSelected('false');
+        setRivalAttackSelected('false');
+        setMyAttack(undefined);
+        setRivalAttack(undefined);
+        setMyAttackPower(0);
+        setRivalAttackPower(0);
+        setMyBonus(0);
+        setRivalBonus(0);
+        setMyBonusFinal(0);
+        setRivalBonusFinal(0);
+        setMyTotal(0);
+        setRivalTotal(0);
+        setMyExtra(0);
+        setRivalExtra(0);
+        setMyDice(0);
+        setRivalDice(0);
+        setMyDiceRows([null]);
+        setRivalDiceRows([null]);
+        setMyLocked(false);
+        setRivalLocked(false);
+        setShowCapturePrompt(false);
+        setExpandedField(null);
     };
 
     const resetBattleState = () => {
@@ -1454,6 +1490,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     };
 
     const handleNextTurn = () => {
+        // La música es de este turno: no sigue sonando sobre el del siguiente
+        stopMusic();
         onNextTurn();
     };
 
@@ -2178,6 +2216,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     Especiales
                 </div>
             )}
+
+            {/* Reproductor de música. Vuelve al rincón de abajo a la izquierda,
+                pero una fila por encima de "?" y "Especiales": ese hueco ya está
+                ocupado. En el home y en la selección el botón va dentro de sus
+                barras —ahí no cabe una burbuja flotante—, y el audio es
+                compartido, así que la música no se corta al saltar de una
+                pantalla a otra. */}
+            {rival && !showSetup && !inSelection && <MusicPlayer />}
 
             <ModalSpecialAttacks show={showSpecialFns}
                                  onClose={() => setShowSpecialFns(false)}
@@ -3393,6 +3439,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                     <span>Frontera</span>
                                 </div>
                             )}
+                            {/* Música: aquí y no flotando, que en el home esta
+                                barra ocupa todo el borde de abajo */}
+                            <MusicPlayer variant="tool" />
                         </div>
 
                         {isMyTurn && (

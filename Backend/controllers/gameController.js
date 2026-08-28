@@ -818,6 +818,18 @@ export const startSimMirror = async (req, res) => {
     }
 };
 
+export const simRematch = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        game.simRematch(playerId);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Re-Match iniciado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Carga rivales únicos desde DB para una generación y los inyecta al juego
 async function loadRivalsForGeneration(generation, db) {
     const rows = await db.all(

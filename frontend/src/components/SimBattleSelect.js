@@ -3,6 +3,7 @@ import { getTrainerImage } from '../data/trainers';
 import { getLeaderPortrait, getLeaderCardImg } from '../data/leaders';
 import { typeColor, typeLabel } from '../pokemonTypes';
 import PokemonName from './PokemonName';
+import MusicPlayer from './MusicPlayer';
 import { applyTera, hasTeraOrb, TERA_BY_ID } from '../data/teraTypes';
 import { applyDynamax, canDynamax, previewMaxMoves, maxEffectText } from '../data/maxMoves';
 import imgTeraOrb from '../images/store/chart/TeraOrb.png';
@@ -382,6 +383,10 @@ const SimBattleSelect = ({
                         </div>
                     </div>
                     <div className="sbs-tool sbs-tool--help" title="Guía de efectos" onClick={onOpenRules}>?</div>
+                    {/* El mismo reproductor del home y de la batalla: el audio
+                        es compartido, así que al entrar aquí desde Change
+                        Pokemon o Re-Match la música sigue sonando */}
+                    <MusicPlayer variant="square" />
                     {isMyTurn && (
                         <div className="sbs-tool sbs-tool--turn" title="Siguiente turno" onClick={onNextTurn}>→|</div>
                     )}

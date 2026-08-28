@@ -1043,6 +1043,21 @@ const startSimMirror = async (playerId) => {
     }
 };
 
+// Como startSimMirror pero conservando los Pokémon del combate: el Re-Match
+// repite la ronda con los mismos dos y vuelve a la selección de ataque.
+const simRematch = async (playerId) => {
+    try {
+        const response = await fetch(`${SERVER_IP}/sim-rematch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId }),
+        });
+        if (!response.ok) console.error('Error en sim-rematch:', response.status);
+    } catch (error) {
+        console.error('Error en simRematch:', error);
+    }
+};
+
 const onHandleBonusFinal = async (player, bonus) => {
     try {
         const response = await fetch(`${SERVER_IP}/set-battle-bonus-final`, {
@@ -1155,7 +1170,7 @@ return (
                 no distingue mayúsculas, así que /Score entra por aquí igual. */}
             <Route path="/Table" element={<Score />} />
             <Route path="/battle" element={ <Stadium game={game} player={game.players[game.currentTurn]} rival={game.CurrentRival}  onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onToggleBattlePublic={toggleBattlePublic} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} increaseLevel={increaseLevel} changeState={changeState}/>} />
-            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} attachEquip={attachEquip} attachLegendary={attachLegendary} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onHordeStart={hordeStart} onHordeTeam={hordeTeam} onHordeRound={hordeRound} onHordeFinish={hordeFinish} onHordeClear={hordeClear} onTrainerStart={trainerBattleStart} onTrainerRound={trainerBattleRound} onTrainerClear={trainerBattleClear} onFrontierStart={frontierBattleStart} onFrontierFinish={frontierBattleFinish} onFrontierClear={frontierBattleClear} onPokeStarStart={pokeStarStart} onPokeStarLevel={pokeStarLevel} onPokeStarClear={pokeStarClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onUndergroundBattle={undergroundBattle} onEventMirror={eventMirror} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove} onMovePlayerMap={updateMapPosition} onToggleSurf={toggleSurf}/>} />
+            <Route path="/pokedex/:playerId" element={<SimPlayer game={game} onSimWildBattle={simWildBattle} onSimLeaderBattle={simLeaderBattle} onSimPlayerBattle={simPlayerBattle} onChangeState={changeState} onIncreaseLevel={increaseLevel} onStartSimMirror={startSimMirror} onSimRematch={simRematch} onHandleBattlePokemon={onHandleBattlePokemon} onHandleBattleAttack={onHandleBattleAttack} onHandleTotales={onHandleTotales} onChangeBattlePhase={onChangeBattlePhase} onSetFormsView={onSetFormsView} onHandleDice={onHandleDice} onHandleBonuses={onHandleBonuses} onHandleBonusFinal={onHandleBonusFinal} onToggleBattlePublic={toggleBattlePublic} onEvolvePokemon={evolvePokemon} onNextTurn={nextTurn} onAddPokemon={addPokemonToPlayer} onRemovePokemon={removePokemonToPlayer} onAttach={attachItem} attachTM={attachTM} attachMega={attachMega} attachTera={attachTera} attachEquip={attachEquip} attachLegendary={attachLegendary} onRaidStart={raidStart} onRaidTeam={raidTeam} onRaidRound={raidRound} onRaidFinish={raidFinish} onRaidClear={raidClear} onHordeStart={hordeStart} onHordeTeam={hordeTeam} onHordeRound={hordeRound} onHordeFinish={hordeFinish} onHordeClear={hordeClear} onTrainerStart={trainerBattleStart} onTrainerRound={trainerBattleRound} onTrainerClear={trainerBattleClear} onFrontierStart={frontierBattleStart} onFrontierFinish={frontierBattleFinish} onFrontierClear={frontierBattleClear} onPokeStarStart={pokeStarStart} onPokeStarLevel={pokeStarLevel} onPokeStarClear={pokeStarClear} onMegaForms={megaForms} onRandomMega={randomMega} onSimMegaBattle={simMegaBattle} onUndergroundBattle={undergroundBattle} onEventMirror={eventMirror} onBagAdd={bagAdd} onBagRemove={bagRemove} onMarkEventUsed={markEventUsed} onSetFieldMove={setFieldMove} onMovePlayerMap={updateMapPosition} onToggleSurf={toggleSurf}/>} />
             <Route path="/progress" element={<ProgressChart />} />
             {/* Editor del tablero: coloca gimnasios y nodos, y los guarda en
                 Backend/saves/. No forma parte de la partida — es herramienta. */}
