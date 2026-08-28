@@ -58,7 +58,7 @@ const LEADER_PREFIXES = ['gym', 'Riv'];
 // estas se ofrece el botón Mapa: sin nodos no hay ficha, ni ruta, ni casillas,
 // y el mapa se quedaría en una foto de los líderes. Las cuatro regiones están
 // mapeadas y validadas (recorrido completable y Liga sellada hasta la 8ª medalla).
-const MAP_GENERATIONS = [1, 2, 3, 4];
+const MAP_GENERATIONS = [1, 2, 3, 4, 5];
 
 const getBadgeImg = (gen, num) => {
     try {

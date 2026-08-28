@@ -8,8 +8,9 @@ import mapGen1 from '../../images/maps/gen1.jpg';
 import mapGen2 from '../../images/maps/gen2.png';
 import mapGen3 from '../../images/maps/gen3.png';
 import mapGen4 from '../../images/maps/gen4.png';
+import mapGen5 from '../../images/maps/gen5.jpg';
 
-const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4 };
+const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4, 5: mapGen5 };
 
 // Cuántas casillas de más puede tener la ruta alternativa para que valga la
 // pena enseñarla. Por encima deja de ser una opción y solo estorba el mapa.

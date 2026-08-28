@@ -6,8 +6,9 @@ import mapGen1 from '../images/maps/gen1.jpg';
 import mapGen2 from '../images/maps/gen2.png';
 import mapGen3 from '../images/maps/gen3.png';
 import mapGen4 from '../images/maps/gen4.png';
+import mapGen5 from '../images/maps/gen5.jpg';
 
-const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4 };
+const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4, 5: mapGen5 };
 
 // Solo son los valores por defecto al colocar un gimnasio NUEVO: al pinchar en
 // uno existente el formulario se rellena desde el fichero, no desde aquí.
@@ -18,6 +19,7 @@ const GYM_LEADERS = {
     2: ['Falkner', 'Bugsy', 'Whitney', 'Morty', 'Chuck', 'Jasmine', 'Pryce', 'Clair'],
     3: ['Roxanne', 'Brawly', 'Wattson', 'Flannery', 'Norman', 'Winona', 'Tate & Liza', 'Wallace'],
     4: ['Roark', 'Gardenia', 'Maylene', 'Crasher Wake', 'Fantina', 'Byron', 'Candice', 'Volkner'],
+    5: ['Cheren', 'Roxie', 'Burgh', 'Elesa', 'Clay', 'Skyla', 'Drayden', 'Marlon'],
 };
 
 const CITIES = {
@@ -25,6 +27,7 @@ const CITIES = {
     2: ['Ciudad Malva', 'Ciudad Ázalea', 'Ciudad Goldenrod', 'Ciudad Escarcha', 'Ciudad Olivina', 'Ciudad Acero', 'Ciudad Mahogany', 'Ciudad Blackthorn'],
     3: ['Ciudad Rocavelo', 'Ciudad Dorsalia', 'Ciudad Mauville', 'Ciudad Lavaridge', 'Petalburg City', 'Ciudad Fortree', 'Mossdeep City', 'Ciudad Sootópolis'],
     4: ['Oreburgh City', 'Ciudad Eterna', 'Ciudad Mauville', 'Ciudad Pastoria', 'Ciudad Hearthome', 'Ciudad Canalave', 'Ciudad Snowpoint', 'Ciudad Sunyshore'],
+    5: ['Ciudad Angora', 'Ciudad Loza', 'Ciudad Porcelana', 'Ciudad Mayólica', 'Ciudad Esmalte', 'Ciudad Fayenza', 'Ciudad Teja', 'Ciudad Nacarada'],
 };
 
 // ── Catch node colors ──────────────────────────────────────────
@@ -270,7 +273,7 @@ const MapEditor = () => {
                     <button className={`map-editor-mode-tab ${editorMode === 'board' ? 'active' : ''}`} onClick={() => setEditorMode('board')}>Tablero</button>
                 </div>
                 <div className="map-editor-gens">
-                    {[1, 2, 3, 4].map(g => (
+                    {[1, 2, 3, 4, 5].map(g => (
                         <button key={g} className={`map-editor-gen-btn ${gen === g ? 'active' : ''}`} onClick={() => setGen(g)}>Gen {g}</button>
                     ))}
                 </div>

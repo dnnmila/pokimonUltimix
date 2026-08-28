@@ -10,6 +10,7 @@ import mapGen1 from '../images/maps/gen1.jpg';
 import mapGen2 from '../images/maps/gen2.png';
 import mapGen3 from '../images/maps/gen3.png';
 import mapGen4 from '../images/maps/gen4.png';
+import mapGen5 from '../images/maps/gen5.jpg';
 
 import backPink   from '../images/back tokens/pink.png';
 import backGreen  from '../images/back tokens/green.png';
@@ -18,7 +19,7 @@ import backBlue   from '../images/back tokens/blue.png';
 import backRed    from '../images/back tokens/red.png';
 import backPurple from '../images/back tokens/purple.png';
 
-const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4 };
+const MAPS = { 1: mapGen1, 2: mapGen2, 3: mapGen3, 4: mapGen4, 5: mapGen5 };
 
 const PLAYER_COLORS = ['#e74c3c','#3498db','#27ae60','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63'];
 

@@ -26,6 +26,9 @@ const getTypeIcon = (type) => tryRequire(() => require(`../images/Types/${type}.
 // Rejilla 2x2 de tipos del botón de la tabla, igual que en el setup
 const TYPE_FAB = ['FIRE', 'WATER', 'GRASS', 'ELECTRIC'];
 
+// Un POKEDEX así no es un Pokémon del catálogo, es la carta de un entrenador
+const LEADER_PREFIXES = ['gym', 'Riv'];
+
 // Especies de líder que no se pueden resolver por nombre contra el catálogo de
 // `/pokemon-list`: o vienen mal escritas en `pokemonsLeaders` (Mr.Mine) o
 // sencillamente no están en la tabla `pokemons` (no tienen carta propia en el
@@ -49,6 +52,21 @@ const DEX_FIX = {
     cherubi:   '0420',
     quagsire:  '0195',
     drifblim:  '0426',
+    // Gen 5
+    patrat:    '0504',
+    lillipup:  '0506',
+    stoutland: '0508',
+    simisage:  '0512',
+    musharna:  '0518',
+    swoobat:   '0528',
+    leavanny:  '0542',
+    dwebble:   '0557',
+    sigilyph:  '0561',
+    minccino:  '0572',
+    swanna:    '0581',
+    emolga:    '0587',
+    jellicent: '0593',
+    mienshao:  '0620',
 };
 
 /**
@@ -221,8 +239,14 @@ const SimBattleSelect = ({
             || spriteByName(pkm.name)
             || pokemonArt(DEX_FIX[key]);
         if (sprite) return { src: sprite, isCard: false };
-        const token = tokenArt(pkm.pokedex);
-        if (token) return { src: token, isCard: false };
+        // `tokens_ultimix` no está separado por generación y guarda las cartas de
+        // líder de Kanto con el mismo nombre (gym1_1 es Brock/Geodude). Para un
+        // Pokémon de líder hay que ir a Leaders<gen>, o cualquier generación que
+        // no sea la 1 acabaría enseñando a Brock.
+        if (!LEADER_PREFIXES.some(p => (pkm.pokedex || '').startsWith(p))) {
+            const token = tokenArt(pkm.pokedex);
+            if (token) return { src: token, isCard: false };
+        }
         return { src: leaderArt(pkm.pokedex, generation), isCard: true };
     };
 
