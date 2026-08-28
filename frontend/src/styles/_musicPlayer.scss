@@ -1,17 +1,23 @@
+// Rincón de abajo a la izquierda, una fila por encima de "?" y "Especiales":
+// esa primera fila ya está ocupada. El `bottom` se calcula desde el botón "?"
+// (1.1rem de margen + 2.6rem de alto) para que los tres se muevan juntos si
+// cambia ese rincón. `column-reverse` deja el toggle abajo, fijo, y hace que el
+// panel crezca hacia arriba en vez de salirse por debajo de la pantalla.
+// z-index 300, el mismo que los otros flotantes, para que los modales lo tapen.
 .music-player {
     position: fixed;
-    bottom: 1.5rem;
-    left: 1.5rem;
-    z-index: 9999;
+    bottom: calc(1.1rem + 2.6rem + 0.5rem);
+    left: 1.1rem;
+    z-index: 300;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: flex-start;
     gap: 0.5rem;
 }
 
 .music-player-toggle {
-    width: 3.2rem;
-    height: 3.2rem;
+    width: 2.6rem;
+    height: 2.6rem;
     background: linear-gradient(135deg, #1a1a2e, #2a2a4e);
     border: 2px solid #f0d080;
     border-radius: 50%;
@@ -28,8 +34,39 @@
     }
 }
 
+// ── Botón dentro de una barra (home y selección de combatientes) ────────────
+// Ahí no hay sitio para una burbuja flotante: la barra inferior del home y la
+// superior de la selección ocupan todo el ancho. El botón se disfraza del resto
+// de su barra (.sim-setup-btn / .sbs-tool) y solo aporta el ancla del panel.
+.music-player-anchor {
+    position: relative;
+
+    // Con el panel abierto el botón se queda quieto: su barra lo escala o lo
+    // sube al pasar por encima y el panel, anclado a él, bailaba con el ratón.
+    &.is-on:hover { transform: none; }
+
+    // .sbs-tool no tiene estado abierto propio; el del home ya lo trae
+    &.sbs-tool.is-on {
+        background: rgba(240, 208, 128, 0.3);
+        border-color: #f0d080;
+    }
+}
+
+// En la barra del home es el mismo círculo dorado de la batalla, solo que algo
+// más pequeño para no pasar del alto de las pastillas vecinas, y sin etiqueta:
+// la nota se entiende sola y la barra va justa de sitio.
+.music-player-toggle--bar {
+    width: 2.2rem;
+    height: 2.2rem;
+    flex-shrink: 0;
+
+    &.is-on { box-shadow: 0 0 18px rgba(240, 208, 128, 0.7); }
+}
+
 .music-player-note {
-    font-size: 1.5rem;
+    // inline-block porque el pulso es un `transform`, que no aplica a un inline
+    display: inline-block;
+    font-size: 1.3rem;
     color: #f0d080;
     line-height: 1;
     user-select: none;
@@ -37,6 +74,11 @@
     &--playing {
         animation: musicPulse 0.8s ease-in-out infinite alternate;
     }
+
+    // En las barras el hueco es más pequeño; el de la selección además toma el
+    // tono de su propia barra en vez del dorado del círculo
+    .music-player-toggle--bar & { font-size: 1.1rem; }
+    .sbs-tool & { font-size: 1.2rem; color: var(--hud-gold); }
 }
 
 @keyframes musicPulse {
@@ -55,6 +97,29 @@
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
+    // En landscape de móvil/tablet la pantalla es baja y el panel se salía por
+    // arriba: la lista de pistas se hace scroll antes que desbordar.
+    max-height: calc(100vh - 8rem);
+    overflow: hidden;
+}
+
+// Anclado al botón de la barra del home, que vive abajo: se abre hacia arriba.
+// z-index por encima del 50 de .sim-hud-actions para que no lo tape la banda.
+.music-player-panel--tool {
+    position: absolute;
+    bottom: calc(100% + 0.6rem);
+    left: 0;
+    z-index: 400;
+    cursor: default;
+}
+
+// La barra de la selección está arriba y pegada a la derecha: al revés
+.music-player-panel--square {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    right: 0;
+    z-index: 400;
+    cursor: default;
 }
 
 .music-player-now {
@@ -112,6 +177,8 @@
     gap: 0.3rem;
     border-top: 1px solid rgba(240, 208, 128, 0.2);
     padding-top: 0.6rem;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .music-player-track {
@@ -145,17 +212,21 @@
 
 @media (max-width: 768px) {
     .music-player {
-        bottom: 1rem;
-        left: 0.8rem;
+        // Mismo cálculo que en escritorio con las medidas móviles del "?"
+        bottom: calc(0.6rem + 2.2rem + 0.4rem);
+        left: 0.6rem;
     }
 
     .music-player-toggle {
-        width: 2.8rem;
-        height: 2.8rem;
+        width: 2.2rem;
+        height: 2.2rem;
     }
+
+    .music-player-note { font-size: 1.1rem; }
 
     .music-player-panel {
         width: 200px;
         padding: 0.8rem 1rem;
+        max-height: calc(100vh - 6rem);
     }
 }

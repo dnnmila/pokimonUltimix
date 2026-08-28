@@ -310,6 +310,28 @@ class Game {
         this.rivalBonusAtk3 = 0;
     }
 
+    // Re-Match: se repite el combate con los mismos dos Pokémon, así que —a
+    // diferencia de startSimMirror— `myPlayerPkm` y `myRivalPkm` se quedan
+    // como están y la fase va directa a la selección de ataque. Los bonus por
+    // tipo tampoco se tocan: dependen del cruce de los dos Pokémon, que es el
+    // mismo, y nadie los va a volver a calcular en esta ronda.
+    simRematch(playerId) {
+        const isCurrentTurn = this.players[this.currentTurn]?.id === playerId;
+        if (!isCurrentTurn) return;
+        const player = this.players.find(p => p.id === playerId);
+        if (!player?.simRival) return;
+        this.CurrentRival = player.simRival;
+        this.battlePublic = true;
+        this.simFormsView = false;
+        this.eventMirror = null;
+        this.myPlayerPkmAtk = [];
+        this.myRivalPkmAtk = [];
+        this.myBonusFinal = 0;
+        this.rivalBonusFinal = 0;
+        // Deja en cero dados, totales y extras de la ronda
+        this.setBattlePhase('AttackSelection');
+    }
+
     // Reloj de turnos: mientras el juego está pausado el tiempo queda congelado
     // en el instante de la pausa, así cambiar de jugador con el crono parado no
     // suma ni resta segundos a nadie.
