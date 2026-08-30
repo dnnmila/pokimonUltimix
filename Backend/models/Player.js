@@ -51,6 +51,15 @@ class Player {
         // pisar hasta tenerla. Hoy se activa a mano desde el mapa; el día que
         // haya un objeto o evento que la conceda, bastará con ponerla a true.
         this.surf = false;
+        // Reto de medalla en curso, o null: { badge, gymName, round, startedAt }.
+        // Se abre al retar a un líder desde la tablet y solo se cierra de dos
+        // maneras: ganando el combate (se borra sin más) o perdiéndolo, que
+        // apunta la derrota y cobra el castigo. Vive en el jugador y no en el
+        // SimPlayer para que sobreviva a un refresco de la tablet y para que el
+        // servidor pueda cerrarlo él solo si el turno pasa con el reto abierto
+        // —que es justo lo que pasaba antes: el dado decía que habías perdido y
+        // nadie volvía a tocar la tablet, así que la derrota no se apuntaba.
+        this.gymChallenge = null;
 
 
     }
@@ -126,7 +135,32 @@ class Player {
         const coinsToAdjust = 5;
         this[badgeKey] = false;
         this.coins -= coinsToAdjust;
-       
+
+    }
+
+    // ── Reto de medalla ─────────────────────────────────────────────────────
+    startGymChallenge(badge, gymName, round) {
+        this.gymChallenge = {
+            badge: Number(badge) || null,
+            gymName: gymName || null,
+            round,
+            startedAt: Date.now(),
+        };
+    }
+
+    clearGymChallenge() {
+        this.gymChallenge = null;
+    }
+
+    // Castigo por perder un combate de medalla: se va un tercio del dinero y se
+    // queda con los otros dos. Nunca deja el monedero en negativo, y con menos
+    // de 3 monedas no cuesta nada —redondeo a la baja, como el resto de precios.
+    // Devuelve lo que se ha perdido, que es lo que hay que enseñarle al jugador.
+    loseThirdOfCoins() {
+        const before = Math.max(0, Math.floor(this.coins || 0));
+        const lost = Math.floor(before / 3);
+        this.coins = before - lost;
+        return lost;
     }
 
     battleFrontier (color, win){
@@ -148,11 +182,18 @@ class Player {
         else if (color === 'golden'){
             this.frontierGolden= true;
         }
-        if(win === true){
+        // Ganar da 5 monedas; perder cuesta un tercio del dinero, el mismo
+        // castigo que un reto de medalla fallado. Antes se dejaba
+        // `coins = coins/3`, que era QUEDARSE con un tercio en vez de perderlo:
+        // un combate de frontera podía vaciar el monedero de golpe.
+        //
+        // El gimnasio no tiene premio aquí porque ya lo lleva la medalla:
+        // BadgeWon suma sus 5 monedas al otorgarla.
+        if (win === true) {
             this.coins += 5;
         }
-        if (win === false){
-            this.coins = Math.floor(this.coins/3);
+        if (win === false) {
+            this.loseThirdOfCoins();
         }
     }
 

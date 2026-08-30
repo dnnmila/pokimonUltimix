@@ -1,0 +1,104 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// Reto de medalla
+//
+// Un combate contra un líder no tenía final: se peleaba hasta que alguien se
+// quedaba sin equipo, y cuando el dado físico ya cantaba la derrota nadie
+// volvía a tocar la tablet —así que la derrota no se apuntaba en ningún sitio.
+// Ahora el reto es un estado con principio y final, y esta hoja pinta los tres
+// modales que lo enmarcan: entrar, rendirse y cobrar.
+//
+// El precio va SIEMPRE delante (--hud-red sobre papel): el castigo tiene que
+// leerse antes de decidir, no descubrirse después en el marcador. Va solo en
+// estos modales — durante el combate no hay ningún cartel fijo, que estorbaba
+// más de lo que avisaba.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Modales del flujo ───────────────────────────────────────────────────────
+// Reaprovechan .levelup-prompt (fondo, título, botones): son de la misma
+// familia que el resto de avisos de combate y así siguen al tema sin repetir
+// paleta. Aquí solo se añade lo propio del reto.
+.gym-challenge-modal {
+    max-width: 26rem;
+
+    .levelup-prompt-msg strong { color: var(--hud-ink); }
+}
+
+.gym-challenge-modal--warn {
+    border-color: var(--hud-red);
+    box-shadow: 0 0 30px rgba(212, 72, 59, 0.35);
+
+    .levelup-prompt-title { color: var(--hud-red); }
+}
+
+.gym-challenge-modal-badge {
+    align-self: center;
+    width: 3.4rem;
+    height: 3.4rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+// La medalla que se escapó, apagada: el mismo gesto que usa la marca de
+// derrota en la línea de tiempo de /progress, para que se lean como lo mismo.
+.gym-challenge-modal-badge--lost {
+    filter: grayscale(1);
+    opacity: 0.55;
+}
+
+// ── El precio ───────────────────────────────────────────────────────────────
+.gym-challenge-cost {
+    padding: 0.4rem 0.7rem;
+    border-radius: 10px;
+    background: var(--hud-paper);
+    border: 1px solid var(--hud-line);
+    color: var(--hud-dim);
+    font-size: 0.82rem;
+
+    b { color: var(--hud-gold-ink-deep); font-size: 0.95rem; }
+}
+
+.gym-challenge-cost--warn {
+    background: rgba(212, 72, 59, 0.1);
+    border-color: rgba(212, 72, 59, 0.4);
+    color: var(--hud-red);
+
+    b { color: var(--hud-red); }
+}
+
+.gym-challenge-modal .levelup-prompt-buttons button[disabled] {
+    opacity: 0.5;
+    cursor: default;
+    transform: none;
+}
+
+// ── Relevo del líder ────────────────────────────────────────────────────────
+// Cae uno de su equipo y sale el siguiente. El sprite del que entra va grande y
+// arriba de los botones: es el dato que decide si te quedas o te cambias.
+.sim-next-rival {
+    max-width: 24rem;
+
+    .levelup-prompt-msg strong { color: var(--hud-ink); }
+}
+
+.sim-next-rival-art {
+    align-self: center;
+    width: 7rem;
+    height: 7rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    filter: drop-shadow(0 6px 10px rgba(var(--hud-shadow-rgb), 0.35));
+    animation: sim-next-rival-in 0.35s ease both;
+}
+
+@keyframes sim-next-rival-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.9); }
+    to   { opacity: 1; transform: none; }
+}
+
+// ── Tablets pequeñas y móvil apaisado ───────────────────────────────────────
+@media (max-width: 900px), (max-height: 500px) {
+    .gym-challenge-modal-badge { width: 2.4rem; height: 2.4rem; }
+    .sim-next-rival-art { width: 5rem; height: 5rem; }
+}

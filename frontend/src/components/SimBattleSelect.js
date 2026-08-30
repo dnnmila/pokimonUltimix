@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getTrainerImage } from '../data/trainers';
 import { getLeaderPortrait, getLeaderCardImg } from '../data/leaders';
 import { typeColor, typeLabel } from '../pokemonTypes';
@@ -19,7 +19,11 @@ const pokemonArt = (pokedex) => (pokedex ? tryRequire(() => require(`../images/P
 const tokenArt   = (pokedex) => (pokedex ? tryRequire(() => require(`../images/tokens_ultimix/${pokedex}.png`)) : null);
 const leaderArt  = (pokedex, gen) => (pokedex ? tryRequire(() => require(`../images/Leaders${gen}/${pokedex}.png`)) : null);
 
-const badgeArt = (gen, num) => tryRequire(() => require(`../images/badges/badges${gen}/badge${num}.webp`))
+// Las medallas 9 y 10 —Alto Mando y Campeón— son las mismas en toda generación
+const badgeArt = (gen, num) =>
+    (num === 9  ? tryRequire(() => require('../images/badges/elite.png'))   :
+     num === 10 ? tryRequire(() => require('../images/badges/campion.png')) : null)
+    || tryRequire(() => require(`../images/badges/badges${gen}/badge${num}.webp`))
     || tryRequire(() => require(`../images/badges/badge${num}.png`));
 
 const getTypeIcon = (type) => tryRequire(() => require(`../images/Types/${type}.png`));
@@ -92,6 +96,12 @@ const SimBattleSelect = ({
     readOnly = false,
     selectedMine = null,
     selectedTheirs = null,
+    // Rival impuesto: contra un líder no se elige a quién sacas enfrente, sale
+    // el que le toque de su equipo (ver `leaderIdx` en SimPlayer). Con esto
+    // puesto, tocar un Pokémon del rival solo enseña su carta.
+    fixedTheirs = null,
+    // Cuántos del equipo rival ya han caído, para tacharlos en la fila
+    beaten = 0,
     formsView = false,
     onConfirm,
     onBack,
@@ -153,13 +163,19 @@ const SimBattleSelect = ({
     // rival es otro entrenador (los líderes y los salvajes no la tienen).
     const [rivalDynaOn, setRivalDynaOn] = useState(false);
 
+    // Carta que se enseña del lado del rival. Por defecto la del que va a
+    // pelear; con el rival impuesto, tocar cualquiera de los suyos cambia solo
+    // esto —mirar su carta no cambia contra quién peleas—.
+    const [rivalPeek, setRivalPeek] = useState(null);
+
     // En el espejo las elecciones no son del componente: vienen de la partida.
     // El salvaje es la excepción: no se elige, así que se da por puesto igual
     // que en la tablet en vez de quedarse en "todavía no ha elegido".
     const mine   = readOnly ? selectedMine : mineLocal;
     const theirs = readOnly
         ? (selectedTheirs || (isWild ? rivalTeam[0] : null) || null)
-        : theirsLocal;
+        : (fixedTheirs || theirsLocal);
+    const peeked = (!readOnly && rivalPeek) || theirs;
 
     const pickMine = (pkm) => {
         if (readOnly) return;
@@ -194,8 +210,17 @@ const SimBattleSelect = ({
     const canOfferRivalDyna = Boolean(rival.dynamax) && canDynamax(theirs);
     const rivalMaxPreview   = rivalDynaOn && theirs ? previewMaxMoves(theirs) : [];
 
+    // El rival impuesto no se toca, así que nadie avisaba al espejo del máster
+    // de quién sale: se publica en cuanto se sabe, sin esperar a un toque.
+    useEffect(() => {
+        if (readOnly || !fixedTheirs || !onPreview) return;
+        onPreview('Rival', fixedTheirs);
+    }, [fixedTheirs?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const pickTheirs = (pkm) => {
         if (readOnly || isWild) return;
+        // Con rival impuesto el toque es solo para mirar la carta
+        if (fixedTheirs) return setRivalPeek(pkm);
         setTheirsLocal(pkm);
         setRivalDynaOn(false);
         if (onPreview) onPreview('Rival', pkm);
@@ -272,12 +297,17 @@ const SimBattleSelect = ({
     // justo después de un gimnasio saldría anunciado como reto de gimnasio.
     const gymBadge = isLeader && badgeNum !== null ? badgeNum : null;
 
-    const title = gymBadge !== null ? 'Reto de gimnasio'
+    // Las medallas 9 y 10 no salen de un gimnasio: llamarlas así confundiría
+    const title = gymBadge === 10 ? 'Combate por el título'
+        : gymBadge === 9 ? 'Reto del Alto Mando'
+        : gymBadge !== null ? 'Reto de gimnasio'
         : isPlayer ? 'Duelo de entrenadores'
         : isWild   ? 'Encuentro salvaje'
         : 'Batalla';
 
-    const rivalRole = gymBadge !== null ? `Líder · Gimnasio ${gymBadge}`
+    const rivalRole = gymBadge === 10 ? 'Campeón'
+        : gymBadge === 9 ? 'Alto Mando'
+        : gymBadge !== null ? `Líder · Gimnasio ${gymBadge}`
         : isPlayer ? 'Entrenador'
         : isWild   ? 'Pokémon salvaje'
         : 'Rival';
@@ -289,12 +319,17 @@ const SimBattleSelect = ({
     const renderOrb = (pkm, i) => {
         const art = artInfo(pkm);
         const chosen = theirs?.id === pkm.id;
-        const isDead = pkm.state === 'Dead';
+        // Ya derrotado: contra un líder se pelea en orden, así que los que
+        // quedan detrás del que sale son los que ya han caído.
+        const down   = pkm.state === 'Dead' || (Boolean(fixedTheirs) && i < beaten);
+        const peeking = Boolean(fixedTheirs) && !chosen && peeked?.id === pkm.id;
         return (
             <div key={pkm.id || `${pkm.name}-${i}`}
-                 className={`sbs-orb ${chosen ? 'sbs-orb--chosen' : ''} ${isDead ? 'sbs-orb--dead' : ''}`}
+                 className={`sbs-orb ${chosen ? 'sbs-orb--chosen' : ''} ${down ? 'sbs-orb--dead' : ''} ${peeking ? 'sbs-orb--peek' : ''}`}
                  style={{ '--pkm-type': typeColor(pkm.type1) }}
-                 title={readOnly ? nameTitle(pkm) : `Elegir a ${displayName(pkm)}`}
+                 title={readOnly ? nameTitle(pkm)
+                     : fixedTheirs ? `Ver la carta de ${displayName(pkm)}`
+                     : `Elegir a ${displayName(pkm)}`}
                  onClick={() => pickTheirs(pkm)}>
                 <div className={`sbs-orb-disc ${art.isCard ? 'sbs-orb-disc--card' : ''}`}
                      style={art.src ? { backgroundImage: `url(${art.src})` } : {}}>
@@ -302,7 +337,8 @@ const SimBattleSelect = ({
                     {pkm.status !== 'Normal' && (
                         <span className={`status_pokemon sbs-orb-status ${pkm.status}`} />
                     )}
-                    {chosen && <span className="sbs-orb-tag">Elegido</span>}
+                    {chosen  && <span className="sbs-orb-tag">{fixedTheirs ? 'Sale' : 'Elegido'}</span>}
+                    {!chosen && down && <span className="sbs-orb-tag sbs-orb-tag--down">Derrotado</span>}
                 </div>
                 <PokemonName pkm={pkm} as="div" className="sbs-orb-name" />
                 <div className="sbs-orb-types">
@@ -366,7 +402,8 @@ const SimBattleSelect = ({
                     <span className="sbs-title-main">{title}</span>
                     <span className="sbs-title-sub">
                         {readOnly ? 'Eligiendo combatientes'
-                            : isWild ? 'Elige tu Pokémon' : 'Elige de ambos lados'}
+                            : (isWild || fixedTheirs) ? 'Elige tu Pokémon'
+                            : 'Elige de ambos lados'}
                     </span>
                 </div>
 
@@ -400,12 +437,12 @@ const SimBattleSelect = ({
                 el líder y, a su derecha, su equipo. */}
             <section className="sbs-side sbs-side--rival">
                 <div className="sbs-cardview">
-                    {theirs && cardOf(theirs) ? (
+                    {peeked && cardOf(peeked) ? (
                         <img className="sbs-cardview-img"
-                             src={cardOf(theirs)}
-                             alt={theirs.name}
+                             src={cardOf(peeked)}
+                             alt={peeked.name}
                              title="Toca para ver la carta en grande"
-                             onClick={() => setZoomCard(cardOf(theirs))} />
+                             onClick={() => setZoomCard(cardOf(peeked))} />
                     ) : (
                         <div className="sbs-cardview-empty">
                             {readOnly
@@ -569,7 +606,9 @@ const SimBattleSelect = ({
                 <div className="sbs-pick sbs-pick--rival">
                     <div className="sbs-pick-meta">
                         <span className="sbs-pick-label">
-                            {isWild ? 'Salvaje' : `${rival.name} elige`}
+                            {isWild ? 'Salvaje'
+                                : fixedTheirs ? `${rival.name} envía`
+                                : `${rival.name} elige`}
                         </span>
                         {theirs
                             ? <PokemonName pkm={theirs} className="sbs-pick-name" />

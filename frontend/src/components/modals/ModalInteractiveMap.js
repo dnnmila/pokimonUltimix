@@ -98,13 +98,32 @@ function shortestPath(fromId, toId, adjacency, canEnter = () => true, blockedEdg
     return null;
 }
 
-const ModalInteractiveMap = ({ show, onClose, generation = 1, player, onMovePlayer, onToggleSurf }) => {
+// Color de cada jugador, por su posición en la partida. Es la misma paleta y el
+// mismo criterio que MapPlayer (el tablero del máster), para que la ficha de
+// alguien sea del mismo color se mire donde se mire.
+const PLAYER_COLORS = ['#e74c3c','#3498db','#27ae60','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63'];
+
+// Reparto de las fichas que coinciden en una casilla. Una sola va justo encima
+// del punto; a partir de dos se abren en corro para que se vean todas. En
+// píxeles y no en %: los % de x e y van contra dimensiones distintas y un corro
+// en porcentaje saldría aplastado.
+const RING_RADIUS = 24;
+const ringOffset = (i, n) => {
+    if (n <= 1) return { dx: 0, dy: 0 };
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    return { dx: Math.cos(angle) * RING_RADIUS, dy: Math.sin(angle) * RING_RADIUS };
+};
+
+const ModalInteractiveMap = ({ show, onClose, generation = 1, player, players = [], onMovePlayer, onToggleSurf }) => {
     const [gyms, setGyms]           = useState([]);
     const [board, setBoard]         = useState({ nodes: [], edges: [] });
     const [active, setActive]       = useState(null);   // líder abierto en el popup
     const [destId, setDestId]       = useState(null);   // destino elegido a mano
     const [dragging, setDragging]   = useState(false);
     const [dropTarget, setDropTarget] = useState(null); // nodo bajo el dedo
+    // Fichas de los demás. Se pueden apagar: son informativas y en una casilla
+    // muy visitada tapan el tablero que hay debajo.
+    const [showOthers, setShowOthers] = useState(true);
     const wrapperRef = useRef(null);
 
     useEffect(() => {
@@ -166,6 +185,28 @@ const ModalInteractiveMap = ({ show, onClose, generation = 1, player, onMovePlay
     const posId = player?.mapNodeId && nodeById[player.mapNodeId]
         ? player.mapNodeId
         : startNode?.id || null;
+
+    // ── Los demás jugadores ─────────────────────────────────────────────────
+    // Se ven, pero no se tocan: cada uno mueve su ficha desde su propia tablet.
+    // Solo salen los que ya están colocados; a quien no ha puesto ficha no se le
+    // inventa una en la salida, que es lo que sí hace la propia (ver posId).
+    //
+    // Se agrupan por casilla porque coincidir es lo normal —la salida, un
+    // gimnasio— y sin repartirlas las de arriba taparían a las de abajo.
+    const othersByNode = useMemo(() => {
+        const map = {};
+        (players || []).forEach((p, idx) => {
+            if (p.id === player?.id) return;
+            if (!p.mapNodeId || !nodeById[p.mapNodeId]) return;
+            const entry = { ...p, color: PLAYER_COLORS[idx % PLAYER_COLORS.length] };
+            (map[p.mapNodeId] = map[p.mapNodeId] || []).push(entry);
+        });
+        return map;
+    }, [players, player?.id, nodeById]);
+
+    const othersCount = useMemo(
+        () => Object.values(othersByNode).reduce((n, list) => n + list.length, 0),
+        [othersByNode]);
 
     const total   = ordered.length;
     const nextGym = ordered.find(m => !hasBadge(m.order));
@@ -350,6 +391,21 @@ const ModalInteractiveMap = ({ show, onClose, generation = 1, player, onMovePlay
                         progreso, que era quien ocupaba el hueco, ya no está */}
                     <div className="imap-header-spacer" />
 
+                    {/* Las fichas de los demás se pueden apagar: en una casilla
+                        concurrida tapan el tablero, y a veces solo quieres ver
+                        tu ruta. */}
+                    {hasBoard && othersCount > 0 && (
+                        <div className={`imap-others-toggle ${showOthers ? 'on' : ''}`}
+                             onClick={() => setShowOthers(v => !v)}
+                             title={showOthers
+                                ? 'Ocultar a los demás jugadores'
+                                : 'Ver dónde están los demás jugadores'}>
+                            <span className="imap-others-icon">◍</span>
+                            <span>Jugadores</span>
+                            <b>{othersCount}</b>
+                        </div>
+                    )}
+
                     {/* Surf abre las casillas de agua. Se activa aquí a mano
                         mientras no haya un objeto o evento que la conceda. */}
                     {hasBoard && onToggleSurf && (
@@ -405,7 +461,11 @@ const ModalInteractiveMap = ({ show, onClose, generation = 1, player, onMovePlay
                                 const landmark = n.type === 'city' || n.type === 'league';
                                 // Las cerradas también: saber dónde está el muro
                                 // importa más que tener el mapa limpio.
-                                if (!inRoute && !inAlt && !lock && !landmark && !dragging) return null;
+                                //
+                                // Y las que pisa alguien: si no, su ficha
+                                // quedaría flotando sobre un punto invisible.
+                                const busy = showOthers && othersByNode[n.id]?.length > 0;
+                                if (!inRoute && !inAlt && !lock && !landmark && !dragging && !busy) return null;
                                 const name = n.label?.trim() || (n.type === 'league' ? 'Liga Pokémon' : 'Ciudad');
                                 return (
                                     <div key={n.id}
@@ -479,6 +539,38 @@ const ModalInteractiveMap = ({ show, onClose, generation = 1, player, onMovePlay
                                         <span className="imap-marker-name">{m.leader}</span>
                                     </div>
                                 );
+                            })}
+
+                            {/* Fichas de los demás. Van debajo de la propia y no
+                                responden al puntero: aquí solo se mira. El
+                                nombre va escrito porque el avatar solo no
+                                siempre basta para saber quién es quién. */}
+                            {hasBoard && showOthers && Object.entries(othersByNode).flatMap(([nodeId, list]) => {
+                                const node = nodeById[nodeId];
+                                if (!node) return [];
+                                return list.map((p, i) => {
+                                    const { dx, dy } = ringOffset(i, list.length);
+                                    const face = getTrainerAvatar(p.name);
+                                    return (
+                                        <div key={p.id}
+                                             className="imap-other-token"
+                                             style={{
+                                                 left: `${node.x}%`,
+                                                 top: `${node.y}%`,
+                                                 '--pc': p.color,
+                                                 '--dx': `${dx}px`,
+                                                 '--dy': `${dy}px`,
+                                             }}
+                                             title={`${p.name} — está aquí`}>
+                                            {face
+                                                ? <img src={face} alt="" className="imap-other-token-face" />
+                                                : <span className="imap-other-token-initial">
+                                                      {p.name?.[0]?.toUpperCase() || '?'}
+                                                  </span>}
+                                            <span className="imap-other-token-name">{p.name}</span>
+                                        </div>
+                                    );
+                                });
                             })}
 
                             {/* Ficha del jugador: se arrastra a cualquier casilla */}

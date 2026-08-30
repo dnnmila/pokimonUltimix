@@ -84,27 +84,24 @@ function tmStrengthFor(tmAttack, type1, type2) {
 }
 
 async function  getAttack(idAttack,db){
-    try {
-        const AttackData = await db.get("SELECT * FROM attacks WHERE IDATK = ?", [idAttack]);
-        if (!AttackData) {
-            return res.status(404).json({ message: 'Attack was not found ' });
-        }
-
-        const newAttack = new Attacks(
-            AttackData.IDATK,
-            AttackData.NAME,
-            AttackData.TYPE,
-            AttackData.POWER,
-            AttackData.EFFECT,
-            AttackData.DICE
-
-        )
-        return newAttack;
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // Aquí no hay `res`: esto es un helper, no un handler. Si un ataque no está
+    // en la tabla se avisa por consola y se devuelve null; quien llama decide.
+    // Antes se llamaba a `res.status(...)` y el ReferenceError se comía el error
+    // de verdad, así que el jugador solo veía un 500 sin explicación.
+    const AttackData = await db.get("SELECT * FROM attacks WHERE IDATK = ?", [idAttack]);
+    if (!AttackData) {
+        console.warn('Attack was not found: ' + idAttack);
+        return null;
     }
 
-
+    return new Attacks(
+        AttackData.IDATK,
+        AttackData.NAME,
+        AttackData.TYPE,
+        AttackData.POWER,
+        AttackData.EFFECT,
+        AttackData.DICE
+    );
 }
 // Helper: agrega el G-Max automáticamente si el pokemon tiene forma G-Max
 async function attachGMaxIfAvailable(player, pokemon, pokemonData, db) {
@@ -152,18 +149,16 @@ export const addPokemonToPlayer = async (req, res) => {
 
         // Busca el Pokémon en la base de datos
         const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [formattedPokemonId]);
-        
-        console.log("Looking for Attack 1 ");
-        const Attack1 = await getAttack(pokemonData.ATK1,db);
-        console.log(Attack1);
-        console.log("Looking for Attack 1 ");
-        const Attack2 = await getAttack(pokemonData.ATK2,db);
-        console.log(Attack2);
-        const Attack3 = await getAttack(pokemonData.ATK3,db);
-        console.log(Attack3);
+
+        // El 404 va antes de leer los ataques: si no, `pokemonData.ATK1` revienta
+        // y el jugador recibe un 500 en vez de saber que ese POKEDEX no existe.
         if (!pokemonData) {
-            return res.status(404).json({ message: 'Pokémon no encontrado' });
+            return res.status(404).json({ message: 'Pokémon no encontrado: ' + formattedPokemonId });
         }
+
+        const Attack1 = await getAttack(pokemonData.ATK1,db);
+        const Attack2 = await getAttack(pokemonData.ATK2,db);
+        const Attack3 = await getAttack(pokemonData.ATK3,db);
 
         const uniqueId = player.name + '_' + pokemonData.POKEDEX + '_' + player.totalPokemons;
         // Crear una instancia de Pokémon
@@ -235,18 +230,15 @@ export const addPokemonScanned = async (req, res) => {
         // Busca el Pokémon en la base de datos
         const pokemonData = await db.get("SELECT * FROM pokemons WHERE UID LIKE ?", ['%' + pokemonUID + '%']);
         console.log(pokemonData);
-        console.log("Looking for Attack 1 ");
-        const Attack1 = await getAttack(pokemonData.ATK1,db);
-        console.log(Attack1);
-        console.log("Looking for Attack 1 ");
-        const Attack2 = await getAttack(pokemonData.ATK2,db);
-        console.log(Attack2);
-        const Attack3 = await getAttack(pokemonData.ATK3,db);
-        console.log(Attack3);
-     
+
+        // Igual que en add-pokemon: el 404 antes de tocar los ataques.
         if (!pokemonData) {
-            return res.status(404).json({ message: 'Pokémon no encontrado' });
+            return res.status(404).json({ message: 'Pokémon no encontrado: ' + pokemonUID });
         }
+
+        const Attack1 = await getAttack(pokemonData.ATK1,db);
+        const Attack2 = await getAttack(pokemonData.ATK2,db);
+        const Attack3 = await getAttack(pokemonData.ATK3,db);
 
         const uniqueId = player.name + '_' + pokemonData.POKEDEX + '_' + player.totalPokemons;
         // Crear una instancia de Pokémon
@@ -328,18 +320,15 @@ export const evolvePokemon = async (req, res) => {
 
         // Busca el Pokémon en la base de datos
         const pokemonData = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [formattedPokemonId]);
-    
-        const Attack1 = await getAttack(pokemonData.ATK1,db);
-        console.log(Attack1);
-        console.log("Looking for Attack 1 ");
-        const Attack2 = await getAttack(pokemonData.ATK2,db);
-        console.log(Attack2);
-        const Attack3 = await getAttack(pokemonData.ATK3,db);
-        console.log(Attack3);
 
+        // Igual que en add-pokemon: el 404 antes de tocar los ataques.
         if (!pokemonData) {
-            return res.status(404).json({ message: 'Pokémon no encontrado' });
+            return res.status(404).json({ message: 'Pokémon no encontrado: ' + formattedPokemonId });
         }
+
+        const Attack1 = await getAttack(pokemonData.ATK1,db);
+        const Attack2 = await getAttack(pokemonData.ATK2,db);
+        const Attack3 = await getAttack(pokemonData.ATK3,db);
 
         const uniqueId = player.name + '_' + pokemonData.POKEDEX + '_' + player.totalPokemons;
         // Crear una instancia de Pokémon
@@ -530,6 +519,9 @@ export const badgeWon  = async (req, res) => {
         }
         player.BadgeWon(numBadge);
         console.log(player.name + ' badge WON: ' + numBadge);
+        // Si la medalla se otorga a mano desde el máster, el reto que tuviera
+        // abierto el jugador ya no puede acabar en derrota.
+        player.clearGymChallenge();
         const gameForHistory = getGame();
         gameForHistory.badgeHistory.push({ round: gameForHistory.round, timestamp: Date.now(), playerId: player.id, playerName: player.name, badge: numBadge, action: 'won' });
         if (numBadge === 10) {
@@ -577,13 +569,11 @@ export const badgeLost = async (req, res) => {
     }
 };
 
-// Reto de gimnasio fallado: al jugador se le cayó el último Pokémon vivo contra
-// un líder. Lo avisa la tablet, que es la única que sabe si quedaba equipo en
-// pie cuando el combate se resolvió. No toca nada de la partida —solo apunta—,
-// así que repetirlo no rompe nada, pero sí se ignoran los avisos duplicados de
-// la misma ronda y el mismo gimnasio: si el jugador vuelve a entrar y a caer en
-// la misma ronda es el mismo intento fallido, no dos.
-export const gymDefeat = async (req, res) => {
+// Abrir un reto de medalla. Lo llama la tablet al retar a un líder, antes de
+// montar el combate. A partir de aquí el reto está vivo y solo se cierra
+// ganando (gymChallengeWin) o perdiendo (gymDefeat, que cobra el castigo); si
+// el turno pasa con él abierto, lo cierra el propio nextTurn como derrota.
+export const gymChallengeStart = async (req, res) => {
     try {
         const { playerId, badge, gymName } = req.body;
         const player = getPlayerById(playerId);
@@ -591,22 +581,52 @@ export const gymDefeat = async (req, res) => {
             return res.status(404).json({ message: 'Jugador no encontrado' });
         }
         const game = getGame();
-        if (!game.gymHistory) game.gymHistory = [];
-        const numBadge = Number(badge) || null;
-        const already = game.gymHistory.some(e =>
-            e.playerId === player.id && e.round === game.round && e.badge === numBadge);
-        if (!already) {
-            game.gymHistory.push({
-                round: game.round,
-                timestamp: Date.now(),
-                playerId: player.id,
-                playerName: player.name,
-                badge: numBadge,
-                gymName: gymName || null,
-            });
+        player.startGymChallenge(badge, gymName, game.round);
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Gym challenge started', gymChallenge: player.gymChallenge });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Reto ganado: el jugador tumbó al último Pokémon del líder con los totales
+// puestos en la tablet. Solo cierra el reto —la medalla la otorga badgeWon,
+// que es una decisión aparte y puede llegar también del máster.
+export const gymChallengeWin = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) {
+            return res.status(404).json({ message: 'Jugador no encontrado' });
+        }
+        if (player.gymChallenge) {
+            player.clearGymChallenge();
             updateGameAndNotify();
         }
-        res.status(200).json({ message: 'Gym defeat recorded' });
+        res.status(200).json({ message: 'Gym challenge won' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Reto de medalla fallado. Llega de la tablet cuando al jugador se le cae el
+// último Pokémon vivo o cuando sale del combate sin haberlo ganado. Apunta el
+// intento y cobra el castigo —un tercio del dinero—; los avisos duplicados de
+// la misma ronda y el mismo gimnasio se ignoran, así que repetirlo no cobra dos
+// veces. Ver Game.recordGymDefeat.
+export const gymDefeat = async (req, res) => {
+    try {
+        const { playerId, badge, gymName, reason } = req.body;
+        const player = getPlayerById(playerId);
+        if (!player) {
+            return res.status(404).json({ message: 'Jugador no encontrado' });
+        }
+        const game = getGame();
+        const badgeNum = badge ?? player.gymChallenge?.badge ?? null;
+        const name = gymName || player.gymChallenge?.gymName || null;
+        const result = game.recordGymDefeat(player, badgeNum, name, reason || 'quit');
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Gym defeat recorded', ...result });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

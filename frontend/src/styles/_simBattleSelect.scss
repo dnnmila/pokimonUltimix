@@ -393,6 +393,31 @@
     box-shadow: 0 0 0 4px rgba(var(--hud-accent-rgb), 0.45), var(--hud-shadow-lg);
 }
 
+// Ya derrotado. Contra un líder se pelea a su equipo en orden, así que estos
+// son los que van quedando atrás: se apagan, pero se siguen pudiendo tocar
+// para releerles la carta.
+.sbs-orb--dead {
+    .sbs-orb-disc {
+        filter: grayscale(1);
+        opacity: 0.45;
+        border-color: rgba(var(--hud-ink-rgb), 0.2);
+        box-shadow: none;
+    }
+
+    .sbs-orb-name,
+    .sbs-orb-types { opacity: 0.5; }
+}
+
+// El que se está mirando sin ser el que pelea: un aro discreto, nunca el dorado
+// del que sale —eso confundiría justo lo que este cambio venía a separar.
+.sbs-orb--peek .sbs-orb-disc {
+    box-shadow: 0 0 0 3px rgba(var(--hud-ink-rgb), 0.28);
+}
+
+.sbs-orb-tag--down {
+    background: var(--hud-dim-2);
+}
+
 .sbs-orb-lvl {
     position: absolute;
     left: -0.2rem;

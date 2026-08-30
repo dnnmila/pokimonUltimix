@@ -17,10 +17,13 @@ const TYPE_COLORS = {
     FAIRY:'#f8bbd0', NORMAL:'#ffffff',
 };
 
+// Un POKEDEX sin token no puede tumbar la pantalla de combate: se devuelve null
+// y la ficha sale sin ilustración.
 const getPkmImg = (pokedex, generation = 1) => {
-    if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
-    if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
-    return require(`../images/tokens_ultimix/${pokedex}.png`);
+    try {
+        if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
+        return require(`../images/tokens_ultimix/${pokedex}.png`);
+    } catch { return null; }
 };
 
 const Stadium = ({game, player, rival, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onToggleBattlePublic, onHandleDice, onHandleBonuses, onHandleBonusFinal, increaseLevel, changeState}) => {
