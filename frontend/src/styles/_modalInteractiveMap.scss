@@ -346,6 +346,44 @@
     line-height: 1;
 }
 
+// Interruptor de las fichas ajenas. Misma píldora que Surf: las dos son
+// opciones del mapa, no acciones de la partida.
+.imap-others-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #0f3460;
+    color: #6c7a89;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover { border-color: rgba(255,255,255,0.2); }
+
+    &.on {
+        background: #2c3e6b;
+        color: #fff;
+        border-color: #8fa3d8;
+    }
+
+    b {
+        padding: 0 5px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        font-size: 0.68rem;
+    }
+}
+
+.imap-others-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
 .imap-next-reset {
     width: 18px;
     height: 18px;
@@ -538,6 +576,65 @@
     font-weight: bold;
     color: #10162b;
     pointer-events: none;
+}
+
+// ── Fichas de los demás jugadores ───────────────────────────────────────────
+// Redondas y con aro de color, frente a la tarjeta blanca con pico de la
+// propia: la FORMA es lo que dice de un vistazo cuál se puede arrastrar. Van
+// centradas en el punto (la tuya flota por encima de él, así que no se pisan) y
+// `--dx/--dy` las abre en corro cuando varias caen en la misma casilla.
+//
+// `pointer-events: none` no es un detalle: sin ello robarían el gesto de
+// arrastre de la ficha propia al coincidir en la misma casilla.
+.imap-other-token {
+    position: absolute;
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)));
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #10162b;
+    border: 2px solid var(--pc, #fff);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    z-index: 40;              // por debajo de la ficha propia (45)
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.92;
+}
+
+.imap-other-token-face {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    // Igual que en el HUD: el arte es vertical y la cara va arriba
+    object-position: center top;
+    display: block;
+}
+
+.imap-other-token-initial {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.imap-other-token-name {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 5px;
+    border-radius: 4px;
+    background: rgba(10, 15, 30, 0.88);
+    border: 1px solid var(--pc, transparent);
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
 }
 
 // El gimnasio también acepta la ficha

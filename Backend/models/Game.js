@@ -54,13 +54,16 @@ class Game {
         this.ended = false;
         this.winner = null;
         this.badgeHistory = [];
-        // Derrotas contra líderes de gimnasio:
-        //   { round, timestamp, playerId, playerName, badge, gymName }
+        // Derrotas contra líderes:
+        //   { round, timestamp, playerId, playerName, badge, gymName,
+        //     reason, coinsLost, coinsAfter }
         // No va en `badgeHistory` a propósito: el 'lost' de ahí es el máster
-        // QUITANDO una medalla, no un combate perdido. Aquí se apunta cuando al
-        // jugador se le cae el último Pokémon vivo enfrentándose a un líder, que
-        // es lo único que cuenta de verdad como reto fallado. Lo consume la
-        // línea de tiempo de /progress.
+        // QUITANDO una medalla, no un combate perdido. Aquí se apunta todo reto
+        // de medalla que no acabó en victoria, sea porque al jugador se le cayó
+        // el último Pokémon (`reason: 'wiped'`), porque salió del combate
+        // (`'quit'`) o porque el turno pasó con el reto abierto (`'turnEnded'`).
+        // Ver recordGymDefeat, aquí abajo. Lo consume la línea de tiempo de
+        // /progress.
         this.gymHistory = [];
         // Pokémon que entran en un equipo: { round, timestamp, playerId,
         // playerName, pokedex, pokemonName }. Guarda el pokedex y no solo el
@@ -120,6 +123,45 @@ class Game {
             turnsLeft: Math.max(1, this.players.length),
             startedRound: this.round,
         };
+    }
+
+    // Punto ÚNICO donde se cierra un reto de medalla en derrota: apunta el
+    // intento fallido, cobra el castigo (un tercio del dinero) y borra el reto
+    // del jugador. Todo junto a propósito —hay tres caminos que llegan aquí
+    // (equipo barrido, salir del combate, pasar de turno) y los tres tienen que
+    // dejar exactamente el mismo rastro.
+    //
+    // Se ignora el aviso repetido del mismo jugador contra el mismo gimnasio en
+    // la misma ronda: si vuelve a entrar y a caer sigue siendo el mismo intento,
+    // y sobre todo el castigo no se cobra dos veces.
+    //
+    // Devuelve { recorded, coinsLost, coinsAfter }.
+    recordGymDefeat(player, badge, gymName, reason = 'quit') {
+        if (!player) return { recorded: false, coinsLost: 0, coinsAfter: 0 };
+        if (!this.gymHistory) this.gymHistory = [];
+
+        const numBadge = Number(badge) || null;
+        const already = this.gymHistory.some(e =>
+            e.playerId === player.id && e.round === this.round && e.badge === numBadge);
+        if (already) {
+            player.clearGymChallenge();
+            return { recorded: false, coinsLost: 0, coinsAfter: player.coins };
+        }
+
+        const coinsLost = player.loseThirdOfCoins();
+        this.gymHistory.push({
+            round: this.round,
+            timestamp: Date.now(),
+            playerId: player.id,
+            playerName: player.name,
+            badge: numBadge,
+            gymName: gymName || null,
+            reason,
+            coinsLost,
+            coinsAfter: player.coins,
+        });
+        player.clearGymChallenge();
+        return { recorded: true, coinsLost, coinsAfter: player.coins };
     }
 
     changeWeather(weather) {

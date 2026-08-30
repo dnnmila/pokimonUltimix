@@ -36,6 +36,7 @@ import ModalHordeSetup from "./modals/ModalHordeSetup";
 import ModalTrainerBattle from "./modals/ModalTrainerBattle";
 import ModalContest from "./modals/ModalContest";
 import ModalPokeStar from "./modals/ModalPokeStar";
+import ModalRareCandy from "./modals/ModalRareCandy";
 import ModalRulesCard from "./modals/ModalRulesCard";
 import ModalHelp from "./modals/ModalHelp";
 import ModalMegaBattle from "./modals/ModalMegaBattle";
@@ -61,7 +62,11 @@ const LEADER_PREFIXES = ['gym', 'Riv'];
 // mapeadas y validadas (recorrido completable y Liga sellada hasta la 8ª medalla).
 const MAP_GENERATIONS = [1, 2, 3, 4, 5];
 
+// Las medallas 9 y 10 —Alto Mando y Campeón— no están numeradas por generación:
+// son las mismas dos imágenes para todas.
 const getBadgeImg = (gen, num) => {
+    if (num === 9)  { try { return require('../images/badges/elite.png');   } catch { return null; } }
+    if (num === 10) { try { return require('../images/badges/campion.png'); } catch { return null; } }
     try {
         return require(`../images/badges/badges${gen}/badge${num}.webp`);
     } catch (e) {
@@ -295,6 +300,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [contestOpen, setContestOpen] = useState(false);
     // Poké Star Studios: montaje abierto, llamada en vuelo y el final del rodaje
     const [pokeStarOpen, setPokeStarOpen] = useState(false);
+    const [rareCandyOpen, setRareCandyOpen] = useState(false);
+    const [rareCandyError, setRareCandyError] = useState(null);
     const [pokeStarLoading, setPokeStarLoading] = useState(false);
     const [pokeStarError, setPokeStarError] = useState(null);
     const [pokeStarDone, setPokeStarDone] = useState(false);
@@ -313,6 +320,24 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
     const [gymLeaderBadgeNum, setGymLeaderBadgeNum] = useState(null);
     const [pendingBadge, setPendingBadge] = useState(false);
+    // ── Reto de medalla ──────────────────────────────────────────────────────
+    // El reto en sí vive en el servidor (`player.gymChallenge`); aquí solo hay
+    // los tres modales del flujo: la confirmación antes de retar, la de salir
+    // rindiéndose y el aviso de la derrota ya cobrada.
+    //   pendingChallenge : { leaderKey, uid1, uid2, badge, name, art } | null
+    //   surrenderAsk     : { onQuit } | null   — qué hacer si confirma salir
+    //   defeatNotice     : { gymName, badge, coinsLost, coinsAfter } | null
+    const [pendingChallenge, setPendingChallenge] = useState(null);
+    const [surrenderAsk, setSurrenderAsk] = useState(null);
+    const [defeatNotice, setDefeatNotice] = useState(null);
+    const [challengeBusy, setChallengeBusy] = useState(false);
+    // Contra un líder su equipo NO se elige: se pelea en orden. `leaderIdx` es
+    // contra cuál de los suyos estás ahora, y sube al tumbarlo.
+    const [leaderIdx, setLeaderIdx] = useState(0);
+    // Aviso de «cae uno, sale el siguiente». `pending…` lo encola detrás del
+    // modal de subir nivel, igual que hace pendingBadge con la medalla.
+    const [showNextRivalPrompt, setShowNextRivalPrompt] = useState(false);
+    const [pendingNextRival, setPendingNextRival] = useState(false);
     const [showEvolveModal, setShowEvolveModal] = useState(false);
     const [evolveOptions, setEvolveOptions] = useState([]);
     const [evolvingPkm, setEvolvingPkm] = useState(null);
@@ -370,6 +395,28 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         </div>
     );
     const isOfficialBattle = isMyTurn && game.battlePublic;
+
+    // Reto de medalla en curso. Lo manda el servidor, así que sobrevive a un
+    // refresco de la tablet y sigue vivo aunque el jugador se vaya al home: no
+    // se cierra hasta que gana el combate o lo pierde.
+    const gymChallenge = player?.gymChallenge || null;
+    // Lo que costaría rendirse ahora mismo. Se calcula igual que en el servidor
+    // (Player.loseThirdOfCoins) para poder decirlo ANTES, que es lo que hace
+    // que el castigo se sienta como una decisión y no como un susto.
+    const surrenderCost = Math.floor(Math.max(0, player?.coins || 0) / 3);
+
+    // Equipo del líder, en el orden en que sale a pelear. Contra un líder el
+    // rival no se elige —eso era una licencia de la tablet, no una regla del
+    // juego—: sale el primero, y al tumbarlo sale el siguiente.
+    //
+    // Solo en el turno propio: fuera de turno esto es un simulacro que no
+    // cuenta para nada, y ahí sí conviene poder montar el emparejamiento que
+    // se quiera para probar.
+    const leaderTeam    = isMyTurn && rival?.id?.startsWith('SimLeader-')
+        ? (rival.pokemons || [])
+        : null;
+    const leaderFighter = leaderTeam ? (leaderTeam[leaderIdx] || null) : null;
+    const leaderNext    = leaderTeam ? (leaderTeam[leaderIdx + 1] || null) : null;
 
     const playTurnSound = () => {
         try {
@@ -548,10 +595,22 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel
                 && canGainLevel(myPokemon);
             if (canLevelUp) setShowLevelUpPrompt(true);
-            const isLastRivalPkm = rival?.pokemons?.[rival.pokemons.length - 1]?.id === rivalPokemon?.id;
-            if (rival?.id?.startsWith('SimLeader-') && gymLeaderBadgeNum !== null && isLastRivalPkm) {
-                if (canLevelUp) setPendingBadge(true);
-                else setShowBadgePrompt(true);
+            // Contra un líder se le va tumbando el equipo en orden. Mientras le
+            // queden Pokémon, cae uno y sale el siguiente; solo al acabárselos
+            // el combate está ganado.
+            if (leaderTeam) {
+                if (leaderNext) {
+                    if (canLevelUp) setPendingNextRival(true);
+                    else setShowNextRivalPrompt(true);
+                } else if (gymLeaderBadgeNum !== null) {
+                    // El reto está ganado: se cierra YA, aquí, y no cuando el
+                    // jugador conteste al modal de la medalla. Así el castigo no
+                    // puede caerle a quien sí terminó el combate —aunque diga
+                    // que no a la medalla, o cierre el modal de un toque.
+                    closeGymChallengeAsWin();
+                    if (canLevelUp) setPendingBadge(true);
+                    else setShowBadgePrompt(true);
+                }
             }
         }
         if (myTotal < rivalTotal && myPokemon.state === 'Alive') {
@@ -747,7 +806,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         const id = normalizeWildId(rawId);
         if (!id) return;
         try {
-            const img = getPkmImg(id, generation);
+            // Sin token no se cancela la búsqueda: la ficha sale igual y solo se
+            // queda sin ilustración. Con getPkmImg a secas, un POKEDEX sin PNG
+            // (p.ej. SH0249) caía al catch y el salvaje no aparecía nunca.
+            const img = getSafePkmImg(id, generation);
             setWildPreviewImg(img);
             setWildPokemonId(id);
             setWildFoundId(id);
@@ -829,22 +891,59 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (evolvingPkm) onEvolvePokemon(player.id, evolvingPkm.id, newPokedex);
     };
 
-    const handleSimLeader = async (leaderID, pkm1, pkm2, badgeNum = null) => {
+    // Qué medalla se juega contra cada rival. Los gimnasios van por su posición
+    // en la lista (eso lo pone la tarjeta); el Alto Mando y el Campeón tienen
+    // número fijo, y los rivales por color y el Team Rocket no dan medalla, así
+    // que se retan como siempre, sin reto ni castigo.
+    const badgeForLeader = (l) => (
+        l.category === 'elite' ? 9 : l.category === 'champion' ? 10 : null
+    );
+
+    // Retar a un líder. Todo lo que da medalla abre antes una confirmación: a
+    // partir de ahí el combate hay que terminarlo en la tablet, y salirse sin
+    // ganarlo cuesta un tercio del dinero. Lo que no da medalla arranca directo.
+    //
+    // Fuera de turno no se abre reto ninguno: la batalla no es pública, así que
+    // el servidor no vería la victoria y el combate acabaría contando como
+    // derrota SIEMPRE. Fuera de turno esto es un simulacro, como hasta ahora.
+    const handleSimLeader = (leader, badgeNum = null) => {
+        if (badgeNum === null || !isMyTurn) return startSimLeader(leader, badgeNum);
+        setPendingChallenge({ ...leader, badge: badgeNum });
+    };
+
+    const startSimLeader = async (leader, badgeNum = null) => {
+        setPendingChallenge(null);
+        // Su equipo empieza de cero: siempre se pelea primero contra el primero
+        setLeaderIdx(0);
+        setPendingNextRival(false);
+        setShowNextRivalPrompt(false);
         if (badgeNum !== null) {
             setGymLeaderBadgeNum(badgeNum);
             setPendingBadge(false);
+            // El reto solo se abre en el turno propio (ver handleSimLeader)
+            if (isMyTurn) {
+                try {
+                    await fetch(`${SERVER_IP}/gym-challenge-start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ playerId, badge: badgeNum, gymName: leader.name }),
+                    });
+                } catch (e) {
+                    console.error('Error al abrir el reto de medalla:', e);
+                }
+            }
             // Retar a un líder en oficial significa estar en su ciudad, así que
             // la ficha del mapa se coloca sola en ese gimnasio. Se mueve sin
             // preguntar: una confirmación en mitad del combate estorba, y si el
             // sitio no era ese la ficha se arrastra a mano desde el mapa.
-            // Solo donde hay tablero: en el resto sería guardar una casilla
-            // que no existe.
-            if (MAP_GENERATIONS.includes(generation)) {
+            // Solo donde hay tablero y solo con los ocho gimnasios: el Alto
+            // Mando y el Campeón no tienen casilla propia.
+            if (badgeNum <= 8 && MAP_GENERATIONS.includes(generation)) {
                 onMovePlayerMap?.(playerId, `gym-${badgeNum}`);
             }
         }
         await runCurtain(async () => {
-            await onSimLeaderBattle(playerId, leaderID, pkm1, pkm2);
+            await onSimLeaderBattle(playerId, leader.leaderKey, leader.uid1, leader.uid2);
             if (isMyTurn) onStartSimMirror(playerId);
             setShowSetup(false);
         });
@@ -956,7 +1055,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                  title={color ? `Retar — ${color.label}` : `Retar a ${l.name}`}
                                  onClick={() => {
                                      setShowOtherRivals(false);
-                                     handleSimLeader(l.leaderKey, l.uid1, l.uid2);
+                                     handleSimLeader(l, badgeForLeader(l));
                                  }}>
                                 <div className={`Elite sim-rival-card ${portraits ? 'sim-rival-card--tall' : ''}`}
                                      style={{
@@ -992,18 +1091,44 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
     // `kind` es 'buy' salvo que sea una venta de carta, que en vez de cobrar
     // paga. La resta o la suma la hace el backend al aprobar, no esto.
-    const handleRequestPurchase = async (item, price, kind = 'buy') => {
+    // `extra` lo usa el Caramelo Raro para decir a qué Pokémon va: el máster
+    // tiene que ver qué aprueba sin ir a buscar la ficha del jugador.
+    // Devuelve el mensaje de error del servidor, o null si la solicitud entró.
+    const handleRequestPurchase = async (item, price, kind = 'buy', extra = null) => {
         try {
             const res = await fetch(`${SERVER_IP}/request-purchase`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ playerId, item, price, kind })
+                body: JSON.stringify({ playerId, item, price, kind, ...(extra || {}) })
             });
             const data = await res.json();
-            if (res.ok) setPendingRequest({ id: data.purchaseId, item, price, kind });
+            if (!res.ok) return data?.message || 'No se pudo enviar la solicitud';
+            setPendingRequest({ id: data.purchaseId, item, price, kind, ...(extra || {}) });
+            return null;
         } catch (err) {
             console.error('Error al solicitar compra:', err);
+            return 'No se pudo enviar la solicitud';
         }
+    };
+
+    // Caramelo Raro: la solicitud va con el Pokémon elegido. La regla —no al de
+    // nivel más alto— la hace valer el servidor; aquí solo se enseña el error
+    // si llega a saltar (entre abrir el modal y pedirlo pudo subir de nivel).
+    const handleRareCandyRequest = async (pkm) => {
+        setRareCandyError(null);
+        // Una solicitud a la vez: `pendingRequest` es un solo hueco y lo comparte
+        // con la tienda, así que pedir dos cosas dejaría una sin pantalla de espera.
+        if (pendingRequest) {
+            setRareCandyError('Ya tienes una solicitud esperando al máster');
+            return;
+        }
+        const err = await handleRequestPurchase(`Caramelo Raro · ${displayName(pkm)}`, 0, 'rareCandy', {
+            pokemonId: pkm.id,
+            pokemonName: displayName(pkm),
+            fromLevel: pkm.totalLevel,
+            toLevel: pkm.totalLevel + 1,
+        });
+        if (err) setRareCandyError(err);
     };
 
     async function checkBonusType(Attack_type, PkmRival_type) {
@@ -1150,31 +1275,58 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         return (base.extra ?? 0) < MAX_EXTRA_LEVEL;
     };
 
-    // Reto de gimnasio fallado. El combate contra un líder no tiene un final
-    // explícito —se pelea hasta que uno de los dos se queda sin equipo—, así
-    // que la derrota se detecta aquí: si el Pokémon que acaba de caer era el
-    // último en pie, el intento se apunta en `gymHistory` para que la línea de
-    // tiempo de /progress lo pinte.
-    //
-    // Se cuenta sobre el equipo BASE (los megas y G-Max no van aparte: el KO
-    // siempre viaja a su base) y se descuenta a mano el que se acaba de tumbar,
-    // porque el estado nuevo todavía no ha vuelto del backend.
+    // ── Cierre del reto de medalla ───────────────────────────────────────────
+    // Un reto solo acaba de dos maneras, y las dos pasan por aquí.
+
+    // Ganado: el jugador tumbó al último Pokémon del líder con los totales
+    // puestos. Cierra el reto y ya no hay castigo posible; la medalla se otorga
+    // aparte, con el modal de siempre.
+    const closeGymChallengeAsWin = async () => {
+        if (!gymChallenge) return;
+        try {
+            await fetch(`${SERVER_IP}/gym-challenge-win`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId }),
+            });
+        } catch (e) {
+            console.error('Error al cerrar el reto de medalla:', e);
+        }
+    };
+
+    // Perdido: apunta el intento en `gymHistory` y cobra el castigo —un tercio
+    // del dinero—. El servidor devuelve cuánto se ha ido para poder enseñarlo:
+    // el jugador tiene que ver el cobro, no descubrirlo luego en el marcador.
+    const closeGymChallengeAsDefeat = async (reason) => {
+        if (!gymChallenge) return;
+        const { badge, gymName } = gymChallenge;
+        try {
+            const res = await fetch(`${SERVER_IP}/gym-defeat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerId, badge, gymName, reason }),
+            });
+            const data = await res.json();
+            if (data?.recorded) {
+                setDefeatNotice({ badge, gymName, coinsLost: data.coinsLost, coinsAfter: data.coinsAfter });
+            }
+        } catch (e) {
+            console.error('Error al registrar la derrota de gimnasio:', e);
+        }
+    };
+
+    // Equipo barrido: si el Pokémon que acaba de caer era el último en pie, el
+    // reto está perdido y se cierra solo, sin preguntar —no hay decisión que
+    // tomar—. Se cuenta sobre el equipo BASE (los megas y G-Max no van aparte:
+    // el KO siempre viaja a su base) y se descuenta a mano el que se acaba de
+    // tumbar, porque el estado nuevo todavía no ha vuelto del backend.
     const reportGymDefeatIfWiped = async (knockedOutPkm) => {
-        if (!rival?.id?.startsWith('SimLeader-')) return;
-        if (gymLeaderBadgeNum === null) return;
+        if (!gymChallenge) return;
         const knockedId = resolveBasePokemonId(knockedOutPkm);
         const stillAlive = (player.pokemons || [])
             .filter(p => p.id !== knockedId && p.state === 'Alive').length;
         if (stillAlive > 0) return;
-        try {
-            await fetch(`${SERVER_IP}/gym-defeat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ playerId, badge: gymLeaderBadgeNum, gymName: rival?.name }),
-            });
-        } catch (e) {
-            console.error('Error al registrar la derrota de gimnasio:', e);
-        }
+        await closeGymChallengeAsDefeat('wiped');
     };
 
     const knockOutIfAbandoned = () => {
@@ -1188,7 +1340,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
     const handleSelectMyPokemon = async (pokemon) => {
         setMyPokemon(pokemon);
-        setMyPokemonImg(getPkmImg(pokemon.pokedex, generation));
+        setMyPokemonImg(getSafePkmImg(pokemon.pokedex, generation));
         setMyPokemonType1_class(`type_${pokemon.type1}`);
         setMyPokemonType2_class(`type_${pokemon.type2}`);
         setMyPkm_type_id1(`types_${pokemon.id}_1`);
@@ -1210,7 +1362,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
     const handleSelectRivalPokemon = async (pokemon, myPkm = myPokemon) => {
         setRivalPokemon(pokemon);
-        setRivalPokemonImg(getPkmImg(pokemon.pokedex, generation));
+        setRivalPokemonImg(getSafePkmImg(pokemon.pokedex, generation));
         setRivalPokemonType1_class(`type_${pokemon.type1}`);
         setRivalPokemonType2_class(`type_${pokemon.type2}`);
         setRivalPkm_type_id1(`types_${pokemon.id}_1`);
@@ -1489,10 +1641,19 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowWildModal(false);
     };
 
-    const handleNextTurn = () => {
+    const runNextTurn = () => {
         // La música es de este turno: no sigue sonando sobre el del siguiente
         stopMusic();
         onNextTurn();
+    };
+
+    // Salir con un reto abierto es rendirse, así que se avisa antes y con el
+    // precio delante. No es un paso de más por gusto: el servidor cierra igual
+    // el reto en cuanto pasa el turno, y sin este aviso el jugador vería el
+    // cobro sin haber entendido de dónde salía.
+    const handleNextTurn = () => {
+        if (gymChallenge) return setSurrenderAsk({ onQuit: runNextTurn });
+        runNextTurn();
     };
 
     // Huir del salvaje: se cobra 1 moneda y se cierra el turno. Solo sale en el
@@ -1524,13 +1685,16 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const teamSlots  = Array.from({ length: 6 }, (_, i) => (player.pokemons || [])[i] || null);
 
     // Botón home / modal de turno: vuelve al setup para elegir nuevo rival
-    const handleNewSimulation = () => {
+    const runNewSimulation = () => {
         knockOutIfAbandoned();
         resetBattleState();
         setShowSetup(true);
         setGymLeaderBadgeNum(null);
         setPendingBadge(false);
         setShowBadgePrompt(false);
+        setLeaderIdx(0);
+        setPendingNextRival(false);
+        setShowNextRivalPrompt(false);
         setShowPokedex(false);
         setShowLeaderViewer(false);
         setShowStore(false);
@@ -1563,6 +1727,25 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowReplaceModal(false);
         setPendingCapturePokedex(null);
         if (isMyTurn && game.battlePublic) onToggleBattlePublic();
+    };
+
+    // Con un reto abierto, volver al home es rendirse: mismo aviso que en Next
+    // Turn. El modal de «es tu turno» llama directo a runNewSimulation, que ahí
+    // no hay nada que rendir —el reto de la vuelta anterior lo cerró el turno.
+    const handleNewSimulation = () => {
+        if (gymChallenge) return setSurrenderAsk({ onQuit: runNewSimulation });
+        runNewSimulation();
+    };
+
+    // Rendirse de verdad: apunta la derrota, cobra el tercio y solo entonces
+    // hace lo que el jugador estaba intentando (salir al home o pasar turno).
+    const handleSurrenderConfirm = async () => {
+        const next = surrenderAsk?.onQuit;
+        setSurrenderAsk(null);
+        setChallengeBusy(true);
+        await closeGymChallengeAsDefeat('quit');
+        setChallengeBusy(false);
+        next?.();
     };
 
     // ── Eventos ─────────────────────────────────────────────────────────────
@@ -1631,6 +1814,11 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             case 'contest':
                 // Ni monta rival ni encadena nada: se resuelve en su modal.
                 setContestOpen(true);
+                break;
+            case 'rareCandy':
+                // No se consume por turno: lo que lo limita es que la subida la
+                // tiene que aprobar el máster, y solo cabe una solicitud a la vez.
+                setRareCandyOpen(true);
                 break;
             case 'trainerBattle':
                 if (trainerBattle) await onTrainerClear(player.id);
@@ -2136,6 +2324,47 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (isMyTurn) onStartSimMirror(playerId);
     };
 
+    // Lo que va detrás del modal de subir nivel, conteste lo que conteste el
+    // jugador: la captura del salvaje, la medalla del líder o el relevo de su
+    // siguiente Pokémon. Nunca coinciden dos.
+    const afterLevelUpPrompt = () => {
+        if (rival?.name === 'Wild Pokemon') {
+            if (!noCaptureEvent) setShowCapturePrompt(true);
+            return;
+        }
+        if (pendingBadge) {
+            setPendingBadge(false);
+            setShowBadgePrompt(true);
+        } else if (pendingNextRival) {
+            setPendingNextRival(false);
+            setShowNextRivalPrompt(true);
+        }
+    };
+
+    // ── Relevo del líder ────────────────────────────────────────────────────
+    // Cayó uno de los suyos y le queda equipo: sale el siguiente. El jugador
+    // decide si sigue con el mismo Pokémon —el combate continúa donde estaba,
+    // solo se limpia la ronda— o si se lo cambia, que devuelve a la pantalla de
+    // selección con el nuevo rival ya puesto.
+    const handleNextRivalSame = async () => {
+        setShowNextRivalPrompt(false);
+        const next = leaderNext;
+        if (!next) return;
+        setLeaderIdx(i => i + 1);
+        resetRoundState();
+        // El que entra viene entero: los estados alterados eran del que cayó
+        setRivalStatus('Normal');
+        if (isMyTurn) onSimRematch(playerId);
+        await handleSelectRivalPokemon(next, myPokemon);
+    };
+
+    const handleNextRivalSwitch = () => {
+        setShowNextRivalPrompt(false);
+        if (!leaderNext) return;
+        setLeaderIdx(i => i + 1);
+        handleResetBattle();
+    };
+
     // Pantalla de selección de combatientes. Trae su propia barra superior, así
     // que mientras está en pantalla los botones flotantes (home, turno, guía,
     // tabla de tipos) se retiran para no montarse encima.
@@ -2173,7 +2402,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                    alt="" />
                             : <div className="turn-modal-icon">⚡</div>}
                         <div className="turn-modal-text">¡Es tu turno,<br /><span>{player.name}</span>!</div>
-                        <button className="turn-modal-btn" onClick={() => { stopTurnAlert(); setShowTurnModal(false); handleNewSimulation(); }}>OK</button>
+                        <button className="turn-modal-btn" onClick={() => { stopTurnAlert(); setShowTurnModal(false); runNewSimulation(); }}>OK</button>
                     </div>
                 </div>
             )}
@@ -2285,12 +2514,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             <ModalRulesGuide show={showRulesGuide} onClose={() => setShowRulesGuide(false)} />
             {/* Mapa de referencia: líderes por ciudad, orden de medallas y
                 —solo donde hay tablero— ficha arrastrable y ruta mínima al
-                siguiente gimnasio. El dado y los turnos siguen en MapPlayer.js. */}
+                siguiente gimnasio. El dado y los turnos siguen en MapPlayer.js.
+                `players` es solo para ver dónde está cada uno: la única ficha
+                que se puede mover sigue siendo la propia. */}
             <ModalInteractiveMap
                 show={showMap && MAP_GENERATIONS.includes(generation)}
                 onClose={() => setShowMap(false)}
                 generation={generation}
                 player={player}
+                players={game.players || []}
                 onMovePlayer={(nodeId) => onMovePlayerMap?.(playerId, nodeId)}
                 onToggleSurf={(value) => onToggleSurf?.(playerId, value)}
             />
@@ -2332,6 +2564,20 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 onOpenRules={() => setRaidRulesOpen('horde')}
                 onMirror={publishEventMirror}
                 loading={hordeLoading}
+            />
+
+            {/* Caramelo Raro. `pendingRequest` es el mismo hueco que usa la
+                tienda, así que solo se enseña aquí si la solicitud pendiente es
+                de un caramelo: si el jugador dejó una compra a medias, el modal
+                que tiene que estar esperando es el de la tienda. */}
+            <ModalRareCandy
+                show={rareCandyOpen}
+                onClose={() => { setRareCandyOpen(false); setRareCandyError(null); }}
+                player={player}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                pendingRequest={pendingRequest?.kind === 'rareCandy' ? pendingRequest : null}
+                error={rareCandyError}
+                onRequest={handleRareCandyRequest}
             />
 
             <ModalPokeStar
@@ -2660,10 +2906,18 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 )}
                             </>
                         ) : (
-                            <div className="raid-round-note">
-                                La frontera ya está gastada: se marca al lanzar el reto. Las
-                                PokéMonedas y la recompensa solo caen ganando el combate.
-                            </div>
+                            <>
+                                {frontierBattle.coinsLost > 0 && (
+                                    <div className="gym-challenge-cost gym-challenge-cost--warn">
+                                        −<b>{frontierBattle.coinsLost}</b> monedas · te quedan <b>{frontierBattle.coinsAfter}</b>
+                                    </div>
+                                )}
+                                <div className="raid-round-note">
+                                    La frontera ya está gastada: se marca al lanzar el reto. Las
+                                    PokéMonedas y la recompensa solo caen ganando el combate, y
+                                    perder cuesta un tercio del dinero.
+                                </div>
+                            </>
                         )}
 
                         <div className="raid-result-actions">
@@ -3292,7 +3546,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                         <div key={l.leaderKey}
                                              className={`sim-leader-card sim-leader-card--${status}`}
                                              title={`Retar a ${l.name}`}
-                                             onClick={() => handleSimLeader(l.leaderKey, l.uid1, l.uid2, badgeNum)}>
+                                             onClick={() => handleSimLeader(l, badgeNum)}>
                                             <div className={`sim-leader-card-art ${portrait ? '' : 'sim-leader-card-art--token'}`}
                                                  style={art ? { backgroundImage: `url(${art})` } : {}} />
                                             <div className="sim-leader-card-body">
@@ -3455,16 +3709,20 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
             {/* Selección de combatientes: una sola pantalla con los dos equipos.
                 `key` con el id del rival para que al cambiar de rival la pantalla
-                se monte limpia (el salvaje viene preelegido en el estado inicial). */}
+                se monte limpia (el salvaje viene preelegido en el estado inicial).
+                Lleva también el Pokémon del líder que toca: al pasar al siguiente
+                la carta que se estuviera mirando es de un combate que ya pasó. */}
             {inSelection && (
                 <SimBattleSelect
-                    key={rival.id}
+                    key={`${rival.id}-${leaderIdx}`}
                     player={player}
                     rival={rival}
                     generation={generation}
                     pokemonList={pokemonList}
                     badgeNum={gymLeaderBadgeNum}
                     isMyTurn={isMyTurn}
+                    fixedTheirs={leaderFighter}
+                    beaten={leaderIdx}
                     onConfirm={handleConfirmSelection}
                     onPreview={handlePreviewSelection}
                     onToggleForms={(showForms) => { if (isMyTurn) onSetFormsView(showForms); }}
@@ -3744,8 +4002,40 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                             <br />¿Subir de nivel?
                         </div>
                         <div className="levelup-prompt-buttons">
-                            <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, resolveBasePokemonId(myPokemon), { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); if (pendingBadge) { setPendingBadge(false); setShowBadgePrompt(true); } }}>Sí</button>
-                            <button className="levelup-btn-no" onClick={() => { setShowLevelUpPrompt(false); if (rival?.name === 'Wild Pokemon' && !noCaptureEvent) setShowCapturePrompt(true); }}>No</button>
+                            {/* Lo que venía detrás del nivel (la medalla, o el
+                                relevo del líder) sale igual se suba o no: antes
+                                colgaba solo del «Sí» y decir que no dejaba la
+                                medalla sin ofrecer. */}
+                            <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, resolveBasePokemonId(myPokemon), { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); afterLevelUpPrompt(); }}>Sí</button>
+                            <button className="levelup-btn-no" onClick={() => { setShowLevelUpPrompt(false); afterLevelUpPrompt(); }}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Relevo del líder: cayó uno de los suyos y saca al siguiente. Sin
+                backdrop que cierre al tocar fuera —hay que decidir con quién
+                sigues, y el combate no puede quedarse a medias sin rival. */}
+            {showNextRivalPrompt && leaderNext && (
+                <div className="modal-backdrop">
+                    <div className="levelup-prompt sim-next-rival" onClick={e => e.stopPropagation()}>
+                        <div className="levelup-prompt-title">¡Uno menos!</div>
+                        <div className="levelup-prompt-msg">
+                            {rival?.name} saca a <strong>{displayName(leaderNext)}</strong> (Nv {leaderNext.totalLevel}).
+                            <br />¿Sigues con {displayName(myPokemon)}?
+                        </div>
+                        <div className="sim-next-rival-art"
+                             style={(() => {
+                                 const art = getPokemonImg(leaderNext.pokedex)
+                                     || getSafePkmImg(leaderNext.pokedex, generation);
+                                 return art ? { backgroundImage: `url(${art})` } : {};
+                             })()} />
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes" onClick={handleNextRivalSame}>
+                                Seguir igual
+                            </button>
+                            <button className="levelup-btn-no" onClick={handleNextRivalSwitch}>
+                                Cambiar de Pokémon
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -3755,7 +4045,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
                         <div className="levelup-prompt-title">¡Medalla!</div>
                         <div className="levelup-prompt-msg">
-                            ¡Derrotaste a {rival?.name}!<br />¿Otorgar medalla {gymLeaderBadgeNum}?
+                            ¡Derrotaste a {rival?.name}!<br />
+                            {/* Del Alto Mando basta con ganarle a UNO —el que
+                                elija el jugador—, así que la medalla 9 se
+                                ofrece igual que la de cualquier gimnasio. */}
+                            {gymLeaderBadgeNum === 10 ? '¿Coronarte campeón?'
+                                : gymLeaderBadgeNum === 9 ? '¿Otorgar la medalla del Alto Mando?'
+                                : `¿Otorgar medalla ${gymLeaderBadgeNum}?`}
                         </div>
                         <div className="levelup-prompt-buttons">
                             <button className="levelup-btn-yes" onClick={async () => {
@@ -3768,6 +4064,85 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                 setGymLeaderBadgeNum(null);
                             }}>Sí</button>
                             <button className="levelup-btn-no" onClick={() => setShowBadgePrompt(false)}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ── Flujo del reto de medalla ─────────────────────────────────
+                Tres pasos, y los tres con el precio a la vista: aceptar el
+                reto, rendirse, y el aviso de lo que se acaba de cobrar.
+                Sin backdrop que cierre al tocar fuera: en los dos primeros hay
+                dinero de por medio y el toque perdido no puede decidir. */}
+            {pendingChallenge && (
+                <div className="modal-backdrop">
+                    <div className="levelup-prompt gym-challenge-modal" onClick={e => e.stopPropagation()}>
+                        <div className="gym-challenge-modal-badge"
+                             style={{ backgroundImage: `url(${getBadgeImg(generation, pendingChallenge.badge)})` }} />
+                        <div className="levelup-prompt-title">
+                            {pendingChallenge.badge === 10 ? 'Combate por el título'
+                                : pendingChallenge.badge === 9 ? 'Reto del Alto Mando'
+                                : `Reto de gimnasio ${pendingChallenge.badge}`}
+                        </div>
+                        <div className="levelup-prompt-msg">
+                            Vas a retar a <strong>{pendingChallenge.name}</strong>.<br />
+                            El combate hay que terminarlo aquí: si sales sin ganarlo
+                            cuenta como <strong>derrota</strong> y pierdes un tercio de tu dinero.
+                        </div>
+                        <div className="gym-challenge-cost">
+                            {surrenderCost > 0
+                                ? <>Rendirte ahora costaría <b>{surrenderCost}</b> de tus <b>{player.coins}</b> monedas</>
+                                : <>Ahora mismo no tienes monedas que perder</>}
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes"
+                                    onClick={() => startSimLeader(pendingChallenge, pendingChallenge.badge)}>
+                                Retar
+                            </button>
+                            <button className="levelup-btn-no" onClick={() => setPendingChallenge(null)}>Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {surrenderAsk && (
+                <div className="modal-backdrop">
+                    <div className="levelup-prompt gym-challenge-modal gym-challenge-modal--warn" onClick={e => e.stopPropagation()}>
+                        <div className="levelup-prompt-title">¿Rendirte?</div>
+                        <div className="levelup-prompt-msg">
+                            Todavía no has ganado el reto contra <strong>{gymChallenge?.gymName}</strong>.
+                            Salir ahora lo apunta como <strong>derrota</strong>.
+                        </div>
+                        <div className="gym-challenge-cost gym-challenge-cost--warn">
+                            {surrenderCost > 0
+                                ? <>Pierdes <b>{surrenderCost}</b> monedas · te quedan <b>{player.coins - surrenderCost}</b></>
+                                : <>No pierdes monedas: no te queda ninguna</>}
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-no"
+                                    disabled={challengeBusy}
+                                    onClick={handleSurrenderConfirm}>
+                                Rendirme
+                            </button>
+                            <button className="levelup-btn-yes" onClick={() => setSurrenderAsk(null)}>Seguir peleando</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {defeatNotice && (
+                <div className="modal-backdrop" onClick={() => setDefeatNotice(null)}>
+                    <div className="levelup-prompt gym-challenge-modal gym-challenge-modal--warn" onClick={e => e.stopPropagation()}>
+                        <div className="gym-challenge-modal-badge gym-challenge-modal-badge--lost"
+                             style={{ backgroundImage: `url(${getBadgeImg(generation, defeatNotice.badge)})` }} />
+                        <div className="levelup-prompt-title">Reto perdido</div>
+                        <div className="levelup-prompt-msg">
+                            {defeatNotice.gymName} se queda con la medalla {defeatNotice.badge}.
+                        </div>
+                        <div className="gym-challenge-cost gym-challenge-cost--warn">
+                            {defeatNotice.coinsLost > 0
+                                ? <>−<b>{defeatNotice.coinsLost}</b> monedas · te quedan <b>{defeatNotice.coinsAfter}</b></>
+                                : <>Sin monedas que perder</>}
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes" onClick={() => setDefeatNotice(null)}>Entendido</button>
                         </div>
                     </div>
                 </div>

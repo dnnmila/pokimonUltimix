@@ -11,10 +11,13 @@ import SERVER_IP from "../config.js";
 
 const LEADER_PREFIXES = ['gym', 'Riv'];
 
+// Un POKEDEX sin token no puede tumbar el espejo: se devuelve null y la ficha
+// sale sin ilustración.
 const getPkmImg = (pokedex, generation = 1) => {
-    if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
-    if (pokedex.startsWith('M') || pokedex.startsWith('GM') || pokedex.startsWith('A')) return require(`../images/tokens_ultimix/${pokedex}.png`);
-    return require(`../images/tokens_ultimix/${pokedex}.png`);
+    try {
+        if (LEADER_PREFIXES.some(p => pokedex.startsWith(p))) return require(`../images/Leaders${generation}/${pokedex}.png`);
+        return require(`../images/tokens_ultimix/${pokedex}.png`);
+    } catch { return null; }
 };
 
 // Cabecera del combatiente: entrenador, token, nombre, nivel y tipos. Es lo que

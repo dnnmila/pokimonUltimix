@@ -60,9 +60,13 @@ const ModalTiendaSim = ({ show, onClose, player, pendingRequest, onRequestPurcha
                         <div className="sim-store-pending-text">
                             Solicitud enviada
                         </div>
-                        {/* El signo evita la duda de si te van a cobrar o a pagar */}
+                        {/* El signo evita la duda de si te van a cobrar o a pagar.
+                            El Caramelo Raro comparte esta cola pero no mueve
+                            monedas: ahí un precio solo confundiría. */}
                         <div className="sim-store-pending-item">
-                            {pendingRequest.item} — {pendingRequest.kind === 'sell' ? '+' : '-'}${pendingRequest.price}
+                            {pendingRequest.item}
+                            {pendingRequest.kind !== 'rareCandy' &&
+                                ` — ${pendingRequest.kind === 'sell' ? '+' : '-'}$${pendingRequest.price}`}
                         </div>
                         <div className="sim-store-pending-wait">
                             Esperando aprobación ...

@@ -84,11 +84,25 @@ const buildEvents = (game) => {
         });
     });
 
+    // Cómo acabó el reto. El matiz importa al repasar la partida: no es lo
+    // mismo que te barrieran el equipo que salirte del combate, y menos aún que
+    // el reto se cerrara solo al pasar el turno.
+    const GYM_REASON = {
+        wiped:     'equipo debilitado',
+        quit:      'se retiró',
+        turnEnded: 'turno terminado sin acabar el combate',
+    };
+
     (game.gymHistory || []).forEach(e => {
+        const bits = [
+            e.badge ? `Medalla ${e.badge} no conseguida` : null,
+            GYM_REASON[e.reason] || null,
+            e.coinsLost > 0 ? `−${e.coinsLost} monedas · quedan ${e.coinsAfter}` : null,
+        ].filter(Boolean);
         push(e.playerId, {
             kind: 'gymLost', round: e.round, timestamp: e.timestamp, badge: e.badge,
-            title: e.gymName ? `Perdió contra ${e.gymName}` : 'Reto de gimnasio fallado',
-            detail: e.badge ? `Gimnasio ${e.badge} · medalla no conseguida` : '',
+            title: e.gymName ? `Perdió contra ${e.gymName}` : 'Reto de medalla fallado',
+            detail: bits.join(' · '),
         });
     });
 
@@ -118,10 +132,16 @@ const buildEvents = (game) => {
     (game.levelHistory || []).forEach(e => {
         const p = byName.get(e.playerName);
         if (!p) return;
+        // De dónde salió el nivel: de un combate, o del Caramelo Raro que
+        // aprobó el máster. Sin esto los dos se leen igual y el caramelo
+        // parecería una victoria que nadie recuerda.
+        const detail = e.source === 'rare-candy'
+            ? 'Caramelo Raro'
+            : (e.rivalPokemonName ? `contra ${e.rivalPokemonName}` : '');
         push(p.id, {
             kind: 'levelUp', round: e.round, timestamp: e.timestamp,
             title: `${e.pokemonName} Nv ${e.previousLevel} → ${e.newLevel}`,
-            detail: e.rivalPokemonName ? `contra ${e.rivalPokemonName}` : '',
+            detail,
         });
     });
 

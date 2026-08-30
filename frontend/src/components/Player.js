@@ -479,19 +479,28 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
             {pendingPurchases.length > 0 && (
                 <div className="pending-purchases">
-                    <div className="pending-purchases-title">Solicitudes de compra</div>
+                    <div className="pending-purchases-title">Solicitudes</div>
                     {/* El signo y el color separan cobrar de pagar: aprobar una
                         venta le SUMA monedas al jugador, y eso tiene que verse
-                        antes de pulsar el ✓, no después. */}
+                        antes de pulsar el ✓, no después.
+                        El Caramelo Raro no mueve monedas: en su hueco va el
+                        nivel que se está aprobando. */}
                     {pendingPurchases.map(req => {
                         const isNext = nextPending?.id === req.id;
+                        const isCandy = req.kind === 'rareCandy';
                         return (
                         <div key={req.id} className={`pending-purchase-item${isNext ? ' pending-purchase-item--next' : ''}`}>
                             <span className="pending-purchase-player">{req.playerName}</span>
                             <span className="pending-purchase-item-name">{req.item}</span>
-                            <span className={`pending-purchase-price${req.kind === 'sell' ? ' pending-purchase-price--sell' : ''}`}>
-                                {req.kind === 'sell' ? '+' : '-'}${req.price}
-                            </span>
+                            {isCandy ? (
+                                <span className="pending-purchase-price pending-purchase-price--level">
+                                    Nv {req.fromLevel} → {req.toLevel}
+                                </span>
+                            ) : (
+                                <span className={`pending-purchase-price${req.kind === 'sell' ? ' pending-purchase-price--sell' : ''}`}>
+                                    {req.kind === 'sell' ? '+' : '-'}${req.price}
+                                </span>
+                            )}
                             {/* El ⏎ marca cuál aprueba la tecla: con varias en
                                 cola hay que saber a cuál le toca */}
                             <button className="pending-approve" onClick={() => onApprovePurchase(req.id)}>

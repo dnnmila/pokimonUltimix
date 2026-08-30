@@ -30,6 +30,8 @@ import imgUnderground from '../images/tokens_ultimix/0050.png';
 // símbolo de un tipo — el evento reparte el objeto, y el tipo lo elige cada
 // carta. Es además el que ya pinta la bolsa en ModalEvents.
 import imgTeraOrb from '../images/store/chart/TeraOrb.png';
+// El Caramelo Raro va con el arte del propio objeto.
+import imgRareCandy from '../images/Nuevos items/Rare Candy.png';
 
 // `accent` pinta el borde y el título de la tarjeta: agrupa de un vistazo los
 // eventos de «recoger objeto» (los tres primeros) frente a los de combate.
@@ -57,6 +59,14 @@ export const SIM_EVENTS = [
         desc: 'Salen 3 Orbes Tera al azar: quédate uno para equiparlo o guardarlo.',
         img: imgTeraOrb,
         accent: '#b06ef2',
+    },
+    {
+        id: 'rareCandy',
+        title: 'Rare Candy',
+        es: 'Caramelo Raro',
+        desc: 'Sube un nivel al que elijas, salvo al más alto del equipo. Lo aprueba el máster.',
+        img: imgRareCandy,
+        accent: '#ef6f8e',
     },
     {
         id: 'raidMax',

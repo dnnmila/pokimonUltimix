@@ -406,6 +406,9 @@ margin-left: 0rem;
 .pending-purchase-item-name { flex: 1.5; }
 .pending-purchase-price { color: var(--hud-ink); font-weight: bold; width: 3.2rem; text-align: right; }
 .pending-purchase-price--sell { color: #2f8f4e; }
+// El Caramelo Raro no cobra: en el hueco del precio va el nivel que se aprueba,
+// que necesita algo más de sitio que un "-$5".
+.pending-purchase-price--level { color: #b8437a; width: 5.4rem; white-space: nowrap; }
 .pending-approve {
     background: #2f8f4e; border: none; border-radius: 6px;
     color: white; font-weight: bold; cursor: pointer; padding: 0.2rem 0.55rem;

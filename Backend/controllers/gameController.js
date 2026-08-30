@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 
 import { getGame, initializeGame,updateGameAndNotify,getRivalrById,getPlayerById, saveGame, loadGame, getSaveInfo, setGameRivals } from "../gameInstance.js";
 import { getIo } from "../socketIo.js";
+import { MAX_EXTRA_LEVEL } from "./playerController.js";
 
 async function openDb() {
     return open({
@@ -114,6 +115,18 @@ export const nextTurn = async (req, res) => {
                     });
                 }
             }
+        }
+
+        // Reto de medalla que se queda abierto al acabar el turno: es una
+        // derrota. Este es el caso que se perdía siempre —al ver en el dado
+        // físico que ya no había remontada nadie volvía a tocar la tablet, así
+        // que el combate no se cerraba y no quedaba rastro de él. Se resuelve
+        // aquí, del lado del servidor, para que dé igual quién pase el turno:
+        // el jugador, el máster o el botón de la mesa.
+        const leavingPlayer = game.players[game.currentTurn];
+        if (leavingPlayer?.gymChallenge) {
+            const { badge, gymName } = leavingPlayer.gymChallenge;
+            game.recordGymDefeat(leavingPlayer, badge, gymName, 'turnEnded');
         }
 
         game.nextTurn();
@@ -695,26 +708,69 @@ export const setBattleBonuses = async (req, res) => {
     }
 };
 
+// ── Caramelo Raro ───────────────────────────────────────────────────────────
+// Sube un nivel, pero solo a quien va por detrás: no se le puede dar al que ya
+// es el más alto del equipo. Con un Blastoise 9, un Charizard 9 y un Venusaur 8
+// el caramelo solo entra en el Venusaur. Sirve para que el equipo se empareje,
+// no para estirar todavía más al que ya iba primero.
+//
+// Se comprueba en dos momentos —al pedirlo y al aprobarlo— porque entre una
+// cosa y la otra el jugador puede haber subido de nivel en un combate.
+const checkRareCandy = (player, pokemonId) => {
+    const team = player.pokemons || [];
+    const pokemon = team.find(p => p.id === pokemonId);
+    if (!pokemon) return { error: 'Ese Pokémon no está en el equipo' };
+    // El tope de extras es duro: pasarse CICLA a +0 (ver Pokemons.addExtra), o
+    // sea que el caramelo reiniciaría al Pokémon en vez de subirlo.
+    if ((pokemon.extra ?? 0) >= MAX_EXTRA_LEVEL) {
+        return { error: `${pokemon.name} ya está en el máximo (+${MAX_EXTRA_LEVEL})` };
+    }
+    const top = team.reduce((max, p) => Math.max(max, p.totalLevel ?? 0), 0);
+    if ((pokemon.totalLevel ?? 0) >= top) {
+        return { error: `${pokemon.name} ya es el de nivel más alto del equipo` };
+    }
+    return { pokemon };
+};
+
 export const requestPurchase = async (req, res) => {
     try {
         // `kind` distingue comprar de vender. Llega ausente en las solicitudes
         // de siempre, así que el defecto tiene que ser 'buy': las partidas ya
         // guardadas y cualquier cliente sin actualizar siguen comprando igual.
-        const { playerId, item, price, kind = 'buy' } = req.body;
-        const isSell = kind === 'sell';
+        // 'rareCandy' es la tercera: no mueve monedas, sube un nivel.
+        const { playerId, item, price, kind = 'buy', pokemonId } = req.body;
+        const isSell  = kind === 'sell';
+        const isCandy = kind === 'rareCandy';
         const game = getGame();
         const player = game.players.find(p => p.id === playerId);
         if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
-        // Vender paga, no cobra: no hay saldo que comprobar
-        if (!isSell && player.coins < price) return res.status(400).json({ message: 'Monedas insuficientes' });
+        // Vender paga, no cobra: no hay saldo que comprobar. El caramelo no
+        // cuesta dinero, pero sí tiene que cumplir su regla.
+        if (!isSell && !isCandy && player.coins < price) {
+            return res.status(400).json({ message: 'Monedas insuficientes' });
+        }
+
         const purchaseRequest = {
             id: Date.now().toString(),
             playerId: player.id,
             playerName: player.name,
             item,
-            price,
-            kind: isSell ? 'sell' : 'buy'
+            price: isCandy ? 0 : price,
+            kind: isCandy ? 'rareCandy' : isSell ? 'sell' : 'buy',
         };
+
+        if (isCandy) {
+            const { pokemon, error } = checkRareCandy(player, pokemonId);
+            if (error) return res.status(400).json({ message: error });
+            // El nivel viaja con la solicitud para que el máster vea qué está
+            // aprobando sin tener que ir a buscar la ficha del jugador.
+            purchaseRequest.pokemonId   = pokemon.id;
+            purchaseRequest.pokemonName = pokemon.name;
+            purchaseRequest.fromLevel   = pokemon.totalLevel;
+            purchaseRequest.toLevel     = pokemon.totalLevel + 1;
+            purchaseRequest.item        = item || `Caramelo Raro · ${pokemon.name}`;
+        }
+
         game.pendingPurchases.push(purchaseRequest);
         updateGameAndNotify();
         res.status(200).json({ message: 'Solicitud enviada', purchaseId: purchaseRequest.id });
@@ -731,6 +787,37 @@ export const approvePurchase = async (req, res) => {
         if (!request) return res.status(404).json({ message: 'Solicitud no encontrada' });
         const player = game.players.find(p => p.id === request.playerId);
         if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+
+        // El Caramelo Raro no pasa por el monedero: sube un nivel y se anota en
+        // `levelHistory`, igual que una subida ganada en combate, para que la
+        // línea de tiempo de /progress la pinte como lo que es.
+        if (request.kind === 'rareCandy') {
+            game.pendingPurchases = game.pendingPurchases.filter(r => r.id !== purchaseId);
+            // Se revalida: entre pedirlo y aprobarlo el jugador pudo subir de
+            // nivel en un combate y dejar de cumplir la regla.
+            const { pokemon, error } = checkRareCandy(player, request.pokemonId);
+            if (error) {
+                updateGameAndNotify();
+                return res.status(200).json({ message: `Caramelo no aplicado: ${error}`, applied: false });
+            }
+            const previousLevel = pokemon.totalLevel;
+            player.increasePokemonLevel(pokemon.id);
+            const updated = player.pokemons.find(p => p.id === pokemon.id);
+            game.levelHistory.push({
+                round: game.round,
+                timestamp: Date.now(),
+                playerName: player.name,
+                pokemonName: updated.name,
+                previousLevel,
+                newLevel: updated.totalLevel,
+                rivalName: null,
+                rivalPokemonName: null,
+                source: 'rare-candy',
+            });
+            updateGameAndNotify();
+            return res.status(200).json({ message: 'Caramelo Raro aplicado', applied: true });
+        }
+
         // Vender suma en vez de restar. Las solicitudes viejas no traen `kind`,
         // y sin él se comportan como compras, que es lo que eran.
         const isSell = request.kind === 'sell';
@@ -1735,16 +1822,27 @@ export const frontierBattleFinish = async (req, res) => {
         fb.rivalTotal = theirs;
         fb.result = mine > theirs ? 'win' : mine === theirs ? 'tie' : 'lose';
         fb.coins = fb.result === 'win' ? FRONTIER_PRIZE_COINS : 0;
+        // Perder cuesta un tercio del dinero, el mismo castigo que un reto de
+        // medalla fallado. El empate no es una derrota: ni premio ni castigo.
+        fb.coinsLost = 0;
 
-        if (fb.coins) {
-            const player = getPlayerById(playerId);
-            if (player) {
-                const before = Number(player.coins) || 0;
-                // Una partida restaurada de un save trae el jugador como objeto
-                // pelado, sin los métodos de la clase: de ahí la segunda vía.
+        const player = getPlayerById(playerId);
+        if (player) {
+            const before = Number(player.coins) || 0;
+            // Una partida restaurada de un save trae el jugador como objeto
+            // pelado, sin los métodos de la clase: de ahí la segunda vía.
+            if (fb.coins) {
                 if (typeof player.updateNewCoins === 'function') player.updateNewCoins(before + fb.coins);
                 else player.coins = before + fb.coins;
+            } else if (fb.result === 'lose') {
+                if (typeof player.loseThirdOfCoins === 'function') {
+                    fb.coinsLost = player.loseThirdOfCoins();
+                } else {
+                    fb.coinsLost = Math.floor(Math.max(0, before) / 3);
+                    player.coins = Math.max(0, before) - fb.coinsLost;
+                }
             }
+            fb.coinsAfter = player.coins;
         }
 
         updateGameAndNotify();

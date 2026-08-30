@@ -91,6 +91,10 @@
 @import "./modalBattle";
 @import "./simPlayer";
 @import "./simBattleSelect";
+// Después de simPlayer: el modal del reto reaprovecha .levelup-prompt y tiene
+// que poder pisarle el borde y el título
+@import "./gymChallenge";
+@import "./modalRareCandy";
 // Solo variables: repinta los tokens de _tokens sobre .sim-player--<tema>
 @import "./simThemes";
 @import "./modalSettings";
