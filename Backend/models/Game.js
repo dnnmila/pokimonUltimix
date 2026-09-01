@@ -82,6 +82,10 @@ class Game {
         // Combate de entrenador (1 o 2 rivales seguidos), o null. Ver los
         // trainerBattle* de gameController.
         this.trainerBattle = null;
+        // Battle Royal en curso, o null. Cada Pokémon vivo del jugador con
+        // token verde, azul, amarillo o rojo pelea su propio combate contra un
+        // salvaje sorteado DE SU MISMO COLOR. Ver los royale* de gameController.
+        this.royale = null;
         // Reto de frontera en curso, o null. Un solo combate contra un salvaje
         // del color de la frontera; guarda qué frontera se retó para poder
         // enseñar su recompensa al cerrar. Ver los frontierBattle* de

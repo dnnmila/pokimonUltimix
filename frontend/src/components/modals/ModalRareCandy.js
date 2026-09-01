@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PokemonName from '../PokemonName';
 import { displayName, nameTitle } from '../../moteName';
 import { MAX_EXTRA_LEVEL } from '../../battleRules';
-import imgRareCandy from '../../images/Nuevos items/Rare Candy.png';
+import imgRareCandy from '../../images/RareCandy.png';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Caramelo Raro.

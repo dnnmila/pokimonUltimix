@@ -118,6 +118,9 @@
 @import "./modalEvents";
 @import "./modalEventPick";
 @import "./modalRaid";
+// Después de modalRaid: el Battle Royal reaprovecha su franja y su resultado, y
+// necesita poder teñirlos con el color del token
+@import "./modalBattleRoyale";
 // Después de la incursión a propósito: la horda reaprovecha su piel y solo la
 // repinta de verde
 @import "./modalHorde";

@@ -117,6 +117,12 @@ export const nextTurn = async (req, res) => {
             }
         }
 
+        // Los equipos que vienen de una partida en marcha pueden no tener el
+        // color puesto todavía. Es una comprobación en memoria y solo abre la
+        // DB la primera vez que encuentra algo (ver backfillTokenColors), así
+        // que aquí sale gratis y ahorra tener que recargar la partida.
+        await backfillTokenColors(game);
+
         // Reto de medalla que se queda abierto al acabar el turno: es una
         // derrota. Este es el caso que se perdía siempre —al ver en el dado
         // físico que ya no había remontada nadie volvía a tocar la tablet, así
@@ -468,6 +474,9 @@ export const loadGameController = async (req, res) => {
         const game = loadGame();
         const db = await openDb();
         await loadRivalsForGeneration(game.generation || 1, db);
+        // Las partidas guardadas antes de que el Pokémon llevara su color lo
+        // traen vacío: se rellena aquí, que es el punto natural de migración.
+        await backfillTokenColors(game);
         updateGameAndNotify();
         res.status(200).json({ message: 'Partida cargada correctamente', round: game.round });
     } catch (error) {
@@ -1175,6 +1184,44 @@ const RAID_TEAM_SIZE = 4;
 // Construye un Pokémon completo (con sus tres ataques) desde su POKEDEX.
 // Es lo mismo que hace simWildBattle, extraído para poder reusarlo con el jefe
 // y con los salvajes de relleno.
+// ── Color de token ──────────────────────────────────────────────────────────
+// El color vive en la columna TOKEN_COLOR y se estampa en cada Pokémon al
+// construirlo (ver playerController). Lo de aquí abajo es solo para los equipos
+// que ya existían antes de que el campo existiera.
+//
+// Es dato de catálogo —no cambia en toda la partida— así que se cachea por
+// POKEDEX. Eso es lo que permite llamar al relleno en cada turno sin coste: a
+// partir de la primera pasada no vuelve a abrir la DB, ni siquiera para los
+// Pokémon que la DB no tiene clasificados (192 de 1185), que se quedan en null
+// para siempre en vez de provocar una consulta por turno.
+const tokenColorCache = new Map();
+
+export async function backfillTokenColors(game) {
+    const missing = [];
+    for (const p of game?.players || []) {
+        for (const list of [p.pokemons, p.megas, p.gmaxes]) {
+            for (const pkm of list || []) if (pkm && !pkm.tokenColor) missing.push(pkm);
+        }
+    }
+    if (missing.length === 0) return 0;
+
+    const unseen = [...new Set(missing.map(p => p.pokedex).filter(d => d && !tokenColorCache.has(d)))];
+    if (unseen.length) {
+        const db = await openDb();
+        for (const dex of unseen) {
+            const row = await db.get('SELECT TOKEN_COLOR FROM pokemons WHERE POKEDEX = ? LIMIT 1', [dex]);
+            tokenColorCache.set(dex, row?.TOKEN_COLOR || null);
+        }
+    }
+
+    let filled = 0;
+    for (const pkm of missing) {
+        const color = tokenColorCache.get(pkm.pokedex) || null;
+        if (color) { pkm.tokenColor = color; filled++; }
+    }
+    return filled;
+}
+
 async function buildPokemonFromDex(pokedex, db, idPrefix = 'raid') {
     const data = await db.get("SELECT * FROM pokemons WHERE POKEDEX = ? LIMIT 1", [pokedex]);
     if (!data) return null;
@@ -1715,6 +1762,190 @@ export const trainerBattleClear = async (req, res) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  BATTLE ROYAL (carta «Battle Royal Dome»)
+//
+//  Cada Pokémon VIVO del jugador cuyo token sea verde, azul, amarillo o rojo
+//  pelea su propio combate contra un salvaje sorteado DE SU MISMO COLOR. No es
+//  un rival contra todo el equipo (eso es la horda): son parejas, una por
+//  Pokémon, y cada una se resuelve por separado. Por cada victoria se roba una
+//  carta del mazo físico; la tablet solo dice cuántas.
+//
+//  Los otros dos colores de token —rosa y morado— se quedan fuera: es lo que
+//  dice la carta, y son los que el tablero reserva para otras cosas.
+//
+//  Por dentro cada combate es una batalla salvaje corriente (el rival se monta
+//  con el nombre 'Wild Pokemon'): se sube de nivel y se debilita como siempre.
+//  Lo que la tablet desactiva es la captura — son contrincantes del torneo, no
+//  salvajes que se quede uno.
+//
+//  El color de cada Pokémon del jugador viaja en su propia ficha
+//  (`pokemon.tokenColor`, ver Pokemons.js): se estampa al capturarlo, al
+//  evolucionarlo y al montarle una mega o G-Max. Aquí solo se lee.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ROYALE_COLORS = ['green', 'blue', 'yellow', 'red'];
+
+export const royaleStart = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (!player) return res.status(404).json({ message: 'Jugador no encontrado' });
+
+        const alive = (player.pokemons || []).filter(p => p.state === 'Alive');
+        if (alive.length === 0) {
+            return res.status(400).json({ message: 'No te queda ningún Pokémon en pie' });
+        }
+
+        // El color viaja en la ficha del Pokémon. Se rellena antes por si el
+        // equipo viene de una partida vieja que aún no lo tenía.
+        await backfillTokenColors(game);
+
+        const db = await openDb();
+
+        const fighters = alive
+            .map(pkm => ({ pkm, color: pkm.tokenColor || null }))
+            .filter(f => ROYALE_COLORS.includes(f.color));
+
+        if (fighters.length === 0) {
+            return res.status(400).json({
+                message: 'Ninguno de tus Pokémon en pie es de token verde, azul, amarillo o rojo',
+            });
+        }
+
+        // Un rival por cada uno, de su color. Se evita repetir salvaje entre
+        // combates: con dos verdes en el equipo, salir dos veces el mismo
+        // parece un fallo aunque el sorteo sea legítimo.
+        const bouts = [];
+        const used = [];
+        for (const { pkm, color } of fighters) {
+            const notIn = used.length ? ` AND POKEDEX NOT IN (${used.map(() => '?').join(',')})` : '';
+            const row = await db.get(
+                `SELECT POKEDEX
+                   FROM pokemons
+                  WHERE FORM = 'Normal'
+                    AND POKEDEX GLOB '[0-9][0-9][0-9][0-9]'
+                    AND TOKEN_COLOR = ?${notIn}
+                  ORDER BY RANDOM()
+                  LIMIT 1`,
+                [color, ...used]
+            );
+            // Sin candidatos nuevos se repite: mejor un rival repetido que un
+            // combate menos del que dice la carta.
+            const dex = row?.POKEDEX || (await db.get(
+                `SELECT POKEDEX FROM pokemons
+                  WHERE FORM = 'Normal' AND POKEDEX GLOB '[0-9][0-9][0-9][0-9]' AND TOKEN_COLOR = ?
+                  ORDER BY RANDOM() LIMIT 1`, [color]))?.POKEDEX;
+            if (!dex) continue;
+            used.push(dex);
+            const wild = await buildPokemonFromDex(dex, db, 'royale');
+            if (!wild) continue;
+            bouts.push({
+                color,
+                pokemonId: pkm.id,
+                pokemon: JSON.parse(JSON.stringify(pkm)),
+                wild,
+            });
+        }
+
+        if (bouts.length === 0) {
+            return res.status(500).json({ message: 'No se pudo sortear ningún rival' });
+        }
+
+        // 'Wild Pokemon' no es decorativo: es lo que hace que SimPlayer aplique
+        // las reglas de batalla salvaje sin ramas nuevas.
+        const rival = new Rival('SimRoyale-' + playerId, 'Wild Pokemon');
+        rival.addPokemon(bouts[0].wild);
+        player.setSimRival(rival);
+
+        game.royale = {
+            hostId: playerId,
+            hostName: player.name,
+            bouts,
+            index: 0,
+            rounds: [],
+            wins: 0,
+            prize: 0,
+            result: null,
+        };
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Battle Royal listo', royale: game.royale });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra un combate y, si queda otro, pone al siguiente rival en el mismo
+// hueco. El premio son cartas: una por victoria, y se resuelve al cerrar el
+// último combate.
+//
+// El empate NO cuenta como victoria: la carta pide ganar, y aquí no hay un
+// host al que darle la ventaja como en la incursión o la horda.
+export const royaleRound = async (req, res) => {
+    try {
+        const { playerId, hostTotal, rivalTotal } = req.body;
+        const game = getGame();
+        const ro = game.royale;
+        if (!ro || ro.hostId !== playerId) {
+            return res.status(400).json({ message: 'No hay Battle Royal para este jugador' });
+        }
+        if (ro.rounds.length >= ro.bouts.length) {
+            return res.status(400).json({ message: 'El Battle Royal ya terminó' });
+        }
+
+        const bout = ro.bouts[ro.rounds.length];
+        const mine = Number(hostTotal) || 0;
+        const theirs = Number(rivalTotal) || 0;
+        ro.rounds.push({
+            color: bout?.color || null,
+            mine: bout?.pokemon?.name || '—',
+            rival: bout?.wild?.name || '—',
+            hostTotal: mine,
+            rivalTotal: theirs,
+            win: mine > theirs,
+            tie: mine === theirs,
+        });
+        ro.wins = ro.rounds.filter(r => r.win).length;
+
+        if (ro.rounds.length < ro.bouts.length) {
+            ro.index = ro.rounds.length;
+            const player = getPlayerById(playerId);
+            const next = ro.bouts[ro.index].wild;
+            // Una partida restaurada de un save trae el rival como objeto
+            // pelado, sin los métodos de la clase: de ahí la segunda vía.
+            if (player?.simRival) {
+                if (typeof player.simRival.addPokemon === 'function') player.simRival.addPokemon(next);
+                else player.simRival.pokemons = [next];
+            }
+        } else {
+            ro.prize = ro.wins;
+            ro.result = ro.wins > 0 ? 'win' : 'lose';
+        }
+
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Combate registrado', royale: game.royale });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Cierra el evento y libera el rival de simulación del host.
+export const royaleClear = async (req, res) => {
+    try {
+        const { playerId } = req.body;
+        const game = getGame();
+        const player = getPlayerById(playerId);
+        if (player) player.setSimRival(null);
+        if (game.royale && game.royale.hostId === playerId) game.royale = null;
+        updateGameAndNotify();
+        res.status(200).json({ message: 'Battle Royal cerrado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  RETO DE FRONTERA (Battle Frontier)
 //
 //  Las seis fronteras del tablero son retos de color: al lanzar una sale un
@@ -2137,7 +2368,10 @@ export const simMegaBattle = async (req, res) => {
 //  La tablet publica aquí una FOTO de lo que está enseñando el modal del evento
 //  (color de token elegido, tipo, quién salió, en qué paso va) y la tabla de
 //  /players la repinta. No es estado de juego: nada de lo que llega manda sobre
-//  la partida, así que no se valida más allá de que el jugador exista.
+//  la partida, así que no se valida el contenido; lo único que se comprueba es
+//  QUIÉN publica —solo el jugador del turno—, porque el panel es uno solo y
+//  cualquiera que abriera un evento desde su tablet le taparía la jugada al
+//  que va.
 //
 //  Cerrar: llega el mismo `event` con `closed: true`. Se compara el id del
 //  evento antes de borrar porque los modales publican al abrirse Y al cerrarse,
@@ -2156,6 +2390,13 @@ export const setEventMirror = async (req, res) => {
             const mismoEvento = !view || game.eventMirror?.event === view.event;
             if (game.eventMirror?.hostId === playerId && mismoEvento) game.eventMirror = null;
         } else {
+            // Solo publica quien tiene el turno. Los demás pueden abrir los
+            // modales de eventos en su tablet para mirar, pero la mesa está
+            // viendo la jugada del que va: su espejo no se toca. Cerrar sí se
+            // deja pasar siempre —lo de arriba— porque solo borra si el que
+            // cierra es el mismo que publicó.
+            const esSuTurno = game.players[game.currentTurn]?.id === playerId;
+            if (!esSuTurno) return res.status(200).json({ message: 'No es su turno: espejo ignorado' });
             game.eventMirror = { ...view, hostId: playerId, hostName: player.name };
         }
 

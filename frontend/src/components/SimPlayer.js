@@ -34,6 +34,8 @@ import ModalEventPick from "./modals/ModalEventPick";
 import ModalRaidSetup from "./modals/ModalRaidSetup";
 import ModalHordeSetup from "./modals/ModalHordeSetup";
 import ModalTrainerBattle from "./modals/ModalTrainerBattle";
+import ModalBattleRoyale from "./modals/ModalBattleRoyale";
+import { tokenColorHex } from "../data/tokenColors";
 import ModalContest from "./modals/ModalContest";
 import ModalPokeStar from "./modals/ModalPokeStar";
 import ModalRareCandy from "./modals/ModalRareCandy";
@@ -140,7 +142,7 @@ const battleForm = (pkm) => {
     };
 };
 
-const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onSimRematch, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, attachEquip, attachLegendary, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onUndergroundBattle, onEventMirror, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove, onMovePlayerMap, onToggleSurf }) => {
+const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle, onChangeState, onIncreaseLevel, onStartSimMirror, onSimRematch, onHandleBattlePokemon, onHandleBattleAttack, onHandleTotales, onChangeBattlePhase, onSetFormsView, onHandleDice, onHandleBonuses, onHandleBonusFinal, onToggleBattlePublic, onEvolvePokemon, onNextTurn, onAddPokemon, onRemovePokemon, onAttach, attachTM, attachMega, attachTera, attachEquip, attachLegendary, onRaidStart, onRaidTeam, onRaidRound, onRaidFinish, onRaidClear, onHordeStart, onHordeTeam, onHordeRound, onHordeFinish, onHordeClear, onTrainerStart, onTrainerRound, onTrainerClear, onRoyaleStart, onRoyaleRound, onRoyaleClear, onFrontierStart, onFrontierFinish, onFrontierClear, onPokeStarStart, onPokeStarLevel, onPokeStarClear, onMegaForms, onRandomMega, onSimMegaBattle, onUndergroundBattle, onEventMirror, onBagAdd, onBagRemove, onMarkEventUsed, onSetFieldMove, onMovePlayerMap, onToggleSurf }) => {
     const { playerId } = useParams();
 
     // El audio del reproductor vive fuera de React para que la música no se
@@ -167,6 +169,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // que no va — el Pokémon es de un entrenador.
     const trainerBattle = game.trainerBattle && game.trainerBattle.hostId === playerId ? game.trainerBattle : null;
     const trainerActive = Boolean(trainerBattle && !trainerBattle.result);
+    const royale = game.royale && game.royale.hostId === playerId ? game.royale : null;
+    const royaleActive = Boolean(royale && !royale.result);
     // Reto de frontera. Igual que el combate de entrenador: batalla salvaje de
     // pleno derecho salvo por la captura, que no va — el rival es el guardián de
     // la frontera, no un salvaje que se quede uno.
@@ -176,8 +180,9 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // rival, así que aguanta un refresco sin ayuda de nadie.
     const pokeStarActive = Boolean(rival?.id?.startsWith('SimPokeStar-'));
     // Ningún evento encadenado ofrece capturar combate a combate. En el rodaje
-    // tampoco: el Prop es un actor del estudio, no un salvaje.
-    const noCaptureEvent = hordeActive || trainerActive || frontierActive || pokeStarActive;
+    // tampoco: el Prop es un actor del estudio, no un salvaje; y en el Battle
+    // Royal los rivales son contrincantes del torneo.
+    const noCaptureEvent = hordeActive || trainerActive || frontierActive || pokeStarActive || royaleActive;
     const fieldMoves = (game?.fieldMoves || []).filter(Boolean);
     // Clave estable para detectar cuándo el master cambió las cartas de campo
     const fieldKey = JSON.stringify(game?.fieldMoves || []);
@@ -288,6 +293,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [trainerError, setTrainerError] = useState(null);
     const [trainerRoundHidden, setTrainerRoundHidden] = useState(false);
     const [trainerResultOpen, setTrainerResultOpen] = useState(false);
+    // Battle Royal. Mismo reparto que el resto de eventos encadenados: el cuadro
+    // vive en `game.royale` y aquí solo queda lo de la pantalla.
+    const [royaleSetupOpen, setRoyaleSetupOpen] = useState(false);
+    const [royaleLoading, setRoyaleLoading] = useState(false);
+    const [royaleError, setRoyaleError] = useState(null);
+    const [royaleRoundHidden, setRoyaleRoundHidden] = useState(false);
+    const [royaleResultOpen, setRoyaleResultOpen] = useState(false);
     // Reto de frontera. No hay pantalla de montaje: el rival lo sortea el
     // backend a partir del color de la frontera, así que la llamada sale del
     // propio modal de fronteras y aquí solo queda su estado en vuelo.
@@ -317,9 +329,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // Item adjunto abierto a tamaño carta: {itemId, pokemon, pokemonName}
     const [itemCardOpen, setItemCardOpen] = useState(null);
     const [showTurnModal, setShowTurnModal] = useState(false);
-    const [showLevelUpPrompt, setShowLevelUpPrompt] = useState(false);
     const [gymLeaderBadgeNum, setGymLeaderBadgeNum] = useState(null);
-    const [pendingBadge, setPendingBadge] = useState(false);
     // ── Reto de medalla ──────────────────────────────────────────────────────
     // El reto en sí vive en el servidor (`player.gymChallenge`); aquí solo hay
     // los tres modales del flujo: la confirmación antes de retar, la de salir
@@ -334,10 +344,24 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     // Contra un líder su equipo NO se elige: se pelea en orden. `leaderIdx` es
     // contra cuál de los suyos estás ahora, y sube al tumbarlo.
     const [leaderIdx, setLeaderIdx] = useState(0);
-    // Aviso de «cae uno, sale el siguiente». `pending…` lo encola detrás del
-    // modal de subir nivel, igual que hace pendingBadge con la medalla.
-    const [showNextRivalPrompt, setShowNextRivalPrompt] = useState(false);
-    const [pendingNextRival, setPendingNextRival] = useState(false);
+    // Relevo del líder: cae uno de los suyos y sale el siguiente. null = no hay
+    // relevo pendiente. Lo que lleva dentro se congela al abrirlo, porque al
+    // contestar ya se habrá limpiado la ronda:
+    //   { locked, levelUp, name, from, to }
+    //   locked  — ya vas por tu segundo Pokémon: ni cambio ni nivel, solo seguir
+    //   levelUp — cambiar ahora le sube el nivel (se aplica solo, no se pregunta)
+    const [nextRival, setNextRival] = useState(null);
+    // Los Pokémon que YA han peleado una ronda en el combate de líder en curso.
+    // Su tamaño es lo que distingue «vas con el primero» de «ya cambiaste».
+    const [leaderFighters, setLeaderFighters] = useState(() => new Set());
+    // Aviso fugaz de subida de nivel: { name, from, to }. No se pregunta nada,
+    // solo se enseña el +1 un momento y se va solo.
+    const [levelFlash, setLevelFlash] = useState(null);
+    // Elección tras ganar a un salvaje: nivel O captura, nunca las dos.
+    const [wildChoice, setWildChoice] = useState(false);
+    // Una subida por ronda resuelta. Va en un ref y no en estado porque no
+    // pinta nada: solo frena el segundo cobro (ver grantLevel).
+    const levelGrantedRef = useRef(false);
     const [showEvolveModal, setShowEvolveModal] = useState(false);
     const [evolveOptions, setEvolveOptions] = useState([]);
     const [evolvingPkm, setEvolvingPkm] = useState(null);
@@ -535,6 +559,14 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     const [myDiceAnim, setMyDiceAnim] = useState(0);
     const [rivalDiceAnim, setRivalDiceAnim] = useState(0);
 
+    // El +1 se va solo. Se limpia al desmontar para no dejar el timer suelto si
+    // el jugador cambia de pantalla mientras está en el aire.
+    useEffect(() => {
+        if (!levelFlash) return;
+        const t = setTimeout(() => setLevelFlash(null), 1600);
+        return () => clearTimeout(t);
+    }, [levelFlash]);
+
     // Detectar cuando el request pendiente fue resuelto (aprobado o denegado)
     useEffect(() => {
         if (!pendingRequest) return;
@@ -573,10 +605,22 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             if (myTotal > rivalTotal) {
                 const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel
                     && canGainLevel(myPokemon);
-                // Al máximo se salta directo a la captura, que es lo que había
-                // después de decir «No» al nivel.
-                if (canLevelUp) setShowLevelUpPrompt(true);
-                else if (!noCaptureEvent) setShowCapturePrompt(true);
+                const canCatch = !noCaptureEvent;
+                // Contra un salvaje el nivel y la captura son EXCLUYENTES: de
+                // ganar sale una cosa o la otra. Por eso aquí sí se pregunta —y
+                // es la única batalla donde se pregunta—: subir cuesta el
+                // intento de captura, así que no es un trámite.
+                //
+                // Se pregunta encadenado (nivel → captura) y no en un modal de
+                // dos botones porque la captura se tira con el dado y puede
+                // fallar: renunciar al nivel no garantiza el Pokémon, y quedarse
+                // sin ninguna de las dos es un desenlace legítimo.
+                //
+                // Si solo hay una de las dos sobre la mesa no hay nada que
+                // sopesar: el nivel se aplica solo y la captura se ofrece sola.
+                if (canLevelUp && canCatch) setWildChoice(true);
+                else if (canLevelUp) grantLevel(myPokemon);
+                else if (canCatch) setShowCapturePrompt(true);
             }
             // En el rodaje nadie se queda debilitado: la carta reanima al final,
             // así que lo más simple es no tumbarlo.
@@ -589,27 +633,58 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
         // Batallas oficiales (líderes / jugadores)
         if (!isOfficialBattle) return;
+
+        // Quién ha peleado ya en este combate de líder. Se apunta aquí, al
+        // cerrar la ronda, y no al elegir Pokémon: lo que cuenta es haber
+        // combatido, no haber pasado por la pantalla de selección. De esto
+        // depende si al tumbar al primero del líder hay decisión que tomar.
+        let leaderFought = leaderFighters;
+        if (leaderTeam && myPokemon) {
+            leaderFought = new Set(leaderFighters);
+            leaderFought.add(resolveBasePokemonId(myPokemon));
+            if (leaderFought.size !== leaderFighters.size) setLeaderFighters(leaderFought);
+        }
+
         if (myTotal > rivalTotal) {
-            // Mismo tope que en la salvaje: al máximo no se ofrece subir, y la
-            // medalla sale de una vez en lugar de esperar a la respuesta.
+            // Mismo tope que en la salvaje: al máximo no sube.
             const canLevelUp = rivalPokemon.totalLevel >= myPokemon.totalLevel
                 && canGainLevel(myPokemon);
-            if (canLevelUp) setShowLevelUpPrompt(true);
+
             // Contra un líder se le va tumbando el equipo en orden. Mientras le
             // queden Pokémon, cae uno y sale el siguiente; solo al acabárselos
             // el combate está ganado.
+            //
+            // En ese punto medio el nivel NO se cobra todavía: es la
+            // consecuencia de cambiar de Pokémon —uno no sube dos veces en el
+            // mismo combate, así que solo cobra su subida al retirarse— y lo
+            // aplica el modal del relevo.
+            const leaderMidPoint = Boolean(leaderTeam && leaderNext);
+            if (canLevelUp && !leaderMidPoint) grantLevel(myPokemon);
+
             if (leaderTeam) {
                 if (leaderNext) {
-                    if (canLevelUp) setPendingNextRival(true);
-                    else setShowNextRivalPrompt(true);
+                    // Solo hay elección yendo con el primero que sale a pelear.
+                    // Con el segundo ya no: ni cambio ni nivel hasta tumbar a
+                    // los dos del líder.
+                    const locked = leaderFought.size > 1;
+                    // El nivel va al Pokémon BASE (los megas y G-Max no suben
+                    // aparte), así que el número que se enseña sale de ahí.
+                    const base = (player.pokemons || [])
+                        .find(p => p.id === resolveBasePokemonId(myPokemon)) || myPokemon;
+                    setNextRival({
+                        locked,
+                        levelUp: !locked && canLevelUp,
+                        name: displayName(myPokemon),
+                        from: base.totalLevel,
+                        to: base.totalLevel + 1,
+                    });
                 } else if (gymLeaderBadgeNum !== null) {
                     // El reto está ganado: se cierra YA, aquí, y no cuando el
                     // jugador conteste al modal de la medalla. Así el castigo no
                     // puede caerle a quien sí terminó el combate —aunque diga
                     // que no a la medalla, o cierre el modal de un toque.
                     closeGymChallengeAsWin();
-                    if (canLevelUp) setPendingBadge(true);
-                    else setShowBadgePrompt(true);
+                    setShowBadgePrompt(true);
                 }
             }
         }
@@ -629,6 +704,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             setHordeRoundHidden(false);
             setTrainerRoundHidden(false);
             setFrontierRoundHidden(false);
+            setRoyaleRoundHidden(false);
             setPokeStarDone(false);
         }
     }, [myLocked, rivalLocked]);
@@ -711,13 +787,30 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     //      EVENTO, porque hay siete modales montados a la vez publicando cada
     //      uno lo suyo. Es la red de seguridad: aunque un efecto se dispare de
     //      más, si no hay nada nuevo que contar no sale ninguna petición.
+    //   3. Solo publica quien tiene el turno. Los demás pueden abrir los modales
+    //      para mirar —el juego no se lo impide— pero la mesa está viendo la
+    //      jugada del que va, y su espejo no se toca. Va por ref por lo mismo
+    //      que la función de arriba: si `isMyTurn` entrara en las dependencias,
+    //      la identidad cambiaría en cada paso de turno y volvería a disparar
+    //      los efectos de los siete modales. El backend hace la misma
+    //      comprobación, que es la que manda; esta solo ahorra la petición.
     const mirrorFnRef = useRef(onEventMirror);
     mirrorFnRef.current = onEventMirror;
+    const isMyTurnRef = useRef(isMyTurn);
+    isMyTurnRef.current = isMyTurn;
     const lastMirrorRef = useRef({});
+
+    // Las firmas son de la jugada que acaba: al cambiar el turno el backend
+    // borra el espejo, así que hay que olvidarlas o el jugador que vuelva a
+    // abrir el mismo evento con la misma vista no publicaría nada.
+    useEffect(() => {
+        lastMirrorRef.current = {};
+    }, [isMyTurn]);
 
     const publishEventMirror = useCallback((view) => {
         const enviar = mirrorFnRef.current;
         if (!playerId || !enviar || !view?.event) return;
+        if (!isMyTurnRef.current) return;
         const firma = JSON.stringify(view);
         if (lastMirrorRef.current[view.event] === firma) return;
         lastMirrorRef.current[view.event] = firma;
@@ -913,13 +1006,13 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
 
     const startSimLeader = async (leader, badgeNum = null) => {
         setPendingChallenge(null);
-        // Su equipo empieza de cero: siempre se pelea primero contra el primero
+        // Su equipo empieza de cero: siempre se pelea primero contra el primero,
+        // y de los míos todavía no ha peleado ninguno
         setLeaderIdx(0);
-        setPendingNextRival(false);
-        setShowNextRivalPrompt(false);
+        setNextRival(null);
+        setLeaderFighters(new Set());
         if (badgeNum !== null) {
             setGymLeaderBadgeNum(badgeNum);
-            setPendingBadge(false);
             // El reto solo se abre en el turno propio (ver handleSimLeader)
             if (isMyTurn) {
                 try {
@@ -1568,6 +1661,8 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
     };
 
     const resetRoundState = () => {
+        // Ronda nueva: vuelve a haber un nivel que ganar (ver grantLevel)
+        levelGrantedRef.current = false;
         setMyAttackSelected('false');
         setRivalAttackSelected('false');
         setMyAttack(undefined);
@@ -1589,10 +1684,12 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyLocked(false);
         setRivalLocked(false);
         setShowCapturePrompt(false);
+        setWildChoice(false);
         setExpandedField(null);
     };
 
     const resetBattleState = () => {
+        levelGrantedRef.current = false;
         setMyPokemon(undefined);
         setRivalPokemon(undefined);
         setMyPokemonSelected('false');
@@ -1614,6 +1711,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setMyStatus('Normal');
         setRivalStatus('Normal');
         setShowCapturePrompt(false);
+        setWildChoice(false);
         setExpandedField(null);
     };
 
@@ -1690,11 +1788,10 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         resetBattleState();
         setShowSetup(true);
         setGymLeaderBadgeNum(null);
-        setPendingBadge(false);
         setShowBadgePrompt(false);
         setLeaderIdx(0);
-        setPendingNextRival(false);
-        setShowNextRivalPrompt(false);
+        setNextRival(null);
+        setLeaderFighters(new Set());
         setShowPokedex(false);
         setShowLeaderViewer(false);
         setShowStore(false);
@@ -1712,7 +1809,6 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setPickEvent(null);
         setShowWildModal(false);
         setShowOtherRivals(false);
-        setShowLevelUpPrompt(false);
         setShowEvolveModal(false);
         setShowAllPlayers(false);
         setShowFrontierModal(false);
@@ -1723,7 +1819,16 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             setFrontierRoundHidden(false);
             onFrontierClear(player.id);
         }
+        // El Battle Royal, igual: su cuadro no tiene pantalla de montaje a la
+        // que volver a mitad de torneo, y su cierre de combate saltaría encima
+        // de la siguiente batalla, que no es suya.
+        if (royale && !royale.result) {
+            setRoyaleRoundHidden(false);
+            setRoyaleSetupOpen(false);
+            onRoyaleClear(player.id);
+        }
         setShowCapturePrompt(false);
+        setWildChoice(false);
         setShowReplaceModal(false);
         setPendingCapturePokedex(null);
         if (isMyTurn && game.battlePublic) onToggleBattlePublic();
@@ -1790,6 +1895,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 if (horde) await onHordeClear(player.id);
                 if (trainerBattle) await onTrainerClear(player.id);
                 if (frontierBattle) await onFrontierClear(player.id);
+                if (royale) await onRoyaleClear(player.id);
                 setRaidSetupOpen(true);
                 break;
             case 'horde':
@@ -1799,6 +1905,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 if (raid) await onRaidClear(player.id);
                 if (trainerBattle) await onTrainerClear(player.id);
                 if (frontierBattle) await onFrontierClear(player.id);
+                if (royale) await onRoyaleClear(player.id);
                 setHordeSetupOpen(true);
                 break;
             case 'pokeStar':
@@ -1808,6 +1915,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 if (horde) await onHordeClear(player.id);
                 if (trainerBattle) await onTrainerClear(player.id);
                 if (frontierBattle) await onFrontierClear(player.id);
+                if (royale) await onRoyaleClear(player.id);
                 setPokeStarDone(false);
                 setPokeStarOpen(true);
                 break;
@@ -1820,11 +1928,25 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 // tiene que aprobar el máster, y solo cabe una solicitud a la vez.
                 setRareCandyOpen(true);
                 break;
+            case 'battleRoyale':
+                // Mismo criterio que el resto de eventos de combate: el hueco de
+                // rival es uno solo, así que montar este cierra el que hubiera.
+                // El torneo anterior también, para que el cuadro salga limpio.
+                if (royale) await onRoyaleClear(player.id);
+                if (raid) await onRaidClear(player.id);
+                if (horde) await onHordeClear(player.id);
+                if (trainerBattle) await onTrainerClear(player.id);
+                if (frontierBattle) await onFrontierClear(player.id);
+                setRoyaleError(null);
+                setRoyaleRoundHidden(false);
+                setRoyaleSetupOpen(true);
+                break;
             case 'trainerBattle':
                 if (trainerBattle) await onTrainerClear(player.id);
                 if (raid) await onRaidClear(player.id);
                 if (horde) await onHordeClear(player.id);
                 if (frontierBattle) await onFrontierClear(player.id);
+                if (royale) await onRoyaleClear(player.id);
                 setTrainerSetupOpen(true);
                 break;
             case 'megaBattle':
@@ -1839,6 +1961,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 if (horde) await onHordeClear(player.id);
                 if (trainerBattle) await onTrainerClear(player.id);
                 if (frontierBattle) await onFrontierClear(player.id);
+                if (royale) await onRoyaleClear(player.id);
                 setUndergroundOpen(true);
                 break;
             default:
@@ -2163,6 +2286,70 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         setShowSetup(true);
     };
 
+    // ── Battle Royal ────────────────────────────────────────────────────────
+    //
+    // Parejas, no una fila: cada Pokémon vivo del jugador con token verde, azul,
+    // amarillo o rojo pelea SU combate contra un rival de su mismo color. Los
+    // dos lados vienen dados, así que la pantalla de selección se salta y cada
+    // combate se monta entero desde aquí — como en la horda, pero cambiando
+    // también de Pokémon propio en cada relevo.
+    const royaleRoundsDone = royale?.rounds?.length || 0;
+    const royaleTotal = royale?.bouts?.length || 0;
+    const royaleWins = royale?.rounds?.filter(r => r.win).length || 0;
+
+    const startRoyaleRound = async (index, from = royale) => {
+        const bout = from?.bouts?.[index];
+        if (!bout) return;
+        // El Pokémon vivo de VERDAD, no la copia congelada del cuadro: entre el
+        // sorteo y este combate pudo subir de nivel o cambiar de item.
+        const mine = (player.pokemons || []).find(p => p.id === bout.pokemonId) || bout.pokemon;
+        resetBattleState();
+        setShowSetup(false);
+        // Sin esperar al espejo, el combate no llega a la tabla del máster y
+        // además pisaría la selección de Pokémon de aquí abajo.
+        if (isMyTurn) await onStartSimMirror(playerId);
+        await handleSelectMyPokemon(mine);
+        await handleSelectRivalPokemon(bout.wild, mine);
+    };
+
+    const handleRoyaleRoll = async () => {
+        setRoyaleLoading(true);
+        setRoyaleError(null);
+        const res = await onRoyaleStart(player.id);
+        setRoyaleLoading(false);
+        if (!res?.ok) setRoyaleError(res?.message || 'No se pudo montar el torneo');
+    };
+
+    const handleRoyaleBegin = async () => {
+        if (!royale?.bouts?.length) return;
+        setRoyaleSetupOpen(false);
+        setRoyaleRoundHidden(false);
+        await startRoyaleRound(royaleRoundsDone);
+    };
+
+    // Cierra el combate en curso: anota quién ganó y encadena el siguiente.
+    const handleRoyaleNext = async () => {
+        setRoyaleRoundHidden(true);
+        const res = await onRoyaleRound(player.id, myTotal, rivalTotal);
+        const ro = res?.royale;
+        if (!ro || ro.result) {
+            // Se acabó el torneo: la pantalla se recoge para enseñar el premio
+            resetBattleState();
+            setShowSetup(true);
+            setRoyaleResultOpen(true);
+            return;
+        }
+        await startRoyaleRound(ro.rounds.length, ro);
+    };
+
+    const handleRoyaleClose = async () => {
+        setRoyaleResultOpen(false);
+        setRoyaleRoundHidden(false);
+        await onRoyaleClear(player.id);
+        resetBattleState();
+        setShowSetup(true);
+    };
+
     // ── Reto de frontera ────────────────────────────────────────────────────
     //
     // El más corto de los eventos de combate: un solo combate contra un salvaje
@@ -2324,30 +2511,40 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         if (isMyTurn) onStartSimMirror(playerId);
     };
 
-    // Lo que va detrás del modal de subir nivel, conteste lo que conteste el
-    // jugador: la captura del salvaje, la medalla del líder o el relevo de su
-    // siguiente Pokémon. Nunca coinciden dos.
-    const afterLevelUpPrompt = () => {
-        if (rival?.name === 'Wild Pokemon') {
-            if (!noCaptureEvent) setShowCapturePrompt(true);
-            return;
-        }
-        if (pendingBadge) {
-            setPendingBadge(false);
-            setShowBadgePrompt(true);
-        } else if (pendingNextRival) {
-            setPendingNextRival(false);
-            setShowNextRivalPrompt(true);
-        }
+    // Subir de nivel no se pregunta: cuando toca, se aplica y se enseña el +1.
+    // Preguntarlo no aportaba nada —nadie dice que no a un nivel— y encima
+    // partía en dos el cierre de cada combate.
+    //
+    // El nivel va siempre al Pokémon BASE: los megas y G-Max no suben aparte,
+    // y de ahí sale también el número que se enseña en el aviso.
+    //
+    // Una subida por ronda resuelta, y la marca la lleva un ref. Hace falta
+    // porque desbloquear un dado para corregirlo y volver a bloquearlo hace
+    // pasar otra vez por el cierre del combate: cuando esto se preguntaba, el
+    // jugador podía decir que no; ahora, sin freno, cobraría dos niveles.
+    const grantLevel = (pkm) => {
+        if (!pkm || levelGrantedRef.current) return;
+        levelGrantedRef.current = true;
+        const baseId = resolveBasePokemonId(pkm);
+        const base = (player.pokemons || []).find(p => p.id === baseId) || pkm;
+        onIncreaseLevel(player.id, baseId, {
+            rivalName: rival?.name,
+            rivalPokemonName: rivalPokemon?.name,
+            source: 'sim-battle',
+        });
+        setLevelFlash({
+            name: displayName(pkm),
+            from: base.totalLevel,
+            to: base.totalLevel + 1,
+        });
     };
 
     // ── Relevo del líder ────────────────────────────────────────────────────
-    // Cayó uno de los suyos y le queda equipo: sale el siguiente. El jugador
-    // decide si sigue con el mismo Pokémon —el combate continúa donde estaba,
-    // solo se limpia la ronda— o si se lo cambia, que devuelve a la pantalla de
-    // selección con el nuevo rival ya puesto.
+    // Cayó uno de los suyos y le queda equipo: sale el siguiente. Seguir con el
+    // mismo Pokémon continúa el combate donde estaba (solo se limpia la ronda);
+    // cambiarlo devuelve a la pantalla de selección con el nuevo rival puesto.
     const handleNextRivalSame = async () => {
-        setShowNextRivalPrompt(false);
+        setNextRival(null);
         const next = leaderNext;
         if (!next) return;
         setLeaderIdx(i => i + 1);
@@ -2358,9 +2555,15 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
         await handleSelectRivalPokemon(next, myPokemon);
     };
 
+    // Cambiar de Pokémon cobra la subida de nivel, si la había: el que se
+    // retira ya no va a pelear más en este combate, así que o sube ahora o no
+    // sube. No se pregunta —la decisión ya está tomada al cambiar—, solo se
+    // enseña el +1 un momento.
     const handleNextRivalSwitch = () => {
-        setShowNextRivalPrompt(false);
+        const info = nextRival;
+        setNextRival(null);
         if (!leaderNext) return;
+        if (info?.levelUp) grantLevel(myPokemon);
         setLeaderIdx(i => i + 1);
         handleResetBattle();
     };
@@ -2595,7 +2798,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 los avisos de nivel: en Poké Star sí se sube. */}
             {pokeStarActive && myLocked && rivalLocked && !pokeStarDone
                 && myPokemon && rivalPokemon
-                && !showLevelUpPrompt && !showEvolveModal && (() => {
+                && !showEvolveModal && (() => {
                 const ending = POKESTAR_ENDINGS[pokeStarOutcome];
                 return (
                     <div className="modal-backdrop raid-round-backdrop">
@@ -2685,6 +2888,141 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 loading={trainerLoading}
             />
 
+            {/* ── Battle Royal ──────────────────────────────────────────────
+                Cuadro de combates: cada Pokémon vivo de token verde, azul,
+                amarillo o rojo contra un rival de su color. */}
+            <ModalBattleRoyale
+                show={royaleSetupOpen}
+                onClose={async () => {
+                    setRoyaleSetupOpen(false);
+                    setRoyaleError(null);
+                    if (royale && !royale.result) await onRoyaleClear(player.id);
+                }}
+                royale={royale}
+                pokemonImg={(pkm) => getPokemonImg(pkm.pokedex) || getSafePkmImg(pkm.pokedex, generation)}
+                onRoll={handleRoyaleRoll}
+                onStart={handleRoyaleBegin}
+                loading={royaleLoading}
+                error={royaleError}
+                onOpenRules={() => setRaidRulesOpen('battleRoyale')}
+                onMirror={publishEventMirror}
+            />
+
+            {/* Franja del torneo: por dónde va y cómo ha ido cada combate */}
+            {royale && !showSetup && !royale.result && royaleTotal > 0 && (
+                <div className="raid-strip horde-strip">
+                    <div className="raid-strip-round">
+                        Combate {Math.min(royaleRoundsDone + 1, royaleTotal)} de {royaleTotal}
+                        {royaleWins > 0 && <b> · {royaleWins} {royaleWins === 1 ? 'carta' : 'cartas'}</b>}
+                    </div>
+                    <div className="raid-strip-dots">
+                        {royale.bouts.map((b, i) => {
+                            const r = royale.rounds?.[i];
+                            const mark = r ? (r.win ? 'is-win' : r.tie ? 'is-tie' : 'is-lose') : '';
+                            return (
+                                <span key={i}
+                                      className={`raid-strip-dot ${i === royaleRoundsDone ? 'is-now' : ''} ${mark}`}
+                                      style={{ '--token-color': tokenColorHex(b.color) || undefined }}
+                                      title={`${b.pokemon?.name} vs ${b.wild?.name}`} />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Cierre de combate del Battle Royal */}
+            {royale && !royale.result && myLocked && rivalLocked && !royaleRoundHidden
+                && myPokemon && rivalPokemon
+                && !showEvolveModal && !showReplaceModal && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className="raid-round-modal horde-round-modal">
+                        <div className="raid-round-title">
+                            Combate {royaleRoundsDone + 1} de {royaleTotal}
+                        </div>
+                        <div className="raid-round-score">
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{displayName(myPokemon)}</span>
+                                <span className="raid-round-num">{myTotal}</span>
+                            </div>
+                            <i>vs</i>
+                            <div className="raid-round-side">
+                                <span className="raid-round-label">{rivalPokemon?.name}</span>
+                                <span className="raid-round-num">{rivalTotal}</span>
+                            </div>
+                        </div>
+                        <div className={`horde-round-verdict ${myTotal > rivalTotal ? 'is-win' : myTotal === rivalTotal ? 'is-tie' : 'is-lose'}`}>
+                            {myTotal > rivalTotal
+                                ? '¡Ganaste! +1 carta'
+                                : myTotal === rivalTotal
+                                    ? 'Empate: no cuenta como victoria'
+                                    : 'Perdiste el combate'}
+                        </div>
+                        <div className="raid-round-note">
+                            Cada combate se cuenta por separado: robas una carta por cada
+                            victoria, no hace falta ganarlos todos.
+                        </div>
+                        <div className="raid-round-actions">
+                            <button className="raid-setup-btn raid-setup-btn--ghost"
+                                    onClick={() => setRoyaleRoundHidden(true)}>
+                                ← Volver al combate
+                            </button>
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleRoyaleNext}>
+                                {royaleRoundsDone + 1 >= royaleTotal
+                                    ? 'Ver el resultado'
+                                    : 'Siguiente combate →'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Resultado del torneo: una carta por victoria, del mazo físico */}
+            {royaleResultOpen && royale && (
+                <div className="modal-backdrop raid-round-backdrop">
+                    <div className={`raid-result-modal horde-result-modal raid-result-modal--${royale.result}`}>
+                        <div className="raid-result-title">
+                            {royale.wins === royaleTotal ? '¡Torneo perfecto!'
+                                : royale.wins > 0 ? `Ganaste ${royale.wins} de ${royaleTotal}`
+                                : 'Sin victorias'}
+                        </div>
+
+                        <div className="raid-result-rows">
+                            {royale.rounds.map((r, i) => (
+                                <div className={`raid-result-row horde-result-row--${r.win ? 'win' : r.tie ? 'tie' : 'lose'}`}
+                                     key={i}
+                                     style={{ '--token-color': tokenColorHex(r.color) || undefined }}>
+                                    <span className="raid-result-who">{r.mine} vs {r.rival}</span>
+                                    <span className="raid-result-nums">
+                                        {r.hostTotal} — {r.rivalTotal}
+                                        <em>{r.win ? '✓' : r.tie ? '=' : '✗'}</em>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {royale.prize > 0 ? (
+                            <div className="horde-bonus trainer-prize">
+                                <span className="horde-bonus-num">{royale.prize}</span>
+                                <span className="horde-bonus-label">
+                                    {royale.prize === 1 ? 'carta' : 'cartas'}<br />
+                                    <em>sácalas del mazo</em>
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="raid-round-note">
+                                Se roba una carta por victoria, y esta vez no cayó ninguna.
+                            </div>
+                        )}
+
+                        <div className="raid-result-actions">
+                            <button className="raid-setup-btn raid-setup-btn--main" onClick={handleRoyaleClose}>
+                                Cerrar el torneo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Franja del combate de entrenador. Solo tiene sentido con dos
                 rivales: con uno no hay nada que llevar la cuenta. */}
             {trainerBattle && !showSetup && !trainerBattle.result && trainerCount > 1 && (
@@ -2709,7 +3047,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             {/* Cierre de combate del evento de entrenador */}
             {trainerBattle && !trainerBattle.result && myLocked && rivalLocked && !trainerRoundHidden
                 && myPokemon && rivalPokemon
-                && !showLevelUpPrompt && !showEvolveModal && !showReplaceModal && (
+                && !showEvolveModal && !showReplaceModal && (
                 <div className="modal-backdrop raid-round-backdrop">
                     <div className="raid-round-modal horde-round-modal">
                         <div className="raid-round-title">
@@ -2823,7 +3161,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             {/* Cierre de combate del reto de frontera */}
             {frontierBattle && !frontierBattle.result && myLocked && rivalLocked && !frontierRoundHidden
                 && myPokemon && rivalPokemon
-                && !showLevelUpPrompt && !showEvolveModal && !showReplaceModal && (
+                && !showEvolveModal && !showReplaceModal && (
                 <div className="modal-backdrop raid-round-backdrop">
                     <div className="raid-round-modal horde-round-modal frontier-round-modal">
                         {/* Volver al combate es la marcha atrás (corregir un dado),
@@ -2959,7 +3297,7 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                 y esos prompts van antes que encadenar el siguiente combate. */}
             {horde && !horde.result && myLocked && rivalLocked && !hordeRoundHidden
                 && myPokemon && rivalPokemon
-                && !showLevelUpPrompt && !showEvolveModal && !showReplaceModal && (
+                && !showEvolveModal && !showReplaceModal && (
                 <div className="modal-backdrop raid-round-backdrop">
                     <div className="raid-round-modal horde-round-modal">
                         <div className="raid-round-title">
@@ -3956,6 +4294,40 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
             )}
 
 
+            {/* Ganaste a un salvaje: primero el nivel y, si lo dejas pasar, la
+                captura. Encadenado y no en un solo modal de dos botones a
+                propósito: la captura se tira con el dado y PUEDE FALLAR, así
+                que decir «captura» no es cobrar un premio, es renunciar al
+                nivel para intentarlo. Se puede acabar sin ninguna de las dos, y
+                eso tiene que ser posible.
+
+                El nivel sí se pregunta aquí —y solo aquí— porque contra un
+                salvaje cuesta algo. En el resto de combates no hay nada que
+                sopesar y sube solo. */}
+            {wildChoice && (
+                <div className="modal-backdrop" onClick={() => { setWildChoice(false); setShowCapturePrompt(true); }}>
+                    <div className="levelup-prompt sim-wild-choice" onClick={e => e.stopPropagation()}>
+                        <div className="levelup-prompt-title">¡Victoria!</div>
+                        <div className="levelup-prompt-msg">
+                            {displayName(myPokemon)} derrotó a {displayName(rivalPokemon)} (Nv {rivalPokemon?.totalLevel}).
+                            <br />¿Subir de nivel?
+                        </div>
+                        <div className="sim-wild-choice-note">
+                            Si sube, ya no puedes intentar la captura.
+                        </div>
+                        <div className="levelup-prompt-buttons">
+                            <button className="levelup-btn-yes"
+                                    onClick={() => { setWildChoice(false); grantLevel(myPokemon); }}>
+                                Sí
+                            </button>
+                            <button className="levelup-btn-no"
+                                    onClick={() => { setWildChoice(false); setShowCapturePrompt(true); }}>
+                                No
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {showCapturePrompt && (
                 <div className="modal-backdrop" onClick={() => setShowCapturePrompt(false)}>
                     <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
@@ -3993,35 +4365,18 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                     </div>
                 </div>
             )}
-            {showLevelUpPrompt && (
-                <div className="modal-backdrop" onClick={() => setShowLevelUpPrompt(false)}>
-                    <div className="levelup-prompt" onClick={e => e.stopPropagation()}>
-                        <div className="levelup-prompt-title">¡Victoria!</div>
-                        <div className="levelup-prompt-msg">
-                            {displayName(myPokemon)} derrotó a {displayName(rivalPokemon)} (Lv. {rivalPokemon?.totalLevel}).
-                            <br />¿Subir de nivel?
-                        </div>
-                        <div className="levelup-prompt-buttons">
-                            {/* Lo que venía detrás del nivel (la medalla, o el
-                                relevo del líder) sale igual se suba o no: antes
-                                colgaba solo del «Sí» y decir que no dejaba la
-                                medalla sin ofrecer. */}
-                            <button className="levelup-btn-yes" onClick={() => { setShowLevelUpPrompt(false); onIncreaseLevel(player.id, resolveBasePokemonId(myPokemon), { rivalName: rival?.name, rivalPokemonName: rivalPokemon?.name, source: 'sim-battle' }); afterLevelUpPrompt(); }}>Sí</button>
-                            <button className="levelup-btn-no" onClick={() => { setShowLevelUpPrompt(false); afterLevelUpPrompt(); }}>No</button>
-                        </div>
-                    </div>
-                </div>
-            )}
             {/* Relevo del líder: cayó uno de los suyos y saca al siguiente. Sin
                 backdrop que cierre al tocar fuera —hay que decidir con quién
-                sigues, y el combate no puede quedarse a medias sin rival. */}
-            {showNextRivalPrompt && leaderNext && (
+                sigues, y el combate no puede quedarse a medias sin rival.
+                La única pregunta es si cambias; el nivel es la consecuencia y va
+                escrito en el propio botón, para que se decida sabiéndolo. */}
+            {nextRival && leaderNext && (
                 <div className="modal-backdrop">
                     <div className="levelup-prompt sim-next-rival" onClick={e => e.stopPropagation()}>
                         <div className="levelup-prompt-title">¡Uno menos!</div>
                         <div className="levelup-prompt-msg">
                             {rival?.name} saca a <strong>{displayName(leaderNext)}</strong> (Nv {leaderNext.totalLevel}).
-                            <br />¿Sigues con {displayName(myPokemon)}?
+                            {!nextRival.locked && <><br />¿Cambias de Pokémon?</>}
                         </div>
                         <div className="sim-next-rival-art"
                              style={(() => {
@@ -4029,15 +4384,52 @@ const SimPlayer = ({ game, onSimWildBattle, onSimLeaderBattle, onSimPlayerBattle
                                      || getSafePkmImg(leaderNext.pokedex, generation);
                                  return art ? { backgroundImage: `url(${art})` } : {};
                              })()} />
-                        <div className="levelup-prompt-buttons">
-                            <button className="levelup-btn-yes" onClick={handleNextRivalSame}>
-                                Seguir igual
-                            </button>
-                            <button className="levelup-btn-no" onClick={handleNextRivalSwitch}>
-                                Cambiar de Pokémon
-                            </button>
-                        </div>
+
+                        {nextRival.locked ? (
+                            <>
+                                {/* Ya no vas con el primero: el combate sigue con
+                                    el mismo y el nivel se juega al final. */}
+                                <div className="sim-next-rival-note">
+                                    Ya cambiaste de Pokémon en este combate: <b>{nextRival.name}</b> sigue
+                                    peleando y el nivel se decide al derrotar a los dos.
+                                </div>
+                                <div className="levelup-prompt-buttons">
+                                    <button className="levelup-btn-yes" onClick={handleNextRivalSame}>
+                                        Continuar
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className={`sim-next-rival-note ${nextRival.levelUp ? 'is-up' : 'is-flat'}`}>
+                                    {nextRival.levelUp
+                                        ? <>Si lo cambias, <b>{nextRival.name}</b> sube a <b>Nv {nextRival.to}</b>.
+                                            Si sigue peleando, no sube ahora.</>
+                                        : <><b>{nextRival.name}</b> no sube de nivel lo cambies o no.</>}
+                                </div>
+                                <div className="levelup-prompt-buttons">
+                                    <button className="levelup-btn-no" onClick={handleNextRivalSwitch}>
+                                        Cambiar
+                                        {nextRival.levelUp && <em className="sim-next-rival-gain">+1 Nv</em>}
+                                    </button>
+                                    <button className="levelup-btn-yes" onClick={handleNextRivalSame}>
+                                        Seguir con {nextRival.name}
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
+                </div>
+            )}
+
+            {/* El +1 al retirar un Pokémon: no se pregunta nada, se enseña y se
+                va solo. No bloquea: es un aviso, no un paso del flujo. */}
+            {levelFlash && (
+                <div className="sim-level-flash" key={`${levelFlash.name}-${levelFlash.to}`}>
+                    <span className="sim-level-flash-plus">+1</span>
+                    <span className="sim-level-flash-text">
+                        {levelFlash.name} · Nv {levelFlash.from} → {levelFlash.to}
+                    </span>
                 </div>
             )}
             {showBadgePrompt && (
