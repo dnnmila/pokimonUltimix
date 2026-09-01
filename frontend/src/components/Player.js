@@ -59,6 +59,12 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
 
     const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
     const [historyTab, setHistoryTab] = useState('purchases');
+    // Filtros del historial. Se quedan puestos al cambiar de pestaña, porque la
+    // ronda y el jugador significan lo mismo en las tres; el de origen no, que
+    // las compras no traen `source`.
+    const [historyRound, setHistoryRound] = useState('all');
+    const [historyPlayer, setHistoryPlayer] = useState('all');
+    const [historySource, setHistorySource] = useState('all');
     const [showTradeModal, setShowTradeModal] = useState(false);
     const [tradeTargetPlayer, setTradeTargetPlayer] = useState(null);
     const [tradeMyPkm, setTradeMyPkm] = useState(null);
@@ -70,6 +76,55 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
         if (!tradeMyPkm || !tradeTargetPkm || !tradeTargetPlayer) return;
         await onTradePokemon(currentPlayerView.id, tradeMyPkm.id, tradeTargetPlayer.id, tradeTargetPkm.id);
         closeTrade();
+    };
+
+    // ── Historial: filtrado ────────────────────────────────────────────────
+    const purchaseLog = game.purchaseHistory || [];
+    const stateLog    = game.stateHistory || [];
+    const levelLog    = game.levelHistory || [];
+
+    // De dónde salió la entrada, agrupado como se filtra. Lo que no es manual
+    // ni caramelo viene de una pelea: las entradas antiguas no traen `source`,
+    // pero solo las de combate se guardaron alguna vez sin él.
+    const sourceGroup = (entry) => {
+        if (entry.source?.startsWith('manual-')) return 'manual';
+        if (entry.source === 'rare-candy') return 'candy';
+        return 'battle';
+    };
+
+    // Las opciones salen de las TRES listas juntas, no de la pestaña abierta:
+    // si se calcularan por pestaña, al cambiar de una a otra el desplegable se
+    // quedaría con un valor que ya no está entre sus opciones, y un <select>
+    // así se ve en blanco.
+    const allLog = [...purchaseLog, ...stateLog, ...levelLog];
+    const roundOptions  = [...new Set(allLog.map(e => e.round).filter(r => r != null))].sort((a, b) => b - a);
+    const playerOptions = [...new Set(allLog.map(e => e.playerName).filter(Boolean))].sort();
+    // El caramelo solo sube niveles: la opción no se ofrece si no hay ninguno.
+    const hasCandyLog = levelLog.some(e => e.source === 'rare-candy');
+
+    const filterLog = (list, withSource) => list.filter(e =>
+        (historyRound  === 'all' || String(e.round) === historyRound) &&
+        (historyPlayer === 'all' || e.playerName === historyPlayer) &&
+        (!withSource || historySource === 'all' || sourceGroup(e) === historySource)
+    );
+    const shownPurchases = filterLog(purchaseLog, false);
+    const shownStates    = filterLog(stateLog, true);
+    const shownLevels    = filterLog(levelLog, true);
+
+    // Para distinguir «no hay nada» de «no hay nada CON ESTOS FILTROS», que si
+    // no parece que se ha perdido el historial.
+    const historyFiltered = historyRound !== 'all' || historyPlayer !== 'all' ||
+                            (historyTab !== 'purchases' && historySource !== 'all');
+    const clearHistoryFilters = () => {
+        setHistoryRound('all');
+        setHistoryPlayer('all');
+        setHistorySource('all');
+    };
+    // 'candy' solo existe en niveles: al salir de esa pestaña se suelta, o el
+    // desplegable se quedaría con un valor que ya no ofrece.
+    const pickHistoryTab = (tab) => {
+        setHistoryTab(tab);
+        if (tab !== 'levels' && historySource === 'candy') setHistorySource('all');
     };
 
     // Las solicitudes llegan en cola (push en el backend), así que la primera de
@@ -401,23 +456,65 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                         <div className="purchase-history-tabs">
                             <button
                                 className={`ph-tab${historyTab === 'purchases' ? ' ph-tab-active' : ''}`}
-                                onClick={() => setHistoryTab('purchases')}
+                                onClick={() => pickHistoryTab('purchases')}
                             >Compras</button>
                             <button
                                 className={`ph-tab${historyTab === 'states' ? ' ph-tab-active' : ''}`}
-                                onClick={() => setHistoryTab('states')}
+                                onClick={() => pickHistoryTab('states')}
                             >Estados</button>
                             <button
                                 className={`ph-tab${historyTab === 'levels' ? ' ph-tab-active' : ''}`}
-                                onClick={() => setHistoryTab('levels')}
+                                onClick={() => pickHistoryTab('levels')}
                             >Niveles</button>
                         </div>
+                        {/* Filtros. El historial de una partida larga son cientos
+                            de líneas y lo que se busca en él es siempre lo mismo:
+                            qué pasó en tal ronda, qué hizo tal jugador, o qué se
+                            ha tocado a mano. */}
+                        <div className="purchase-history-filters">
+                            <label className="ph-filter">
+                                <span className="ph-filter-label">Ronda</span>
+                                <select value={historyRound} onChange={e => setHistoryRound(e.target.value)}>
+                                    <option value="all">Todas</option>
+                                    {roundOptions.map(r => <option key={r} value={String(r)}>R{r}</option>)}
+                                </select>
+                            </label>
+                            <label className="ph-filter">
+                                <span className="ph-filter-label">Jugador</span>
+                                <select value={historyPlayer} onChange={e => setHistoryPlayer(e.target.value)}>
+                                    <option value="all">Todos</option>
+                                    {playerOptions.map(n => <option key={n} value={n}>{n}</option>)}
+                                </select>
+                            </label>
+                            {/* Las compras no traen origen: el desplegable se va
+                                con la pestaña en vez de quedarse sin efecto. */}
+                            {historyTab !== 'purchases' && (
+                                <label className="ph-filter">
+                                    <span className="ph-filter-label">Origen</span>
+                                    <select value={historySource} onChange={e => setHistorySource(e.target.value)}>
+                                        <option value="all">Todos</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="battle">Combate</option>
+                                        {historyTab === 'levels' && hasCandyLog && (
+                                            <option value="candy">Caramelo Raro</option>
+                                        )}
+                                    </select>
+                                </label>
+                            )}
+                            {historyFiltered && (
+                                <button className="ph-filter-reset" onClick={clearHistoryFilters}>
+                                    Quitar filtros
+                                </button>
+                            )}
+                        </div>
                         {historyTab === 'purchases' ? (
-                            (game.purchaseHistory || []).length === 0 ? (
-                                <div className="purchase-history-empty">Sin compras registradas</div>
+                            shownPurchases.length === 0 ? (
+                                <div className="purchase-history-empty">
+                                    {historyFiltered ? 'Ninguna compra con estos filtros' : 'Sin compras registradas'}
+                                </div>
                             ) : (
                                 <div className="purchase-history-list">
-                                    {[...(game.purchaseHistory || [])].reverse().map((entry, i) => (
+                                    {[...shownPurchases].reverse().map((entry, i) => (
                                         <div key={i} className="purchase-history-item">
                                             <span className="ph-round">R{entry.round}</span>
                                             <span className="ph-player">{entry.playerName}</span>
@@ -431,11 +528,13 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                                 </div>
                             )
                         ) : historyTab === 'states' ? (
-                            (game.stateHistory || []).length === 0 ? (
-                                <div className="purchase-history-empty">Sin cambios de estado registrados</div>
+                            shownStates.length === 0 ? (
+                                <div className="purchase-history-empty">
+                                    {historyFiltered ? 'Ningún cambio de estado con estos filtros' : 'Sin cambios de estado registrados'}
+                                </div>
                             ) : (
                                 <div className="purchase-history-list">
-                                    {[...(game.stateHistory || [])].reverse().map((entry, i) => {
+                                    {[...shownStates].reverse().map((entry, i) => {
                                         const sourceLabel = entry.source === 'manual-master' ? 'Manual (Master)' : entry.source === 'manual-player' ? `Manual (${entry.playerName})` : '';
                                         return (
                                             <div key={i} className="purchase-history-item">
@@ -452,12 +551,17 @@ const Player = ({ game, currentPlayerTurn, currentPlayerView,AllPlayers, onNextT
                                 </div>
                             )
                         ) : (
-                            (game.levelHistory || []).length === 0 ? (
-                                <div className="purchase-history-empty">Sin subidas de nivel registradas</div>
+                            shownLevels.length === 0 ? (
+                                <div className="purchase-history-empty">
+                                    {historyFiltered ? 'Ninguna subida de nivel con estos filtros' : 'Sin subidas de nivel registradas'}
+                                </div>
                             ) : (
                                 <div className="purchase-history-list">
-                                    {[...(game.levelHistory || [])].reverse().map((entry, i) => {
-                                        const sourceLabel = entry.source === 'manual-master' ? 'Manual (Master)' : entry.source === 'manual-player' ? `Manual (${entry.playerName})` : '';
+                                    {[...shownLevels].reverse().map((entry, i) => {
+                                        // El caramelo también se etiqueta: es la
+                                        // tercera opción del filtro de origen y
+                                        // sin cartel no se sabría cuál es cuál.
+                                        const sourceLabel = entry.source === 'manual-master' ? 'Manual (Master)' : entry.source === 'manual-player' ? `Manual (${entry.playerName})` : entry.source === 'rare-candy' ? 'Caramelo Raro' : '';
                                         return (
                                             <div key={i} className="purchase-history-item">
                                                 <span className="ph-round">R{entry.round}</span>

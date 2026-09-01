@@ -354,6 +354,53 @@ margin-left: 0rem;
     font-weight: bold;
     &:hover { background: var(--hud-blue-deep); color: #fff; }
 }
+// Barra de filtros: va entre las pestañas y la lista, en su propia banda, para
+// que se lea como «esto acota lo de abajo» y no como otra fila del historial.
+.purchase-history-filters {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    padding: 0.7rem 1.2rem 0;
+}
+.ph-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    select {
+        background: #fff;
+        border: 2px solid var(--hud-line);
+        border-radius: 8px;
+        color: var(--hud-ink);
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: bold;
+        padding: 0.25rem 0.5rem;
+        &:hover  { border-color: var(--hud-blue); }
+        &:focus  { outline: none; border-color: var(--hud-blue); }
+    }
+}
+.ph-filter-label {
+    color: var(--hud-dim);
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+.ph-filter-reset {
+    background: #fff;
+    border: 2px solid var(--hud-red);
+    border-radius: 8px;
+    color: var(--hud-red);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 0.25rem 0.8rem;
+    &:hover { background: var(--hud-red); color: #fff; }
+}
+
 .ph-state { font-weight: bold; min-width: 4.5rem; text-align: right; }
 .ph-state-alive { color: #2f8f4e; }
 .ph-state-dead  { color: var(--hud-red); }

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,getPokemonCard,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,simRematch,pauseGame,endGame,raidStart,raidTeam,raidRound,raidFinish,raidClear,hordeStart,hordeTeam,hordeRound,hordeFinish,hordeClear,trainerBattleStart,trainerBattleRound,trainerBattleClear,frontierBattleStart,frontierBattleFinish,frontierBattleClear,pokeStarStart,pokeStarLevel,pokeStarClear,setStoreDiscount,getMegaForms,getRandomMega,simMegaBattle,undergroundBattle,setEventMirror,getMapCoords,getBoardNodes,saveMapCoords,saveBoardNodes} from '../controllers/gameController.js';
+import { nextTurn,prevTurn,nextPlayerView,prevPlayerView ,startGame,wildBattle,playerBattle,leaderBattle,scanBattle,addPlayer,setMyBattleTotal,setMyBattlePokemon,setMyBattleAttack,setBattlePhase,setFormsView,simWildBattle,simLeaderBattle,simPlayerBattle,toggleBattlePublic,setBattleDice,setBattleBonuses,setBattleBonusFinal,loadGameController,saveInfoController,setGeneration,getLeadersByGeneration,getPokemonList,getRandomPokemon,getPokemonCard,changeWeather,setFieldMove,requestPurchase,approvePurchase,denyPurchase,startSimMirror,simRematch,pauseGame,endGame,raidStart,raidTeam,raidRound,raidFinish,raidClear,hordeStart,hordeTeam,hordeRound,hordeFinish,hordeClear,trainerBattleStart,trainerBattleRound,trainerBattleClear,royaleStart,royaleRound,royaleClear,frontierBattleStart,frontierBattleFinish,frontierBattleClear,pokeStarStart,pokeStarLevel,pokeStarClear,setStoreDiscount,getMegaForms,getRandomMega,simMegaBattle,undergroundBattle,setEventMirror,getMapCoords,getBoardNodes,saveMapCoords,saveBoardNodes} from '../controllers/gameController.js';
 import { addPokemonToPlayer,addPokemonScanned, removePokemonToPlayer, updateCoins,badgeWon,badgeLost,gymChallengeStart,gymChallengeWin,gymDefeat,addPoints,changePosition ,increaseLevel,evolvePokemon,attachItem,attachTM,changeState,changeStatus,setMote,attachMega,attachLegendary,getEvolutionChain,getPossibleEvolutions,toggleDynamax,masterPurchase,decreaseStatusCounter,tradePokemon,toggleFrontier,attachTera,attachEquip,bagAdd,bagRemove,markEventUsed,updateMapPosition,toggleSurf} from '../controllers/playerController.js';
 
 // Ruta para crear un nuevo juego
@@ -80,6 +80,9 @@ router.post('/horde-clear', hordeClear);
 router.post('/trainer-battle-start', trainerBattleStart);
 router.post('/trainer-battle-round', trainerBattleRound);
 router.post('/trainer-battle-clear', trainerBattleClear);
+router.post('/royale-start', royaleStart);
+router.post('/royale-round', royaleRound);
+router.post('/royale-clear', royaleClear);
 router.post('/frontier-battle-start', frontierBattleStart);
 router.post('/frontier-battle-finish', frontierBattleFinish);
 router.post('/frontier-battle-clear', frontierBattleClear);

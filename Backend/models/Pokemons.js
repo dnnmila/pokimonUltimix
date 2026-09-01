@@ -26,6 +26,14 @@ class Pokemons {
         this.mega= mega;
         this.statusCounter = 0;
         this.mote = '';
+        // Color del token físico ('green', 'blue', 'yellow', 'red', 'pink',
+        // 'purple') o null en los pocos que la DB no tiene clasificados. Sale de
+        // la columna TOKEN_COLOR y lo estampa quien construye el Pokémon, que es
+        // el único que tiene la fila de la DB delante.
+        //
+        // Es de la ESPECIE, no del ejemplar: al evolucionar o al montar una mega
+        // hay que releerlo de la fila nueva, no arrastrar el viejo.
+        this.tokenColor = null;
         // Tipo del Orbe Tera adjunto ("DARK", "STELLAR"...), en mayúsculas como
         // los tipos de la DB. Solo tiene valor mientras `attach` sea 'Tera'.
         this.teraType = null;

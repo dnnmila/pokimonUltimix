@@ -54,6 +54,11 @@ export const RULES_CARDS = [
     aliases: ['trainer battle 2', 'combate de entrenador 2'],
   },
   {
+    id: 'battleRoyale',
+    title: 'Reglas del Battle Royal',
+    aliases: ['battle royal dome', 'battle royal', 'battle royale'],
+  },
+  {
     id: 'contest',
     title: 'Reglas del Concurso Pokémon',
     aliases: ['contest rules', 'pokemon contest', 'concurso pokemon'],

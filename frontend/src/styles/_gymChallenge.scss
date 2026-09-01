@@ -97,6 +97,106 @@
     to   { opacity: 1; transform: none; }
 }
 
+// Qué pasa con el nivel si cambias. Es la mitad de la decisión, así que va
+// escrito antes de los botones y no en letra pequeña: verde cuando hay nivel
+// que ganar, neutro cuando no lo hay.
+.sim-next-rival-note {
+    padding: 0.45rem 0.7rem;
+    border-radius: 10px;
+    background: var(--hud-paper);
+    border: 1px solid var(--hud-line);
+    color: var(--hud-dim);
+    font-size: 0.8rem;
+    line-height: 1.4;
+
+    b { color: var(--hud-ink); }
+}
+
+.sim-next-rival-note.is-up {
+    background: rgba(74, 157, 95, 0.12);
+    border-color: rgba(74, 157, 95, 0.45);
+    color: var(--hud-green);
+
+    b { color: var(--hud-green); }
+}
+
+// El +1 dentro del botón de cambiar: la ganancia se lee sin salir del botón
+.sim-next-rival-gain {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.28);
+    font-style: normal;
+    font-size: 0.72rem;
+    font-weight: bold;
+}
+
+// ── Nivel o captura ─────────────────────────────────────────────────────────
+// Contra un salvaje subir de nivel cuesta el intento de captura. Ese coste va
+// escrito entre el resultado y los botones: sin él, el Sí/No parece un trámite.
+.sim-wild-choice {
+    max-width: 24rem;
+}
+
+.sim-wild-choice-note {
+    padding: 0.4rem 0.7rem;
+    border-radius: 10px;
+    background: var(--hud-paper);
+    border: 1px solid var(--hud-line);
+    color: var(--hud-dim);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+// ── Aviso fugaz de subida de nivel ──────────────────────────────────────────
+// Cuando el nivel no se pregunta sino que se aplica, hay que ENSEÑARLO: sin
+// esto la subida pasaría desapercibida y el jugador no sabría si ocurrió.
+// No bloquea ni se cierra a mano; sube, se lee y se va.
+.sim-level-flash {
+    position: fixed;
+    top: 18%;
+    left: 50%;
+    // Por encima de los cierres de combate de los eventos (560) y de los
+    // modales (10000): el +1 salta a la vez que ellos y detrás no se vería.
+    // Por debajo de la cortina de tema (20000), que tapa a todo por diseño.
+    z-index: 15000;
+
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 1.1rem;
+
+    background: var(--hud-card);
+    border: 2px solid var(--hud-green);
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(var(--hud-shadow-rgb), 0.4);
+    pointer-events: none;
+    white-space: nowrap;
+
+    animation: sim-level-flash 1.6s ease-out both;
+}
+
+.sim-level-flash-plus {
+    font-size: 1.5rem;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--hud-green);
+}
+
+.sim-level-flash-text {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--hud-ink);
+}
+
+@keyframes sim-level-flash {
+    0%   { opacity: 0; transform: translate(-50%, 14px) scale(0.9); }
+    12%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    75%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -18px) scale(0.98); }
+}
+
 // ── Tablets pequeñas y móvil apaisado ───────────────────────────────────────
 @media (max-width: 900px), (max-height: 500px) {
     .gym-challenge-modal-badge { width: 2.4rem; height: 2.4rem; }

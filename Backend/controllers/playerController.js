@@ -120,6 +120,7 @@ async function attachGMaxIfAvailable(player, pokemon, pokemonData, db) {
         atk1, atk2, atk3,
         gmaxData.NEXT_LEVEL, gmaxData.EVOLUTION, gmaxData.MEGA
     );
+    gmax.tokenColor = gmaxData.TOKEN_COLOR || null;
     gmax.extra = pokemon.extra;
     gmax.totalLevel = gmax.level + gmax.extra;
     gmax.mote = pokemon.mote || '';
@@ -176,6 +177,7 @@ export const addPokemonToPlayer = async (req, res) => {
             pokemonData.EVOLUTION,
             pokemonData.MEGA
         );
+        pokemon.tokenColor = pokemonData.TOKEN_COLOR || null;
 
        
             
@@ -256,6 +258,7 @@ export const addPokemonScanned = async (req, res) => {
             pokemonData.EVOLUTION,
             pokemonData.MEGA
         );
+        pokemon.tokenColor = pokemonData.TOKEN_COLOR || null;
 
         // Aquí, necesitarás obtener el jugador (Player) por su ID y agregar el Pokémon
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
@@ -346,6 +349,8 @@ export const evolvePokemon = async (req, res) => {
             pokemonData.EVOLUTION,
             pokemonData.MEGA
         );
+        // El color es de la ESPECIE: la forma nueva trae el suyo, no se hereda
+        newPokemon.tokenColor = pokemonData.TOKEN_COLOR || null;
         // Cambio de forma (nextLevel=-1): transferir todo el extra sin descuento
         // Evolución normal: solo transfieren los extras que superan el nextLevel requerido
         const transferExtra = oldPkm.nextLevel === -1
@@ -903,6 +908,7 @@ async function attachMegaForms(player, pokemon, db) {
             data.EVOLUTION,
             data.MEGA
         );
+        mega.tokenColor = data.TOKEN_COLOR || null;
         mega.extra = pokemon.extra;
         mega.totalLevel = mega.level + mega.extra;
         mega.mote = pokemon.mote || '';
@@ -1188,6 +1194,7 @@ export const wildBattle = async (req, res) => {
             pokemonData.EVOLUTION,
             pokemonData.MEGA
         );
+        pokemon.tokenColor = pokemonData.TOKEN_COLOR || null;
 
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
       
@@ -1239,6 +1246,7 @@ export const wildBattleScanned = async (req, res) => {
             pokemonData.EVOLUTION,
             pokemonData.MEGA
         );
+        pokemon.tokenColor = pokemonData.TOKEN_COLOR || null;
 
         // Esta parte dependerá de cómo estás almacenando y manejando los datos de los jugadores
       

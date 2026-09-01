@@ -30,8 +30,15 @@ import imgUnderground from '../images/tokens_ultimix/0050.png';
 // símbolo de un tipo — el evento reparte el objeto, y el tipo lo elige cada
 // carta. Es además el que ya pinta la bolsa en ModalEvents.
 import imgTeraOrb from '../images/store/chart/TeraOrb.png';
-// El Caramelo Raro va con el arte del propio objeto.
-import imgRareCandy from '../images/Nuevos items/Rare Candy.png';
+// El Caramelo Raro va con el caramelo suelto, no con la carta entera: los demás
+// eventos enseñan un icono y la carta, ahí pequeña, no se leía. Está recortado
+// de la propia carta (images/Nuevos items/Rare Candy.png).
+import imgRareCandy from '../images/RareCandy.png';
+// El Battle Royal usa el arte de su carta física si ya está puesta en
+// `images/rules/`; mientras no lo esté, el estadio genérico. Así el evento se
+// puede usar desde hoy y la carta entra sola en cuanto se escanee.
+import { rulesCard } from './rulesCards';
+import imgStadium from '../images/pokeStadium.png';
 
 // `accent` pinta el borde y el título de la tarjeta: agrupa de un vistazo los
 // eventos de «recoger objeto» (los tres primeros) frente a los de combate.
@@ -77,6 +84,15 @@ export const SIM_EVENTS = [
         rules: 'maxRaid',
         img: imgMax,
         accent: '#f2506e',
+    },
+    {
+        id: 'battleRoyale',
+        title: 'Battle Royal',
+        es: 'Battle Royal',
+        desc: 'Cada Pokémon vivo verde, azul, amarillo o rojo pelea contra un rival de su color.',
+        rules: 'battleRoyale',
+        img: rulesCard('battleRoyale')?.img || imgStadium,
+        accent: '#3fbf6a',
     },
     {
         id: 'trainerBattle',
