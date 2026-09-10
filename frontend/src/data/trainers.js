@@ -1,15 +1,34 @@
 // Catálogo de entrenadores seleccionables. El orden de esta lista es el orden
 // en que se pintan en el menú de jugadores.
+//
+// Para meter un entrenador nuevo hay dos cosas que el arte tiene que cumplir, y
+// ninguna se ve venir hasta que ya está puesto y queda feo:
+//
+// 1. FONDO TRANSPARENTE. Los retratos se pintan como `background-image` sobre el
+//    papel del HUD, sin marco propio, así que los doce van en webp con alfa y la
+//    silueta recortada. Una imagen con fondo blanco —lo normal si viene de un
+//    generador— sale como un recuadro blanco dentro del círculo rojo.
+//
+//    Al quitarlo, hay que inundar desde los BORDES en vez de filtrar el blanco de
+//    toda la imagen: el arte encierra blancos que son parte del dibujo (la mitad
+//    clara de la Poké Ball de Kampis, los ojos del vaquero de Tacho, las garras de
+//    su Snorlax) y un filtro global los agujerea. Ojo también con el fondo que
+//    queda ATRAPADO y no toca el marco —a Kampis le pasaba entre los pinchos del
+//    pelo—: esos huecos hay que barrerlos aparte.
+//
+// 2. Puede que necesite `avatar`. El porqué está abajo, en getTrainerAvatar.
 import trainer1  from '../images/trainers/Trainer1.webp';
 import trainer1Avatar from '../images/trainers/Trainer1Avatar.webp';
 import trainer2  from '../images/trainers/Trainer2.webp';
 import trainer2Avatar from '../images/trainers/Trainer2Avatar.webp';
 import trainer3  from '../images/trainers/Trainer3.webp';
 import trainer4  from '../images/trainers/Trainer4.webp';
+import trainer4Avatar from '../images/trainers/Trainer4Avatar.webp';
 import trainer5  from '../images/trainers/Trainer5.webp';
 import trainer6  from '../images/trainers/Trainer6.webp';
 import trainer6Avatar from '../images/trainers/Trainer6Avatar.webp';
 import trainer7  from '../images/trainers/Trainer7.webp';
+import trainer7Avatar from '../images/trainers/Trainer7Avatar.webp';
 import trainer8  from '../images/trainers/Trainer8.webp';
 import trainer9  from '../images/trainers/Trainer9.webp';
 import trainer10 from '../images/trainers/Trainer10.webp';
@@ -21,10 +40,10 @@ export const TRAINERS = [
     { name: 'Mila',    image: trainer1,  avatar: trainer1Avatar },
     { name: 'Wuicho',  image: trainer2, avatar: trainer2Avatar },
     { name: 'Kevin',   image: trainer3  },
-    { name: 'Kampis',  image: trainer4  },
+    { name: 'Kampis',  image: trainer4, avatar: trainer4Avatar },
     { name: 'Mandito', image: trainer5  },
     { name: 'Doc',     image: trainer6, avatar: trainer6Avatar },
-    { name: 'Tacho',   image: trainer7  },
+    { name: 'Tacho',   image: trainer7, avatar: trainer7Avatar },
     { name: 'Fede',    image: trainer8  },
     { name: 'Perry',   image: trainer9  },
     { name: 'Richi',   image: trainer10 },
@@ -56,8 +75,15 @@ export const getTrainerImage = (name) =>
 // Rapidash entero a la derecha). El cuadrado superior los entra a los dos y
 // deja la cara en un puñado de píxeles, así que también llevan su recorte.
 //
+// Kampis y Tacho llegaron ya cuadrados, que es el caso de Mono otra vez: si la
+// imagen es cuadrada, el «cuadrado superior» es la imagen entera y el círculo
+// enseña el cuerpo completo. Encima cada uno tiene lo suyo. A Kampis la corona
+// y los pinchos del pelo le ocupan el tercio de arriba, así que `center top` ni
+// siquiera apunta a la cabeza; a Tacho el tercio superior es Snorlax puro y su
+// cara está en el centro, de modo que sin recorte el círculo sería barriga.
+//
 // Es opcional a propósito. Sin ese campo esto devuelve exactamente lo mismo que
-// getTrainerImage, así que los otros once entrenadores no se enteran de nada.
+// getTrainerImage, así que los nueve entrenadores restantes no se enteran de nada.
 export const getTrainerAvatar = (name) => {
     const t = TRAINERS.find(x => x.name === name);
     return t?.avatar || t?.image || TRAINERS[0].image;

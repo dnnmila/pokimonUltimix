@@ -5,3 +5,8 @@ Backend/.env
 
 # Copias que deja /map-editor antes de sobrescribir un tablero
 Backend/saves/**/*.bak
+
+# La partida en curso es de cada máquina: el servidor tiene la suya y no debe
+# pisarse con la local en cada merge. Los tableros (boardNodes) y los
+# gimnasios (mapCoords) sí se versionan, que son configuración.
+Backend/saves/autosave.json
